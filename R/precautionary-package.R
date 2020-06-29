@@ -1,5 +1,5 @@
 #' @name precautionary-package
-#' @title Precautionary diagnostics for dose-escalation trial designs
+#' @title Safety Diagnostics for Dose-Escalation Trial Designs
 #' @description Enhances various R packages that support the design and simulation
 #' of phase 1 dose-escalation trials, adding diagnostics to examine the safety
 #' characteristics of these designs in light of expected inter-individual variation
@@ -44,7 +44,7 @@
 #'    arXiv:2004.12755 [stat, q-bio]. April 2020.
 #'    \url{http://arxiv.org/abs/2004.12755}
 #' 
-#' @importFrom distr6 Lognormal Gamma
+#' @import distr6
 #' @import methods
 NULL
 

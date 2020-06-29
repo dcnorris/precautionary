@@ -2,20 +2,29 @@
 title: "Testing package escalation"
 author: "David C. Norris"
 date: "6/27/2020"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: <
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Comparative safety of 3 + 3 and CRM dose-finding designs}
+bibliography: precautionary-package.bib
 ---
 
 ```{r setup, include=FALSE}
+options(rmarkdown.html_vignette.check_title = FALSE) # suppress un-needed warning
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 5)
+
+library(precautionary)
 library(escalation)
 library(distr6)
 library(data.table)
-knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 ## Simulating a 3+3 trial
 
 #### Obtain dose-wise DLT probabilities from an MTDi distribution:
+
+Use a lognormally-distributed MTD$_i$ inspired by [@norris_retrospective_2020]:
 
 ```{r derive-DLT-probs}
 mu <- 5              # Values estimated in arXiv:2004.12755 [stat, q-bio];
@@ -49,7 +58,8 @@ ensemble[, `:=`(
 , MTDi5 = MTDi3*r0^2
 , absdose = dose_levels[dose]
 )]
-ensemble[, toxgrade := (absdose>MTDi1) + (absdose>MTDi2) + (absdose>MTDi3) + (absdose>MTDi4) + (absdose>MTDi5)]
+ensemble[, toxgrade := (absdose>MTDi1) + (absdose>MTDi2) + (absdose>MTDi3) +
+                       (absdose>MTDi4) + (absdose>MTDi5)]
 
 toxicities <- ensemble[, .(prob = .N/nrow(ensemble)), by=toxgrade][order(toxgrade)]
 par(mar=c(5, 10, 4, 4), las = 1)
