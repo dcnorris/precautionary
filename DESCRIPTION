@@ -1,0 +1,21 @@
+Package: precautionary
+Type: Package
+Title: Precautionary diagnostics for dose-escalation trial designs
+Version: 0.1-1
+Date: 2020-06-29
+Authors@R: person("David C.", "Norris"
+                 , role = c("aut", "cre")
+                 , email = "david@precisionmethods.guru"
+                 )
+Maintainer: David C. Norris <david@precisionmethods.guru>
+Depends: R (>= 3.4.0), survival
+Imports: data.table, methods
+Suggests: knitr, rmarkdown, lattice, latticeExtra, widgetframe, tidyr,
+        RColorBrewer
+Enhances: escalation
+Description: Enhances various R packages that support the design and simulation
+             of phase 1 dose-escalation trials, adding diagnostics to examine
+             the safety characteristics of these designs in light of expected
+             inter-individual variation in pharmacokinetics and pharmacodynamics.
+URL: https://precisionmethods.guru/
+License: MIT + file LICENSE

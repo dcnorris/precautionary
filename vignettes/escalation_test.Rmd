@@ -1,0 +1,64 @@
+---
+title: "Testing package escalation"
+author: "David C. Norris"
+date: "6/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(escalation)
+library(distr6)
+library(data.table)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Simulating a 3+3 trial
+
+#### Obtain dose-wise DLT probabilities from an MTDi distribution:
+
+```{r derive-DLT-probs}
+mu <- 5              # Values estimated in arXiv:2004.12755 [stat, q-bio];
+sigma <- 1/sqrt(1.3) # see subsection 'Model estimates' and Table 2, pp. 2-3.
+dose_levels <- c(2, 6, 20, 60, 180, 400)
+MTDi <- Lognormal$new(meanlog = mu, sdlog = sigma)
+DLT_probs <- MTDi$cdf(dose_levels)
+```
+
+#### Run a simple simulation
+
+```{r simple-sim}
+suppressWarnings( # "Unknown or uninitialised column: `u_i`" warnings (from Tibble?)
+sims <- get_three_plus_three(num_doses = 6) %>%
+  simulate_trials(num_sims = 200, true_prob_tox = DLT_probs)
+)
+```
+
+#### Obtain ordinal toxicity outcomes via `u_i`
+
+```{r ordinal-toxicities, fig.cap=paste("Distribution of graded toxicities over", nrow(ensemble), "participants in", max(ensemble$rep), "simulated trials.")}
+ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
+                      , idcol="rep")
+
+r0 <- 1.3
+ensemble[, MTDi3 := MTDi$quantile(p = u_i)]
+ensemble[, `:=`(
+  MTDi1 = MTDi3/r0^2
+, MTDi2 = MTDi3/r0
+, MTDi4 = MTDi3*r0
+, MTDi5 = MTDi3*r0^2
+, absdose = dose_levels[dose]
+)]
+ensemble[, toxgrade := (absdose>MTDi1) + (absdose>MTDi2) + (absdose>MTDi3) + (absdose>MTDi4) + (absdose>MTDi5)]
+
+toxicities <- ensemble[, .(prob = .N/nrow(ensemble)), by=toxgrade][order(toxgrade)]
+par(mar=c(5, 10, 4, 4), las = 1)
+barplot(100*prob ~ toxgrade, toxicities
+        , xlab = "CTCAE Toxicity Grade"
+        , ylab = "")
+mtext("% Simulated\nParticipants", side=2, line=3)
+```
+
+#### Try accelerated titration à la NCT02848911
+
+TODO.
