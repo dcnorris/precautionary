@@ -6,12 +6,12 @@ NEW & IMPROVED PLAN
 So, the plan below evaporated quickly after a half-day of thinking
 in my notebook! A new, more focused plan has emerged as follows:
 
-(1) Initial target is a cross-tabulation by r0 and ordinal Tox,
+/1) Initial target is a cross-tabulation by r0 and ordinal Tox,
     displaying counts of enrolled patients over all reps within
     each given draw from (sigma(CV), mu) and the 'true_prob_tox'
     vector that yields.
     
-(2) That crosstab can then be normalized to expected numbers of
+/2) That crosstab can then be normalized to expected numbers of
     each toxicity grade in the trial. (The sum of these of course
     yields the expected enrollment in the trial.)
     
@@ -21,6 +21,60 @@ in my notebook! A new, more focused plan has emerged as follows:
     curves (NB: these should be smoothed) that support roll-over
     interaction with a sub-table (inset?) display.
 
+(4) REFACTORING this code, by contrast, seems essential to MY OWN
+    understanding of what I've done!
+    
+ a. Implement my own 'simulate_trials' method, requiring only modest
+    changes to any existing syntax. For example, syntax like:
+    
+    > simulate_trials(check_safety(sims), num_sims = __, priors = __)
+    
+    Or perhaps even with the true_prob_tox argument given in the form
+    of a *generator* of ordinal toxicities, i.e. a PRIOR.
+    
+    Absent a close collaboration with the author of package 'escalation',
+    I am probably stuck with syntax like that above, which would enable
+    me to impose a change of signature. Retaining the original signature,
+    but with the 'true_prob_tox' argument generalized to accept priors
+    (over *ordinal* toxicities!) would require a coherent redesign of the
+    escalation package: ordinal toxicities would have to be handled in
+    a coherent way, for example.
+    
+ b. Note that the 'priors' above might best be obtained from options
+    specific to my package. The right-minded approach to designing the
+    trial (also, the truly *Bayesian* approach, FWIW) demands setting
+    out such priors in advance. Setting package options nicely aligns
+    with that modus operandi, and with a regard for these priors as
+    honestly posited, and as stable for the duration of a trial-design
+    session.
+    
+ c. The 'check_safety' class implicit in the above syntax affords an
+    opportunity to implement the summary statistics through 'print'
+    methods that generalize 'simulations.print'.
+    
+    Or maybe the check_safety *wrapper* merely appends a 'precautionary'
+    class to the selector_factory in the 1st argument, strictly for
+    method-dispatch purposes. The 'simulations' object returned might
+    then more appropriately get an 'ordinaltox' or 'CTCAE' class appended
+    to it, and the existing 'tox' column then gets overwritten with what
+    I currently denote (capital-T) 'Tox'.
+    
+ d. These refactoring considerations point to the status of parameters
+    such as r0 as a separate concern that may more properly be handled
+    within the existing 'escalation' package.
+    
+    Pending the development of any closer collaboration with escalation's
+    author, I will do best to extend the 'simulations' class within my
+    own package. Certainly, the existing 'simulations' class exposes what
+    may be a highly appropriate interface, which I should consider adhering
+    to as much as possible. A suitable name for the new class might be
+    'factorial_simulations', say.
+    
+ e. Further refactoring opportunities may ultimately come into focus
+    through this effort. For example, is there a generic class of ordinal
+    toxicity generators, capable of subsuming the PO and CR models of
+    Van Meter &al (2011,2012), as well as my own model? What will such
+    a class reveal about the former by comparison with the latter?
 ---
 
 A key consideration as I begin, is how (and whether) to deal with
