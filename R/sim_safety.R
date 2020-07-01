@@ -39,10 +39,10 @@ sim_safety <- function(protocol
                               , sd = true_prob_tox[k]$sigma
                               )]
     ensemble[, `:=`(
-      MTDi1 = MTDi3/r0^2
-    , MTDi2 = MTDi3/r0
-    , MTDi4 = MTDi3*r0
-    , MTDi5 = MTDi3*r0^2
+      MTDi1 = MTDi3 - 2*r0
+    , MTDi2 = MTDi3 - r0
+    , MTDi4 = MTDi3 + r0
+    , MTDi5 = MTDi3 + 2*r0
     )]
     ensemble[, toxgrade := (dose>MTDi1) + (dose>MTDi2) + (dose>MTDi3) +
                            (dose>MTDi4) + (dose>MTDi5)]
