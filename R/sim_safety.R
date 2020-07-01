@@ -8,7 +8,7 @@ sim_safety <- function(protocol
                        , lambda_CV = 3
                        , median_mtd = protocol$num_doses - 1
                        , median_sd = median_mtd/3
-                       , r0 = seq(1.5, 3, 0.5)
+                       , r0 = seq(0.5, 2.5, 0.5)
                        , K = 40
                        , M = 50
                        ){
@@ -25,6 +25,7 @@ sim_safety <- function(protocol
   }
   setcolorder(true_prob_tox, paste0("P", 1:protocol$num_doses)) # move P1..Pd to front
   ensembles <<- list()
+  toxicities <<- list()
   for(k in 1:K){
     cat("k =", k, "\n")
     sims <- simulate_trials(protocol, num_sims = M,
@@ -57,8 +58,44 @@ sim_safety <- function(protocol
     #       of a fatality in *this* trial. Alternatively, we can ask for
     #       the expected number of each grade of toxicity in *this* trial.
     #       Note that this should partition the expected size of this trial!
-    toxicities <- ensemble[, .(prob = .N/nrow(.SD)), by = .(toxgrade,r0)]
+    ensemble[, Tox := factor(toxgrade, levels=0:5, labels=paste0("Gr",0:5))]
     ensembles[[k]] <<- ensemble
+    # See https://stackoverflow.com/a/16519612/3338147 explaining below syntax
+    toxicities[[k]] <<- ensemble[, .(Tox=ordered(levels(Tox)), N=c(table(Tox)))
+                                 , by=r0]
+    # Importantly, because these protocols run considering only DLT = Gr>=3,
+    # they are r0-agnostic. But I ought to allow for the general case where
+    # ordinal toxicities (MTDig for g != 3) affect trial conduct.
+    #
+    # Initially, let me go simply for *counts* and worry secondarily about
+    # obtaining (and dividing by) the denominators.
+    # Want a tabulation with several r0 values defining rows, and columns for
+    # the counts of toxicity grades. A final column may show total enrollments,
+    # which as noted above will all be equal unless ordinal toxicities affect
+    # escalation or termination decisions.
   }
-  list(tpt = true_prob_tox, tox = toxicities)
+  # Indeed, I like the idea of abstracting the calculation of high-level
+  # summary statistics into a separate function, possibly even a 'summary'
+  # method for a suitably defined R3 class. But for now, let me implement
+  # these summaries here, as additional components of the returned list.
+  toxdt <- rbindlist(toxicities, idcol = "k")
+  counts <- toxdt[, .(n=sum(N)), by=.(r0,Tox)]
+  toxtab <- ftable(xtabs(n ~ Tox + r0, counts))
+  # It now seems to me there are 2 perspectives on the probabilities here.
+  # One POV is the per-trial perspective, which might ask for expected
+  # numbers of each grade of toxicity.
+  # The second POV is that of the enrolling patient, who might ask what
+  # is the probability of each grade of toxicity. But this POV ought to
+  # be conditioned on the prior results seen in the trial, and so demands
+  # much more sophisticated modeling -- indeed, modeling of the kind I
+  # employed in the AFM11 paper.
+  # Note in fact that, as soon as such a perspective BEGINS to be acknowledged,
+  # I have already 'won' the argument about dose individualization!
+  list(tpt = true_prob_tox
+      ,toxdt = toxdt
+      ,toxtab = toxtab
+      ,expect = toxtab/(K*M)
+      ,K = K
+      ,M = M
+      )
 }
