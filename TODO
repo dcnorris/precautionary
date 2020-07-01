@@ -1,0 +1,47 @@
+TODO
+====
+
+NEW & IMPROVED PLAN
+
+So, the plan below evaporated quickly after a half-day of thinking
+in my notebook! A new, more focused plan has emerged as follows:
+
+(1) Initial target is a cross-tabulation by r0 and ordinal Tox,
+    displaying counts of enrolled patients over all reps within
+    each given draw from (sigma(CV), mu) and the 'true_prob_tox'
+    vector that yields.
+    
+(2) That crosstab can then be normalized to expected numbers of
+    each toxicity grade in the trial. (The sum of these of course
+    yields the expected enrollment in the trial.)
+    
+(3) VISUALIZING this process seems essential for communicating
+    the basic idea to oncology trialists. One such viz that comes
+    to mind is a representative set of 20 or so 'true_prob_tox'
+    curves (NB: these should be smoothed) that support roll-over
+    interaction with a sub-table (inset?) display.
+
+---
+
+A key consideration as I begin, is how (and whether) to deal with
+absolute vs ordinal doses. One possibility is to suppose that any
+ordinal (1, 2, 3, ...) doses are scaled either logarithmically or
+arithmetically (perhaps set by a package option), with a generic
+case handled by a monotone function.
+
+In case an optional vector of dimensioned doses is provided, then
+the package should adapt printed displays to include these alongside
+any dose level. (Also, concreteness being a cognitive convenience
+for users, these absolute doses might also serve as references for
+specification of MTDi distribution centrality. But such 'speculative
+generality' might best be left as a later refinement.)
+
+1. Implement MTDi.distribution package options(mu, CV, r0),
+   defaulting to generally plausible values,
+   
+2. Redo the vignette by reference to these options
+
+3. Investigate 'hiding' the extra work by shadowing method.
+   This is an interesting possibility, which may even challenge
+   usual notions of 'good programming practice' in R or on CRAN.
+   
