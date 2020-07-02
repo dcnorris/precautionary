@@ -8,8 +8,8 @@ Authors@R: person("David C.", "Norris"
                  , email = "david@precisionmethods.guru"
                  )
 Maintainer: David C. Norris <david@precisionmethods.guru>
-Depends: R (>= 3.4.0)
-Imports: data.table, methods, distr6
+Depends: R (>= 3.4.0), escalation, data.table
+Imports: methods, distr6
 Suggests: knitr, rmarkdown
 Enhances: escalation
 Description: Enhances various R packages that support the design and simulation
@@ -22,3 +22,4 @@ Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
 Encoding: UTF-8
 NeedsCompilation: no
+RoxygenNote: 7.1.0

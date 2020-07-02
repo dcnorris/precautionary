@@ -24,13 +24,49 @@ in my notebook! A new, more focused plan has emerged as follows:
 (4) REFACTORING this code, by contrast, seems essential to MY OWN
     understanding of what I've done!
     
- a. Implement my own 'simulate_trials' method, requiring only modest
-    changes to any existing syntax. For example, syntax like:
+ a. Implement my own 'simulate_trials' generic function, dispatching on a
+    special class 'ordtox' that I can prepend to a selector_factory object
+    in a call such as the following:
     
     > simulate_trials(check_safety(sims), num_sims = __, priors = __)
     
-    Or perhaps even with the true_prob_tox argument given in the form
-    of a *generator* of ordinal toxicities, i.e. a PRIOR.
+    where the wrapper 'check_safety' prepends the class.
+    
+    This allows me to leave escalation::simulate_trials as the default,
+    but to implement my own function. Ideally, I would like to guide
+    users of package 'escalation' toward checking safety, with minimal
+    changes to their own code. Thus, I really should support the basic
+    syntax with num_sims and true_prob_tox arguments, possibly ignoring
+    or going beyond these.
+    by package 'escalation'. When invoked with a 'true_prob_tox' argument,
+    this can simply revert to invoking escalation::simulate_trials.
+    But when invoked *without* this specified, it draws the probabilities
+    from a prior specified in '...' initially. (Eventually, I may consider
+    implementing this in a package-specific option.)
+    
+    Given the design intent reflected in the simulation_function.* methods,
+    I wonder whether it would increase clarity and abstraction for me to
+    'inject' a class such as 'check_safety' into the class list BEFORE
+    the 'tox_selector_factory' class. This might allow me to return my own
+    customized version of phase1_sim instead of having to do a pull request.
+    
+    Hmm.. What happens in R if a generic function shadows a plain old function?
+    What would happen if I rewrote 'simulate_trials' as an S3 method? Would
+    dispatch occur?
+    
+    AHA! This seems to be EXACTLY the scenario where setGeneric() applies.
+    There is an existing function simulate_trials in another package, and
+    I want to define additional methods for that function.
+    
+    simulate_trials <- function(selector_factory, num_sims, true_prob_tox, ...) {
+      sim_func <- simulation_function(selector_factory)
+      l <- lapply(
+        1:num_sims,
+        function(x) sim_func(selector_factory, true_prob_tox, ...)
+      )
+  simulations(fits = l, true_prob_tox = true_prob_tox)
+}
+
     
     Absent a close collaboration with the author of package 'escalation',
     I am probably stuck with syntax like that above, which would enable
@@ -69,6 +105,10 @@ in my notebook! A new, more focused plan has emerged as follows:
     may be a highly appropriate interface, which I should consider adhering
     to as much as possible. A suitable name for the new class might be
     'factorial_simulations', say.
+    
+    Indeed, even upon a cursory glance I stumble upon simulations method
+    'dose_indices', which can improve my implementation of sim_safety and
+    also be implemented (or inherited!) by a factorial_simulations class!
     
  e. Further refactoring opportunities may ultimately come into focus
     through this effort. For example, is there a generic class of ordinal
