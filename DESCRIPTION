@@ -6,6 +6,7 @@ Date: 2020-06-29
 Authors@R: person("David C.", "Norris"
                  , role = c("aut", "cre")
                  , email = "david@precisionmethods.guru"
+                 , comment = c(ORCID = "0000-0001-9593-6343")
                  )
 Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: R (>= 3.4.0), escalation, data.table

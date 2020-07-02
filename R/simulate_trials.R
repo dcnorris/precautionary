@@ -15,12 +15,43 @@ setOldClass("ordtox")
 setOldClass("selector_factory")
 setOldClass("three_plus_three_selector_factory")
 
+# Interestingly, package 'escalation' needs to implement methods for
+# 'num_doses' and 'dose_indices' only for the (post-fit) selectors,
+# and not for the selector_factory. But it is characteristic of my
+# 'ordtox' class that it involves itself with the number of doses
+# under investigation.
+
+#' @export
+num_doses.three_plus_three_selector_factory <- function(x, ...) {
+  return(x$num_doses)
+}
+
+#' @export
+num_doses.dfcrm_selector_factory <- function(x, ...) {
+  return(length(x$skeleton))
+}
+
+#' @export
+num_doses.boin_selector_factory <- function(x, ...) {
+  return(x$num_doses)
+}
+
+#' @export
+dose_indices.ordtox <- function(x, ...) {
+  n <- num_doses(x)
+  if(n > 0) {
+    return(1:n)
+  } else {
+    return(integer(length = 0))
+  }
+}
+
 #' @rdname simulate_trials
 setMethod("simulate_trials", c(selector_factory="ordtox"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     protocol <- selector_factory # separate naming from implementation details
     lambda_CV = 3
-    median_mtd = protocol$num_doses - 1
+    median_mtd = num_doses(protocol) - 1
     median_sd = median_mtd/3
     r0 = seq(0.5, 2.5, 0.5)
     K = num_sims
@@ -33,17 +64,24 @@ setMethod("simulate_trials", c(selector_factory="ordtox"),
       sigma = sqrt(log(CV^2 + 1)) # NB: CV>sigma, w/ near-identity below 0.4
       , mu = rnorm(n=K, mean=median_mtd, sd=median_sd)
     )]
-    for(d in seq(protocol$num_doses)){
+    doses <- dose_indices(protocol)
+    # TODO: Consider using a vector like c("P1", "P2", ..., "P6")
+    #       to index these columns, abstracting away from the integer
+    #       dose levels. This could be done perhaps with a multi-col
+    #       assignment in the true_prob_tox data table, facilitated
+    #       perhaps by lapply(dose_indices(protocol), function(d) pnorm...).
+    # OTOH: What's the point? (!!)
+    for(d in doses){ # TODO: Is this vectorizable? Is that advisable?
       true_prob_tox[, paste0("P",d) := pnorm(q=d, mean=mu, sd=sigma)]
     }
-    setcolorder(true_prob_tox, paste0("P", 1:protocol$num_doses)) # move P1..Pd to front
+    setcolorder(true_prob_tox, paste0("P", doses)) # move P1..Pd to front
     ensembles <<- list()
     toxicities <<- list()
     for(k in 1:K){
       cat("k =", k, "\n")
       # Now invoke the default method from package 'escalation':
       sims <- callNextMethod(protocol, num_sims,
-                             true_prob_tox = as.numeric(true_prob_tox[k, 1:protocol$num_doses]))
+                             true_prob_tox = as.numeric(true_prob_tox[k, ..doses]))
       ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
                             , idcol = "rep")
       ensemble <- merge(data.frame(r0=r0), ensemble) # cartesian product
