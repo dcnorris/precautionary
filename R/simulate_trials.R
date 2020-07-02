@@ -64,24 +64,16 @@ setMethod("simulate_trials", c(selector_factory="ordtox"),
       sigma = sqrt(log(CV^2 + 1)) # NB: CV>sigma, w/ near-identity below 0.4
       , mu = rnorm(n=K, mean=median_mtd, sd=median_sd)
     )]
-    doses <- dose_indices(protocol)
-    # TODO: Consider using a vector like c("P1", "P2", ..., "P6")
-    #       to index these columns, abstracting away from the integer
-    #       dose levels. This could be done perhaps with a multi-col
-    #       assignment in the true_prob_tox data table, facilitated
-    #       perhaps by lapply(dose_indices(protocol), function(d) pnorm...).
-    # OTOH: What's the point? (!!)
-    for(d in doses){ # TODO: Is this vectorizable? Is that advisable?
-      true_prob_tox[, paste0("P",d) := pnorm(q=d, mean=mu, sd=sigma)]
-    }
-    setcolorder(true_prob_tox, paste0("P", doses)) # move P1..Pd to front
+    P_ <- paste0("P", dose_indices(protocol))
+    true_prob_tox[, c(P_) := lapply(dose_indices(protocol),
+                                    function(q) pnorm(q, mean=mu, sd=sigma))]
     ensembles <<- list()
     toxicities <<- list()
     for(k in 1:K){
       cat("k =", k, "\n")
       # Now invoke the default method from package 'escalation':
       sims <- callNextMethod(protocol, num_sims,
-                             true_prob_tox = as.numeric(true_prob_tox[k, ..doses]))
+                             true_prob_tox = as.numeric(true_prob_tox[k, ..P_]))
       ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
                             , idcol = "rep")
       ensemble <- merge(data.frame(r0=r0), ensemble) # cartesian product
