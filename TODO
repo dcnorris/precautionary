@@ -17,6 +17,10 @@ in my notebook! A new, more focused plan has emerged as follows:
     
 (3) REFACTOR package 'escalation' in the direction of abstractions
     pointed to by 'precautionary'.
+    ** The aim here is to better appreciate at once these new
+       generative models and the escalation::simulate_trials function
+       that I wish to 'correct while explaining' in accordance with
+       Popper's notion of the 'depth of a theory'.
     
  a. The question arises, to what extent *generative models* may be
     substituted in place of fixed 'true_prob_tox' vectors within

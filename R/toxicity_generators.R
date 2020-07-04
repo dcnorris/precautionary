@@ -84,32 +84,28 @@ setMethod(
     # The most parsimonious generalization of the default function
     # will substitute a *matrix* for the default result's vector
     # attribute 'true_prob_tox'.
-    true_prob_tox_matrix <- sample_tox_probs(true_prob_tox, K)
-    print(dim(true_prob_tox_matrix))
-    print(true_prob_tox_matrix)
+    tpt_matrix <- sample_tox_probs(true_prob_tox, K)
     P_ <- paste0("P", dose_indices(protocol))
-    ensembles <<- list()
-    toxicities <<- list()
+    fits <- list()
     for(k in 1:K){
       cat("k =", k, "\n")
-      # Now invoke the default method from package 'escalation':
-      tpt_vector <- true_prob_tox_matrix[k, P_]
-      print(tpt_vector)
-      # TODO: Is 'callNextMethod' the wrong idea now?
-      #sims <- callNextMethod(protocol, num_sims = M,
-      #                       true_prob_tox = tpt_vector)
-      sims <- simulate_trials(protocol, num_sims = as.integer(M),
-                              true_prob_tox = tpt_vector)
-      ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
-                            , idcol = "rep")
-      ensemble <- as.data.table(ensemble) # restore data.table after cartesian product
-      ensembles[[k]] <<- ensemble
-      # See https://stackoverflow.com/a/16519612/3338147 explaining below syntax
+      fits <- c(fits,
+                simulate_trials(protocol
+                                ,num_sims = as.integer(M)
+                                ,true_prob_tox = tpt_matrix[k, P_]
+                                , ...)[[1]]
+                )
     }
-    list(tpt_mtx = true_prob_tox_matrix
-         ,K = K
-         ,M = M
-         )
+    sims <- list(
+      fits = fits
+    , true_prob_tox = colMeans(tpt_matrix[, P_])
+    , true_prob_tox_matrix = tpt_matrix
+    , mtdi_generator = true_prob_tox
+    , WARNING = paste("The 'true_prob_tox' component gives the mean of",
+                         K, "samples drawn from the mtdi_generator.")
+    )
+    class(sims) <- "simulations"
+    return(sims)
   }
 )
 

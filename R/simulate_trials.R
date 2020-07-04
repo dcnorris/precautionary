@@ -9,7 +9,6 @@
 #' @importFrom escalation simulate_trials selector_factory
 #' @export
 setGeneric("simulate_trials")
-#           , def = function(selector_factory, num_sims, true_prob_tox, ...) NULL)
 
 setOldClass("ordtox")
 setOldClass("selector_factory")
