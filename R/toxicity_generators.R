@@ -1,9 +1,22 @@
 # Generative models of binary and ordinal toxicities
 
 # Initially, let me focus on generating MTDi distributions.
-# TODO: How do I specify an abstract *interface*, so as to
-#       indicate that an mtdi_generator supports a method
-#       for generating a distr6?
+# Because I aim to induce REALISTIC DOSE-RESPONSE THINKING,
+# this class will actually demand an explicit dose scale.
+# I will also PRESUME from the outset that pharmacologic
+# scaling of doses is always LOGARITHMIC. Certainly, any
+# relaxation of that assumption can await later versions!
+# Furthermore, NO CONCESSIONS can be made here to any fixed
+# number or set of 'dose levels'. That is an abstraction
+# belonging to dose-escalation trials, NOT to realistic
+# thinking about pharmacology.
+# One essential requirement for promoting realistic thinking
+# is SUPPORTING it with good visualization! Thus, among the
+# first functions I should implement are some good graphics
+# showing the implications of any given mtdi_generator.
+# By assuming logarithmic scaling of the dimensioned doses,
+# I will be able to define these graphics without wrestling
+# with multiple alternative (or indefinite) scalings.
 setClass("mtdi_generator",
   slots = list(doses = "numeric" # TODO: Delegate knowledge of doses to client code?
               ),

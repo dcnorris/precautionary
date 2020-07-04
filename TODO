@@ -34,14 +34,22 @@ in my notebook! A new, more focused plan has emerged as follows:
     Importantly, this would enable me to offer up (and refine!) an
     abstract formulation of this generative-model concept.
     
-    Probably, the mtdi_generator and ordtox_generator are distinct
-    concepts requiring separate classes. (Perhaps the latter emerges
-    as a subclass of the former!)
-    
  b. Notice that the task of *specifying* these generative models
     naturally gives rise to questions of scaling and dimensioning.
     Thus, I may have here the needed (and inevitable) stimulus to
-    thinking about explicity (dimensioned) dosing.
+    thinking about explicit (dimensioned) dosing.
+    
+    Indeed, reflecting on Thursday morning's interview, I see how
+    the imperative of "realistic dose-response thinking" precedes
+    almost everything else as a necessary condition. Consequently,
+    the high abstraction of 'dose levels' ought to be abandoned
+    early and explicitly in this effort. Maybe you simply AREN'T
+    ALLOWED to do MTDi generation except by reference to explicit,
+    dimensioned doses!
+    
+ c. Probably, the mtdi_generator and ordtox_generator are distinct
+    concepts requiring separate classes. (Perhaps the latter emerges
+    as a subclass of the former!)
     
 (4) REFACTORING this code, by contrast, seems essential to MY OWN
     understanding of what I've done!
