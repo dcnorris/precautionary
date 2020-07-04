@@ -15,16 +15,34 @@ in my notebook! A new, more focused plan has emerged as follows:
     each toxicity grade in the trial. (The sum of these of course
     yields the expected enrollment in the trial.)
     
-(3) VISUALIZING this process seems essential for communicating
-    the basic idea to oncology trialists. One such viz that comes
-    to mind is a representative set of 20 or so 'true_prob_tox'
-    curves (NB: these should be smoothed) that support roll-over
-    interaction with a sub-table (inset?) display.
-
+(3) REFACTOR package 'escalation' in the direction of abstractions
+    pointed to by 'precautionary'.
+    
+ a. The question arises, to what extent *generative models* may be
+    substituted in place of fixed 'true_prob_tox' vectors within
+    the existing 'escalation' code-base. What changes would this
+    require?
+    
+    It looks to me as if my S4 generic 'simulate_trials' method
+    could simply be expanded to accept a new signature where the
+    3rd argument is an 'MTDi_generator' or 'toxicity_generator'.
+    
+    Importantly, this would enable me to offer up (and refine!) an
+    abstract formulation of this generative-model concept.
+    
+    Probably, the mtdi_generator and ordtox_generator are distinct
+    concepts requiring separate classes. (Perhaps the latter emerges
+    as a subclass of the former!)
+    
+ b. Notice that the task of *specifying* these generative models
+    naturally gives rise to questions of scaling and dimensioning.
+    Thus, I may have here the needed (and inevitable) stimulus to
+    thinking about explicity (dimensioned) dosing.
+    
 (4) REFACTORING this code, by contrast, seems essential to MY OWN
     understanding of what I've done!
     
- a. Implement my own 'simulate_trials' generic function, dispatching on a
+/a. Implement my own 'simulate_trials' generic function, dispatching on a
     special class 'ordtox' that I can prepend to a selector_factory object
     in a call such as the following:
     
@@ -115,6 +133,19 @@ in my notebook! A new, more focused plan has emerged as follows:
     toxicity generators, capable of subsuming the PO and CR models of
     Van Meter &al (2011,2012), as well as my own model? What will such
     a class reveal about the former by comparison with the latter?
+    
+    I now think that this issue of generative models constitutes the next
+    best point of improvement. Notice how even the existing 'escalation'
+    package might naturally admit generative models in place of fixed
+    'true_prob_tox' vectors. This seems important enough to bubble upward
+    to the top level as TODO #3 above...
+
+(5) VISUALIZING this process seems essential for communicating
+    the basic idea to oncology trialists. One such viz that comes
+    to mind is a representative set of 20 or so 'true_prob_tox'
+    curves (NB: these should be smoothed) that support roll-over
+    interaction with a sub-table (inset?) display.
+
 ---
 
 A key consideration as I begin, is how (and whether) to deal with

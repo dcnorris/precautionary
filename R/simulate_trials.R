@@ -46,16 +46,25 @@ dose_indices.ordtox <- function(x, ...) {
   }
 }
 
-#' @rdname simulate_trials
+#' @export
+dose_indices.default <- function(x, ...) {
+  n <- num_doses(x)
+  if(n > 0) {
+    return(1:n)
+  } else {
+    return(integer(length = 0))
+  }
+}
+
 setMethod("simulate_trials", c(selector_factory="ordtox"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     protocol <- selector_factory # separate naming from implementation details
-    lambda_CV = 3
-    median_mtd = num_doses(protocol) - 1
-    median_sd = median_mtd/3
-    r0 = seq(0.5, 2.5, 0.5)
-    K = num_sims
-    M = num_sims
+    lambda_CV <- 3
+    median_mtd <- num_doses(protocol) - 1
+    median_sd <- median_mtd/3
+    r0 <- seq(0.5, 2.5, 0.5)
+    K <- num_sims
+    M <- num_sims
     # TODO: Consider making true_prob_tox argument optionally
     #       a data table (or data frame) of the following form,
     #       _OR_ (more usefully) a *generative model* for same.
@@ -144,6 +153,7 @@ setMethod("simulate_trials", c(selector_factory="ordtox"),
         )
   }
 )
+
 
 #' Syntactic sugar for injecting safety analysis into \code{simulate_trials}
 #'

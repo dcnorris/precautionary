@@ -1,0 +1,116 @@
+# Generative models of binary and ordinal toxicities
+
+# Initially, let me focus on generating MTDi distributions.
+# TODO: How do I specify an abstract *interface*, so as to
+#       indicate that an mtdi_generator supports a method
+#       for generating a distr6?
+setClass("mtdi_generator",
+  slots = list(doses = "numeric" # TODO: Delegate knowledge of doses to client code?
+              ),
+  contains = "VIRTUAL"
+  )
+
+
+setGeneric("sample_tox_probs", function(this, K) {
+  standardGeneric("sample_tox_probs")
+})
+
+# TODO: Maybe this class is too generically named. The key feature,
+#       once I've worked out issues of number of parameters, indeed
+#       may be that very number. Thus, maybe I have here a class
+#       better named (provisionally) "mtdi_lognormal_3hyperparam".
+#       Furthermore, the precise details of the argument may rather
+#       correspond to a certain paper.
+#' @export mtdi_lognormal
+mtdi_lognormal <- setClass("mtdi_lognormal",
+  slots = list( # hyperparameters
+    lambda_CV = "numeric"
+  , median_mtd = "numeric"
+  , median_sd = "numeric" # TODO: Cosider whether an argument can be made
+                          #       for dispensing with this 2nd uncertainty
+                          #       measure. Or is it CV that I might argue
+                          #       is superfluous, on grounds that we may
+                          #       (intuitively) impute our uncertainty in
+                          #       median_mtd to the population variance?
+  ),
+  contains = "mtdi_generator"
+  )
+
+setMethod("initialize", "mtdi_lognormal",
+  function(.Object, ...) {
+    .Object <- callNextMethod(.Object
+                              , doses = 1:6 # TODO: Don't hard-code this!
+                              , ...)
+  })
+
+#' @export
+setMethod("sample_tox_probs", signature("mtdi_lognormal","numeric"),
+  function(this, K) {
+    if(missing(K)) K <- 1
+    # Generate a K-row matrix of sample tox probabilities
+    CV <- rexp(n=K, rate=this@lambda_CV)
+    sdlog <- sqrt(log(CV^2 + 1))
+    meanlog <- rnorm(n=K, mean=this@median_mtd, sd=this@median_sd)
+    tox_probs <- matrix(nrow=K, ncol=length(this@doses)+3)
+    colnames(tox_probs) <- c(paste0("P",1:length(this@doses)), "CV", "meanlog", "sdlog")
+    tox_probs[, paste0("P", seq_along(this@doses))] <- sapply(this@doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
+    tox_probs[,"CV"] <- CV
+    tox_probs[,"meanlog"] <- meanlog
+    tox_probs[,"sdlog"] <- sdlog
+    tox_probs
+  })
+
+# This is a simple generalization of escalation::simulate_trials,
+# to the case where true_prob_tox is specified implicitly through
+# a generative model ('prior') rather than explicitly as a vector.
+# My aim here is to EXAMINE and ELABORATE the MEANING of these
+# generative models as introduced in this source file.
+# A also wish to EXPLORE and understand more fully the behavior
+# and intent of the existing escalation::simulate_trials function,
+# so that I can offer up a more focused extension and/or correction
+# of its functionality. REMEMBER: to achieve 'depth', this package
+# ought to 'correct escalation while explaining it'!
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="three_plus_three_selector_factory", # TOO SPECIFIC!
+      num_sims="numeric",
+      true_prob_tox="mtdi_generator"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    cat('simulate_trials(true_prob_tox="mtdi_generator") method ...\n')
+    protocol <- selector_factory # separate naming from implementation details
+    stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
+    M <- num_sims[1]
+    K <- num_sims[2]; if(is.na(K)) K <- num_sims[1]
+    # The most parsimonious generalization of the default function
+    # will substitute a *matrix* for the default result's vector
+    # attribute 'true_prob_tox'.
+    true_prob_tox_matrix <- sample_tox_probs(true_prob_tox, K)
+    print(dim(true_prob_tox_matrix))
+    print(true_prob_tox_matrix)
+    P_ <- paste0("P", dose_indices(protocol))
+    ensembles <<- list()
+    toxicities <<- list()
+    for(k in 1:K){
+      cat("k =", k, "\n")
+      # Now invoke the default method from package 'escalation':
+      tpt_vector <- true_prob_tox_matrix[k, P_]
+      print(tpt_vector)
+      # TODO: Is 'callNextMethod' the wrong idea now?
+      #sims <- callNextMethod(protocol, num_sims = M,
+      #                       true_prob_tox = tpt_vector)
+      sims <- simulate_trials(protocol, num_sims = as.integer(M),
+                              true_prob_tox = tpt_vector)
+      ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
+                            , idcol = "rep")
+      ensemble <- as.data.table(ensemble) # restore data.table after cartesian product
+      ensembles[[k]] <<- ensemble
+      # See https://stackoverflow.com/a/16519612/3338147 explaining below syntax
+    }
+    list(tpt_mtx = true_prob_tox_matrix
+         ,K = K
+         ,M = M
+         )
+  }
+)
+
+
