@@ -11,8 +11,16 @@
 setGeneric("simulate_trials")
 
 setOldClass("ordtox")
-setOldClass("selector_factory")
-setOldClass("three_plus_three_selector_factory")
+setOldClass(c("three_plus_three_selector_factory",
+              "tox_selector_factory",
+              "selector_factory"))
+setOldClass(c('boin_selector_factory',
+              'tox_selector_factory',
+              'selector_factory'))
+setOldClass(c('dfcrm_selector_factory',
+              'tox_selector_factory',
+              'selector_factory'))
+# TODO: Register also various hierarchies for derived_dose_selector_factory?
 
 # Interestingly, package 'escalation' needs to implement methods for
 # 'num_doses' and 'dose_indices' only for the (post-fit) selectors,

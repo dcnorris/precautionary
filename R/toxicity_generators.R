@@ -147,16 +147,7 @@ setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
 #' @rdname simulate_trials
 setMethod(
   "simulate_trials"
-  , c(selector_factory="three_plus_three_selector_factory",
-      # Note that attempts to generalize the class of 'selector_factory' argument
-      # result in dispatch of the non-generic default in package escalation.
-      # The section 'Specialized Local Generics' in documentation for setGeneric
-      # suggests to me that my attempts to 'rewrite' the escalation package from
-      # the outside may strain the design intent of S4.
-      # In theory, I could repeat this setMethod call for each concrete class of
-      # selector_factory, but the main intention here has been to illuminate the
-      # connection with escalation::simulate_trials; that aim is already achieved
-      # in principle by this method, notwithstanding its overly-specific signature.
+  , c(selector_factory="selector_factory",
       num_sims="numeric",
       true_prob_tox="mtdi_generator"),
   function(selector_factory, num_sims, true_prob_tox, ...){
