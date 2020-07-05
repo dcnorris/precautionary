@@ -79,11 +79,11 @@ setMethod("initialize", "mtdi_lognormal",
 # One essential requirement for promoting realistic thinking
 # is SUPPORTING it with good visualization! Thus, among the
 # first functions I should implement are some good graphics
-# showing the implications of any given mtdi_generator.
+# showing the implications of any given hyper_mtdi_distribution.
 # By assuming logarithmic scaling of the dimensioned doses,
 # I will be able to define these graphics without wrestling
 # with multiple alternative (or indefinite) scalings.
-setClass("mtdi_generator",
+setClass("hyper_mtdi_distribution",
   slots = list(doses = "numeric" # TODO: Delegate knowledge of doses to client code?
               ),
   contains = "VIRTUAL"
@@ -112,7 +112,7 @@ hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
                           #       (intuitively) impute our uncertainty in
                           #       median_mtd to the population variance?
   ),
-  contains = "mtdi_generator"
+  contains = "hyper_mtdi_distribution"
   )
 
 setMethod("initialize", "hyper_mtdi_lognormal",
@@ -162,9 +162,9 @@ setMethod(
   "simulate_trials"
   , c(selector_factory="selector_factory",
       num_sims="numeric",
-      true_prob_tox="mtdi_generator"),
+      true_prob_tox="hyper_mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
-    cat('simulate_trials(true_prob_tox="mtdi_generator") method ...\n')
+    cat('simulate_trials(true_prob_tox="hyper_mtdi_distribution") method ...\n')
     protocol <- selector_factory # separate naming from implementation details
     stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
     M <- num_sims[1]
@@ -173,7 +173,7 @@ setMethod(
     # will substitute a *matrix* for the default result's vector
     # attribute 'true_prob_tox'.
     dose_levels <- getOption("dose_levels"
-                             , default = stop("mtdi_generator methods require option(dose_levels)."))
+                             , default = stop("hyper_mtdi_distribution methods require option(dose_levels)."))
     tpt_matrix <- tox_probs_at(true_prob_tox, dose_levels, K)
     P_ <- paste0("P", dose_indices(protocol))
     fits <- list()
@@ -191,9 +191,9 @@ setMethod(
       fits = fits
     , true_prob_tox = colMeans(tpt_matrix[, P_])
     , true_prob_tox_matrix = tpt_matrix
-    , mtdi_generator = true_prob_tox
+    , hyper_mtdi_distribution = true_prob_tox
     , WARNING = paste("The 'true_prob_tox' component gives the mean of",
-                         K, "samples drawn from the mtdi_generator.")
+                         K, "samples drawn from the hyper_mtdi_distribution.")
     )
     class(sims) <- "simulations"
     return(sims)
