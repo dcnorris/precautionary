@@ -39,7 +39,7 @@ setClass("mtdi_distribution",
   contains = "VIRTUAL"
 )
 
-setGeneric("tox_probs_at", function(mtdi, doses) {
+setGeneric("tox_probs_at", function(mtdi, doses, ...) {
   standardGeneric("tox_probs_at")
 })
 
@@ -90,9 +90,9 @@ setClass("mtdi_generator",
   )
 
 
-setGeneric("sample_tox_probs", function(this, K) {
-  standardGeneric("sample_tox_probs")
-})
+#setGeneric("sample_tox_probs", function(this, K) {
+#  standardGeneric("sample_tox_probs")
+#})
 
 # TODO: Maybe this class is too generically named. The key feature,
 #       once I've worked out issues of number of parameters, indeed
@@ -123,16 +123,18 @@ setMethod("initialize", "hyper_mtdi_lognormal",
   })
 
 #' @export
-setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
-  function(this, K) {
+setMethod(
+  "tox_probs_at"
+  , c("hyper_mtdi_lognormal","numeric"),
+  function(mtdi, doses, K) {
     if(missing(K)) K <- 1
     # Generate a K-row matrix of sample tox probabilities
-    CV <- rexp(n=K, rate=this@lambda_CV)
+    CV <- rexp(n=K, rate=mtdi@lambda_CV)
     sdlog <- sqrt(log(CV^2 + 1))
-    meanlog <- rnorm(n=K, mean=this@median_mtd, sd=this@median_sd)
-    tox_probs <- matrix(nrow=K, ncol=length(this@doses)+3)
-    colnames(tox_probs) <- c(paste0("P",1:length(this@doses)), "CV", "meanlog", "sdlog")
-    tox_probs[, paste0("P", seq_along(this@doses))] <- sapply(this@doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
+    meanlog <- rnorm(n=K, mean=mtdi@median_mtd, sd=mtdi@median_sd)
+    tox_probs <- matrix(nrow=K, ncol=length(mtdi@doses)+3)
+    colnames(tox_probs) <- c(paste0("P",1:length(mtdi@doses)), "CV", "meanlog", "sdlog")
+    tox_probs[, paste0("P", seq_along(mtdi@doses))] <- sapply(mtdi@doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
     tox_probs[,"CV"] <- CV
     tox_probs[,"meanlog"] <- meanlog
     tox_probs[,"sdlog"] <- sdlog
@@ -151,11 +153,10 @@ setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
 # ought to 'correct escalation while explaining it'!
 
 #' @examples
-#' # Comment this test out, for now, as not focused on active dev tasks
-#' #mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
-#' #sims <- get_three_plus_three(num_doses = 6) %>%
-#' #  simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
-#' #summary(sims)
+#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
+#' sims <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
+#' summary(sims)
 #' @rdname simulate_trials
 setMethod(
   "simulate_trials"
@@ -171,7 +172,9 @@ setMethod(
     # The most parsimonious generalization of the default function
     # will substitute a *matrix* for the default result's vector
     # attribute 'true_prob_tox'.
-    tpt_matrix <- sample_tox_probs(true_prob_tox, K)
+    dose_levels <- getOption("dose_levels"
+                             , default = stop("mtdi_generator methods require option(dose_levels)."))
+    tpt_matrix <- tox_probs_at(true_prob_tox, dose_levels, K)
     P_ <- paste0("P", dose_indices(protocol))
     fits <- list()
     pb <- txtProgressBar(max=K, style=3)
