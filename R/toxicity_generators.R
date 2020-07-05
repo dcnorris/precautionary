@@ -39,6 +39,17 @@ setClass("mtdi_distribution",
   contains = "VIRTUAL"
 )
 
+setGeneric("tox_probs_at", function(mtdi, doses) {
+  standardGeneric("tox_probs_at")
+})
+
+setMethod(
+  "tox_probs_at"
+  , c("mtdi_distribution", "numeric"),
+  function(mtdi, doses){
+    mtdi@dist$cdf(doses)
+  })
+
 #' @export mtdi_lognormal
 mtdi_lognormal <- setClass("mtdi_lognormal",
   slots = list(
@@ -218,7 +229,7 @@ setMethod(
                              , default = stop("mtdi_distribution methods require option(dose_levels)."))
     sims <- simulate_trials(selector_factory = selector_factory
                            , num_sims = num_sims
-                           , true_prob_tox = true_prob_tox@dist$cdf(dose_levels)
+                           , true_prob_tox = tox_probs_at(true_prob_tox, dose_levels)
                            , ...)
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
