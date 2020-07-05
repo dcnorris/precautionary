@@ -185,4 +185,44 @@ setMethod(
   }
 )
 
+# Now another incremental generalization of escalation::simulate_trials,
+# only this time in the direction of a greater PHARMACOLOGIC REALISM.
+# The true_prob_tox argument of class "mtdi_distribution" specifies
+# real dosing (including dose units), and deals directly with latent,
+# individual-level characteristics of toxicity thresholds/sensitivity.
+#
+# What I may learn from this is that the (real) dose levels must be
+# specified in package-specific options whenever mtdi_distributions
+# are employed.
+
+#' @examples
+#' # TODO: In keeping with spirit of REALISM, attach UNITS to 'dose_levels'.
+#' options(dose_levels = c(2, 6, 20, 60, 180, 400))
+#' sims <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = 50
+#'                  ,true_prob_tox = mtdi_lognormal(CV = 0.5
+#'                                                 ,median = 140
+#'                                                 ,units = "ng/kg/week"))
+#' summary(sims)
+#' @rdname simulate_trials
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="selector_factory",
+      num_sims="numeric",
+      true_prob_tox="mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    cat('simulate_trials(true_prob_tox="mtdi_distribution") method ...\n')
+    # TODO: Try moving this next line into the argument defaults
+    dose_levels <- getOption("dose_levels"
+                             , default = stop("mtdi_distribution methods require option(dose_levels)."))
+    sims <- simulate_trials(selector_factory = selector_factory
+                           , num_sims = num_sims
+                           , true_prob_tox = true_prob_tox@dist$cdf(dose_levels)
+                           , ...)
+    sims$dose_levels <- dose_levels
+    sims$dose_units <- true_prob_tox@units
+    return(sims)
+  }
+)
+
 
