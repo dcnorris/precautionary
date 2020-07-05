@@ -138,9 +138,25 @@ setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
 # so that I can offer up a more focused extension and/or correction
 # of its functionality. REMEMBER: to achieve 'depth', this package
 # ought to 'correct escalation while explaining it'!
+
+#' @examples
+#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
+#' sims <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
+#' summary(sims)
+#' @rdname simulate_trials
 setMethod(
   "simulate_trials"
-  , c(selector_factory="three_plus_three_selector_factory", # TOO SPECIFIC!
+  , c(selector_factory="three_plus_three_selector_factory",
+      # Note that attempts to generalize the class of 'selector_factory' argument
+      # result in dispatch of the non-generic default in package escalation.
+      # The section 'Specialized Local Generics' in documentation for setGeneric
+      # suggests to me that my attempts to 'rewrite' the escalation package from
+      # the outside may strain the design intent of S4.
+      # In theory, I could repeat this setMethod call for each concrete class of
+      # selector_factory, but the main intention here has been to illuminate the
+      # connection with escalation::simulate_trials; that aim is already achieved
+      # in principle by this method, notwithstanding its overly-specific signature.
       num_sims="numeric",
       true_prob_tox="mtdi_generator"),
   function(selector_factory, num_sims, true_prob_tox, ...){
@@ -155,14 +171,15 @@ setMethod(
     tpt_matrix <- sample_tox_probs(true_prob_tox, K)
     P_ <- paste0("P", dose_indices(protocol))
     fits <- list()
+    pb <- txtProgressBar(max=K, style=3)
     for(k in 1:K){
-      cat("k =", k, "\n")
       fits <- c(fits,
                 simulate_trials(protocol
                                 ,num_sims = as.integer(M)
                                 ,true_prob_tox = tpt_matrix[k, P_]
                                 , ...)[[1]]
                 )
+      setTxtProgressBar(pb, k)
     }
     sims <- list(
       fits = fits
