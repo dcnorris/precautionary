@@ -47,9 +47,28 @@ in my notebook! A new, more focused plan has emerged as follows:
     ALLOWED to do MTDi generation except by reference to explicit,
     dimensioned doses!
     
+    Moreover, I see upon further early morning reflection today (7/5)
+    that questions of dimensioned dosing uncouple from subtler and
+    more profound issues of missing hyperparameters.
+    
  c. Probably, the mtdi_generator and ordtox_generator are distinct
     concepts requiring separate classes. (Perhaps the latter emerges
     as a subclass of the former!)
+    
+ d. The CASE OF THE MISSING HYPERPARAMETERS ...
+    This simulation practice of positing fixed 'true' tox probs before
+    a simulation exposes dose-escalation to criticism on methodological
+    grounds as 'insufficiently Bayesian' and statistically insincere.
+    
+    Notice how the *type* of uncertainty explored in simulate_trials
+    is purely statistical, and not pharmacological! By focusing on the
+    uncertainty connected with sampling (qua study enrollment), the
+    dose-escalation methodologists have recapitulated the same error
+    that frequentists have generated with P values. This suggests that
+    the model-based dose-escalation advocates are only superficially
+    Bayesian. Note how they fail at Bayesian Job #1: specifying priors
+    over the parameters at the scientific heart of the issue -- i.e.,
+    the pharmacologic parameters!
     
 (4) REFACTORING this code, by contrast, seems essential to MY OWN
     understanding of what I've done!
