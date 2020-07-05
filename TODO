@@ -22,7 +22,7 @@ in my notebook! A new, more focused plan has emerged as follows:
        that I wish to 'correct while explaining' in accordance with
        Popper's notion of the 'depth of a theory'.
     
- a. The question arises, to what extent *generative models* may be
+/a. The question arises, to what extent *generative models* may be
     substituted in place of fixed 'true_prob_tox' vectors within
     the existing 'escalation' code-base. What changes would this
     require?
@@ -34,7 +34,7 @@ in my notebook! A new, more focused plan has emerged as follows:
     Importantly, this would enable me to offer up (and refine!) an
     abstract formulation of this generative-model concept.
     
- b. Notice that the task of *specifying* these generative models
+/b. Notice that the task of *specifying* these generative models
     naturally gives rise to questions of scaling and dimensioning.
     Thus, I may have here the needed (and inevitable) stimulus to
     thinking about explicit (dimensioned) dosing.
@@ -55,7 +55,30 @@ in my notebook! A new, more focused plan has emerged as follows:
     concepts requiring separate classes. (Perhaps the latter emerges
     as a subclass of the former!)
     
- d. The CASE OF THE MISSING HYPERPARAMETERS ...
+    <returning to this question after 1+ days of work on b & d...>
+    
+    Aha! I believe I was right about this. Now that I have better
+    worked out the various dimensions of generalization, I can see
+    my existing check_safety --> class("ordtox") device for the
+    superficial syntactical sugar that it is!
+    
+    Far better now to wrap the hyper_mtdi_distributions explicitly
+    in an ordtox() function call to announce that I am automatically
+    overlaying ordinal toxicities. This function could transform
+    the first argument to an c("ordtox",...,"hyper_mtdi_distribution"),
+    using (eventually) any of several methods selectable via a "method"
+    argument. Arguments connected with the various methods could then
+    follow. For example, in my default approach based on the AFM11
+    arXiv paper, I might specify an r0 value (or vector of values).
+    
+    Maybe I'm rushing headlong into OO design before thinking about
+    my problem as a mathematical abstraction. Does an ordinalizer go
+    any further (mathematically) than transforming an MTDi3 into
+    MTDi,g for g in {1,2,4,5}? I think not! Thus, perhaps I need do
+    nothing more than supply an ordinalizer *function* as an argument
+    to any function that I want to use to explore ordinal toxicities!
+    
+/d. The CASE OF THE MISSING HYPERPARAMETERS ...
     This simulation practice of positing fixed 'true' tox probs before
     a simulation exposes dose-escalation to criticism on methodological
     grounds as 'insufficiently Bayesian' and statistically insincere.
