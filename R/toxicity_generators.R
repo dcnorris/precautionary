@@ -1,5 +1,60 @@
 # Generative models of binary and ordinal toxicities
 
+# These generative models will abstract from 'true_tox_probs' in several dimensions:
+# 1. There is a dimension of *uncertainty*, itself comprising 2 types:
+# (a) There is a 'hyperparameter' dimension of (subjective, 'epistemic') uncertainty
+#     about the population-level distribution of toxicity responses.
+# (b) There is *aleatoric* ('purely statistical') uncertainty arising from the
+#     random sampling that study enrollment amounts to.
+# 2. There are questions of *pharmacologic realism*, including:
+# (a) Deriving binary toxicities from latent u_i (equiv., MTDi)
+# (b) Explicit dimensioning of doses
+# (c) The scaling of the pharmacological effects of these doses
+# (d) Elaboration of pharmacologic effects (e.g., *graded* toxicities)
+#
+# I have dealt with (1b) in isolation already, by generalizing 'simulate_trials'
+# to the case where 'true_tox_probs' is (effectively) a matrix.
+#
+# A next step may be to handle (2a,b) *together*, in a class which allows for
+# specification of an MTDi distribution over real doses.
+# In constructing this class, I may wish to anticipate the need to abstract
+# the parameter specification to facilitate (1a).
+#
+#' @importFrom distr6 SDistribution Lognormal
+setOldClass("SDistribution")
+setOldClass("Lognormal")
+
+setClass("mtdi_distribution",
+  slots = list(
+    CV = "numeric"      # Establish CV and median as universal parameters
+  , median = "numeric"  # for specifying MTDi distributions.
+  , units = "character"
+  , dist = "ANY"
+  #, dist = "SDistribution"
+  # I would prefer to specify @dist class as "SDistribution",
+  # but reconcilePropertiesAndPrototype() called upon loading
+  # this package sees this as a "conflict", as if it does not
+  # recognize that "Lognormal" inherits from "SDistribution".
+  ),
+  contains = "VIRTUAL"
+)
+
+#' @export mtdi_lognormal
+mtdi_lognormal <- setClass("mtdi_lognormal",
+  slots = list(
+    dist = "Lognormal"
+  ),
+  contains = "mtdi_distribution"
+)
+
+setMethod("initialize", "mtdi_lognormal",
+  function(.Object, CV, median, ...) {
+    .Object@dist <- Lognormal$new(meanlog = log(median),
+                                  sdlog = sqrt(log(CV^2 + 1)))
+    # Initialize 'bottom-up' to avoid a premature validity check:
+    .Object <- callNextMethod(.Object, CV=CV, median=median, ...)
+  })
+
 # Initially, let me focus on generating MTDi distributions.
 # Because I aim to induce REALISTIC DOSE-RESPONSE THINKING,
 # this class will actually demand an explicit dose scale.
@@ -34,8 +89,8 @@ setGeneric("sample_tox_probs", function(this, K) {
 #       better named (provisionally) "mtdi_lognormal_3hyperparam".
 #       Furthermore, the precise details of the argument may rather
 #       correspond to a certain paper.
-#' @export mtdi_lognormal
-mtdi_lognormal <- setClass("mtdi_lognormal",
+#' @export hyper_mtdi_lognormal
+hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
     lambda_CV = "numeric"
   , median_mtd = "numeric"
@@ -49,7 +104,7 @@ mtdi_lognormal <- setClass("mtdi_lognormal",
   contains = "mtdi_generator"
   )
 
-setMethod("initialize", "mtdi_lognormal",
+setMethod("initialize", "hyper_mtdi_lognormal",
   function(.Object, ...) {
     .Object <- callNextMethod(.Object
                               , doses = 1:6 # TODO: Don't hard-code this!
@@ -57,7 +112,7 @@ setMethod("initialize", "mtdi_lognormal",
   })
 
 #' @export
-setMethod("sample_tox_probs", signature("mtdi_lognormal","numeric"),
+setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
   function(this, K) {
     if(missing(K)) K <- 1
     # Generate a K-row matrix of sample tox probabilities
