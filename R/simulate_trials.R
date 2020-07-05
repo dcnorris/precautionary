@@ -107,9 +107,6 @@ setMethod("simulate_trials", c(selector_factory="ordtox"),
       ensemble[, toxgrade := (dose>MTDi1) + (dose>MTDi2) + (dose>MTDi3) +
                  (dose>MTDi4) + (dose>MTDi5)]
       stopifnot(with(ensemble, all(tox == as.integer(dose >= MTDi3))))
-      # TODO: The following summary is wrong. I need to write the ensemble
-      #       to .GlobalEnv, and experiment 'by hand' to find the right
-      #       summary scheme.
       # N.B.: Any trial realization ('rep') is just as likely as any other.
       #       Therefore, I have to aggregate with reps as the denominator.
       #       Specifically, pooling all the patients would fail to weight
@@ -136,7 +133,7 @@ setMethod("simulate_trials", c(selector_factory="ordtox"),
     }
     # Indeed, I like the idea of abstracting the calculation of high-level
     # summary statistics into a separate function, possibly even a 'summary'
-    # method for a suitably defined R3 class. But for now, let me implement
+    # method for a suitably defined S3 class. But for now, let me implement
     # these summaries here, as additional components of the returned list.
     toxdt <- rbindlist(toxicities, idcol = "k")
     counts <- toxdt[, .(n=sum(N)), by=.(r0,Tox)]
