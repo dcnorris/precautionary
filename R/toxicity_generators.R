@@ -140,10 +140,11 @@ setMethod("sample_tox_probs", signature("hyper_mtdi_lognormal","numeric"),
 # ought to 'correct escalation while explaining it'!
 
 #' @examples
-#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
-#' sims <- get_three_plus_three(num_doses = 6) %>%
-#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
-#' summary(sims)
+#' # Comment this test out, for now, as not focused on active dev tasks
+#' #mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
+#' #sims <- get_three_plus_three(num_doses = 6) %>%
+#' #  simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
+#' #summary(sims)
 #' @rdname simulate_trials
 setMethod(
   "simulate_trials"
@@ -221,8 +222,18 @@ setMethod(
                            , ...)
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
+    class(sims) <- c("realdose_simulations", class(sims))
     return(sims)
   }
 )
 
-
+#' @importFrom dplyr rename rename_with mutate select
+#' @export
+summary.realdose_simulations <- function(x, ...) {
+  summary <- NextMethod()
+  dose_units <- paste0("dose (", x$dose_units, ")")
+  summary %>%
+    mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
+    select(dose, real_dose, everything()) %>%
+    rename_with(.fn = function(.) dose_units, .cols = real_dose)
+}
