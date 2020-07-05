@@ -84,8 +84,9 @@ setMethod("initialize", "mtdi_lognormal",
 # I will be able to define these graphics without wrestling
 # with multiple alternative (or indefinite) scalings.
 setClass("hyper_mtdi_distribution",
-  slots = list(doses = "numeric" # TODO: Delegate knowledge of doses to client code?
-              ),
+  slots = list(
+    units = "character"
+  ),
   contains = "VIRTUAL"
   )
 
@@ -117,9 +118,7 @@ hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
 
 setMethod("initialize", "hyper_mtdi_lognormal",
   function(.Object, ...) {
-    .Object <- callNextMethod(.Object
-                              , doses = 1:6 # TODO: Don't hard-code this!
-                              , ...)
+    .Object <- callNextMethod(.Object, ...)
   })
 
 #' @export
@@ -132,9 +131,9 @@ setMethod(
     CV <- rexp(n=K, rate=mtdi@lambda_CV)
     sdlog <- sqrt(log(CV^2 + 1))
     meanlog <- rnorm(n=K, mean=mtdi@median_mtd, sd=mtdi@median_sd)
-    tox_probs <- matrix(nrow=K, ncol=length(mtdi@doses)+3)
-    colnames(tox_probs) <- c(paste0("P",1:length(mtdi@doses)), "CV", "meanlog", "sdlog")
-    tox_probs[, paste0("P", seq_along(mtdi@doses))] <- sapply(mtdi@doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
+    tox_probs <- matrix(nrow=K, ncol=length(doses)+3)
+    colnames(tox_probs) <- c(paste0("P",1:length(doses)), "CV", "meanlog", "sdlog")
+    tox_probs[, paste0("P", seq_along(doses))] <- sapply(doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
     tox_probs[,"CV"] <- CV
     tox_probs[,"meanlog"] <- meanlog
     tox_probs[,"sdlog"] <- sdlog
@@ -153,7 +152,10 @@ setMethod(
 # ought to 'correct escalation while explaining it'!
 
 #' @examples
-#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3, median_mtd = 4, median_sd = 1)
+#' options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
+#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3
+#'                                  , median_mtd = 6, median_sd = 2
+#'                                  , units="mg/kg")
 #' sims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
 #' summary(sims)
@@ -195,7 +197,9 @@ setMethod(
     , WARNING = paste("The 'true_prob_tox' component gives the mean of",
                          K, "samples drawn from the hyper_mtdi_distribution.")
     )
-    class(sims) <- "simulations"
+    sims$dose_levels <- dose_levels
+    sims$dose_units <- true_prob_tox@units
+    class(sims) <- c("realdose_simulations","simulations")
     return(sims)
   }
 )
