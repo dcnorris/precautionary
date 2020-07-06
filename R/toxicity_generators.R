@@ -111,12 +111,10 @@ setMethod(
     names(probs) <- paste0("Ptox(", doses, ")")
     if( !is.null(body(mtdi@ordinalizer)) ) {
       doses_matrix <- sapply(doses, mtdi@ordinalizer, ...)
-      print(doses_matrix)
-      probs_matrix <- mtdi@dist$cdf(doses_matrix)
-      # restore matrix dims flattened by cdf()
-      probs_matrix <- matrix(probs_matrix, ncol=length(doses))
-      rownames(probs_matrix) <- rownames(doses_matrix)
-      colnames(probs_matrix) <- paste0("Ptox(", doses, ")")
+      probs_matrix <- structure(vapply(doses_matrix, mtdi@dist$cdf, numeric(1))
+                               ,dim = dim(doses_matrix)
+                               ,dimnames = dimnames(doses_matrix))
+      colnames(probs_matrix) <- paste0(doses, mtdi@units)
       attr(probs,'ordtox') <- probs_matrix
     }
     probs
