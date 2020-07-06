@@ -1,6 +1,20 @@
 TODO
 ====
 
+Some immediate TODOs to stay organized amidst the 'chaos of progress':
+
+1. Ensure simulate_trials("mtdi_distribution") returns a sensible result
+   in case the 'mtdi' argument has a non-NULL @ordinalizer.
+   (This may require ensuring ... gets passed appropriately.)
+   
+2. Attempt to build upon simulate_trials("mtdi_distribution") to obtain
+   a generalized behavior from simulate_trials("hyper_mtdi_distribution").
+   
+3. Consider how OO design (even S3 stuff) might help organize summary
+   and print functions for the results from these simulations.
+
+----
+
 NEW & IMPROVED PLAN
 
 So, the plan below evaporated quickly after a half-day of thinking
