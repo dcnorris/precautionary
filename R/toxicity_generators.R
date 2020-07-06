@@ -23,10 +23,35 @@
 #' @importFrom distr6 SDistribution Lognormal
 setOldClass(c("Lognormal","SDistribution"))
 
+# The @ordinalizer slot is an optional 'mixin' defaulting to
+# the absent case of a NULL body(). This function in general
+# is a dose-space transformation that spreads any given dose
+# into an ordered vector of doses at which graded toxicities
+# occur.
+# One appealing manner of specifying an @ordinalizer would be
+# to take an MTDi3 as input dose, and output an ascending
+# vector of doses c(MTDi1=, MTDi2=, ..., MTDi5=). But using
+# this scheme would impose on my code the obligation to invert
+# this relation.
+# So instead, I will implement @ordinalizers directly through
+# the inverse function, one that transforms a given dose into
+# a *descending* vector of doses that yield equivalent rates
+# of toxicity from the mtdi_generator.
+# If I am using 5 toxicity grades (Gr1,..Gr5) and if we take
+# MTDi to be the Gr3 threshold, then the @ordinalizer's task
+# is to transform an given dose into Gr1..5 *equivalents*
+# vis-à-vis the mtdi_generator. This is really so abstract
+# that it may need to be hidden from users; consider.
+# I will gain little from imposing premature concreteness,
+# and indeed may obscure some essential aspects with excessive
+# hand-holding. The user should perhaps be forced to specify
+# the toxicity grades explicitly!
+# Let me keep things simple by assuming this function is of
+# a single dose, i.e., is NOT vectorized.
 setClass("mtdi_generator",
   slots = list(
     units = "character"
-  #, ordinalizer = "function"
+  , ordinalizer = "function" # optional 'mixin', present if !is.null(body(.))
   ),
   contains = "VIRTUAL")
 
@@ -39,15 +64,62 @@ setClass("mtdi_distribution",
   contains = c("mtdi_generator","VIRTUAL")
 )
 
+# This function may offer excellent information-hiding access
+# to the optonal @ordinalizer of its first argument.
+# The return value may simply have an optional 'ordtox' attribute
+# that mirrors the optionality of the @ordinalizer. After invoking
+# 'tox_probs_at', client code can check whether this attribute
+# exists, and act accordingly.
+# The ... argument provides an obvious means to pass further
+# information like r0 (or r[1,2,4,5]) to the @ordinalizer.
+
+#' Obtain toxicity probabilities from an mtdi_generator
+#'
+#' @param mtdi An \code{mtdi_generator}
+#' @param doses A vector of (dimensioned) doses at which to calculate
+#' the toxicity probabilities.
+#' @param ... Arguments passed to \code{mtdi}'s ordinalizer
+#'
+#' @return A suitable data structure (e.g., vector or matrix) of
+#' binary-toxicity probabilities, with an optional \sQuote{ordtox}
+#' attribute (in case \code{mtdi} has a non-NULL ordinalizer slot)
+#' that spreads this into the further dimension of multiple ordinal
+#' toxicities.
+#' @export
 setGeneric("tox_probs_at", function(mtdi, doses, ...) {
   standardGeneric("tox_probs_at")
 })
 
+#' @examples 
+#' mtdi_gen <- mtdi_lognormal(CV = 0.5
+#'                           ,median = 140
+#'                           ,units = "ng/kg/week")
+#' doses <- seq(100, 150, 10)
+#' mtdi_gen %>% tox_probs_at(doses)
+#' # Now attach a proper ordinalizer to 'mtdi_gen':
+#' mtdi_gen@ordinalizer <- function(dose, r0) {
+#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#' }
+#' tpa <- mtdi_gen %>% tox_probs_at(doses, r0=1.5)
+#' tpa
+#' @rdname tox_probs_at
 setMethod(
   "tox_probs_at"
   , c("mtdi_distribution", "numeric"),
-  function(mtdi, doses){
-    mtdi@dist$cdf(doses)
+  function(mtdi, doses, ...){
+    probs <- mtdi@dist$cdf(doses)
+    names(probs) <- paste0("Ptox(", doses, ")")
+    if( !is.null(body(mtdi@ordinalizer)) ) {
+      doses_matrix <- sapply(doses, mtdi@ordinalizer, ...)
+      print(doses_matrix)
+      probs_matrix <- mtdi@dist$cdf(doses_matrix)
+      # restore matrix dims flattened by cdf()
+      probs_matrix <- matrix(probs_matrix, ncol=length(doses))
+      rownames(probs_matrix) <- rownames(doses_matrix)
+      colnames(probs_matrix) <- paste0("Ptox(", doses, ")")
+      attr(probs,'ordtox') <- probs_matrix
+    }
+    probs
   })
 
 #' @export mtdi_lognormal
@@ -66,30 +138,9 @@ setMethod("initialize", "mtdi_lognormal",
     .Object <- callNextMethod(.Object, CV=CV, median=median, ...)
   })
 
-# Initially, let me focus on generating MTDi distributions.
-# Because I aim to induce REALISTIC DOSE-RESPONSE THINKING,
-# this class will actually demand an explicit dose scale.
-# I will also PRESUME from the outset that pharmacologic
-# scaling of doses is always LOGARITHMIC. Certainly, any
-# relaxation of that assumption can await later versions!
-# Furthermore, NO CONCESSIONS can be made here to any fixed
-# number or set of 'dose levels'. That is an abstraction
-# belonging to dose-escalation trials, NOT to realistic
-# thinking about pharmacology.
-# One essential requirement for promoting realistic thinking
-# is SUPPORTING it with good visualization! Thus, among the
-# first functions I should implement are some good graphics
-# showing the implications of any given hyper_mtdi_distribution.
-# By assuming logarithmic scaling of the dimensioned doses,
-# I will be able to define these graphics without wrestling
-# with multiple alternative (or indefinite) scalings.
 setClass("hyper_mtdi_distribution",
-  #slots = list(
-  #  units = "character"
-  #),
   contains = c("mtdi_generator","VIRTUAL")
   )
-
 
 #' @export hyper_mtdi_lognormal
 hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",

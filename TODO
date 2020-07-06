@@ -89,6 +89,11 @@ in my notebook! A new, more focused plan has emerged as follows:
     and even suggests the possibility of multiple inheritance or a 'mixin'.
     On my view, an ordtox_generator is equivalent to an 'mtdi,g_generator'.
     
+    Am I failing to conceive of the @ordinalizer in sufficient generality?
+    Should I maybe re-cast it as a dose-space transformation! Thus, it
+    works 'inside' the mtdi_generator. Given a vector of doses, it yields
+    a matrix of doses with rows corresponding to toxicity grades.
+    
 /d. The CASE OF THE MISSING HYPERPARAMETERS ...
     This simulation practice of positing fixed 'true' tox probs before
     a simulation exposes dose-escalation to criticism on methodological
