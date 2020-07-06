@@ -78,6 +78,17 @@ in my notebook! A new, more focused plan has emerged as follows:
     nothing more than supply an ordinalizer *function* as an argument
     to any function that I want to use to explore ordinal toxicities!
     
+    What kinds of things could be 'ordinalized'? Anything that generates
+    individual-level MTDi3 based on u_i, and that knows something about
+    real dosing. These are precisely the '(hyper_)mtdi_distribution'
+    classes, both of which know about a @units slot.
+    
+    Perhaps both classes (hyper_)mtdi_distribution inherit from a VIRTUAL
+    'mtdi_generator' class that knows about @units and also (optionally?)
+    knows how to ordinalize. Certainly, the *naming* here holds appeal,
+    and even suggests the possibility of multiple inheritance or a 'mixin'.
+    On my view, an ordtox_generator is equivalent to an 'mtdi,g_generator'.
+    
 /d. The CASE OF THE MISSING HYPERPARAMETERS ...
     This simulation practice of positing fixed 'true' tox probs before
     a simulation exposes dose-escalation to criticism on methodological

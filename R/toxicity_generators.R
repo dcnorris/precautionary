@@ -21,22 +21,22 @@
 # the parameter specification to facilitate (1a).
 #
 #' @importFrom distr6 SDistribution Lognormal
-setOldClass("SDistribution")
-setOldClass("Lognormal")
+setOldClass(c("Lognormal","SDistribution"))
+
+setClass("mtdi_generator",
+  slots = list(
+    units = "character"
+  #, ordinalizer = "function"
+  ),
+  contains = "VIRTUAL")
 
 setClass("mtdi_distribution",
   slots = list(
     CV = "numeric"      # Establish CV and median as universal parameters
   , median = "numeric"  # for specifying MTDi distributions.
-  , units = "character"
-  , dist = "ANY"
-  #, dist = "SDistribution"
-  # I would prefer to specify @dist class as "SDistribution",
-  # but reconcilePropertiesAndPrototype() called upon loading
-  # this package sees this as a "conflict", as if it does not
-  # recognize that "Lognormal" inherits from "SDistribution".
+  , dist = "SDistribution"
   ),
-  contains = "VIRTUAL"
+  contains = c("mtdi_generator","VIRTUAL")
 )
 
 setGeneric("tox_probs_at", function(mtdi, doses, ...) {
@@ -84,23 +84,13 @@ setMethod("initialize", "mtdi_lognormal",
 # I will be able to define these graphics without wrestling
 # with multiple alternative (or indefinite) scalings.
 setClass("hyper_mtdi_distribution",
-  slots = list(
-    units = "character"
-  ),
-  contains = "VIRTUAL"
+  #slots = list(
+  #  units = "character"
+  #),
+  contains = c("mtdi_generator","VIRTUAL")
   )
 
 
-#setGeneric("sample_tox_probs", function(this, K) {
-#  standardGeneric("sample_tox_probs")
-#})
-
-# TODO: Maybe this class is too generically named. The key feature,
-#       once I've worked out issues of number of parameters, indeed
-#       may be that very number. Thus, maybe I have here a class
-#       better named (provisionally) "mtdi_lognormal_3hyperparam".
-#       Furthermore, the precise details of the argument may rather
-#       correspond to a certain paper.
 #' @export hyper_mtdi_lognormal
 hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
@@ -255,3 +245,4 @@ summary.realdose_simulations <- function(x, ...) {
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
 }
+
