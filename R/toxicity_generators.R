@@ -103,6 +103,7 @@ setGeneric("tox_probs_at", function(mtdi, doses, ...) {
 #' tpa <- mtdi_gen %>% tox_probs_at(doses, r0=1.5)
 #' tpa
 #' @rdname tox_probs_at
+#' @export
 setMethod(
   "tox_probs_at"
   , c("mtdi_distribution", "numeric"),
@@ -111,9 +112,9 @@ setMethod(
     names(probs) <- paste0("Ptox(", doses, ")")
     if( !is.null(body(mtdi@ordinalizer)) ) {
       doses_matrix <- sapply(doses, mtdi@ordinalizer, ...)
-      probs_matrix <- structure(vapply(doses_matrix, mtdi@dist$cdf, numeric(1))
-                               ,dim = dim(doses_matrix)
-                               ,dimnames = dimnames(doses_matrix))
+      # Trick below comes via https://stackoverflow.com/a/8579498/3338147:
+      probs_matrix <- doses_matrix # template structure
+      probs_matrix[] <- vapply(doses_matrix, mtdi@dist$cdf, numeric(1))
       colnames(probs_matrix) <- paste0(doses, mtdi@units)
       attr(probs,'ordtox') <- probs_matrix
     }
@@ -140,6 +141,10 @@ setClass("hyper_mtdi_distribution",
   contains = c("mtdi_generator","VIRTUAL")
   )
 
+setGeneric("draw_samples", function(hyper, K, ...) {
+  standardGeneric("draw_samples")
+})
+
 #' @export hyper_mtdi_lognormal
 hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
@@ -160,23 +165,61 @@ setMethod("initialize", "hyper_mtdi_lognormal",
     .Object <- callNextMethod(.Object, ...)
   })
 
+setMethod(
+  "draw_samples"
+  , c("hyper_mtdi_lognormal","numeric"),
+  function(hyper, K=NULL, ...) {
+    if(missing(K)) K <- 1
+    mapply(mtdi_lognormal
+          , CV = rexp(n=K, rate=hyper@lambda_CV)
+          , median = rnorm(n=K, mean=hyper@median_mtd, sd=hyper@median_sd)
+          , MoreArgs = list(units = hyper@units
+                           ,ordinalizer = hyper@ordinalizer)
+          , SIMPLIFY = FALSE)
+  })
+
+#' @examples 
+#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3
+#'                                  , median_mtd = 6, median_sd = 2
+#'                                  , units="mg/kg")
+#' doses <- c(0.5, 1, 2, 4, 6, 8)
+#' mtdi_gen %>% tox_probs_at(doses, K=3)
+#' # Now attach a proper ordinalizer to 'mtdi_gen':
+#' mtdi_gen@ordinalizer <- function(dose, r0) {
+#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#' }
+#' # Show the ordinalizer is there!
+#' mtdi_gen@ordinalizer
+#' tpa <- mtdi_gen %>% tox_probs_at(doses, K=3, r0=1.5)
+#' tpa
+#' ordtox <- attr(tpa,'ordtox')
+#' class(ordtox)
+#' dimnames(ordtox)
+#' @rdname tox_probs_at
 #' @export
 setMethod(
   "tox_probs_at"
   , c("hyper_mtdi_lognormal","numeric"),
-  function(mtdi, doses, K) {
-    if(missing(K)) K <- 1
-    # Generate a K-row matrix of sample tox probabilities
-    CV <- rexp(n=K, rate=mtdi@lambda_CV)
-    sdlog <- sqrt(log(CV^2 + 1))
-    meanlog <- rnorm(n=K, mean=mtdi@median_mtd, sd=mtdi@median_sd)
-    tox_probs <- matrix(nrow=K, ncol=length(doses)+3)
-    colnames(tox_probs) <- c(paste0("P",1:length(doses)), "CV", "meanlog", "sdlog")
-    tox_probs[, paste0("P", seq_along(doses))] <- sapply(doses, function(q) pnorm(q, mean=meanlog, sd=sdlog))
-    tox_probs[,"CV"] <- CV
-    tox_probs[,"meanlog"] <- meanlog
-    tox_probs[,"sdlog"] <- sdlog
-    tox_probs
+  function(mtdi, doses, K, ...) {
+    # Generate a list of K mtdi_lognormal objects:
+    mtdi_list <- draw_samples(hyper = mtdi, K = K)
+    ## TEST whether the elements of mtdi_list have 'ordtox' attribute
+    cat("attr(mtdi_list[[1]],'ordtox') = ")
+    print(attr(mtdi_list[[1]],'ordtox'))
+    # Transform this list to a list of tox_probs_at results:
+    tpa_list <- lapply(mtdi_list, tox_probs_at, doses, ...)
+    # Generate a higher-dimensional version of the result
+    # yielded by tox_probs_at("mtdi_distribution") method.
+    # This will be a K-row matrix of sample tox probabilities,
+    # with an optional 'ordtox' attribute that is an *array*.
+    result <- do.call(rbind, tpa_list)
+    ordtox <- sapply(tpa_list, attr, which='ordtox', simplify="array")
+    # TODO: Consider naming the 3rd dimension or ordtox
+    #       with labels like 'sample1', 'sample2', ...
+    #       or perhaps "k=1", "k=2", ... in case I wish
+    #       to settle on 'k' as a sample index.
+    attr(result,'ordtox') <- ordtox
+    result
   })
 
 # This is a simple generalization of escalation::simulate_trials,
