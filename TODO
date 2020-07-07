@@ -3,7 +3,7 @@ TODO
 
 Some immediate TODOs to stay organized amidst the 'chaos of progress':
 
-1. Ensure simulate_trials("mtdi_distribution") returns a sensible result
+1/ Ensure simulate_trials("mtdi_distribution") returns a sensible result
    in case the 'mtdi' argument has a non-NULL @ordinalizer.
    (This may require ensuring ... gets passed appropriately.)
    
@@ -12,6 +12,14 @@ Some immediate TODOs to stay organized amidst the 'chaos of progress':
    
 3. Consider how OO design (even S3 stuff) might help organize summary
    and print functions for the results from these simulations.
+   
+   A 'lightweight' solution for overriding package:escalation functions
+   seems desirable. Perhaps this can be done most simply by means of a
+   single 'precautionary' class prepended to results objects. Any print
+   or other utility function I wish to override gets a *.precautionary
+   S3 method in my package. The concept here is that any result from a
+   precautionary function gets 'flagged' with this class, enabling the
+   *possible* interception of methods defined for it in 'escalation'.
 
 ----
 

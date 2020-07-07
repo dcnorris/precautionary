@@ -48,6 +48,9 @@ setOldClass(c("Lognormal","SDistribution"))
 # the toxicity grades explicitly!
 # Let me keep things simple by assuming this function is of
 # a single dose, i.e., is NOT vectorized.
+# Note that the 'optional' nature of the @ordinalizer carries
+# through into the treatment of ordinal toxicity information
+# using an attr(sims,'ordtox') which may or may not be NULL.
 setClass("mtdi_generator",
   slots = list(
     units = "character"
@@ -109,7 +112,7 @@ setMethod(
   , c("mtdi_distribution", "numeric"),
   function(mtdi, doses, ...){
     probs <- mtdi@dist$cdf(doses)
-    names(probs) <- paste0("Ptox(", doses, ")")
+    names(probs) <- paste0(doses, mtdi@units)
     if( !is.null(body(mtdi@ordinalizer)) ) {
       doses_matrix <- sapply(doses, mtdi@ordinalizer, ...)
       # Trick below comes via https://stackoverflow.com/a/8579498/3338147:
@@ -239,18 +242,18 @@ setMethod(
 #' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3
 #'                                  , median_mtd = 6, median_sd = 2
 #'                                  , units="mg/kg")
-#' sims <- get_three_plus_three(num_doses = 6) %>%
+#' hsims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
-#' summary(sims)
+#' summary(hsims)
 #' # Now attach a proper ordinalizer to 'mtdi_gen':
 #' mtdi_gen@ordinalizer <- function(dose, r0) {
 #'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
 #' }
 #' mtdi_gen@ordinalizer
-#' sims <- get_three_plus_three(num_doses = 6) %>%
+#' hsimsOT <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen, r0 = 1.5)
-#' cat("class(sims) = ", class(sims), "\n")
-#' summary(sims)
+#' cat("class(hsimsOT) = ", class(hsimsOT), "\n")
+#' summary(hsimsOT)
 #' @rdname simulate_trials
 setMethod(
   "simulate_trials"
@@ -258,8 +261,6 @@ setMethod(
       num_sims="numeric",
       true_prob_tox="hyper_mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
-    cat('simulate_trials(true_prob_tox="hyper_mtdi_distribution") method ...\n')
-    cat("... = ", paste0(list(...), collapse = ", "), ".\n")
     protocol <- selector_factory # separate naming from implementation details
     stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
     M <- num_sims[1]
@@ -267,21 +268,9 @@ setMethod(
     # The most parsimonious generalization of the default function
     # will substitute a *matrix* for the default result's vector
     # attribute 'true_prob_tox'.
-    dose_levels <- getOption("dose_levels"
-                             , default = stop("simulate_trials methods require option(dose_levels)."))
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
     tpt_matrix <- tox_probs_at(true_prob_tox, dose_levels, K, ...)
-    cat("class(tpt_matrix) = ", class(tpt_matrix), "\n")
-    cat("colnames(tpt_matrix) = ", paste(colnames(tpt_matrix), collapse=","), "\n")
-    hmm <- attr(tpt_matrix,'ordtox')
-    if(!is.null(hmm)){
-      cat("class(hmm) = ", class(hmm), ";\n")
-      cat("length(hmm) = ", length(hmm), ":\n")
-      cat("tpt_matrix has an ORDTOX attribute with dims "
-          , paste(dim(hmm), collapse=","))
-    } else {
-      cat("tpt_matrix has NO ORDTOX attribute")
-    }
-    cat(".\n")
     P_ <- seq_along(dose_levels)
     fits <- list()
     pb <- txtProgressBar(max=K, style=3)
@@ -304,7 +293,7 @@ setMethod(
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    class(sims) <- c("realdose_simulations","simulations")
+    class(sims) <- c("precautionary","simulations")
     return(sims)
   }
 )
@@ -341,31 +330,35 @@ setMethod(
       num_sims="numeric",
       true_prob_tox="mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
-    cat('simulate_trials(true_prob_tox="mtdi_distribution") method ...\n')
     # TODO: Try moving this next line into the argument defaults
-    dose_levels <- getOption("dose_levels"
-                             , default = stop("simulate_trials methods require option(dose_levels)."))
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
     tpt_vector <- tox_probs_at(true_prob_tox, dose_levels, ...)
-    cat("tpt_vector:\n"); print(tpt_vector)
     sims <- simulate_trials(selector_factory = selector_factory
                            , num_sims = num_sims
                            , true_prob_tox = tpt_vector
                            )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    class(sims) <- c("realdose_simulations", class(sims))
+    class(sims) <- c("precautionary", class(sims))
     return(sims)
   }
 )
 
 #' @importFrom dplyr rename rename_with mutate select
 #' @export
-summary.realdose_simulations <- function(x, ...) {
+summary.precautionary <- function(x, ...) {
   summary <- NextMethod()
+  if(!is(x,"simulations")) return(summary) # override only summary.simulations
   dose_units <- paste0("dose (", x$dose_units, ")")
-  summary %>%
+  summary <- summary %>%
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
+  if(!is.null(attr(x$true_prob_tox,'ordtox'))){
+    # TODO: Handle case where attr(x,'ordtox') is present
+    attr(summary,'ordtox') <- "TODO: Summarize ORDTOX attribute, too."
+  }
+  summary
 }
 
