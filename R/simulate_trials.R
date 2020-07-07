@@ -1,3 +1,6 @@
+#' @include toxicity_generators.R
+NULL
+
 #' Simulate trials defined via package \code{escalation}
 #' 
 #' @docType methods
@@ -21,34 +24,124 @@ setOldClass(c('dfcrm_selector_factory',
               'selector_factory'))
 # TODO: Register also various hierarchies for derived_dose_selector_factory?
 
-# TODO: Check whether I still need these num_doses.* and dose_indices.*
-#       methods, after abandoning the 'ordtox' class and its associated
-#       'check_safety' syntactical sugar.
+# This is a simple generalization of escalation::simulate_trials,
+# to the case where true_prob_tox is specified implicitly through
+# a generative model ('prior') rather than explicitly as a vector.
+# My aim here is to EXAMINE and ELABORATE the MEANING of these
+# generative models as introduced in this source file.
+# A also wish to EXPLORE and understand more fully the behavior
+# and intent of the existing escalation::simulate_trials function,
+# so that I can offer up a more focused extension and/or correction
+# of its functionality. REMEMBER: to achieve 'depth', this package
+# ought to 'correct escalation while explaining it'!
 
-#' @export
-num_doses.three_plus_three_selector_factory <- function(x, ...) {
-  return(x$num_doses)
-}
-
-#' @export
-num_doses.dfcrm_selector_factory <- function(x, ...) {
-  return(length(x$skeleton))
-}
-
-#' @export
-num_doses.boin_selector_factory <- function(x, ...) {
-  return(x$num_doses)
-}
-
-#' @export
-dose_indices.default <- function(x, ...) {
-  n <- num_doses(x)
-  if(n > 0) {
-    return(1:n)
-  } else {
-    return(integer(length = 0))
+#' @examples
+#' options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
+#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3
+#'                                  , median_mtd = 6, median_sd = 2
+#'                                  , units="mg/kg")
+#' hsims <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
+#' summary(hsims)
+#' # Now attach a proper ordinalizer to 'mtdi_gen':
+#' mtdi_gen@ordinalizer <- function(dose, r0) {
+#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#' }
+#' mtdi_gen@ordinalizer
+#' hsimsOT <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen, r0 = 1.5)
+#' cat("class(hsimsOT) = ", class(hsimsOT), "\n")
+#' summary(hsimsOT)
+#' @rdname simulate_trials
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="selector_factory",
+      num_sims="numeric",
+      true_prob_tox="hyper_mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    protocol <- selector_factory # separate naming from implementation details
+    stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
+    M <- num_sims[1]
+    K <- num_sims[2]; if(is.na(K)) K <- num_sims[1]
+    # The most parsimonious generalization of the default function
+    # will substitute a *matrix* for the default result's vector
+    # attribute 'true_prob_tox'.
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
+    tpt_matrix <- tox_probs_at(true_prob_tox, dose_levels, K, ...)
+    P_ <- seq_along(dose_levels)
+    fits <- list()
+    pb <- txtProgressBar(max=K, style=3)
+    for(k in 1:K){
+      fits <- c(fits,
+                simulate_trials(protocol
+                                ,num_sims = as.integer(M)
+                                ,true_prob_tox = tpt_matrix[k, P_]
+                )[[1]]
+      )
+      setTxtProgressBar(pb, k)
+    }
+    sims <- list(
+      fits = fits
+      , true_prob_tox = colMeans(tpt_matrix[, P_])
+      , true_prob_tox_matrix = tpt_matrix
+      , hyper_mtdi_distribution = true_prob_tox
+      , WARNING = paste("The 'true_prob_tox' component gives the mean of",
+                        K, "samples drawn from the hyper_mtdi_distribution.")
+    )
+    sims$dose_levels <- dose_levels
+    sims$dose_units <- true_prob_tox@units
+    class(sims) <- c("precautionary","simulations")
+    return(sims)
   }
-}
+)
+
+# Now another incremental generalization of escalation::simulate_trials,
+# only this time in the direction of a greater PHARMACOLOGIC REALISM.
+# The true_prob_tox argument of class "mtdi_distribution" specifies
+# real dosing (including dose units), and deals directly with latent,
+# individual-level characteristics of toxicity thresholds/sensitivity.
+#
+# What I may learn from this is that the (real) dose levels must be
+# specified in package-specific options whenever mtdi_distributions
+# are employed.
+
+#' @examples
+#' # TODO: In keeping with spirit of REALISM, attach UNITS to 'dose_levels'.
+#' options(dose_levels = c(2, 6, 20, 60, 180, 400))
+#' mtdi_dist <- mtdi_lognormal(CV = 0.5
+#'                            ,median = 140
+#'                            ,units = "ng/kg/week")
+#' sims <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist)
+#' # Now attach a proper ordinalizer to 'mtdi_dist':
+#' mtdi_dist@ordinalizer <- function(dose, r0) {
+#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#' }
+#' simsOT <- get_three_plus_three(num_doses = 6) %>%
+#'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist, r0 = 1.5)
+#' summary(simsOT)
+#' @rdname simulate_trials
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="selector_factory",
+      num_sims="numeric",
+      true_prob_tox="mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    # TODO: Try moving this next line into the argument defaults
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
+    tpt_vector <- tox_probs_at(true_prob_tox, dose_levels, ...)
+    sims <- simulate_trials(selector_factory = selector_factory
+                            , num_sims = num_sims
+                            , true_prob_tox = tpt_vector
+    )
+    sims$dose_levels <- dose_levels
+    sims$dose_units <- true_prob_tox@units
+    class(sims) <- c("precautionary", class(sims))
+    return(sims)
+  }
+)
 
 # setMethod("simulate_trials", c(selector_factory="ordtox"),
 #   function(selector_factory, num_sims, true_prob_tox, ...){

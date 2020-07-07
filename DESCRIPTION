@@ -24,3 +24,8 @@ VignetteBuilder: knitr, rmarkdown
 Encoding: UTF-8
 NeedsCompilation: no
 RoxygenNote: 7.1.0
+Collate: 
+    'enhance.R'
+    'precautionary-package.R'
+    'toxicity_generators.R'
+    'simulate_trials.R'
