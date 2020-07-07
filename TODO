@@ -3,7 +3,7 @@ TODO
 
 Some immediate TODOs to stay organized amidst the 'chaos of progress':
 
-0. Demonstrate that I can use 'escalation' as found on CRAN. Doing a
+0/ Demonstrate that I can use 'escalation' as found on CRAN. Doing a
    pull request seems ridiculous at this point.
    
 a) Overriding simulation_function.tox_selector

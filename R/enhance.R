@@ -6,12 +6,11 @@ prependClass <- function(preclass, object) {
 }
 
 u_i <- function(tox_selector_factory) {
-  stopifnot("Class 'u_i' may be applied only to a tox_selector"
+  stopifnot("Class 'u_i' may be applied only to a tox_selector_factory"
             = is(tox_selector_factory,"tox_selector_factory"))
   prependClass("u_i", tox_selector_factory)
 }
 
-#' @export
 simulation_function.u_i <- function(selector_factory) {
   return(phase1_sim) # returns an override defined in this package
 }
