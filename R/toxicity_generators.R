@@ -191,8 +191,6 @@ setMethod(
 #' mtdi_gen@ordinalizer <- function(dose, r0) {
 #'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
 #' }
-#' # Show the ordinalizer is there!
-#' mtdi_gen@ordinalizer
 #' tpa <- mtdi_gen %>% tox_probs_at(doses, K=3, r0=1.5)
 #' tpa
 #' ordtox <- attr(tpa,'ordtox')
