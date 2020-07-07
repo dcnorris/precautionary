@@ -142,23 +142,29 @@ setMethod(
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
     # If there is an 'ordtox' analysis possible, then do it and return it:
-    # if(!is.null(ordtox <- attr(sims$true_prob_tox,'ordtox'))){
-    #   ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
-    #                         , idcol = "rep")
-    #   ensemble[, MTDi3 := qnorm(p = u_i
-    #                            , mean = true_prob_tox[k]$mu
-    #                            , sd = true_prob_tox[k]$sigma
-    #   )]
-    #   ensemble[, `:=`(
-    #     MTDi1 = MTDi3 - 2*r0
-    #   , MTDi2 = MTDi3 - r0
-    #   , MTDi4 = MTDi3 + r0
-    #   , MTDi5 = MTDi3 + 2*r0
-    #   )]
-    #   ensemble[, toxgrade := (dose>MTDi1) + (dose>MTDi2) + (dose>MTDi3) +
-    #             (dose>MTDi4) + (dose>MTDi5)]
-    #   attr(sims,'ordtox') <- ..
-    # }
+    if(!is.null(ordtox <- attr(sims$true_prob_tox,'ordtox'))){
+      ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
+                            , idcol = "rep")
+      # At this point, 'ordtox' is a matrix with rows Gr1,...,Gr5.
+      # I need to do some appropriate join with a '<' function,
+      # in order to obtain the toxicity grade experienced by each
+      # individual.
+      # Generate a data.table to join on:
+      dt_grades <- as.data.table(t(ordtox))[, dose := .I]
+      # Extract the toxicity grades
+      tox_grades <- rownames(ordtox)
+      # Do the join
+      ens_grades <- ensemble[dt_grades, on = .(dose), nomatch = 0]
+      # Convert probabilities to 0/1
+      for(col in tox_grades) # see https://stackoverflow.com/a/33000778/3338147
+        ens_grades[, (col) := u_i < get(col)]
+      # Tally the thresholds crossed to obtain integer toxgrade
+      ens_grades$toxgrade <- rowSums(ens_grades[, ..tox_grades])
+      # Convert toxgrade to an ordered factor Tox
+      ens_grades$Tox <- ordered(ens_grades$toxgrade+1, labels=c('None', tox_grades))
+      # Drop the tox_grades columns, no longer needed
+      attr(sims,'ordtox') <- ens_grades[, (tox_grades) := NULL]
+    }
     prependClass("precautionary", sims)
   }
 )
