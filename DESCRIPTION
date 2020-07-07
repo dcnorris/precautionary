@@ -11,7 +11,10 @@ Authors@R: person("David C.", "Norris"
 Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: R (>= 3.4.0), escalation, data.table
 Imports: methods, distr6
-Suggests: knitr, rmarkdown
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
 Enhances: escalation
 Description: Enhances various R packages that support the design and simulation
              of phase 1 dose-escalation trials, adding diagnostics to examine

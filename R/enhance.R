@@ -30,7 +30,7 @@ simulation_function.u_i <- function(selector_factory) {
 #' the reciprocal of the rate parameter in an Exponential distribution.
 #' @return \code{data.frame} with columns \code{u_i} and \code{time_delta}
 #' containing respectively the uniformly-distributed latent toxicity tolerance
-#' and intervals of time between patient arrivals.
+#' and arrival-time increment for each trial participant.
 #' 
 #' @importFrom stats rexp runif
 #' @examples
