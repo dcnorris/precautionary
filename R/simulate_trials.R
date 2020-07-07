@@ -83,14 +83,19 @@ setMethod(
     }
     sims <- list(
       fits = fits
-      , mean_prob_tox = colMeans(tpt_matrix[, P_])
-      , true_prob_tox_matrix = tpt_matrix
-      , hyper_mtdi_distribution = true_prob_tox
+    , mean_prob_tox = colMeans(tpt_matrix[, P_])
+    , hyper = list(true_prob_tox = tpt_matrix
+                  ,mtdi_dist = true_prob_tox
+                  )
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    class(sims) <- c("precautionary","simulations")
-    return(sims)
+    # Attach an 'ordtox' attribute to sims$mean_prob_tox, as needed:
+    if('ordtox' %in% attributes(tpt_matrix)){
+      attr(sim$mean_prob_tox,'ordtox') <- attr(tpt_matrix,'ordtox')
+    }
+    class(sims) <- "simulations"
+    prependClass(c("hyper","precautionary"), sims)
   }
 )
 
@@ -136,6 +141,24 @@ setMethod(
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
+    # If there is an 'ordtox' analysis possible, then do it and return it:
+    # if(!is.null(ordtox <- attr(sims$true_prob_tox,'ordtox'))){
+    #   ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
+    #                         , idcol = "rep")
+    #   ensemble[, MTDi3 := qnorm(p = u_i
+    #                            , mean = true_prob_tox[k]$mu
+    #                            , sd = true_prob_tox[k]$sigma
+    #   )]
+    #   ensemble[, `:=`(
+    #     MTDi1 = MTDi3 - 2*r0
+    #   , MTDi2 = MTDi3 - r0
+    #   , MTDi4 = MTDi3 + r0
+    #   , MTDi5 = MTDi3 + 2*r0
+    #   )]
+    #   ensemble[, toxgrade := (dose>MTDi1) + (dose>MTDi2) + (dose>MTDi3) +
+    #             (dose>MTDi4) + (dose>MTDi5)]
+    #   attr(sims,'ordtox') <- ..
+    # }
     prependClass("precautionary", sims)
   }
 )

@@ -11,6 +11,18 @@ u_i <- function(tox_selector_factory) {
   prependClass("u_i", tox_selector_factory)
 }
 
+#' Get a function that simulates dose-escalation trials using latent \code{u_i}
+#' 
+#' Overrides \code{escalation::simulation_function.tox_selector_factory}
+#' to return a [phase1_sim()] that employs latent \code{u_i} in place of
+#' the version native to package \code{escalation}, which merely invokes
+#' \code{rbinom}.
+#' 
+#' @param selector_factory Presently, this must be a \code{tox_selector_factory};
+#' no equivalent for \code{simulation_function.derived_dose_selector_factory}
+#' is yet implemented.
+#'
+#' @export
 simulation_function.u_i <- function(selector_factory) {
   return(phase1_sim) # returns an override defined in this package
 }
@@ -81,7 +93,7 @@ phase1_sim <- function(
   } else {
     time <- rep(0, length(dose))
   }
-  
+
   i <- 1 # loop counter
   max_i <- 30
   time_now <- 0
@@ -142,16 +154,95 @@ phase1_sim <- function(
   }
 }
 
+#' @export
+prob_recommend.precautionary <- function(x, ...) {
+  prob_recs <- NextMethod()
+  names(prob_recs)[-1] <- paste0(x$dose_levels, x$dose_units)
+  prob_recs
+}
+
+#' @export
+prob_administer.precautionary <- function(x, ...) {
+  prob_admin <- NextMethod()
+  names(prob_admin) <- paste0(x$dose_levels, x$dose_units)
+  prob_admin
+}
+
+#' @export
+print.precautionary <- function(x, ...) {
+  
+  cat('Number of iterations:', length(x$fits), '\n')
+  cat('\n')
+  
+  cat('Number of doses:', num_doses(x), '\n')
+  cat('\n')
+  
+  cat('True probability of toxicity:\n')
+  print(x$true_prob_tox, digits = 3)
+  cat('\n')
+  
+  cat('Probability of recommendation:\n')
+  print(prob_recommend(x), digits = 3)
+  cat('\n')
+  
+  cat('Probability of administration:\n')
+  print(prob_administer(x), digits = 3)
+  cat('\n')
+  
+  cat('Sample size:\n')
+  print(summary(num_patients(x)))
+  cat('\n')
+  
+  cat('Total toxicities:\n')
+  print(summary(num_tox(x)))
+  cat('\n')
+  
+  cat('Trial duration:\n')
+  print(summary(trial_duration(x)))
+  cat('\n')
+}
+
+
+#' @export
+print.hyper <- function(x, ...) {
+  
+  cat('Number of iterations:', length(x$fits), '\n')
+  cat('\n')
+  
+  cat('Number of doses:', num_doses(x), '\n')
+  cat('\n')
+  
+  cat('Average probability of toxicity:\n')
+  print(x$mean_prob_tox, digits = 3)
+  cat('\n')
+  
+  cat('Probability of recommendation:\n')
+  print(prob_recommend(x), digits = 3)
+  cat('\n')
+  
+  cat('Probability of administration:\n')
+  print(prob_administer(x), digits = 3)
+  cat('\n')
+  
+  cat('Sample size:\n')
+  print(summary(num_patients(x)))
+  cat('\n')
+  
+  cat('Total toxicities:\n')
+  print(summary(num_tox(x)))
+  cat('\n')
+  
+  cat('Trial duration:\n')
+  print(summary(trial_duration(x)))
+  cat('\n')
+}
+
 
 #' @importFrom dplyr rename rename_with mutate select
 #' @export
 summary.precautionary <- function(x, ...) {
-  if(!is(x,"simulations")) return(NextMethod()) # override only summary.simulations
-  if(!is.null(x$mean_prob_tox)){
-    cat("HYPER simulations require SPECIAL SUMMARIZATION.\n")
-    return()
-  }
   summary <- NextMethod()
+  if(!is(x,"simulations")) return(summary) # override only summary.simulations
   dose_units <- paste0("dose (", x$dose_units, ")")
   summary <- summary %>%
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
@@ -163,10 +254,6 @@ summary.precautionary <- function(x, ...) {
   }
   summary
 }
-
-# TODO: Check whether I still need these num_doses.* and dose_indices.*
-#       methods, after abandoning the 'ordtox' class and its associated
-#       'check_safety' syntactical sugar.
 
 #' @export
 num_doses.three_plus_three_selector_factory <- function(x, ...) {

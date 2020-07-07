@@ -30,6 +30,22 @@ a) Overriding simulation_function.tox_selector
    from the expectations of plain old "simulations" may be essential to
    making good progress. For example, some of the *names* of components
    need to change, in order to make sense in the hyper_* case.
+   
+   Will a further "hyper" prepend class improve my software design?
+   If so, the semantics imply "hyper" as a subclass of "precautionary".
+   
+a. Add print.precautionary and print.hyper methods that appropriately
+   represent (and thereby DOCUMENT!) the underlying structures.
+   
+b. Refactor print.* where possible, to reduce duplicated code and thus
+   closely document the commonalities & differences between the classes.
+   
+c. Attach an 'ordtox' attribute to the "simulations" results themselves,
+   pre-computed based on the underlying u_i values as extracted from the
+   'fits' lists.
+   
+   Ideally, I think this has to begin with the (non-hyper) mtdi_distribution
+   method, and the hyper method should inherit much of the functionality.
 
 ----
 
