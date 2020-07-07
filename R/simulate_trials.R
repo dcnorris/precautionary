@@ -59,7 +59,7 @@ setMethod(
       num_sims="numeric",
       true_prob_tox="hyper_mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
-    protocol <- selector_factory # separate naming from implementation details
+    protocol <- u_i(selector_factory) # separate naming from implementation details
     stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
     M <- num_sims[1]
     K <- num_sims[2]; if(is.na(K)) K <- num_sims[1]
@@ -132,14 +132,13 @@ setMethod(
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
     tpt_vector <- tox_probs_at(true_prob_tox, dose_levels, ...)
-    sims <- simulate_trials(selector_factory = selector_factory
+    sims <- simulate_trials(selector_factory = u_i(selector_factory)
                             , num_sims = num_sims
                             , true_prob_tox = tpt_vector
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    class(sims) <- c("precautionary", class(sims))
-    return(sims)
+    prependClass("precautionary", sims)
   }
 )
 
