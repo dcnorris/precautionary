@@ -3,7 +3,7 @@ test_that("override of escalation::phase1_sim is nearly identical to original", 
   original_body <- body(escalation:::phase1_sim)
   override_lines <- deparse(override_body)
   original_lines <- deparse(original_body)
-  # Of course, tests such as the following are necessarily fragile.
+  # Of course, tests such as the following are inherently fragile.
   # But they make the point that differences are small, and it is
   # nearly 'inconceivable' that they won't fail (thus alerting me)
   # upon any changes to the original code in package 'escalation'.
