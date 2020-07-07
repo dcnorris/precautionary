@@ -83,11 +83,9 @@ setMethod(
     }
     sims <- list(
       fits = fits
-      , true_prob_tox = colMeans(tpt_matrix[, P_])
+      , mean_prob_tox = colMeans(tpt_matrix[, P_])
       , true_prob_tox_matrix = tpt_matrix
       , hyper_mtdi_distribution = true_prob_tox
-      , WARNING = paste("The 'true_prob_tox' component gives the mean of",
-                        K, "samples drawn from the hyper_mtdi_distribution.")
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units

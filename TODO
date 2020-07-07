@@ -25,6 +25,11 @@ a) Overriding simulation_function.tox_selector
    S3 method in my package. The concept here is that any result from a
    precautionary function gets 'flagged' with this class, enabling the
    *possible* interception of methods defined for it in 'escalation'.
+   
+   Furthermore, decoupling my c("precautionary","simulations") results
+   from the expectations of plain old "simulations" may be essential to
+   making good progress. For example, some of the *names* of components
+   need to change, in order to make sense in the hyper_* case.
 
 ----
 

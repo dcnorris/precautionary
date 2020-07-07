@@ -146,8 +146,12 @@ phase1_sim <- function(
 #' @importFrom dplyr rename rename_with mutate select
 #' @export
 summary.precautionary <- function(x, ...) {
+  if(!is(x,"simulations")) return(NextMethod()) # override only summary.simulations
+  if(!is.null(x$mean_prob_tox)){
+    cat("HYPER simulations require SPECIAL SUMMARIZATION.\n")
+    return()
+  }
   summary <- NextMethod()
-  if(!is(x,"simulations")) return(summary) # override only summary.simulations
   dose_units <- paste0("dose (", x$dose_units, ")")
   summary <- summary %>%
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
