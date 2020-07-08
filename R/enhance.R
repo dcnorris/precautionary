@@ -250,9 +250,12 @@ summary.precautionary <- function(x, ...) {
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
-  if(!is.null(attr(x$true_prob_tox,'ordtox'))){
-    # TODO: Handle case where attr(x,'ordtox') is present
-    attr(summary,'ordtox') <- "TODO: Summarize ORDTOX attribute, too."
+  if(!is.null(ordtox <- attr(x,'ordtox'))){
+    K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
+    expected_n_tox_by_grade <- colMeans(xtabs(~ rep + Tox, data=ordtox))/K
+    attr(summary,'ordtox') <- list(
+      `Expected number of toxicities, by grade` = expected_n_tox_by_grade
+      )
   }
   summary
 }
