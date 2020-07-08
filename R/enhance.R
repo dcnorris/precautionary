@@ -5,6 +5,8 @@ prependClass <- function(preclass, object) {
   object
 }
 
+setOldClass(c("u_i","tox_selector_factory","selector_factory"))
+
 u_i <- function(tox_selector_factory) {
   stopifnot("Class 'u_i' may be applied only to a tox_selector_factory"
             = is(tox_selector_factory,"tox_selector_factory"))
