@@ -153,7 +153,7 @@ hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
     lambda_CV = "numeric"
   , median_mtd = "numeric"
-  , median_sd = "numeric" # TODO: Cosider whether an argument can be made
+  , median_sd = "numeric" # TODO: Consider whether an argument can be made
                           #       for dispensing with this 2nd uncertainty
                           #       measure. Or is it CV that I might argue
                           #       is superfluous, on grounds that we may
