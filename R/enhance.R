@@ -215,7 +215,7 @@ print.hyper <- function(x, ...) {
   cat('\n')
   
   cat('Average probability of toxicity:\n')
-  print(x$mean_prob_tox, digits = 3)
+  print(x$avg_prob_tox, digits = 3)
   cat('\n')
   
   cat('Probability of recommendation:\n')

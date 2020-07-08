@@ -94,7 +94,7 @@ setMethod(
     #     may also include hyperparameters in columns to the right. This was a
     #     feature (mainly for debugging) of earlier versions of this code, but
     #     seems worth allowing for, pace 'speculative generality'.
-    , mean_prob_tox = colMeans(tpt_matrix[, seq_along(dose_levels)])
+    , avg_prob_tox = colMeans(tpt_matrix[, seq_along(dose_levels)])
     , hyper = list(true_prob_tox = tpt_matrix
                   ,mtdi_dist = true_prob_tox
                   )
