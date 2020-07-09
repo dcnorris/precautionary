@@ -86,7 +86,7 @@ phase1_sim <- function(
     base_df <- parse_phase1_outcomes('', as_list = FALSE)
   }
   dose <- base_df$dose
-  u_i <- base_df$u_i
+  suppressWarnings(u_i <- base_df$u_i) # RStudio "Unknown or uninitialised column"
   tox <- base_df$tox
   cohort <- base_df$cohort
   next_cohort <- ifelse(length(cohort) > 0, max(cohort) + 1, 1)
@@ -252,10 +252,11 @@ summary.precautionary <- function(x, ...) {
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
   if(!is.null(ordtox <- attr(x,'ordtox'))){
     K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
-    expected_n_tox_by_grade <- colMeans(xtabs(~ rep + Tox, data=ordtox))/K
-    attr(summary,'ordtox') <- list(
-      `Expected number of toxicities, by grade` = expected_n_tox_by_grade
-      )
+    expectation <- colMeans(xtabs(~ rep + Tox, data=ordtox))/K
+    expectation <- c(expectation, All = sum(expectation))
+    expectation <- t(as.matrix(expectation))
+    rownames(expectation) <- "Expected participants"
+    attr(summary,'ordtox') <- expectation
   }
   summary
 }
