@@ -67,6 +67,40 @@ setClass("mtdi_distribution",
   contains = c("mtdi_generator","VIRTUAL")
 )
 
+setGeneric("plot")
+
+#' @export
+setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
+  xlab <- paste0("Dose (", x@units, ")")
+  ylab <- "CDF"
+  title <- paste(class(x@dist)[1], "MTDi Distribution")
+  params <- paste0("CV = ", x@CV, "; median = ", x@median, x@units)
+  # I will presume most pharmacology should be done in log-dose space...
+  CDFs <- seq(0.01, 0.99, 0.01)
+  quantiles <- x@dist$quantile(CDFs)
+  plot.default(CDFs ~ quantiles, type="l", log="x"
+               , xlab = xlab, ylab = ylab, main = title
+               , sub = params, font.sub = 3
+               , las = 1
+               , lab = c(x=20, y=6, len=3)
+               )
+  # Obtain a reasonable default calculation for the minor tick locations.
+  qrange <- range(quantiles)
+  minor_step <- 10^floor(mean(log10(qrange)))
+  steprange <- qrange/minor_step
+  minor_ticks <- minor_step * ceiling(steprange[1]):floor(steprange[2])
+  axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
+  dose_levels <- getOption('dose_levels')
+  if( !is.null(dose_levels) ){
+    tox_probs <- x@dist$cdf(dose_levels)
+    for( i in seq_along(dose_levels) ) {
+      lines(x = c(0.1, rep(dose_levels[i], 2)),
+            y = c(rep(tox_probs[i], 2), -1),
+            lty = 3)
+    }
+  }
+})
+
 # This function may offer excellent information-hiding access
 # to the optonal @ordinalizer of its first argument.
 # The return value may simply have an optional 'ordtox' attribute

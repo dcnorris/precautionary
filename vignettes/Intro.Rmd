@@ -13,13 +13,13 @@ bibliography: precautionary-package.bib
 ```{r setup, include=FALSE}
 options(rmarkdown.html_vignette.check_title = FALSE) # suppress un-needed warning
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(fig.width = 5)
+knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
 
 library(precautionary)
 library(knitr)
 ```
 
-## Introduction to package `precautionary`
+## Background
 
 In package [escalation](https://CRAN.R-project.org/package=escalation), you can simulate a 3 + 3 design as follows:
 
@@ -40,35 +40,61 @@ kable(summary(sims)) # summarize results
 
 From an exercise such as this, we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, in this scenario there is a nonzero probability that even this dose will be rejected by our trial. Conversely, we also find it is quite possible the trial could recommend a dose that is toxic to nearly half the population. Note that, by summing the $n$ column, we can estimate expected enrollment at `r sum(summary(sims)$n)`, possibly informative about the expected cost or duration of our trial. Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their likelihood.
 
-But simulations such as these cannot answer crucial questions about **trial safety**, mainly because the simulation machinery recognizes no notion of *graded toxicity*. The binary (yes/no) toxicities in the simulation machinery of `escalation` cannot distinguish Grade 5 (fatal) toxicities from Grade 3. 
+But simulations such as these cannot answer crucial questions about **trial safety**, mainly because the simulation machinery recognizes no notion of *graded toxicity*. The binary (yes/no) toxicities in the simulation machinery of `escalation` regard Grade 5 (fatal) toxicities no differently from Grade 3. 
+
+## Introducing realistic pharmacologic thinking
+
+The `precautionary` package solves this problem by pursuing a *realistic* approach to pharmacologic thinking. Rather than plucking a sequence of toxicity probabilities out of thin air, this approach **derives** such probabilities according to how a latent toxicity threshold is distributed in the population.
+
+```{r}
+library(precautionary)
+mtdi_dist <- mtdi_lognormal(CV = 2        # coefficient of variation
+                           ,median = 5      # median DLT threshold
+                           ,units = "mg/kg" # real doses have units!
+                           )
+```
+
+Likewise, the pre-specified doses for our dose-escalation design must be specified as actual doses. With package `precautionary`, this is accomplished by setting a `dose_levels` option:
+
+```{r}
+options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
+```
+
+A plot of the MTD$_i$ distribution makes clear the connection with toxicity probabilities:
+
+```{r}
+plot(mtdi_dist)
+```
+
+```{r}
+mtdi_dist %>%
+  tox_probs_at(getOption('dose_levels'), r0 = 1.5) %>%
+  t %>% kable(digits = 3)
+```
 
 ## Introducing graded toxicities via package `precautionary`
 
-The `precautionary` package solves this problem like this:
+The latent toxicity threshold MTD$_i$ introduced here has far-reaching implications for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017,@norris_precautionary_2017].
 
-```{r introducing-u_i}
-library(precautionary)
-# A realistic approach to dose-toxicity relations does not begin
-# by pulling a sequence of toxicity probabilities out of thin air.
-# Rather, it will DERIVE these probabilities according to how a
-# latent toxicity threshold is distributed in the population.
-mtdi_dist <- mtdi_lognormal(CV = 0.5        # coefficient of variation
-                           ,median = 6      # median DLT threshold
-                           ,units = "mg/kg" # real doses have units!
-                           )
+But for *present* purposes---that is, taking it for granted that we must (for whatever reason) employ a dose-escalation design---the MTD$_i$ concept *by itself* amounts to little more than a formality. But in conjunction with a user-specified dose scaling that links different toxicity grades at the individual level, the MTD$_i$ becomes an effective tool for exploring ordinal toxicities even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and are attached to the MTD$_i$ distributions themselves:
 
-# Likewise, the pre-specified doses for our dose-escalation design
-# must be given in ACTUAL dose units. With package 'precautionary',
-# this is accomplished by setting a 'dose_levels' option:
-options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
-
-# Working within this minimally modified set-up, the 'precautionary'
-# package simulates graded toxicities by applying a user-specified
-# transformation of the dose-space, termed an 'ordinalizer':
+```{r}
 mtdi_dist@ordinalizer <- function(dose, r0) {
-   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+  toxdose_scaling <- r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+  return(dose / toxdose_scaling)
 }
+```
 
+To get a sense for what this ordinalizer means, suppose an individual has an MTD$_i$ located at the 30th percentile:
+
+```{r}
+MTD30 <- mtdi_dist@dist$quantile(0.30)
+mtdi_dist@ordinalizer(MTD30, r0=2)
+```
+
+WOW! This shows how untenable this explanation becomes, with the ordinalizer defined in this way. I need to figure out a way to compute the inverse of the specification!
+
+```{r}
 design %>% simulate_trials(
   num_sims = 100
 , true_prob_tox = mtdi_dist  # No mere list of probs now, but a distribution!
@@ -81,6 +107,10 @@ kable(summary(sims_safety))
 ```{r safety}
 kable(attr(summary(sims_safety),'ordtox'))
 ```
+
+### Details on the 'ordinalizer'
+
+The ordinalizer given above adopts the basic assumption that the ordinal toxicities are equally spaced in logarithmic dose-space. For example, if $r_0 = 2$, then ...
 
 ### Fit a hyper_mtdi_distribution to a CRM skeleton
 
@@ -112,4 +142,4 @@ sims <- get_three_plus_three(num_doses = 6) %>%
 
 #### Try accelerated titration à la NCT02848911
 
-TODO.
+## References
