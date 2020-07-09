@@ -1,11 +1,12 @@
 ---
-title: "Testing package escalation"
+title: "Introduction to package 'precautionary'"
 author: "David C. Norris"
-date: "6/27/2020"
+date: "7/8/2020"
 output: rmarkdown::html_vignette
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Comparative safety of 3 + 3 and CRM dose-finding designs}
+  %\VignetteIndexEntry{Introduction to package 'precautionary'}
+  \usepackage[utf8]{inputenc}
 bibliography: precautionary-package.bib
 ---
 
@@ -15,18 +16,81 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width = 5)
 
 library(precautionary)
-library(escalation)
-library(distr6)
-library(data.table)
+library(knitr)
 ```
 
-## Simulating a 3+3 trial
+## Introduction to package `precautionary`
+
+In package [escalation](https://CRAN.R-project.org/package=escalation), you can simulate a 3 + 3 design as follows:
+
+```{r sim-a-3plus3}
+library(escalation)
+# Design a 3 + 3 trial, with 5 pre-specified doses to escalate through
+design <- get_three_plus_three(num_doses = 5)
+# Posit a scenario where these 5 doses cause dose-limiting toxicities
+# (DLTs) in 12%, 27%, etc. of the population:
+scenario <- c(0.12, 0.27, 0.44, 0.53, 0.57)
+design %>% simulate_trials(   # Feed the design to the simulator ...
+    num_sims = 100            # run 100 simulated trials
+  , true_prob_tox = scenario  # under the chosen scenario,
+  ) -> sims                   # and store the results.
+
+kable(summary(sims)) # summarize results
+```
+
+From an exercise such as this, we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, in this scenario there is a nonzero probability that even this dose will be rejected by our trial. Conversely, we also find it is quite possible the trial could recommend a dose that is toxic to nearly half the population. Note that, by summing the $n$ column, we can estimate expected enrollment at `r sum(summary(sims)$n)`, possibly informative about the expected cost or duration of our trial. Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their likelihood.
+
+But simulations such as these cannot answer crucial questions about **trial safety**, mainly because the simulation machinery recognizes no notion of *graded toxicity*. The binary (yes/no) toxicities in the simulation machinery of `escalation` cannot distinguish Grade 5 (fatal) toxicities from Grade 3. 
+
+## Introducing graded toxicities via package `precautionary`
+
+The `precautionary` package solves this problem like this:
+
+```{r introducing-u_i}
+library(precautionary)
+# A realistic approach to dose-toxicity relations does not begin
+# by pulling a sequence of toxicity probabilities out of thin air.
+# Rather, it will DERIVE these probabilities according to how a
+# latent toxicity threshold is distributed in the population.
+mtdi_dist <- mtdi_lognormal(CV = 0.5        # coefficient of variation
+                           ,median = 6      # median DLT threshold
+                           ,units = "mg/kg" # real doses have units!
+                           )
+
+# Likewise, the pre-specified doses for our dose-escalation design
+# must be given in ACTUAL dose units. With package 'precautionary',
+# this is accomplished by setting a 'dose_levels' option:
+options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
+
+# Working within this minimally modified set-up, the 'precautionary'
+# package simulates graded toxicities by applying a user-specified
+# transformation of the dose-space, termed an 'ordinalizer':
+mtdi_dist@ordinalizer <- function(dose, r0) {
+   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+}
+
+design %>% simulate_trials(
+  num_sims = 100
+, true_prob_tox = mtdi_dist  # No mere list of probs now, but a distribution!
+, r0 = 1.5                   # Pass this r0 parameter on to the ordinalizer
+) -> sims_safety
+
+kable(summary(sims_safety))
+```
+
+```{r safety}
+kable(attr(summary(sims_safety),'ordtox'))
+```
+
+### Fit a hyper_mtdi_distribution to a CRM skeleton
+
+One way to understand the `hyper_mtdi_distribution` class is as a putative generator for the 'skeleton' of a CRM model.
 
 #### Obtain dose-wise DLT probabilities from an MTDi distribution:
 
 Use a lognormally-distributed MTD$_i$ inspired by [@norris_retrospective_2020]:
 
-```{r derive-DLT-probs}
+```{r derive-DLT-probs, eval=FALSE}
 mu <- 5              # Values estimated in arXiv:2004.12755 [stat, q-bio];
 sigma <- 1/sqrt(1.3) # see subsection 'Model estimates' and Table 2, pp. 2-3.
 dose_levels <- c(2, 6, 20, 60, 180, 400)
@@ -36,7 +100,7 @@ DLT_probs <- MTDi$cdf(dose_levels)
 
 #### Run a simple simulation
 
-```{r simple-sim}
+```{r simple-sim, eval=FALSE}
 suppressWarnings( # "Unknown or uninitialised column: `u_i`" warnings (from Tibble?)
 sims <- get_three_plus_three(num_doses = 6) %>%
   simulate_trials(num_sims = 200, true_prob_tox = DLT_probs)
@@ -45,29 +109,6 @@ sims <- get_three_plus_three(num_doses = 6) %>%
 
 #### Obtain ordinal toxicity outcomes via `u_i`
 
-```{r ordinal-toxicities, fig.cap=paste("Distribution of graded toxicities over", nrow(ensemble), "participants in", max(ensemble$rep), "simulated trials.")}
-ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
-                      , idcol="rep")
-
-r0 <- 1.3
-ensemble[, MTDi3 := MTDi$quantile(p = u_i)]
-ensemble[, `:=`(
-  MTDi1 = MTDi3/r0^2
-, MTDi2 = MTDi3/r0
-, MTDi4 = MTDi3*r0
-, MTDi5 = MTDi3*r0^2
-, absdose = dose_levels[dose]
-)]
-ensemble[, toxgrade := (absdose>MTDi1) + (absdose>MTDi2) + (absdose>MTDi3) +
-                       (absdose>MTDi4) + (absdose>MTDi5)]
-
-toxicities <- ensemble[, .(prob = .N/nrow(ensemble)), by=toxgrade][order(toxgrade)]
-par(mar=c(5, 10, 4, 4), las = 1)
-barplot(100*prob ~ toxgrade, toxicities
-        , xlab = "CTCAE Toxicity Grade"
-        , ylab = "")
-mtext("% Simulated\nParticipants", side=2, line=3)
-```
 
 #### Try accelerated titration à la NCT02848911
 
