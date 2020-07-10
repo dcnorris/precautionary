@@ -45,7 +45,7 @@ setOldClass(c('dfcrm_selector_factory',
 #' summary(hsims)
 #' # Now attach a proper ordinalizer to 'mtdi_gen':
 #' mtdi_gen@ordinalizer <- function(dose, r0) {
-#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' }
 #' mtdi_gen@ordinalizer
 #' hsimsOT <- get_three_plus_three(num_doses = 6) %>%
@@ -129,7 +129,7 @@ setMethod(
 #'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist)
 #' # Now attach a proper ordinalizer to 'mtdi_dist':
 #' mtdi_dist@ordinalizer <- function(dose, r0) {
-#'   c(Gr1=dose*r0^2, Gr2=dose*r0, Gr3=dose, Gr4=dose/r0, Gr5=dose/r0^2)
+#'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' }
 #' simsOT <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist, r0 = 1.5)
@@ -145,7 +145,7 @@ setMethod(
     # TODO: Try moving this next line into the argument defaults
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
-    tpt_vector <- tox_probs_at(true_prob_tox, dose_levels, ...)
+    tpt_vector <- true_prob_tox@dist$cdf(dose_levels)
     sims <- simulate_trials(selector_factory = u_i(selector_factory)
                             , num_sims = num_sims
                             , true_prob_tox = tpt_vector
@@ -153,22 +153,15 @@ setMethod(
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
     # If there is an 'ordtox' analysis possible, then do it and return it:
-    if(!is.null(ordtox <- attr(sims$true_prob_tox,'ordtox'))){
+    if( !is.null(body(true_prob_tox@ordinalizer)) ){
       ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
                             , idcol = "rep")
-      # At this point, 'ordtox' is a matrix with rows Gr1,...,Gr5.
-      # I need to do some appropriate join with a '<' function,
-      # in order to obtain the toxicity grade experienced by each
-      # individual.
-      # Generate a data.table to join on:
-      dt_grades <- as.data.table(t(ordtox))[, dose := .I]
-      # Extract the toxicity grades
-      tox_grades <- rownames(ordtox)
-      # Do the join
-      ens_grades <- ensemble[dt_grades, on = .(dose), nomatch = 0]
-      # Convert probabilities to 0/1
-      for(col in tox_grades) # see https://stackoverflow.com/a/33000778/3338147
-        ens_grades[, (col) := u_i < get(col)]
+      # Go 'straight to dose-space' by adding MTDi,g columns
+      ensemble[, Dose := dose_levels[dose]]
+      MTDi <- true_prob_tox@dist$quantile(ensemble$u_i)
+      MTDig <- t(sapply(MTDi, true_prob_tox@ordinalizer, ...))
+      tox_grades <- colnames(MTDig)
+      ens_grades <- cbind(ensemble, MTDig)
       # Tally the thresholds crossed to obtain integer toxgrade
       ens_grades$toxgrade <- rowSums(ens_grades[, ..tox_grades])
       # Convert toxgrade to an ordered factor Tox
