@@ -242,7 +242,7 @@ print.hyper <- function(x, ...) {
 
 #' @importFrom dplyr rename rename_with mutate select
 #' @export
-summary.precautionary <- function(x, ...) {
+summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...) {
   summary <- NextMethod()
   if(!is(x,"simulations")) return(summary) # override only summary.simulations
   dose_units <- paste0("dose (", x$dose_units, ")")
@@ -250,13 +250,47 @@ summary.precautionary <- function(x, ...) {
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
-  if(!is.null(ordtox <- attr(x,'ordtox'))){
+  # If there is an 'ordtox' analysis possible, then do it and return it:
+  # TODO: Consider writing an as.data.table.precautionary method,
+  #       and perhaps a separate .hyper method as well.
+  if( !is.null(ordinalizer) ){
+    ensemble <- rbindlist(lapply(x[[1]], function(.) .[[1]]$fit$outcomes)
+                          , idcol = "rep")
+    # Go 'straight to dose-space' by generating MTDi,g columns
+    if( is(x,"hyper") ){
+      K <- length(x$hyper$mtdi_samples)
+      M <- max(ensemble$rep)/K  # so now K*M is nrow(ensemble)
+      ensemble[, k := 1 + (rep-1) %/% M]
+      ensemble[, rep := 1 + (rep-1) %% M]
+      setcolorder(ensemble,c("k","rep")) # so key .(k,rep) is on far left
+      look <<- ensemble
+      ensemble[, MTDi := x$hyper$mtdi_samples[[k]]@dist$quantile(u_i), by = k]
+    } else {
+      ensemble[, MTDi := x$mtdi_dist@dist$quantile(ensemble$u_i)]
+    }
+    # TODO: Do add these columns to 'ensemble', so that the whole table
+    #       may later be inspected by user to improve understanding.
+    MTDig <- t(sapply(ensemble$MTDi, ordinalizer, ...))
+    if( is.null(colnames(MTDig)) ) {
+      warning("Ordinalizer returns unnamed vector; using default names for toxicity grades.")
+      colnames(MTDig) <- paste("Grade", 1:ncol(MTDig))
+    }
+    tox_grades <- colnames(MTDig)
+    # Compare with actual dose to obtain toxicity grade indicator matrix
+    tox_ind <- ( x$dose_levels[ensemble$dose] > MTDig )
+    # Tally the thresholds crossed to obtain integer toxgrade
+    ensemble$toxgrade <- rowSums(tox_ind)
+    # Convert toxgrade to an ordered factor Tox
+    ensemble$Tox <- ordered(ensemble$toxgrade+1
+                              , levels=seq(1+length(tox_grades))
+                              , labels=c('None', tox_grades))
+    attr(summary,'ensemble') <- ensemble # for debugging
     K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
-    expectation <- colMeans(xtabs(~ rep + Tox, data=ordtox))/K
+    expectation <- colMeans(xtabs(~ rep + Tox, data=ensemble))/K
     expectation <- c(expectation, All = sum(expectation))
     expectation <- t(as.matrix(expectation))
     rownames(expectation) <- "Expected participants"
-    attr(summary,'ordtox') <- expectation
+    attr(summary,'safety') <- expectation
   }
   summary
 }

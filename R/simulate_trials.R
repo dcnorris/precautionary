@@ -96,7 +96,8 @@ setMethod(
     #     seems worth allowing for, pace 'speculative generality'.
     , avg_prob_tox = colMeans(tpt_matrix[, seq_along(dose_levels)])
     , hyper = list(true_prob_tox = tpt_matrix
-                  ,mtdi_dist = true_prob_tox
+                  ,mtdi = true_prob_tox
+                  ,mtdi_samples = mtdi_samples
                   )
     )
     sims$dose_levels <- dose_levels
@@ -152,25 +153,7 @@ setMethod(
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    # If there is an 'ordtox' analysis possible, then do it and return it:
-    if( !is.null(body(true_prob_tox@ordinalizer)) ){
-      ensemble <- rbindlist(lapply(sims[[1]], function(.) .[[1]]$fit$outcomes)
-                            , idcol = "rep")
-      # Go 'straight to dose-space' by adding MTDi,g columns
-      ensemble[, Dose := dose_levels[dose]]
-      MTDi <- true_prob_tox@dist$quantile(ensemble$u_i)
-      MTDig <- t(sapply(MTDi, true_prob_tox@ordinalizer, ...))
-      tox_grades <- colnames(MTDig)
-      ens_grades <- cbind(ensemble, MTDig)
-      # Tally the thresholds crossed to obtain integer toxgrade
-      ens_grades$toxgrade <- rowSums(ens_grades[, ..tox_grades])
-      # Convert toxgrade to an ordered factor Tox
-      ens_grades$Tox <- ordered(ens_grades$toxgrade+1
-                                , levels=seq(1+length(tox_grades))
-                                , labels=c('None', tox_grades))
-      # Drop the tox_grades columns, no longer needed
-      attr(sims,'ordtox') <- ens_grades[, (tox_grades) := NULL]
-    }
+    sims$mtdi_dist <- true_prob_tox
     prependClass("precautionary", sims)
   }
 )
