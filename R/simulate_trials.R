@@ -42,16 +42,10 @@ setOldClass(c('dfcrm_selector_factory',
 #'                                  , units="mg/kg")
 #' hsims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
-#' summary(hsims)
-#' # Now attach a proper ordinalizer to 'mtdi_gen':
-#' mtdi_gen@ordinalizer <- function(dose, r0) {
+#' summary(hsims, ordinalizer=NULL) # vanilla summary with binary toxicity
+#' summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
-#' }
-#' mtdi_gen@ordinalizer
-#' hsimsOT <- get_three_plus_three(num_doses = 6) %>%
-#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen, r0 = 1.5)
-#' cat("class(hsimsOT) = ", class(hsimsOT), "\n")
-#' summary(hsimsOT)
+#' )
 #' @rdname simulate_trials
 #' @export
 setMethod(
@@ -129,12 +123,10 @@ setMethod(
 #' sims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist)
 #' # Now attach a proper ordinalizer to 'mtdi_dist':
-#' mtdi_dist@ordinalizer <- function(dose, r0) {
+#' options(ordinalizer = function(dose, r0) {
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
-#' }
-#' simsOT <- get_three_plus_three(num_doses = 6) %>%
-#'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist, r0 = 1.5)
-#' summary(simsOT)
+#' })
+#' summary(sims, r0=2)
 #' @rdname simulate_trials
 #' @export
 setMethod(

@@ -289,7 +289,7 @@ summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...
     mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
-  ensemble <- as.data.table(x, ordinalizer = ordinalizer)
+  ensemble <- as.data.table(x, ordinalizer = ordinalizer, ...)
   attr(summary,'ensemble') <- ensemble # for debugging
   if( !is.null(ordinalizer) ){
     K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
