@@ -17,6 +17,7 @@ knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
 
 library(precautionary)
 library(knitr)
+library(kableExtra)
 ```
 
 ## Background
@@ -94,50 +95,60 @@ kable(summary(SIMS)
      ,caption = "A simulation summary under the MTD$_i$ regime of package `precautionary`.")
 ```
 
-Judging from Table \@ref(tab:MTDi-regime), however, introducing the MTD$_i$ concept alone has so far generated little progress. The only apparent difference compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses. To make further progress *operating within the dose-escalation paradigm*, we need to introduce another concept.
+Judging from Table \@ref(tab:MTDi-regime), however, introducing the MTD$_i$ concept has by itself generated little progress. The only apparent improvement compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses. To make further progress *while continuing to operate within the dose-escalation paradigm*, we need to introduce another concept.
 
 ## Introducing graded toxicities
 
 When its full implications are allowed to develop, the latent toxicity threshold MTD$_i$ has far-reaching consequences for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017; @norris_precautionary_2017].
 
-For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of MTD$_i$, and relegates the MTD$_i$ concept *standing alone* to the status of a mere formalism. But in conjunction with a user-specified dose scaling that links different toxicity grades at the individual level, the MTD$_i$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
+For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of MTD$_i$, and relegates the MTD$_i$ concept *standing alone* to the status of a mere formalism. But in conjunction with *a dose scaling that links different toxicity grades at the individual level*, the MTD$_i$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
 
 ```{r}
-dose_tox_scaling <- function(dose, r0) {
-  dose * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+dose_tox_scaling <- function(MTDi, r0) {
+  MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 }
-sim_summary <- summary(SIMS
-                       , ordinalizer = dose_tox_scaling
-                       , r0 = 2 # supply r0 param value needed by ordinalizer
-                       )
-sim_summary  # exhibit internal structure of summary results
-kable(sim_summary$safety) # safety component of summary
+summary(SIMS
+       ,ordinalizer = dose_tox_scaling
+       ,r0 = 2      # supply a value for ordinalizer's r0 parameter
+       )$safety %>% # select the 'safety' component of the summary
+  kable() %>% add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
-To get a sense for what this ordinalizer means, suppose an individual has an MTD$_i$ located at the 30th percentile:
+Clearly, we have now made some genuine progress. Of special interest from a safety perspective are the numbers of Grade 4 (severe) and Grade 5 (fatal) toxicities expected in the trial.
+
+## A closer look at the *ordinalizer*
+
+Let us unroll the ordinalizer above, to make it less cryptic:
 
 ```{r, eval=FALSE}
-MTD30 <- mtdi_dist@dist$quantile(0.30)
-mtdi_dist@ordinalizer(MTD30, r0=2)
+dose_tox_scaling <-
+  function(MTDi   # An ordinalizer is a function of a dose threshold,
+          ,r0 = 2 # and in general has additional parameters as well.
+          ) {
+    # An ordinalizer assumes we start with a binary toxicity notion,
+    # and maps that to a *graded* notion of toxicity by means of a
+    # transformation in 'dose-space'.
+    # Assuming the default value r0 = 2 provided in its definition,
+    # this ordinalizer says that an individual whose dose threshold
+    # for the binary toxicity is MTDi has thresholds ...
+    c(Gr1 = MTDi / r0^2 # at MTDi/4 for Gr1,
+     ,Gr2 = MTDi / r0   # at MTDi/2 for Gr2,
+     ,Gr3 = MTDi        # at MTDi for Gr3 ('tox' is defined as Gr3+),
+     ,Gr4 = MTDi * r0   # at 2*MTDi for Gr4,
+     ,Gr5 = MTDi * r0^2 # at 4*MTDi for Gr5.
+    )
+  }
 ```
 
-When we simulate with this set-up, we get
+In general, an ordinalizer returns a named vector^[The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.] that links the different doses at which an individual will experience each grade of toxicity. In [@norris_retrospective_2020], these concepts are laid out in terms of MTD$_i^g$ with the index $g$ running over toxicity grades:
 
-```{r, eval=FALSE}
-design %>% simulate_trials(
-  num_sims = 100
-, true_prob_tox = mtdi_dist  # No mere list of probs now, but a distribution!
-, r0 = 1.5                   # Pass this r0 parameter on to the ordinalizer
-) -> sims_safety
+$$
+\mathrm{MTD}_i^g, g \in \{1,...,5\},
+$$
 
-kable(summary(sims_safety))
-```
+and defined as the dose threshold where a grade-$(g-1)$ toxicity would convert to grade-$g$.^[To preserve the intuition of the term 'maximum tolerated dose', you could say MTD$_i^g$ is the maximum dose that individual $i$ can tolerate if 'tolerability' is defined as toxicity below grade-$g$.] Thus, in the usual case where the binary 'dose-limiting toxicity' (DLT) of a dose-escalation design is defined as CTCAE Grade 3 and above, we identify MTD$_i$ with MTD$_i^3$ .
 
-```{r safety, eval=FALSE}
-kable(attr(summary(sims_safety),'ordtox'))
-```
 
-### Details on the 'ordinalizer'
 
 TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
 
