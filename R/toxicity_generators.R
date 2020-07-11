@@ -84,11 +84,10 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
                , las = 1
                , lab = c(x=20, y=6, len=3)
                )
-  # Obtain a reasonable default calculation for the minor tick locations.
-  qrange <- range(quantiles)
-  minor_step <- 10^floor(mean(log10(qrange)))
-  steprange <- qrange/minor_step
-  minor_ticks <- minor_step * ceiling(steprange[1]):floor(steprange[2])
+  # Locate old-fashioned, decade-wise logarithmic axis minor ticks
+  erange <- floor(log10(range(quantiles)))
+  exponents <- erange[1]:erange[2]
+  minor_ticks <- as.vector(outer(2:9, exponents, function(x,y) x*10^y))
   axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
   dose_levels <- getOption('dose_levels')
   if( !is.null(dose_levels) ){
