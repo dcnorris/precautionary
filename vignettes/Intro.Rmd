@@ -2,7 +2,7 @@
 title: "Introduction to package 'precautionary'"
 author: "David C. Norris"
 date: "7/8/2020"
-output: rmarkdown::html_vignette
+output: bookdown::tufte_html2
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Introduction to package 'precautionary'}
@@ -23,22 +23,27 @@ library(knitr)
 
 In package [escalation](https://CRAN.R-project.org/package=escalation), you can simulate a 3 + 3 design as follows:
 
-```{r sim-a-3plus3}
+```{r results='hide'}
 library(escalation)
 # Design a 3 + 3 trial, with 5 pre-specified doses to escalate through
 design <- get_three_plus_three(num_doses = 5)
 # Posit a scenario where these 5 doses cause dose-limiting toxicities
 # (DLTs) in 12%, 27%, etc. of the population:
 scenario <- c(0.12, 0.27, 0.44, 0.53, 0.57)
-design %>% simulate_trials(   # Feed the design to the simulator ...
-    num_sims = 100            # run 100 simulated trials
-  , true_prob_tox = scenario  # under the chosen scenario,
-  ) -> sims                   # and store the results.
+design %>% simulate_trials( # Feed the design to the simulator ...
+  num_sims = 100            # run 100 simulated trials
+, true_prob_tox = scenario  # under the chosen scenario,
+) -> sims                   # and store the results.
 
-kable(summary(sims)) # summarize results
+summary(sims) # summarize simulation results
 ```
 
-From an exercise such as this, we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, in this scenario there is a real chance that even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the $n$ column, we can estimate expected enrollment at `r sum(summary(sims)$n)`, possibly informative about the expected cost or duration of our trial. Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their likelihood.
+```{r basic-sim, echo=FALSE}
+kable(summary(sims)
+     ,caption="Simulation summary as produced by package `escalation`.")
+```
+
+From Table \@ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the $n$ column, we can estimate expected enrollment at `r sum(round(summary(sims)$n, digits=2))`, which perhaps informs us about the expected cost or duration of our trial.^[Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their varying likelihood.]
 
 But simulations such as these cannot answer crucial questions about **trial safety**, mainly because the simulation machinery recognizes no notion of *graded toxicity*. The binary (yes/no) toxicities in the simulation machinery of `escalation` regard Grade 5 (fatal) toxicities no differently from Grade 3. 
 
@@ -76,16 +81,22 @@ t(probs) %>% kable(digits = 4)
 
 Package `precautionary` provides additional methods for `escalation` functions, so that an `mtdi_distribution` may be used instead of out-of-thin-air probabilities:
 
-```{r}
+```{r, results='hide'}
 design %>% simulate_trials(
-    num_sims = 100
-  , true_prob_tox = mtdi_dist # tox probs pulled from a *model*, not thin air
-  ) -> SIMS
+  num_sims = 100
+, true_prob_tox = mtdi_dist # pull tox probs from a MODEL, not thin air
+) -> SIMS
 
-kable(summary(SIMS)) # summarize results
+summary(SIMS)
+```
+```{r MTDi-regime, echo=FALSE}
+kable(summary(SIMS)
+     ,caption = "A simulation summary under the MTD$_i$ regime of package `precautionary`.")
 ```
 
-## Introducing graded toxicities via package `precautionary`
+Judging from Table \@ref(tab:MTDi-regime), however, our introduction of an MTD$_i$ concept has so far generated little progress. The only difference compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses.
+
+## Introducing graded toxicities
 
 The latent toxicity threshold MTD$_i$ introduced here has far-reaching implications for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017; @norris_precautionary_2017].
 
