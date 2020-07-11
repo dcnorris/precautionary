@@ -293,7 +293,7 @@ summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...
     summary <- list(escalation = summary, safety = NULL)
     K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
     expectation <- colMeans(xtabs(~ rep + Tox, data=ensemble))/K
-    expectation <- c(expectation, All = sum(expectation))
+    expectation <- c(expectation, Total = sum(expectation))
     expectation <- t(as.matrix(expectation))
     rownames(expectation) <- "Expected participants"
     summary$safety <- expectation
