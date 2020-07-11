@@ -283,21 +283,20 @@ as.data.table.precautionary <- function(x, ordinalizer = getOption('ordinalizer'
 #' @export
 summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...) {
   summary <- NextMethod()
-  if(!is(x,"simulations")) return(summary) # override only summary.simulations
   dose_units <- paste0("dose (", x$dose_units, ")")
   summary <- summary %>%
-    mutate("real_dose" = c(0, x$dose_levels)[as.integer(summary$dose)]) %>%
+    mutate("real_dose" = c(0, x$dose_levels)[as.integer(dose)]) %>%
     select(dose, real_dose, everything()) %>%
     rename_with(.fn = function(.) dose_units, .cols = real_dose)
   ensemble <- as.data.table(x, ordinalizer = ordinalizer, ...)
-  attr(summary,'ensemble') <- ensemble # for debugging
   if( !is.null(ordinalizer) ){
+    summary <- list(escalation = summary, safety = NULL)
     K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
     expectation <- colMeans(xtabs(~ rep + Tox, data=ensemble))/K
     expectation <- c(expectation, All = sum(expectation))
     expectation <- t(as.matrix(expectation))
     rownames(expectation) <- "Expected participants"
-    attr(summary,'safety') <- expectation
+    summary$safety <- expectation
   }
   summary
 }

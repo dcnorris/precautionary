@@ -38,7 +38,7 @@ design %>% simulate_trials(   # Feed the design to the simulator ...
 kable(summary(sims)) # summarize results
 ```
 
-From an exercise such as this, we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, in this scenario there is a nonzero probability that even this dose will be rejected by our trial. Conversely, we also find it is quite possible the trial could recommend a dose that is toxic to nearly half the population. Note that, by summing the $n$ column, we can estimate expected enrollment at `r sum(summary(sims)$n)`, possibly informative about the expected cost or duration of our trial. Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their likelihood.
+From an exercise such as this, we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, in this scenario there is a real chance that even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the $n$ column, we can estimate expected enrollment at `r sum(summary(sims)$n)`, possibly informative about the expected cost or duration of our trial. Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their likelihood.
 
 But simulations such as these cannot answer crucial questions about **trial safety**, mainly because the simulation machinery recognizes no notion of *graded toxicity*. The binary (yes/no) toxicities in the simulation machinery of `escalation` regard Grade 5 (fatal) toxicities no differently from Grade 3. 
 
@@ -48,7 +48,7 @@ The `precautionary` package solves this problem by pursuing a *realistic* approa
 
 ```{r}
 library(precautionary)
-mtdi_dist <- mtdi_lognormal(CV = 2        # coefficient of variation
+mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
                            ,median = 5      # median DLT threshold
                            ,units = "mg/kg" # real doses have units!
                            )
@@ -67,34 +67,52 @@ plot(mtdi_dist)
 ```
 
 ```{r}
-mtdi_dist %>%
-  tox_probs_at(getOption('dose_levels'), r0 = 1.5) %>%
-  t %>% kable(digits = 3)
+probs <- mtdi_dist@dist$cdf(getOption('dose_levels'))
+names(probs) <- paste(getOption('dose_levels'), mtdi_dist@units)
+t(probs) %>% kable(digits = 4)
+```
+
+## Extending `escalation` to support this
+
+Package `precautionary` provides additional methods for `escalation` functions, so that an `mtdi_distribution` may be used instead of out-of-thin-air probabilities:
+
+```{r}
+design %>% simulate_trials(
+    num_sims = 100
+  , true_prob_tox = mtdi_dist # tox probs pulled from a *model*, not thin air
+  ) -> SIMS
+
+kable(summary(SIMS)) # summarize results
 ```
 
 ## Introducing graded toxicities via package `precautionary`
 
-The latent toxicity threshold MTD$_i$ introduced here has far-reaching implications for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017,@norris_precautionary_2017].
+The latent toxicity threshold MTD$_i$ introduced here has far-reaching implications for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017; @norris_precautionary_2017].
 
-But for *present* purposes---that is, taking it for granted that we must (for whatever reason) employ a dose-escalation design---the MTD$_i$ concept *by itself* amounts to little more than a formality. But in conjunction with a user-specified dose scaling that links different toxicity grades at the individual level, the MTD$_i$ becomes an effective tool for exploring ordinal toxicities even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and are attached to the MTD$_i$ distributions themselves:
+For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of MTD$_i$, and relegates the MTD$_i$ concept *standing alone* to the status of a mere formalism. But in conjunction with a user-specified dose scaling that links different toxicity grades at the individual level, the MTD$_i$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
 
 ```{r}
-mtdi_dist@ordinalizer <- function(dose, r0) {
-  toxdose_scaling <- r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
-  return(dose / toxdose_scaling)
+dose_tox_scaling <- function(dose, r0) {
+  dose * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 }
+sim_summary <- summary(SIMS
+                       , ordinalizer = dose_tox_scaling
+                       , r0 = 2 # supply r0 param value needed by ordinalizer
+                       )
+sim_summary  # exhibit internal structure of summary results
+kable(sim_summary$safety) # safety component of summary
 ```
 
 To get a sense for what this ordinalizer means, suppose an individual has an MTD$_i$ located at the 30th percentile:
 
-```{r}
+```{r, eval=FALSE}
 MTD30 <- mtdi_dist@dist$quantile(0.30)
 mtdi_dist@ordinalizer(MTD30, r0=2)
 ```
 
-WOW! This shows how untenable this explanation becomes, with the ordinalizer defined in this way. I need to figure out a way to compute the inverse of the specification!
+When we simulate with this set-up, we get
 
-```{r}
+```{r, eval=FALSE}
 design %>% simulate_trials(
   num_sims = 100
 , true_prob_tox = mtdi_dist  # No mere list of probs now, but a distribution!
@@ -104,11 +122,15 @@ design %>% simulate_trials(
 kable(summary(sims_safety))
 ```
 
-```{r safety}
+```{r safety, eval=FALSE}
 kable(attr(summary(sims_safety),'ordtox'))
 ```
 
 ### Details on the 'ordinalizer'
+
+TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
+
+TODO: Show how you can set an `options(ordinalizer = <function>)`, and give advice that parameters (like `r0` above) in such a default ordinalizer generally warrant default settings, in order to fully yield the convenience-value of an option setting.
 
 The ordinalizer given above adopts the basic assumption that the ordinal toxicities are equally spaced in logarithmic dose-space. For example, if $r_0 = 2$, then ...
 
