@@ -23,38 +23,9 @@
 #' @importFrom distr6 SDistribution Lognormal Rayleigh
 setOldClass(c("Lognormal","SDistribution"))
 
-# The @ordinalizer slot is an optional 'mixin' defaulting to
-# the absent case of a NULL body(). This function in general
-# is a dose-space transformation that spreads any given dose
-# into an ordered vector of doses at which graded toxicities
-# occur.
-# One appealing manner of specifying an @ordinalizer would be
-# to take an MTDi3 as input dose, and output an ascending
-# vector of doses c(MTDi1=, MTDi2=, ..., MTDi5=). But using
-# this scheme would impose on my code the obligation to invert
-# this relation.
-# So instead, I will implement @ordinalizers directly through
-# the inverse function, one that transforms a given dose into
-# a *descending* vector of doses that yield equivalent rates
-# of toxicity from the mtdi_generator.
-# If I am using 5 toxicity grades (Gr1,..Gr5) and if we take
-# MTDi to be the Gr3 threshold, then the @ordinalizer's task
-# is to transform an given dose into Gr1..5 *equivalents*
-# vis-à-vis the mtdi_generator. This is really so abstract
-# that it may need to be hidden from users; consider.
-# I will gain little from imposing premature concreteness,
-# and indeed may obscure some essential aspects with excessive
-# hand-holding. The user should perhaps be forced to specify
-# the toxicity grades explicitly!
-# Let me keep things simple by assuming this function is of
-# a single dose, i.e., is NOT vectorized.
-# Note that the 'optional' nature of the @ordinalizer carries
-# through into the treatment of ordinal toxicity information
-# using an attr(sims,'ordtox') which may or may not be NULL.
 setClass("mtdi_generator",
   slots = list(
     units = "character"
-  , ordinalizer = "function" # optional 'mixin', present if !is.null(body(.))
   ),
   contains = "VIRTUAL")
 
@@ -151,7 +122,7 @@ setMethod(
                             , meanlog=log(hyper@median_mtd)
                             , sdlog=hyper@median_sdlog)
           , MoreArgs = list(units = hyper@units
-                           ,ordinalizer = hyper@ordinalizer)
+                           )
           , SIMPLIFY = FALSE)
   })
 
