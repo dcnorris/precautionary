@@ -7,10 +7,12 @@ prependClass <- function(preclass, object) {
 
 setOldClass(c("u_i","tox_selector_factory","selector_factory"))
 
-u_i <- function(tox_selector_factory) {
-  stopifnot("Class 'u_i' may be applied only to a tox_selector_factory"
-            = is(tox_selector_factory,"tox_selector_factory"))
-  prependClass("u_i", tox_selector_factory)
+u_i <- function(selector_factory) {
+  stopifnot("Class 'u_i' applies only to a (tox|derived_dose)_selector_factory"
+            = is(selector_factory,"tox_selector_factory") || 
+              is(selector_factory,"derived_dose_selector_factory")
+            )
+  prependClass("u_i", selector_factory)
 }
 
 #' Get a function that simulates dose-escalation trials using latent \code{u_i}
@@ -243,8 +245,11 @@ print.hyper <- function(x, ...) {
 #' @export
 as.data.table.precautionary <- function(x, ordinalizer = getOption('ordinalizer')
                                         , ...) {
-  ensemble <- rbindlist(lapply(x[[1]], function(.) .[[1]]$fit$outcomes)
-                        , idcol = "rep")
+  extractor <- ifelse(is(x$fits[[1]][[1]]$fit, "derived_dose_selector")
+                     ,function(.) .[[1]]$fit$parent$outcomes
+                     ,function(.) .[[1]]$fit$outcomes
+                     )
+  ensemble <- rbindlist(lapply(x$fits, extractor), idcol = "rep")
   # Go 'straight to dose-space' by generating MTDi,g columns
   if( is(x,"hyper") ){ # TODO: Consider handling this via 'as.data.table.hyper'
     K <- length(x$hyper$mtdi_samples)

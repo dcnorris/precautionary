@@ -22,7 +22,9 @@ setOldClass(c('boin_selector_factory',
 setOldClass(c('dfcrm_selector_factory',
               'tox_selector_factory',
               'selector_factory'))
-# TODO: Register also various hierarchies for derived_dose_selector_factory?
+setOldClass(c('stop_at_n_selector_factory',
+              'derived_dose_selector_factory',
+              'selector_factory'))
 
 # This is a simple generalization of escalation::simulate_trials,
 # to the case where true_prob_tox is specified implicitly through
@@ -45,6 +47,18 @@ setOldClass(c('dfcrm_selector_factory',
 #' summary(hsims, ordinalizer=NULL) # vanilla summary with binary toxicity
 #' summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
+#' )
+#' # Set a CRM skeleton from the average probs in above simulation
+#' get_dfcrm(skeleton = hsims$avg_prob_tox
+#'          ,target = 0.25
+#'          ) %>% stop_at_n(n = 24) %>%
+#'   simulate_trials(
+#'     num_sims = 20
+#'   , true_prob_tox = mtdi_gen
+#'   ) -> crm_hsims
+#' summary(crm_hsims
+#' , ordinalizer = function(MTDi, r0 = sqrt(2))
+#'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
 #' @rdname simulate_trials
 #' @export
@@ -80,6 +94,7 @@ setMethod(
       setTxtProgressBar(pb, k)
     }
     tpt_matrix <- do.call(rbind, tpts)
+    colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
     sims <- list(
       fits = fits
     , ordtox_check = ordtox
@@ -127,6 +142,19 @@ setMethod(
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' })
 #' summary(sims, r0=2)
+#' # Set a CRM skeleton from the average probs in above simulation
+#' get_dfcrm(skeleton = sims$true_prob_tox
+#'          ,target = 0.25
+#'          ) %>% stop_at_n(n = 24) %>%
+#'   simulate_trials(
+#'     num_sims = 20
+#'   , true_prob_tox = mtdi_dist
+#'   ) -> crm_sims
+#' summary(crm_sims
+#' , ordinalizer = function(MTDi, r0 = sqrt(2))
+#'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+#' )
+
 #' @rdname simulate_trials
 #' @export
 setMethod(
@@ -142,6 +170,7 @@ setMethod(
     sims <- simulate_trials(selector_factory = u_i(selector_factory)
                             , num_sims = num_sims
                             , true_prob_tox = tpt_vector
+                            , ... # including, e.g., i_like_big_trials param?
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units

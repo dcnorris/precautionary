@@ -268,7 +268,43 @@ cbind(data.table(`$r_0$` = r0), safety) %>% kable() %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
-# Details
+# Beyond 3 + 3
+
+One reason that package `escalation` makes such a suitable basis for these developments is that it unifies multiple dose-escalation designs. Thus, we can repeat the above simulation exercise with a CRM design:
+
+```{r CRM, results='hide'}
+crm_design <- get_dfcrm(skeleton = scenario, target = 0.25) %>%
+  stop_at_n(n = 24)
+crm_design %>% simulate_trials(
+  num_sims = 20
+, true_prob_tox = mtdi_dist
+) -> CRM_sims
+
+summary(CRM_sims)$safety
+```
+
+```{r, echo=FALSE}
+summary(CRM_sims)$safety %>%
+  kable() %>%
+  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+```
+
+```{r hyper-CRM, results='hide'}
+crm_design <- get_dfcrm(skeleton = scenario, target = 0.25) %>%
+  stop_at_n(n = 24)
+crm_design %>% simulate_trials(
+  num_sims = 20 # interpreted same as c(20,20), for convenience
+, true_prob_tox = mtdi_gen
+) -> CRM_hsims
+
+summary(CRM_hsims)
+```
+
+```{r, echo=FALSE}
+summary(CRM_hsims)$safety %>%
+  kable() %>%
+  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+```
 
 TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
 
