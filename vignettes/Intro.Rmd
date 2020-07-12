@@ -18,9 +18,11 @@ knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
 library(precautionary)
 library(knitr)
 library(kableExtra)
+
+options(ordinalizer = NULL) # vignette presumes this is not already set
 ```
 
-## Background
+# Basics
 
 In package [escalation](https://CRAN.R-project.org/package=escalation), you can simulate a 3 + 3 design as follows:
 
@@ -78,7 +80,7 @@ names(probs) <- paste(getOption('dose_levels'), mtdi_dist@units)
 t(probs) %>% kable(digits = 4)
 ```
 
-## Extending `escalation` to support this
+## Extending `escalation` to support the MTD$_i$ concept
 
 Package `precautionary` provides additional methods for `escalation` functions, so that an `mtdi_distribution` may be used instead of out-of-thin-air probabilities:
 
@@ -104,11 +106,11 @@ When its full implications are allowed to develop, the latent toxicity threshold
 For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of MTD$_i$, and relegates the MTD$_i$ concept *standing alone* to the status of a mere formalism. But in conjunction with *a dose scaling that links different toxicity grades at the individual level*, the MTD$_i$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
 
 ```{r}
-dose_tox_scaling <- function(MTDi, r0) {
+tox_threshold_scaling <- function(MTDi, r0) {
   MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 }
 summary(SIMS
-       ,ordinalizer = dose_tox_scaling
+       ,ordinalizer = tox_threshold_scaling
        ,r0 = 2      # supply a value for ordinalizer's r0 parameter
        )$safety %>% # select the 'safety' component of the summary
   kable() %>% add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
@@ -121,7 +123,7 @@ Clearly, we have now made some genuine progress. Of special interest from a safe
 Let us unroll the ordinalizer above, to make it less cryptic:
 
 ```{r, eval=FALSE}
-dose_tox_scaling <-
+tox_threshold_scaling <-
   function(MTDi   # An ordinalizer is a function of a dose threshold,
           ,r0 = 2 # and in general has additional parameters as well.
           ) {
@@ -140,15 +142,119 @@ dose_tox_scaling <-
   }
 ```
 
-In general, an ordinalizer returns a named vector^[The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.] that links the different doses at which an individual will experience each grade of toxicity. In [@norris_retrospective_2020], these concepts are laid out in terms of MTD$_i^g$ with the index $g$ running over toxicity grades:
+In general, an ordinalizer returns a named vector^[The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.] that links the different dose thresholds at which an individual will experience each grade of toxicity. In [@norris_retrospective_2020], these concepts are laid out in terms of MTD$_i^g$ with the index $g$ running over toxicity grades:
 
 $$
 \mathrm{MTD}_i^g, g \in \{1,...,5\},
 $$
 
-and defined as the dose threshold where a grade-$(g-1)$ toxicity would convert to grade-$g$.^[To preserve the intuition of the term 'maximum tolerated dose', you could say MTD$_i^g$ is the maximum dose that individual $i$ can tolerate if 'tolerability' is defined as toxicity below grade-$g$.] Thus, in the usual case where the binary 'dose-limiting toxicity' (DLT) of a dose-escalation design is defined as CTCAE Grade 3 and above, we identify MTD$_i$ with MTD$_i^3$ .
+and defined as the dose threshold where a grade-$(g-1)$ toxicity would convert to grade-$g$.^[To preserve the intuition of the term 'maximum tolerated dose', you could say MTD$_i^g$ is the maximum dose that individual $i$ can tolerate if 'tolerability' is defined as toxicity *below* grade-$g$.] Thus, in the usual case where the binary 'dose-limiting toxicity' (DLT) of a dose-escalation design is defined as CTCAE Grade ≥ 3, we identify 'MTD$_i$' with MTD$_i^3$ .
 
+## Taking stock of parameter counts
 
+It might seem that the benefits of package `precautionary` come at the cost of having to pre-specify many additional parameters. *Au contraire!* In the example above, the `CV` and `median` parameters of `mtdi_dist` **replaced** the 5 'true toxicity probabilities' that the package-`escalation` approach requires you to pluck out of thin air. Thus, immediately we have save 3 parameters. From this savings, we then spent only 1 on the single parameter `r0` of our simple ordinalizer. Indeed, if we had wished to spend all of our 'parameter savings', we could have specified an ordinalizer such as:^[Note the judicious allocation of parameters. This ordinalizer devotes 2 parameters (`r4` and `r5`) to the safety-critical threshold ratios $r_4 := \mathrm{MTD}_i^3 : \mathrm{MTD}_i^4$ and $r_5 := \mathrm{MTD}_i^3 : \mathrm{MTD}_i^4$, but conserves on parameters by sharing the same parameter $r_{12}$ for the ratios involving low-grade toxicities.]
+
+```{r, eval=FALSE}
+function(MTDi3, r12, r4, r5) {
+  c(Gr1 = MTDi3 / r12^2
+   ,Gr2 = MTDi3 / r12
+   ,Gr3 = MTDi3
+   ,Gr4 = MTDi3 * r4
+   ,Gr5 = MTDi3 * r4*r5
+   )
+}
+```
+
+As we count design parameters, we also ought not overlook the pre-specified dose levels themselves, which are indeed parameters of our design. But package `prcautionary` changes the manner in which these parameters enter into simulation-based trial design. In the usual approach, every new set of pre-specified dose levels requires its own set of 'true toxicity probabilities' to be pulled anew out of thin air. But in package `precautionary`, the linkage between dose levels and probabilities is provided through a model. In theory, this would allow us to obtain our dose levels as *results* of simulation-based design, instead of providing them as *inputs*.
+
+# Modeling uncertainty
+
+When you ask people to start thinking, sometimes they keep going. No sooner will you have elicited values for the `CV` and `median` parametrizing a lognormal MTD$_i$ distribution
+
+$$
+\begin{align}
+\log \mathrm{MTD}_i &\sim \mathscr{N}(\mu, \sigma^2)
+\\
+\mu &\equiv \log(\mathrm{median})
+\\
+\sigma^2 &\equiv \log (1+\mathrm{CV}^2),
+\end{align}
+$$
+
+than you will hear about the uncertainty in these values themselves. You can model this uncertainty by introducing *hyperparameters* $\sigma_{\mathrm{CV}}$ and $\sigma_{\mathrm{med}}$:
+
+$$
+\begin{align}
+\mu &\sim \mathscr{N}(\log \mathrm{median}, \sigma_{\mathrm{med}}^2)
+\\
+\mathrm{CV} &\sim \mathscr{R}(\sigma_{\mathrm{CV}})
+\end{align}
+$$
+
+Here, $\sigma_{\mathrm{med}}$ expresses *in relative terms*^[For example, setting $\sigma_{\mathrm{med}} = 0.5$ would express a ±50% uncertainty in our guessed median MTD$_i$.] our uncertainty about the median of MTD$_i$, while $\sigma_{\mathrm{CV}}$ is the parameter of the [Raleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution):
+
+```{r Raleigh-distribution, echo=FALSE, message=FALSE}
+# Plot the Raleigh density for a suitable range of sigma_CV values
+library(distr6)
+sigmas <- c(0.1, 0.25, 0.5, 1)
+curves <- as.data.table(expand.grid(x = seq(0, 2, 0.01)
+                                   ,mode = sigmas
+                                   )
+                        )
+curves[, pdf := Rayleigh$new(mode = mode)$pdf(x), by = mode]
+#library(lattice)
+#xyplot(pdf ~ x, groups = mode, data = curves, type = 'l')
+plot(pdf ~ x, data = curves[mode == sigmas[1]], type = 'l'
+     , main = "Probability density function of the Rayleigh distribution")
+for(sigma in sigmas[-1])
+  lines(pdf ~ x, data = curves[mode == sigma])
+text(x=0.3, y=5, expression(sigma == 0.1))
+text(x=0.5, y=2.25, expression(sigma == 0.25))
+text(x=0.75, y=1.4, expression(sigma == 0.5))
+text(x=1.5, y=0.9, expression(sigma == 1))
+```
+
+Happily, the Raleigh distribution's $\sigma$ parameter coincides with its mode. Thus, when we implement these features in package `precautionary`, we simply make the identification $\sigma_{\mathrm{CV}} \equiv \mathrm{CV}$ as a convenience to the user:
+
+```{r dang, results='hide'}
+mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+                                ,median_mtd = 5
+                                ,median_sdlog = 0.5 # this is new
+                                ,units="mg/kg"
+                                )
+design %>% simulate_trials(
+  num_sims = c(M = 20 # Number of trials to simulate per hyperprior draw
+              ,K = 20 # Number of draws from hyperprior
+              )
+, true_prob_tox = mtdi_gen # pull tox probs from MANY models
+) -> HYPERSIMS
+
+# As a convenience, package 'precautionary' lets you set the
+# ordinalizer as an *option* so that you don't have to keep
+# specifying it as an argument to summary(). By providing a
+# default setting for the r0 parameter in the ordinalizer
+# definition, we avoid having to keep specifying that, too.
+options(ordinalizer = function(MTDi, r0 = 1.5) {
+  MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+})
+
+summary(HYPERSIMS)$safety
+```
+
+```{r, echo=FALSE}
+summary(HYPERSIMS)$safety %>%
+  kable() %>%
+  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+```
+
+## Uncertainty about the ordinalizer
+
+What about our uncertainty over the parameter $r_0$?
+deiayou never know where they will stop. Discuss prior elicitation.
+
+Here, introduce the `mtdi_generator` idea.
+
+# Details
 
 TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
 

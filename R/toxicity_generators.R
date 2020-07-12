@@ -20,7 +20,7 @@
 # In constructing this class, I may wish to anticipate the need to abstract
 # the parameter specification to facilitate (1a).
 #
-#' @importFrom distr6 SDistribution Lognormal
+#' @importFrom distr6 SDistribution Lognormal Rayleigh
 setOldClass(c("Lognormal","SDistribution"))
 
 # The @ordinalizer slot is an optional 'mixin' defaulting to
@@ -128,14 +128,9 @@ setGeneric("draw_samples", function(hyper, K, ...) {
 #' @export hyper_mtdi_lognormal
 hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
-    lambda_CV = "numeric"
+    CV = "numeric"
   , median_mtd = "numeric"
-  , median_sd = "numeric" # TODO: Consider whether an argument can be made
-                          #       for dispensing with this 2nd uncertainty
-                          #       measure. Or is it CV that I might argue
-                          #       is superfluous, on grounds that we may
-                          #       (intuitively) impute our uncertainty in
-                          #       median_mtd to the population variance?
+  , median_sdlog = "numeric"
   ),
   contains = "hyper_mtdi_distribution"
   )
@@ -151,8 +146,10 @@ setMethod(
   function(hyper, K=NULL, ...) {
     if(missing(K)) K <- 1
     mapply(mtdi_lognormal
-          , CV = rexp(n=K, rate=hyper@lambda_CV)
-          , median = rnorm(n=K, mean=hyper@median_mtd, sd=hyper@median_sd)
+          , CV = Rayleigh$new(mode = hyper@CV)$rand(n=K, simplify=TRUE)
+          , median = rlnorm(n=K
+                            , meanlog=log(hyper@median_mtd)
+                            , sdlog=hyper@median_sdlog)
           , MoreArgs = list(units = hyper@units
                            ,ordinalizer = hyper@ordinalizer)
           , SIMPLIFY = FALSE)

@@ -37,8 +37,8 @@ setOldClass(c('dfcrm_selector_factory',
 
 #' @examples
 #' options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
-#' mtdi_gen <- hyper_mtdi_lognormal(lambda_CV = 3
-#'                                  , median_mtd = 6, median_sd = 2
+#' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+#'                                  , median_mtd = 6, median_sdlog = 0.5
 #'                                  , units="mg/kg")
 #' hsims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
