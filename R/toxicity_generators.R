@@ -41,6 +41,41 @@ setClass("mtdi_distribution",
 setGeneric("plot")
 
 #' @export
+setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
+  xlab <- paste0("Dose (", x@units, ")")
+  ylab <- "CDF"
+  params <- paste0("CV ~ Raleigh(mode=", x@CV, ");  median = "
+                   , x@median_mtd, x@units, " ± ", 100*x@median_sdlog, "%")
+  mtdi_samples <- draw_samples(x, K = K)
+  title <- paste(K, class(mtdi_samples[[1]]@dist)[1]
+                 , "MTDi distributions sampled from hyperprior")
+  CDFs <- seq(0.01, 0.99, 0.01)
+  quantiles <- lapply(mtdi_samples
+                      , function(mtdi) mtdi@dist$quantile(CDFs))
+  xlim <- range(do.call(c, quantiles))
+  plot.default(CDFs ~ quantiles[[1]], type="l", log="x"
+               , xlab = xlab, ylab = ylab, main = title
+               , xlim = xlim
+               , sub = params, font.sub = 3
+               , las = 1
+               , lab = c(x=20, y=6, len=3)
+               , col = "gray"
+  )
+  # Locate old-fashioned, decade-wise logarithmic axis minor ticks
+  erange <- floor(log10(range(quantiles)))
+  exponents <- erange[1]:erange[2]
+  minor_ticks <- as.vector(outer(2:9, exponents, function(x,y) x*10^y))
+  axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
+  dose_levels <- getOption('dose_levels')
+  for(k in 2:K){
+    lines(CDFs ~ quantiles[[k]], col = "gray")
+  }
+  if( !is.null(dose_levels) ){
+    abline(v = dose_levels, lty = 3)
+  }
+})
+
+#' @export
 setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
   xlab <- paste0("Dose (", x@units, ")")
   ylab <- "CDF"

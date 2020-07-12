@@ -216,15 +216,21 @@ text(x=1.5, y=0.9, expression(sigma == 1))
 
 Happily, the Raleigh distribution's $\sigma$ parameter coincides with its mode. Thus, when we implement these features in package `precautionary`, we simply make the identification $\sigma_{\mathrm{CV}} \equiv \mathrm{CV}$ as a convenience to the user:
 
-```{r dang, results='hide'}
+```{r hyperprior, fig.cap="Multiple samples from a *hyperprior* over the distribution of MTD$_i$. Consider the implications for the customary practice of pulling 'true toxicity probabilities' out of thin air!"}
 mtdi_gen <- hyper_mtdi_lognormal(CV = 1
                                 ,median_mtd = 5
                                 ,median_sdlog = 0.5 # this is new
                                 ,units="mg/kg"
                                 )
+plot(mtdi_gen, K=100)
+```
+
+```{r dang, results='hide'}
 design %>% simulate_trials(
-  num_sims = c(M = 20 # Number of trials to simulate per hyperprior draw
-              ,K = 20 # Number of draws from hyperprior
+  # Note 'num_sims' is now a vector of 2 numbers, reflecting the
+  # *multilevel* nature of simulations from a hyper_mtdi_distribution:
+  num_sims = c(20 # How many trials to simulate per hyperprior draw
+              ,20 # How many samples to draw from hyperprior
               )
 , true_prob_tox = mtdi_gen # pull tox probs from MANY models
 ) -> HYPERSIMS
