@@ -249,10 +249,18 @@ summary(HYPERSIMS)$safety %>%
 
 ## Uncertainty about the ordinalizer
 
-What about our uncertainty over the parameter $r_0$?
-deiayou never know where they will stop. Discuss prior elicitation.
+What about our uncertainty over the parameter $r_0$? Here, it seems entirely reasonable simply to explore a range of values:
 
-Here, introduce the `mtdi_generator` idea.
+```{r}
+r0 <- c(1.25, 1.5, 1.75, 2.0)
+rbind(summary(HYPERSIMS, r0=r0[1])$safety
+     ,summary(HYPERSIMS, r0=r0[2])$safety
+     ,summary(HYPERSIMS, r0=r0[3])$safety
+     ,summary(HYPERSIMS, r0=r0[4])$safety
+     ) -> safety
+cbind(data.table(`$r_0$` = r0), safety) %>% kable() %>%
+  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+```
 
 # Details
 
