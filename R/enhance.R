@@ -75,7 +75,7 @@ cohorts_of_n <- function(n = 3, mean_time_delta = 1) {
 #'
 #' @importFrom magrittr %>%
 #' @importFrom utils tail
-#' @importFrom escalation recommended_dose continue
+#' @importFrom escalation recommended_dose continue parse_phase1_outcomes
 phase1_sim <- function(
   selector_factory,
   true_prob_tox,
@@ -85,7 +85,6 @@ phase1_sim <- function(
   i_like_big_trials = FALSE, # Safety net if stop_trial_func is mis-specified...
   return_all_fits = FALSE
 ) {
-  parse_phase1_outcomes <- escalation:::parse_phase1_outcomes
   spruce_outcomes_df <- escalation:::spruce_outcomes_df
   if(is.character(previous_outcomes)) {
     base_df <- parse_phase1_outcomes(previous_outcomes, as_list = FALSE)
