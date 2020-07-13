@@ -35,7 +35,7 @@ simulation_function.u_i <- function(selector_factory) {
 #' Override \code{escalation::cohorts_of_n} to include latent toxicity tolerances
 #' 
 #' The original function in package \code{escalation} recognizes that individual
-#' trial participants arrive at distinct times. Building upon this acknowledgement
+#' trial participants arrive at distinct times. Building upon this acknowledgment
 #' of individuality, this override adds an extra line of code to draw as well a
 #' latent toxicity tolerance \code{u_i} for each individual participant.
 #' 
