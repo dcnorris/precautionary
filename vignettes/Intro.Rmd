@@ -270,76 +270,51 @@ cbind(data.table(`$r_0$` = r0), safety) %>% kable() %>%
 
 # Beyond 3 + 3
 
-One reason that package `escalation` makes such a suitable basis for these developments is that it unifies multiple dose-escalation designs. Thus, we can repeat the above simulation exercise with a CRM design:
-
-```{r CRM, results='hide'}
-crm_design <- get_dfcrm(skeleton = scenario, target = 0.25) %>%
-  stop_at_n(n = 24)
-crm_design %>% simulate_trials(
-  num_sims = 20
-, true_prob_tox = mtdi_dist
-) -> CRM_sims
-
-summary(CRM_sims)$safety
-```
-
-```{r, echo=FALSE}
-summary(CRM_sims)$safety %>%
-  kable() %>%
-  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
-```
+One reason that package `escalation` makes such a suitable basis for these developments is that it unifies several dose-escalation designs under one object-oriented design. Thus, we can repeat the above simulation exercise with a CRM design:
 
 ```{r hyper-CRM, results='hide'}
 crm_design <- get_dfcrm(skeleton = scenario, target = 0.25) %>%
   stop_at_n(n = 24)
 crm_design %>% simulate_trials(
-  num_sims = 20 # interpreted same as c(20,20), for convenience
+  num_sims = 20 # interpreted as convenient shorthand for c(20,20)
 , true_prob_tox = mtdi_gen
-) -> CRM_hsims
+) -> CRM_HYPERSIMS
 
-summary(CRM_hsims)
+summary(CRM_HYPERSIMS)$safety
 ```
 
 ```{r, echo=FALSE}
-summary(CRM_hsims)$safety %>%
+summary(CRM_HYPERSIMS)$safety %>%
   kable() %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
+The BOIN design of [@liu_bayesian_2015] is also supported:
+
+```{r hyper-BOIN, results='hide'}
+boin_design <- get_boin(num_doses = 5, target = 0.25) %>%
+  stop_at_n(n = 24)
+boin_design %>% simulate_trials(
+  num_sims = 20
+, true_prob_tox = mtdi_gen
+) -> BOIN_HYPERSIMS
+
+summary(BOIN_HYPERSIMS)$safety
+```
+
+```{r, echo=FALSE}
+summary(BOIN_HYPERSIMS)$safety %>%
+  kable() %>%
+  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+```
+
+
 TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
-
-TODO: Show how you can set an `options(ordinalizer = <function>)`, and give advice that parameters (like `r0` above) in such a default ordinalizer generally warrant default settings, in order to fully yield the convenience-value of an option setting.
-
-The ordinalizer given above adopts the basic assumption that the ordinal toxicities are equally spaced in logarithmic dose-space. For example, if $r_0 = 2$, then ...
 
 ### Fit a hyper_mtdi_distribution to a CRM skeleton
 
 One way to understand the `hyper_mtdi_distribution` class is as a putative generator for the 'skeleton' of a CRM model.
 
-#### Obtain dose-wise DLT probabilities from an MTDi distribution:
-
-Use a lognormally-distributed MTD$_i$ inspired by [@norris_retrospective_2020]:
-
-```{r derive-DLT-probs, eval=FALSE}
-mu <- 5              # Values estimated in arXiv:2004.12755 [stat, q-bio];
-sigma <- 1/sqrt(1.3) # see subsection 'Model estimates' and Table 2, pp. 2-3.
-dose_levels <- c(2, 6, 20, 60, 180, 400)
-MTDi <- Lognormal$new(meanlog = mu, sdlog = sigma)
-DLT_probs <- MTDi$cdf(dose_levels)
-```
-
-#### Run a simple simulation
-
-```{r simple-sim, eval=FALSE}
-suppressWarnings( # "Unknown or uninitialised column: `u_i`" warnings (from Tibble?)
-sims <- get_three_plus_three(num_doses = 6) %>%
-  simulate_trials(num_sims = 200, true_prob_tox = DLT_probs)
-)
-```
-
-#### Obtain ordinal toxicity outcomes via `u_i`
-
-
-#### Try accelerated titration à la NCT02848911
+<!-- TODO: Try accelerated titration à la NCT02848911 -->
 
 ## References
