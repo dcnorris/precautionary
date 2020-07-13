@@ -1,7 +1,7 @@
 ---
 title: "Introduction to package 'precautionary'"
 author: "David C. Norris"
-date: "7/8/2020"
+date: "7/13/2020"
 output: bookdown::tufte_html2
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
@@ -308,13 +308,8 @@ summary(BOIN_HYPERSIMS)$safety %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
+# Implications of package `precautionary`
 
-TODO: Show how you can't use an ordinalizer directly on simulations from package 'escalation'. Explain that the `u_i` variable is missing, but has been supplied by an overridden function in 'precautionary'.
+Package `precautionary` demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking. prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an 'ordinalizer' and the notion of [therapeutic index](https://en.wikipedia.org/wiki/Therapeutic_index) (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.
 
-### Fit a hyper_mtdi_distribution to a CRM skeleton
-
-One way to understand the `hyper_mtdi_distribution` class is as a putative generator for the 'skeleton' of a CRM model.
-
-<!-- TODO: Try accelerated titration à la NCT02848911 -->
-
-## References
+# References
