@@ -41,10 +41,11 @@
 #'    \doi{10.1002/pst.2016}.
 #'    
 #' 8. Norris DC. Retrospective analysis of a fatal dose-finding trial.
-#'    arXiv:2004.12755 [stat, q-bio]. April 2020.
+#'    arXiv:2004.12755 \[stat, q-bio\]. April 2020.
 #'    \url{http://arxiv.org/abs/2004.12755}
 #' 
-#' @import distr6
 #' @import methods
+#' @import magrittr
+#' @import data.table
 NULL
 

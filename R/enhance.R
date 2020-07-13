@@ -26,6 +26,7 @@ u_i <- function(selector_factory) {
 #' no equivalent for \code{simulation_function.derived_dose_selector_factory}
 #' is yet implemented.
 #'
+#' @importFrom escalation simulation_function
 #' @export
 simulation_function.u_i <- function(selector_factory) {
   return(phase1_sim) # returns an override defined in this package
@@ -61,16 +62,20 @@ cohorts_of_n <- function(n = 3, mean_time_delta = 1) {
 
 #' Override \code{escalation::phase1_sim} to incorporate latent toxicity tolerances
 #'
-#' @param selector_factory 
-#' @param true_prob_tox 
-#' @param sample_patient_arrivals 
-#' @param previous_outcomes 
-#' @param next_dose 
-#' @param i_like_big_trials 
-#' @param return_all_fits 
+#' @param selector_factory An \code{escalation::selector_factory} object
+#' @param true_prob_tox A vector of toxicity probabilities for the doses
+#'  defined in \code{selector_factory} 
+#' @param sample_patient_arrivals A function implementing an arrivals process
+#'  for trial enrollment
+#' @param previous_outcomes This may or may not apply in applications of
+#'  package \code{precautionary}
+#' @param next_dose Undocumented
+#' @param i_like_big_trials I didn't choose this parameter name
+#' @param return_all_fits Don't do this
 #'
 #' @importFrom magrittr %>%
 #' @importFrom utils tail
+#' @importFrom escalation recommended_dose continue
 phase1_sim <- function(
   selector_factory,
   true_prob_tox,
@@ -80,6 +85,8 @@ phase1_sim <- function(
   i_like_big_trials = FALSE, # Safety net if stop_trial_func is mis-specified...
   return_all_fits = FALSE
 ) {
+  parse_phase1_outcomes <- escalation:::parse_phase1_outcomes
+  spruce_outcomes_df <- escalation:::spruce_outcomes_df
   if(is.character(previous_outcomes)) {
     base_df <- parse_phase1_outcomes(previous_outcomes, as_list = FALSE)
   } else if(is.data.frame(previous_outcomes)) {
@@ -158,6 +165,7 @@ phase1_sim <- function(
   }
 }
 
+#' @importFrom escalation prob_recommend
 #' @export
 prob_recommend.precautionary <- function(x, ...) {
   prob_recs <- NextMethod()
@@ -165,6 +173,7 @@ prob_recommend.precautionary <- function(x, ...) {
   prob_recs
 }
 
+#' @importFrom escalation prob_administer
 #' @export
 prob_administer.precautionary <- function(x, ...) {
   prob_admin <- NextMethod()
@@ -173,12 +182,13 @@ prob_administer.precautionary <- function(x, ...) {
 }
 
 #' @export
+#' @importFrom escalation num_patients num_tox trial_duration
 print.precautionary <- function(x, ...) {
   
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
   
-  cat('Number of doses:', num_doses(x), '\n')
+  cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
   
   cat('True probability of toxicity:\n')
@@ -208,12 +218,13 @@ print.precautionary <- function(x, ...) {
 
 
 #' @export
+#' @importFrom escalation num_patients num_tox trial_duration
 print.hyper <- function(x, ...) {
   
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
   
-  cat('Number of doses:', num_doses(x), '\n')
+  cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
   
   cat('Average probability of toxicity:\n')
@@ -242,8 +253,21 @@ print.hyper <- function(x, ...) {
 }
 
 
+#' Convert an object of class c('precautionary','simulations') to a data.table
+#'
+#' @param x An object of class c('precautionary','simulations')
+#'
+#' @param keep.rownames Unused; retained for S3 generic/method consistency
+#' @param ordinalizer If not NULL, this is a function mapping the threshold
+#'  dose ('MTDi') at which an individual experiences a binary toxicity (as
+#'  recognized by the dose-escalation design) to a named vector giving dose
+#'  thresholds for multiple grades of toxicity. The names of this vector will
+#'  be taken as designations of the toxicity grades.
+#' @param ... Additional parameters passed to the \code{ordinalizer}
+#'
 #' @export
-as.data.table.precautionary <- function(x, ordinalizer = getOption('ordinalizer')
+as.data.table.precautionary <- function(x, keep.rownames = FALSE
+                                        , ordinalizer = getOption('ordinalizer')
                                         , ...) {
   extractor <- ifelse(is(x$fits[[1]][[1]]$fit, "derived_dose_selector")
                      ,function(.) .[[1]]$fit$parent$outcomes
@@ -254,10 +278,10 @@ as.data.table.precautionary <- function(x, ordinalizer = getOption('ordinalizer'
   if( is(x,"hyper") ){ # TODO: Consider handling this via 'as.data.table.hyper'
     K <- length(x$hyper$mtdi_samples)
     M <- max(ensemble$rep)/K  # so now K*M is nrow(ensemble)
+    k <- MTDi <- NULL # avert spurious R CMD check "no visible binding" NOTEs
     ensemble[, k := 1 + (rep-1) %/% M]
     ensemble[, rep := 1 + (rep-1) %% M]
     setcolorder(ensemble,c("k","rep")) # so key .(k,rep) is on far left
-    look <<- ensemble
     ensemble[, MTDi := x$hyper$mtdi_samples[[k]]@dist$quantile(u_i), by = k]
   } else {
     ensemble[, MTDi := x$mtdi_dist@dist$quantile(ensemble$u_i)]
@@ -283,20 +307,23 @@ as.data.table.precautionary <- function(x, ordinalizer = getOption('ordinalizer'
   ensemble
 }
 
-
-#' @importFrom dplyr rename rename_with mutate select
+#' @importFrom dplyr rename rename_with mutate select everything
+#' @importFrom stats xtabs
+#' @importFrom rlang .data
 #' @export
-summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...) {
+summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer'), ...) {
   summary <- NextMethod()
-  dose_units <- paste0("dose (", x$dose_units, ")")
+  dose_units <- paste0("dose (", object$dose_units, ")")
+  # For an explanation of the .data 'pronoun' used below,
+  # see https://dplyr.tidyverse.org/articles/programming.html.
   summary <- summary %>%
-    mutate("real_dose" = c(0, x$dose_levels)[as.integer(dose)]) %>%
-    select(dose, real_dose, everything()) %>%
-    rename_with(.fn = function(.) dose_units, .cols = real_dose)
-  ensemble <- as.data.table(x, ordinalizer = ordinalizer, ...)
+    mutate("real_dose" = c(0, object$dose_levels)[as.integer(.data$dose)]) %>%
+    select(.data$dose, .data$real_dose, everything()) %>%
+    rename_with(.fn = function(.) dose_units, .cols = .data$real_dose)
+  ensemble <- as.data.table(object, ordinalizer = ordinalizer, ...)
   if( !is.null(ordinalizer) ){
     summary <- list(escalation = summary, safety = NULL)
-    K <- c(nrow(x$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
+    K <- c(nrow(object$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
     expectation <- colMeans(xtabs(~ rep + Tox, data=ensemble))/K
     expectation <- c(expectation, Total = sum(expectation))
     expectation <- t(as.matrix(expectation))
@@ -306,6 +333,7 @@ summary.precautionary <- function(x, ordinalizer = getOption('ordinalizer'), ...
   summary
 }
 
+#' @importFrom escalation num_doses
 #' @export
 num_doses.three_plus_three_selector_factory <- function(x, ...) {
   return(x$num_doses)
@@ -321,6 +349,7 @@ num_doses.boin_selector_factory <- function(x, ...) {
   return(x$num_doses)
 }
 
+#' @importFrom escalation dose_indices
 #' @export
 dose_indices.default <- function(x, ...) {
   n <- num_doses(x)

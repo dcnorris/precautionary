@@ -40,12 +40,21 @@ setClass("mtdi_distribution",
 
 setGeneric("plot")
 
+#' Visualize K samples from an \code{mtdi_generator} object
+#'
+#' @param x An \code{mtdi_generator} object
+#' @param y Included for compatibility with generic signature
+#' @param K Number of samples to draw from hyperprior for visualization
+#' @param \dots Included for compatibility with generic signature
+#'
+#' @importFrom graphics abline axis lines plot.default
 #' @export
 setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
   xlab <- paste0("Dose (", x@units, ")")
   ylab <- "CDF"
   params <- paste0("CV ~ Raleigh(mode=", x@CV, ");  median = "
-                   , x@median_mtd, x@units, " ± ", 100*x@median_sdlog, "%")
+                   , x@median_mtd, x@units, " \u00b1 " # <-- plus/minus character
+                   , 100*x@median_sdlog, "%")
   mtdi_samples <- draw_samples(x, K = K)
   title <- paste(K, class(mtdi_samples[[1]]@dist)[1]
                  , "MTDi distributions sampled from hyperprior")
@@ -75,6 +84,12 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
   }
 })
 
+#' Visualize an \code{mtdi_distribution} object
+#'
+#' @param x An \code{mtdi_distribution} object 
+#' @param y Included for compatibility with generic signature
+#' @param \dots Included for compatibility with generic signature
+#'
 #' @export
 setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
   xlab <- paste0("Dose (", x@units, ")")
@@ -107,6 +122,10 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
 })
 
 
+#' A lognormal MTDi distribution
+#' 
+#' @slot dist An object of class \code{distr6::Lognormal}
+#'
 #' @export mtdi_lognormal
 mtdi_lognormal <- setClass("mtdi_lognormal",
   slots = list(
@@ -131,6 +150,24 @@ setGeneric("draw_samples", function(hyper, K, ...) {
   standardGeneric("draw_samples")
 })
 
+#' Hyperprior for lognormal MTDi distributions
+#' 
+#' This hyperprior generates lognormal MTDi distributions with their
+#' coefficient of variation being drawn from a Rayleigh distribution
+#' with mode parameter \code{CV}. Because the standard deviation of
+#' this distribution is
+#' 
+#' this implicitly link our uncertainty about \code{CV} to its value.
+#' 
+#' The medians of the lognormal distributions generated are themselves
+#' drawn from a lognormal distribution with \code{meanlog = log(median_mtd)}
+#' and \code{sdlog = median_sdlog}. Thus, parameter \code{median_sdlog}
+#' represents a proportional uncertainty in \code{median_mtd}.
+#'
+#' @slot CV Coefficient of variation
+#' @slot median_mtd Median MTDi
+#' @slot median_sdlog Proportional uncertainty in median MTDi
+#'
 #' @export hyper_mtdi_lognormal
 hyper_mtdi_lognormal <- setClass("hyper_mtdi_lognormal",
   slots = list( # hyperparameters
@@ -146,6 +183,7 @@ setMethod("initialize", "hyper_mtdi_lognormal",
     .Object <- callNextMethod(.Object, ...)
   })
 
+#' @importFrom stats rlnorm
 setMethod(
   "draw_samples"
   , c("hyper_mtdi_lognormal","numeric"),

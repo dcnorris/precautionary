@@ -61,6 +61,7 @@ setOldClass(c('stop_at_n_selector_factory',
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
 #' @rdname simulate_trials
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 setMethod(
   "simulate_trials"
