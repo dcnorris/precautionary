@@ -15,6 +15,7 @@ Suggests:
     knitr,
     rmarkdown,
     bookdown,
+    tufte,
     kableExtra,
     testthat
 Description: Enhances various R packages that support the design and simulation
