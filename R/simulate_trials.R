@@ -42,18 +42,28 @@ setOldClass(c('stop_at_n_selector_factory',
 #' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
 #'                                  , median_mtd = 6, median_sdlog = 0.5
 #'                                  , units="mg/kg")
+#' num_sims <- ifelse(interactive()
+#' , c(15, 20)
+#' , c( 3,  5) # avoid taxing CRAN servers
+#' )
 #' hsims <- get_three_plus_three(num_doses = 6) %>%
-#'   simulate_trials(num_sims = c(30, 10), true_prob_tox = mtdi_gen)
+#'   simulate_trials(
+#'     num_sims = num_sims
+#'   , true_prob_tox = mtdi_gen)
 #' summary(hsims, ordinalizer=NULL) # vanilla summary with binary toxicity
 #' summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' )
 #' # Set a CRM skeleton from the average probs in above simulation
+#' num_sims <- ifelse(interactive()
+#' , 20
+#' ,  5  # avoid taxing CRAN servers
+#' )
 #' get_dfcrm(skeleton = hsims$avg_prob_tox
 #'          ,target = 0.25
 #'          ) %>% stop_at_n(n = 24) %>%
 #'   simulate_trials(
-#'     num_sims = 20
+#'     num_sims = num_sims
 #'   , true_prob_tox = mtdi_gen
 #'   ) -> crm_hsims
 #' summary(crm_hsims
@@ -83,7 +93,7 @@ setMethod(
     fits <- list()
     ordtox <- list()
     tpts <- list()
-    pb <- txtProgressBar(max=K, style=3)
+    if(interactive()) pb <- txtProgressBar(max=K, style=3)
     for(k in 1:K){
       sims_k <- callGeneric(selector_factory = protocol
                            ,num_sims = M
@@ -92,7 +102,7 @@ setMethod(
       fits <- c(fits, sims_k[[1]])
       ordtox[[k]] <- attr(sims_k,'ordtox')
       tpts[[k]] <- sims_k$true_prob_tox
-      setTxtProgressBar(pb, k)
+      if(interactive()) setTxtProgressBar(pb, k)
     }
     tpt_matrix <- do.call(rbind, tpts)
     colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
@@ -136,8 +146,14 @@ setMethod(
 #' mtdi_dist <- mtdi_lognormal(CV = 0.5
 #'                            ,median = 140
 #'                            ,units = "ng/kg/week")
+#' num_sims <- ifelse(interactive()
+#' , 100
+#' ,  10  # avoid taxing CRAN servers
+#' )
 #' sims <- get_three_plus_three(num_doses = 6) %>%
-#'   simulate_trials(num_sims = 50, true_prob_tox = mtdi_dist)
+#'   simulate_trials(
+#'     num_sims = num_sims
+#'   , true_prob_tox = mtdi_dist)
 #' # Now attach a proper ordinalizer to 'mtdi_dist':
 #' options(ordinalizer = function(dose, r0) {
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)

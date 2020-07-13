@@ -6,7 +6,7 @@
 #' in pharmacokinetics and pharmacodynamics.
 #' @aliases precautionary-package precautionary
 #' @docType package
-#' @author David C. Norris
+#' @author David C. Norris (<https://orcid.org/0000-0001-9593-6343>)
 #' 
 #' @references
 #' 1. Norris DC. Dose Titration Algorithm Tuning (DTAT) should supersede
