@@ -56,8 +56,8 @@ setOldClass(c('stop_at_n_selector_factory',
 #' )
 #' # Set a CRM skeleton from the average probs in above simulation
 #' num_sims <- ifelse(interactive()
-#' , 20
-#' ,  5  # avoid taxing CRAN servers
+#' , 16
+#' ,  4  # avoid taxing CRAN servers
 #' )
 #' get_dfcrm(skeleton = hsims$avg_prob_tox
 #'          ,target = 0.25
