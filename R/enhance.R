@@ -85,7 +85,13 @@ phase1_sim <- function(
   i_like_big_trials = FALSE, # Safety net if stop_trial_func is mis-specified...
   return_all_fits = FALSE
 ) {
-  spruce_outcomes_df <- escalation:::spruce_outcomes_df
+  spruce_outcomes_df <- function(df) { # TODO: Request 'escalation' export this fun
+    df$dose <- as.integer(df$dose)
+    df$tox <- as.integer(df$tox)
+    if('cohort' %in% colnames(df)) df$cohort <- as.integer(df$cohort)
+    if('patient' %in% colnames(df)) df$patient <- as.integer(df$patient)
+    df
+  }
   if(is.character(previous_outcomes)) {
     base_df <- parse_phase1_outcomes(previous_outcomes, as_list = FALSE)
   } else if(is.data.frame(previous_outcomes)) {
