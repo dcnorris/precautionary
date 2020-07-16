@@ -211,8 +211,6 @@ curves <- as.data.table(expand.grid(x = seq(0, 2, 0.01)
                                    )
                         )
 curves[, pdf := Rayleigh$new(mode = mode)$pdf(x), by = mode]
-#library(lattice)
-#xyplot(pdf ~ x, groups = mode, data = curves, type = 'l')
 plot(pdf ~ x, data = curves[mode == sigmas[1]], type = 'l'
      , main = "Probability density function of the Rayleigh distribution")
 for(sigma in sigmas[-1])
@@ -231,7 +229,7 @@ mtdi_gen <- hyper_mtdi_lognormal(CV = 1
                                 ,median_sdlog = 0.5 # this is new
                                 ,units="mg/kg"
                                 )
-plot(mtdi_gen, K=100)
+plot(mtdi_gen, K=100, col=adjustcolor("red", alpha=0.25))
 ```
 
 ```{r dang}

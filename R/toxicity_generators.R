@@ -45,11 +45,20 @@ setGeneric("plot")
 #' @param x An \code{mtdi_generator} object
 #' @param y Included for compatibility with generic signature
 #' @param K Number of samples to draw from hyperprior for visualization
-#' @param \dots Included for compatibility with generic signature
+#' @param col Color of lines used to depict samples
+#' @param \dots Additional arguments passed onward to \code{plot}
 #'
 #' @importFrom graphics abline axis lines plot.default
+#' @examples
+#' if (interactive()) {
+#' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+#'                                 ,median_mtd = 5
+#'                                 ,median_sdlog = 0.5
+#'                                 ,units="mg/kg")
+#' plot(mtdi_gen, K=100, col=adjustcolor("red", alpha=0.5))
+#' } 
 #' @export
-setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
+setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, col="gray", ...) {
   xlab <- paste0("Dose (", x@units, ")")
   ylab <- "CDF"
   params <- paste0("CV ~ Raleigh(mode=", x@CV, ");  median = "
@@ -68,7 +77,8 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
                , sub = params, font.sub = 3
                , las = 1
                , lab = c(x=20, y=6, len=3)
-               , col = "gray"
+               , col = col
+               , ...
   )
   # Locate old-fashioned, decade-wise logarithmic axis minor ticks
   erange <- floor(log10(range(quantiles)))
@@ -77,7 +87,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
   axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
   dose_levels <- getOption('dose_levels')
   for(k in 2:K){
-    lines(CDFs ~ quantiles[[k]], col = "gray")
+    lines(CDFs ~ quantiles[[k]], col = col, ...)
   }
   if( !is.null(dose_levels) ){
     abline(v = dose_levels, lty = 3)
@@ -88,8 +98,19 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, ...) {
 #'
 #' @param x An \code{mtdi_distribution} object 
 #' @param y Included for compatibility with generic signature
-#' @param \dots Included for compatibility with generic signature
+#' @param \dots Additional arguments passed onward to \code{plot}
 #'
+#' @examples 
+#' if (interactive()) {
+#' mtdi_dist <- mtdi_lognormal(CV = 2
+#'                            ,median = 5
+#'                            ,units = "mg/kg")
+#' # Setting pre-specified dose levels via options() causes
+#' # toxicity probabilities to be annotated on the plot.
+#' old <- options(dose_levels = c(0.5, 1, 2, 4, 6))
+#' plot(mtdi_dist, col = "red")
+#' options(old)
+#' }
 #' @export
 setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
   xlab <- paste0("Dose (", x@units, ")")
@@ -104,6 +125,7 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
                , sub = params, font.sub = 3
                , las = 1
                , lab = c(x=20, y=6, len=3)
+               , ...
                )
   # Locate old-fashioned, decade-wise logarithmic axis minor ticks
   erange <- floor(log10(range(quantiles)))
