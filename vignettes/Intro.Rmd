@@ -20,13 +20,25 @@ library(knitr)
 library(kableExtra)
 
 options(ordinalizer = NULL) # vignette presumes this is not already set
+
+# Echo source focused on package functionality by redacting calls to kable()
+# see https://bookdown.org/yihui/rmarkdown-cookbook/hook-hide.html:
+local({
+  hook_source <- knitr::knit_hooks$get('source')
+  knitr::knit_hooks$set(source = function(x, options) {
+    x <- gsub(" -> etc.", "", x)
+    x <- x[!grepl("^etc. %>%", x)] # strip lines starting "etc. %>% ..."
+    x <- x[!grepl("\\(etc.,", x)]  # strip lines with fun(etc., ...)
+    hook_source(x, options)
+  })
+})
 ```
 
 # Basics
 
 In package [escalation](https://CRAN.R-project.org/package=escalation), you can simulate a 3 + 3 design as follows:
 
-```{r results='hide'}
+```{r basic-sim}
 library(escalation)
 # Design a 3 + 3 trial, with 5 pre-specified doses to escalate through
 design <- get_three_plus_three(num_doses = 5)
@@ -38,12 +50,9 @@ design %>% simulate_trials( # Feed the design to the simulator ...
 , true_prob_tox = scenario  # under the chosen scenario,
 ) -> sims                   # and store the results.
 
-summary(sims) # summarize simulation results
-```
-
-```{r basic-sim, echo=FALSE}
-kable(summary(sims)
-     ,caption="Simulation summary as produced by package `escalation`.")
+summary(sims) -> etc. # summarize simulation results
+etc. %>%
+  kable(caption="Simulation summary as produced by package `escalation`.")
 ```
 
 From Table \@ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the $n$ column, we can estimate expected enrollment at `r sum(round(summary(sims)$n, digits=2))`, which perhaps informs us about the expected cost or duration of our trial.^[Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their varying likelihood.]
@@ -84,17 +93,17 @@ t(probs) %>% kable(digits = 4)
 
 Package `precautionary` provides additional methods for `escalation` functions, so that an `mtdi_distribution` may be used instead of out-of-thin-air probabilities:
 
-```{r, results='hide'}
+```{r MTDi-regime}
 design %>% simulate_trials(
   num_sims = 100
 , true_prob_tox = mtdi_dist # pull tox probs from a MODEL, not thin air
 ) -> SIMS
 
-summary(SIMS)
+summary(SIMS) -> etc.
+etc. %>% kable(caption = "A simulation summary under the MTD$_i$ regime of package `precautionary`.")
 ```
-```{r MTDi-regime, echo=FALSE}
-kable(summary(SIMS)
-     ,caption = "A simulation summary under the MTD$_i$ regime of package `precautionary`.")
+```{r , echo=FALSE}
+
 ```
 
 Judging from Table \@ref(tab:MTDi-regime), however, introducing the MTD$_i$ concept has by itself generated little progress. The only apparent improvement compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses. To make further progress *while continuing to operate within the dose-escalation paradigm*, we need to introduce another concept.
@@ -225,7 +234,7 @@ mtdi_gen <- hyper_mtdi_lognormal(CV = 1
 plot(mtdi_gen, K=100)
 ```
 
-```{r dang, results='hide'}
+```{r dang}
 design %>% simulate_trials(
   # Note 'num_sims' is now a vector of 2 numbers, reflecting the
   # *multilevel* nature of simulations from a hyper_mtdi_distribution:
@@ -244,12 +253,8 @@ options(ordinalizer = function(MTDi, r0 = 1.5) {
   MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 })
 
-summary(HYPERSIMS)$safety
-```
-
-```{r, echo=FALSE}
-summary(HYPERSIMS)$safety %>%
-  kable() %>%
+summary(HYPERSIMS)$safety -> etc.
+etc. %>% kable() %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
@@ -272,7 +277,7 @@ cbind(data.table(`$r_0$` = r0), safety) %>% kable() %>%
 
 One reason that package `escalation` makes such a suitable basis for these developments is that it unifies several dose-escalation designs under one object-oriented design. Thus, we can repeat the above simulation exercise with a CRM design:
 
-```{r hyper-CRM, results='hide'}
+```{r hyper-CRM}
 crm_design <- get_dfcrm(skeleton = scenario, target = 0.25) %>%
   stop_at_n(n = 24)
 crm_design %>% simulate_trials(
@@ -280,18 +285,14 @@ crm_design %>% simulate_trials(
 , true_prob_tox = mtdi_gen
 ) -> CRM_HYPERSIMS
 
-summary(CRM_HYPERSIMS)$safety
-```
-
-```{r, echo=FALSE}
-summary(CRM_HYPERSIMS)$safety %>%
-  kable() %>%
+summary(CRM_HYPERSIMS)$safety -> etc.
+etc. %>% kable() %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
 The BOIN design of [@liu_bayesian_2015] is also supported:
 
-```{r hyper-BOIN, results='hide'}
+```{r hyper-BOIN}
 boin_design <- get_boin(num_doses = 5, target = 0.25) %>%
   stop_at_n(n = 24)
 boin_design %>% simulate_trials(
@@ -299,12 +300,8 @@ boin_design %>% simulate_trials(
 , true_prob_tox = mtdi_gen
 ) -> BOIN_HYPERSIMS
 
-summary(BOIN_HYPERSIMS)$safety
-```
-
-```{r, echo=FALSE}
-summary(BOIN_HYPERSIMS)$safety %>%
-  kable() %>%
+summary(BOIN_HYPERSIMS)$safety -> etc.
+etc. %>% kable() %>%
   add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
 ```
 
