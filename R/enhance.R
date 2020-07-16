@@ -22,6 +22,9 @@ u_i <- function(selector_factory) {
 #' the version native to package \code{escalation}, which merely invokes
 #' \code{rbinom}.
 #' 
+#' This function is exported for the purpose of effecting this override,
+#' and is not meant to be invoked directly by the user.
+#' 
 #' @param selector_factory Presently, this must be a \code{tox_selector_factory};
 #' no equivalent for \code{simulation_function.derived_dose_selector_factory}
 #' is yet implemented.
@@ -40,7 +43,7 @@ simulation_function.u_i <- function(selector_factory) {
 #' latent toxicity tolerance \code{u_i} for each individual participant.
 #' 
 #' @seealso [phase1_sim()], which this package also overrides with similarly
-#' minute changes to incorporate \code{u_i}.
+#' minute changes in order to incorporate \code{u_i}.
 #'
 #' @param n integer, sample arrival times for this many patients.
 #' @param mean_time_delta the average gap between patient arrival times. I.e.
@@ -171,7 +174,6 @@ phase1_sim <- function(
 }
 
 #' @importFrom escalation prob_recommend
-#' @export
 prob_recommend.precautionary <- function(x, ...) {
   prob_recs <- NextMethod()
   names(prob_recs)[-1] <- paste0(x$dose_levels, x$dose_units)
@@ -179,14 +181,18 @@ prob_recommend.precautionary <- function(x, ...) {
 }
 
 #' @importFrom escalation prob_administer
-#' @export
 prob_administer.precautionary <- function(x, ...) {
   prob_admin <- NextMethod()
   names(prob_admin) <- paste0(x$dose_levels, x$dose_units)
   prob_admin
 }
 
-#' @export
+#' Specialize print method for objects of class \code{escalation::simulations}
+#'
+#' @param x An object of class  c("precautionary","simulations")
+#'
+#' @param ... Additional arguments; ignored
+#'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.precautionary <- function(x, ...) {
   
@@ -222,7 +228,12 @@ print.precautionary <- function(x, ...) {
 }
 
 
-#' @export
+#' Specialize print method defined for class \code{escalation::simulations}
+#'
+#' @param x An object of class  c("hyper","precautionary","simulations")
+#'
+#' @param ... Additional arguments; ignored
+#'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.hyper <- function(x, ...) {
   
@@ -312,6 +323,21 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
   ensemble
 }
 
+#' Specialize a method defined in package 'escalation' for class 'simulations'
+#' 
+#' Simulations produced by package \code{precautionary} incorporate a \sQuote{u_i}
+#' latent toxicity tolerance that characterizes the toxic dose-response of each
+#' simulated individual trial participant. In conjunction with an
+#' \sQuote{ordinalizer} function, these extra data enable questions to be asked
+#' about trial safety, in terms of the probabilities of high-grade toxicities.
+#' This function specializes the \code{escalation::summary.simulations} method
+#' accordingly.
+#' 
+#' @param object An object of class c('precautionary','simulations') 
+#'
+#' @param ordinalizer An ordinalizer function
+#' @param ... Additional parameters passed to the ordinalizer
+#'
 #' @importFrom dplyr rename rename_with mutate select everything
 #' @importFrom stats xtabs
 #' @importFrom rlang .data
@@ -339,17 +365,14 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
 }
 
 #' @importFrom escalation num_doses
-#' @export
 num_doses.three_plus_three_selector_factory <- function(x, ...) {
   return(x$num_doses)
 }
 
-#' @export
 num_doses.dfcrm_selector_factory <- function(x, ...) {
   return(length(x$skeleton))
 }
 
-#' @export
 num_doses.boin_selector_factory <- function(x, ...) {
   return(x$num_doses)
 }

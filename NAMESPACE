@@ -2,13 +2,6 @@
 
 S3method(as.data.table,precautionary)
 S3method(dose_indices,default)
-S3method(num_doses,boin_selector_factory)
-S3method(num_doses,dfcrm_selector_factory)
-S3method(num_doses,three_plus_three_selector_factory)
-S3method(print,hyper)
-S3method(print,precautionary)
-S3method(prob_administer,precautionary)
-S3method(prob_recommend,precautionary)
 S3method(simulation_function,u_i)
 S3method(summary,precautionary)
 export(cohorts_of_n)
