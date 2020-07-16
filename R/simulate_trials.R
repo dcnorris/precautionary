@@ -38,7 +38,7 @@ setOldClass(c('stop_at_n_selector_factory',
 # ought to 'correct escalation while explaining it'!
 
 #' @examples
-#' options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
+#' old <- options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
 #' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
 #'                                  , median_mtd = 6, median_sdlog = 0.5
 #'                                  , units="mg/kg")
@@ -70,6 +70,7 @@ setOldClass(c('stop_at_n_selector_factory',
 #' , ordinalizer = function(MTDi, r0 = sqrt(2))
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
+#' options(old)
 #' @rdname simulate_trials
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
@@ -141,8 +142,7 @@ setMethod(
 # are employed.
 
 #' @examples
-#' # TODO: In keeping with spirit of REALISM, attach UNITS to 'dose_levels'.
-#' options(dose_levels = c(2, 6, 20, 60, 180, 400))
+#' old <- options(dose_levels = c(2, 6, 20, 60, 180, 400))
 #' mtdi_dist <- mtdi_lognormal(CV = 0.5
 #'                            ,median = 140
 #'                            ,units = "ng/kg/week")
@@ -154,7 +154,7 @@ setMethod(
 #'   simulate_trials(
 #'     num_sims = num_sims
 #'   , true_prob_tox = mtdi_dist)
-#' # Now attach a proper ordinalizer to 'mtdi_dist':
+#' # Now set a proper ordinalizer via options():
 #' options(ordinalizer = function(dose, r0) {
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' })
@@ -171,7 +171,7 @@ setMethod(
 #' , ordinalizer = function(MTDi, r0 = sqrt(2))
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
-
+#' options(old)
 #' @rdname simulate_trials
 #' @export
 setMethod(
