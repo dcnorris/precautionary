@@ -64,12 +64,12 @@ knitr::opts_hooks$set(tweet = function(options) {
 ```
 
 
-```{r tweet=c("My initial experiments toward #precautionary began by cloning the source for #escalation, and --- following the plan I had intimated in a 2018 letter desk-rejected by @CCR_AACR --- \"changing just one line of simulation code\": https://pubpeer.com/publications/4CEB4434EA94CC0AA3BCAF63617A78#1")}
+```{r tweet=c("My initial experiments toward #precautionary began by cloning the sourcecode for #escalation, and --- following the plan I had intimated in a 2018 letter desk-rejected by @CCR_AACR --- \"changing just one line of simulation code\": https://pubpeer.com/publications/4CEB4434EA94CC0AA3BCAF63617A78#1")}
 knitr::include_graphics("an-extremely-modest-proposal.png")
 ```
 
 
-```{r tweet=c("Here's the git diff (red=removed; green=added). Admittedly, I split the change across 2 lines of code:","• cohorts_of_n() now generates a uniform random variate $u_i \\sim \\mathscr{U}(0,1]$ for each enrolled patient","• phase1_sim() then uses $u_i$ instead of calling rbinom().")}
+```{r tweet=c("Here's the git diff (red=removed; green=added). Admittedly, I split the change across 2 lines of code:","• cohorts_of_n() now generates a uniform random variate $u_i \\sim \\mathscr{U}[0,1]$ for each enrolling patient","• phase1_sim() then refers to $u_i$ instead of calling rbinom().")}
 knitr::include_graphics("big-git-diff.png")
 ```
 
@@ -79,7 +79,7 @@ knitr::include_graphics("big-git-diff.png")
 
 ---
 
-```{r tweet=c("Seen from a purely *software-engineering* POV, these are simple code transformations: we 'unwrapped' rbinom() to expose its inner workings, retaining u_i.","But this formal refactoring turns out to have *conceptual* correlates. Retaining $u_i$ makes a world of difference!")}
+```{r tweet=c("Seen from a purely *software-engineering* POV, then, these are simple code transformations: we 'unwrapped' rbinom() to expose its inner workings, retaining u_i.","But this formal refactoring turns out to have *conceptual* correlates. Retaining $u_i$ makes a world of difference!")}
 ```
 
 
@@ -97,7 +97,7 @@ knitr::include_graphics("Pandora_-_John_William_Waterhouse.jpg")
 
 ---
 
-```{r tweet=c("Wait, though ... If someone destroys your universe, but you're not paying attention, does your universe remain intact? https://twitter.com/davidcnorrismd/status/1244471654882750466")}
+```{r tweet=c("Wait, though ... If someone destroys your universe, but you're not paying attention, does your universe endure? https://twitter.com/davidcnorrismd/status/1244471654882750466")}
 knitr::include_graphics("if-wages-et-al-would-allow.png")
 ```
 
@@ -120,7 +120,7 @@ knitr::include_graphics("finding-the-green-crystal.jpg")
 ```
 
 
-```{r tweet=c("...or, more precisely, a $u_i$ for each patent in the simulation.","With these $u_i$'s, we can reconstitute most of the #DoseIndividualization argument right under the #OneSizeFitsAllogists' noses, in the midst of one of their dose-escalation trials. We need only 1 further idea...")}
+```{r tweet=c("...or, more precisely, a $u_i$ for each patent in the simulation.","With these $u_i$'s, we can reconstitute the #DoseIndividualization argument right under the #OneSizeFitsAllogists' noses, in the very midst of one of their dose-escalation trials. We need only 1 further idea...")}
 ```
 
 
@@ -138,11 +138,11 @@ knitr::include_graphics("onc-TI<1.png")
 ```
 
 
-```{r tweet=c("If a #TherapeuticIndex ratio is to remain useful in a clinical context like oncology, where toxicity is expected and sometimes sought-after as a clinical correlate of on-target efficacy, then a less stringent numerator is needed."), link="https://twitter.com/davidcnorrismd/status/1176114631951159296"}
+```{r tweet=c("If a #TherapeuticIndex ratio is to remain useful in a clinical context like oncology, where toxicity is expected and sometimes sought-after as a clinical correlate of on-target efficacy, then this ratio needs a less stringent numerator."), link="https://twitter.com/davidcnorrismd/status/1176114631951159296"}
 ```
 
 
-```{r tweet=c("The CTCAE toxicity grading system implicitly acknowledges this, I think. The numerator and denominator of an oncology-adapted TI ought to reference doses at which unacceptable and tolerable toxicities occur."), link="https://twitter.com/davidcnorrismd/status/1284451892224053250"}
+```{r tweet=c("The CTCAE toxicity grading system implicitly acknowledges this, I think. The numerator / denominator of an oncology-adapted TI ought to reference doses at which unacceptable / tolerable toxicities occur."), link="https://twitter.com/davidcnorrismd/status/1284451892224053250"}
 ```
 
 
@@ -166,7 +166,7 @@ knitr::include_graphics("onc-TI<1.png")
 ```
 
 
-```{r tweet=c("For line-by-line details of R commands, I refer you to the #precautionary package's Intro vignette. But the basic outline is like this:","We start from where the #escalation package leaves off:")}
+```{r tweet=c("For line-by-line details of R commands, I refer you to the #precautionary package's Intro vignette [link here]. But the basic outline is like this:","We start from where the #escalation package leaves off:")}
 knitr::include_graphics("escalation-way.png")
 ```
 
@@ -176,7 +176,7 @@ knitr::include_graphics("spec-mtdi-dist.png")
 ```
 
 
-```{r tweet=c("Secondly, because #escalation works at a high level of abstraction, such that doses are merely labeled '1', '2', '3', ..., we have to specify the actual doses in our trial.")}
+```{r tweet=c("Secondly, because #escalation works at a high level of abstraction, such that doses are merely labeled '1', '2', '3', ..., we have to specify the actual doses in our trial. (You were going to do this anyway; it's just that #precautionary cares to know.)")}
 knitr::include_graphics("set-dose-levels.png")
 ```
 
@@ -186,7 +186,7 @@ knitr::include_graphics("look-MTDi-dist.png")
 ```
 
 
-```{r tweet=c("When we invoke the simulate_trials() method now, #precautionary takes over---through object-oriented 'magic'.","So far, little has changed about the output. But behind the scenes, SIMS now contains the u_i variable that #escalation's simulation output lacked.")}
+```{r tweet=c("Now, when we invoke the simulate_trials() method, #precautionary takes over---through the 'magic' of #rstats S4 classes.","In terms of the *output*, little has changed. But behind the scenes, SIMS now contains the u_i variable that #escalation's simulation output lacked.")}
 knitr::include_graphics("minimal-change.png")
 ```
 
@@ -196,31 +196,27 @@ knitr::include_graphics("simulate-safety.png")
 ```
 
 
-```{r tweet=c("But why do I offer this up as some kind of catastrophe for the #OneSizeFitsAllogists?","Because once people start thinking this way, they won't be able to stop. Three decades of evading optimal-dose heterogeneity will come to screeching halt.")}
+```{r tweet=c("But why do I present this as some kind of catastrophe for the #OneSizeFitsAllogists?","Because fatal toxicities in phase 1 oncology trials utterly discredit 1-size-fits-all #dosefinding, and its contempt for #PrecautionaryCoherence."), link="https://twitter.com/davidcnorrismd/status/1240299151067197443"}
 ```
 
 
-```{r tweet=c("Fatalities in phase 1 oncology trials do happen, and they reflect poorly on 1-size-fits-all #dosefinding designs. Only 2 weeks ago, @US_FDA placed a clinical hold on a CAR-T dose-escalation trial:"), link="https://twitter.com/statnews/status/1280501925859950600"}
+```{r tweet=c("Only 2 weeks ago, @US_FDA put a clinical hold on a fatal CAR-T dose escalation.","And the abovementioned arXiv paper, where MTD$_i^g$ and $r_0$ arose, was stimulated by severe & fatal toxicities in #AFM11 dose-escalation trials."), link=c("https://twitter.com/statnews/status/1280501925859950600","https://twitter.com/davidcnorrismd/status/1255120071648821249")}
 ```
 
 
-```{r tweet=c("Indeed the abovementioned arXiv paper, where the MTD$_i^g$ and $r_0$ concepts were developed, was stimulated by severe and fatal toxicities in two #AFM11 trials."), link="https://twitter.com/davidcnorrismd/status/1255120071648821249"}
+```{r tweet=c("Surely @FDAOncology #prospectively reviews phase 1 trial designs under 21 CFR §312.42(b)(1)(i). These reviews could be more effective---and make trials #safer---if they took into view the #TherapeuticIndex considerations implemented in #precautionary."), link="https://twitter.com/davidcnorrismd/status/1264186764161363975"}
 ```
 
 
-```{r tweet=c("Surely @FDAOncology #prospectively reviews phase 1 trial designs under 21 CFR §312.42(b)(1)(i). Such reviews will be more effective, and make trials #safer, if they take into view the #TherapeuticIndex considerations implemented in #precautionary."), link="https://twitter.com/davidcnorrismd/status/1264186764161363975"}
+```{r tweet=c("In the final analysis, it is of course the physician-investigator who bears the ultimate responsibility for #trialsafety. My greatest hope is that package #precautionary helps trialists to think more realistically about #dosefinding designs, and to field safer trials.")}
 ```
 
 
-```{r tweet=c("In the final analysis, it is of course the physician-investigator who bears the ultimate responsibility for trial safety. My greatest hope is that package #precautionary helps trialists to think more realistically about #dosefinding designs.")}
+```{r tweet=c("This is an INITIAL RELEASE of #precautionary --- v0.1-1. Much further work remains: to test & extend the package, and to automate certain functionality. I hope to carry out most of this effort in collaborations on investigator-initiated trials. Investigators: email or DM me!")}
 ```
 
 
-```{r tweet=c("This is only version 0.1-1 of #precautionary! Much further work remains to test and extend the package, especially to automate some functionality. I hope some of this work can be done in collaborations on investigator-initiated trials. Email or DM!")}
-```
-
-
-```{r tweet=c("There may also be some value in extending the reach of #precautionary to other R packages for #dosefinding trial design. The application of reasonable defaults might enable semi-automated safety analysis for off-the-shelf dose-escalation designs."), link="https://twitter.com/thomas_jaki/status/1229462881898565632"}
+```{r tweet=c("I also must explore enlarging the #precautionary tent to subsume other R #dosefinding packages, such as #crmPack by @thomas_jaki &al. Might suitable defaults exist to enable semi-automated safety checks on any off-the-shelf dose-escalation design?"), link="https://twitter.com/thomas_jaki/status/1229462881898565632"}
 ```
 
 
