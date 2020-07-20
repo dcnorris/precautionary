@@ -56,7 +56,7 @@ knitr::opts_hooks$set(tweet = function(options) {
 #       Would I rather need a *pandoc* filter?
 ```
 
-```{r tweet=c("New #rstats package #precautionary [pending] on CRAN","\"The shaft of the arrow had been feathered with one of the eagle's own plumes. We often give our enemies the means of our own destruction.\"\n\n --- Aesop\n\n[THREAD]"), link="https://CRAN.R-project.org/package=precautionary"}
+```{r tweet=c("New #rstats package #precautionary now on CRAN","\"The shaft of the arrow had been feathered with one of the eagle's own plumes. We often give our enemies the means of our own destruction.\"\n\n --- Aesop\n\n[THREAD]"), link="https://CRAN.R-project.org/package=precautionary"}
 ```
 
 
@@ -64,12 +64,12 @@ knitr::opts_hooks$set(tweet = function(options) {
 ```
 
 
-```{r tweet=c("My initial experiments toward #precautionary began by cloning the sourcecode for #escalation, and --- following the plan I had intimated in a 2018 letter desk-rejected by @CCR_AACR --- \"changing just one line of simulation code\": https://pubpeer.com/publications/4CEB4434EA94CC0AA3BCAF63617A78#1")}
+```{r tweet=c("My initial experiments toward #precautionary began by cloning his #escalation sourcecode, then --- following the plan I had intimated in a 2018 letter desk-rejected by @CCR_AACR --- \"changing just one line of simulation code\": https://pubpeer.com/publications/4CEB4434EA94CC0AA3BCAF63617A78#1")}
 knitr::include_graphics("an-extremely-modest-proposal.png")
 ```
 
 
-```{r tweet=c("Here's the git diff (red=removed; green=added). Admittedly, I split the change across 2 lines of code:","• cohorts_of_n() now generates a uniform random variate $u_i \\sim \\mathscr{U}[0,1]$ for each enrolling patient","• phase1_sim() then refers to $u_i$ instead of calling rbinom().")}
+```{r tweet=c("The git diff (red=removed; green=added) show admittedly that I split the change across 2 lines of code:","• cohorts_of_n() now generates a uniform random variate $u_i \\sim \\mathscr{U}[0,1]$ for each enrolling patient","• phase1_sim() then refers to $u_i$ instead of calling rbinom().")}
 knitr::include_graphics("big-git-diff.png")
 ```
 
@@ -92,12 +92,12 @@ knitr::include_graphics("Pandora_-_John_William_Waterhouse.jpg")
 ```
 
 
-```{r tweet=c("What exactly is the litany of ills we have unleashed by opening up rbinom()? You know how on #DoctorWho some villain is always going to destroy the fabric of the universe?","Well, that's basically what u_i does. (Only, it's not ME that's evil, it's THEM!)"), link="https://twitter.com/TygerWhoCame2T/status/1251955542525968386"}
+```{r tweet=c("What litany of ills, exactly, do we unleash by opening up rbinom()? You know how #DoctorWho villains are always going to destroy the fabric of the universe?","That's basically what u_i does."), link="https://twitter.com/TygerWhoCame2T/status/1251955542525968386"}
 ```
 
 ---
 
-```{r tweet=c("Wait, though ... If someone destroys your universe, but you're not paying attention, does your universe endure? https://twitter.com/davidcnorrismd/status/1244471654882750466")}
+```{r tweet=c("Wait, though ... haven't the #OneSizeFitsAllogists shown that, even if someone destroys your universe, so long as you're not paying attention, your universe remains? https://twitter.com/davidcnorrismd/status/1244471654882750466")}
 knitr::include_graphics("if-wages-et-al-would-allow.png")
 ```
 
@@ -133,7 +133,7 @@ knitr::include_graphics("muller+milton.png")
 ```
 
 
-```{r tweet=c("In their short section on Oncology indications, Muller & Milton address the substantial toxicity of many oncology drugs in terms of a 'TI < 1'. But this seems to carry over inappropriate TI notions from other clinical applications.")}
+```{r tweet=c("In their short section on Oncology indications, Muller & Milton address the substantial toxicity of many oncology drugs in terms of a 'TI < 1'. But to my mind this inappropriately translates TI notions from other clinical applications.")}
 knitr::include_graphics("onc-TI<1.png")
 ```
 
@@ -142,7 +142,7 @@ knitr::include_graphics("onc-TI<1.png")
 ```
 
 
-```{r tweet=c("The CTCAE toxicity grading system implicitly acknowledges this, I think. The numerator / denominator of an oncology-adapted TI ought to reference doses at which unacceptable / tolerable toxicities occur."), link="https://twitter.com/davidcnorrismd/status/1284451892224053250"}
+```{r tweet=c("The CTCAE toxicity grading system already acknowledges this, I think. The numerator / denominator of an oncology-adapted TI ought to reference doses at which unacceptable / tolerable toxicities occur."), link="https://twitter.com/davidcnorrismd/status/1284451892224053250"}
 ```
 
 
@@ -150,11 +150,11 @@ knitr::include_graphics("onc-TI<1.png")
 ```
 
 
-```{r tweet=c("And now an $i$ subscript on TI, too? Well, ... YES!", "In person-centered care you have every reason to consider TI as a patient-specific concept. When you advise, \"I don't think this would be a good drug for you\", you're saying the patient's TI$_i$ is not sufficiently above 1.")}
+```{r tweet=c("I've let the subscript linger briefly on TI$_i$ to invite this consideration: In person-centered care TI is most properly a patient-specific concept. When you advise, \"I don't think this would be a good drug for you\", you're saying the patient's TI$_i$ is below or too near 1.")}
 ```
 
 
-```{r tweet=c("This TI$_i$ concept now looks like the $r_i$ of that arXiv paper, a dose ratio that connects adjacent CTCAE toxicity grades.", link="https://twitter.com/davidcnorrismd/status/1255160313340723203")}
+```{r tweet=c("The subscript on TI$_i$ also helps to reveal a close connection to the arXiv paper's $r_i$ --- a dose ratio that connects adjacent CTCAE toxicity grades.", link="https://twitter.com/davidcnorrismd/status/1255160313340723203")}
 ```
 
 
@@ -162,11 +162,11 @@ knitr::include_graphics("onc-TI<1.png")
 ```
 
 
-```{r tweet=c("For present purposes, tho, let's drop the $i$ subscript, since a population-average TI notion suffices. Thus, as in the arXiv paper, we write $r_0$ instead of $r_i$.","Now here's the deal: You posit an $r_0$; #precautionary simulates your trial's safety."), link="https://twitter.com/davidcnorrismd/status/1255165059807969287"}
+```{r tweet=c("For present purposes, tho, we may drop the $i$ subscript, since a population-average TI notion suffices. Thus, as in the arXiv paper, we write $r_0$ instead of $r_i$.","Now here's the deal: You posit an $r_0$; #precautionary simulates your trial's safety."), link="https://twitter.com/davidcnorrismd/status/1255165059807969287"}
 ```
 
 
-```{r tweet=c("For line-by-line details of R commands, I refer you to the #precautionary package's Intro vignette [link here]. But the basic outline is like this:","We start from where the #escalation package leaves off:")}
+```{r tweet=c("For line-by-line details of R commands, I refer you to the #precautionary package's Intro vignette https://cran.r-project.org/web/packages/precautionary/vignettes/Intro.html. But the basic outline is like this:","We start from where the #escalation package leaves off:")}
 knitr::include_graphics("escalation-way.png")
 ```
 
@@ -200,7 +200,7 @@ knitr::include_graphics("simulate-safety.png")
 ```
 
 
-```{r tweet=c("Only 2 weeks ago, @US_FDA put a clinical hold on a fatal CAR-T dose escalation.","And the abovementioned arXiv paper, where MTD$_i^g$ and $r_0$ arose, was stimulated by severe & fatal toxicities in #AFM11 dose-escalation trials."), link=c("https://twitter.com/statnews/status/1280501925859950600","https://twitter.com/davidcnorrismd/status/1255120071648821249")}
+```{r tweet=c("Only 2 weeks ago, @US_FDA put a clinical hold on a fatal CAR-T dose escalation.","And the abovementioned arXiv paper, where MTD$_i^g$ and $r_0$ emerged, was stimulated by severe & fatal toxicities in #AFM11 dose-escalation trials."), link=c("https://twitter.com/statnews/status/1280501925859950600","https://twitter.com/davidcnorrismd/status/1255120071648821249")}
 ```
 
 
@@ -212,11 +212,15 @@ knitr::include_graphics("simulate-safety.png")
 ```
 
 
-```{r tweet=c("This is an INITIAL RELEASE of #precautionary --- v0.1-1. Much further work remains: to test & extend the package, and to automate certain functionality. I hope to carry out most of this effort in collaborations on investigator-initiated trials. Investigators: email or DM me!")}
+```{r tweet=c("Of course, this is an INITIAL RELEASE: #precautionary v0.1-1. Much work remains, to test & extend the package, and to automate certain functionality. I hope to carry out most of this effort in collaborations on investigator-initiated trials. Investigators: email or DM me!")}
 ```
 
 
-```{r tweet=c("I also must explore enlarging the #precautionary tent to subsume other R #dosefinding packages, such as #crmPack by @thomas_jaki &al. Might suitable defaults exist to enable semi-automated safety checks on any off-the-shelf dose-escalation design?"), link="https://twitter.com/thomas_jaki/status/1229462881898565632"}
+```{r tweet=c("I also ought to enlarge the #precautionary tent to subsume other R #dosefinding packages, e.g. #crmPack by @thomas_jaki &al.","And I would be delighted of course to foster a flow of #precautionary ideas into the dose-escalation mainstream."), link="https://twitter.com/thomas_jaki/status/1229462881898565632"}
+```
+
+
+```{r tweet=c("Looking ahead through whatever lingering life dose escalation still has left, I'll advance the following conjecture:","Suitable defaults can be found to enable semi-automated safety diagnostics for the majority of off-the-shelf dose-escalation designs."), }
 ```
 
 
