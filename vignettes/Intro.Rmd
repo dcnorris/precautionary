@@ -305,7 +305,7 @@ etc. %>% kable() %>%
 
 # Implications of package `precautionary`
 
-Package `precautionary` demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking. prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an 'ordinalizer' and the notion of [therapeutic index](https://en.wikipedia.org/wiki/Therapeutic_index) (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.
+Package `precautionary` demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking during prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an 'ordinalizer' and the notion of [therapeutic index](https://en.wikipedia.org/wiki/Therapeutic_index) (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI [@muller_determination_2012]. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
