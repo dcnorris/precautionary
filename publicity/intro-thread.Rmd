@@ -5,7 +5,7 @@ date: "7/15/2020"
 output:
   html_document:
     keep_md: true
-#    pandoc_args: ["--lua-filter=recover-asterisks.lua"]
+    pandoc_args: ["--lua-filter=tweetdown-preview.lua"]
 ---
 
 <!--
@@ -77,7 +77,6 @@ knitr::include_graphics("big-git-diff.png")
 ```{r tweet=c("In R, 'rbinom(size=1, prob=.)' generates a random Bernoulli (0/1) variate with the given prob of being a 1. Under the hood, this function almost surely works by","(a) drawing a uniformly distributed random number between 0 and 1, then","(b) comparing that against the given prob.")}
 ```
 
----
 
 ```{r tweet=c("Seen from a purely *software-engineering* POV, then, these are simple code transformations: we 'unwrapped' rbinom() to expose its inner workings, retaining u_i.","But this formal refactoring turns out to have *conceptual* correlates. Retaining $u_i$ makes a world of difference!")}
 ```
@@ -95,7 +94,6 @@ knitr::include_graphics("Pandora_-_John_William_Waterhouse.jpg")
 ```{r tweet=c("What litany of ills, exactly, do we unleash by opening up rbinom()? You know how #DoctorWho villains are always going to destroy the fabric of the universe?","That's basically what u_i does."), link="https://twitter.com/TygerWhoCame2T/status/1251955542525968386"}
 ```
 
----
 
 ```{r tweet=c("Wait, though ... haven't the #OneSizeFitsAllogists shown that, even if someone destroys your universe, so long as you're not paying attention, your universe remains? https://twitter.com/davidcnorrismd/status/1244471654882750466")}
 knitr::include_graphics("if-wages-et-al-would-allow.png")
