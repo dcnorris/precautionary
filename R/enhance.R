@@ -338,7 +338,7 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
 #' @param ordinalizer An ordinalizer function
 #' @param ... Additional parameters passed to the ordinalizer
 #'
-#' @importFrom dplyr rename rename_with mutate select everything
+#' @importFrom dplyr mutate rename_with select everything
 #' @importFrom stats xtabs
 #' @importFrom rlang .data
 #' @export
