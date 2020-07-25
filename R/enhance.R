@@ -339,7 +339,7 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
 #' @param ... Additional parameters passed to the ordinalizer
 #'
 #' @importFrom dplyr mutate rename_with select everything
-#' @importFrom stats xtabs
+#' @importFrom stats xtabs addmargins sd var
 #' @importFrom rlang .data
 #' @export
 summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer'), ...) {
@@ -355,11 +355,17 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
   if( !is.null(ordinalizer) ){
     summary <- list(escalation = summary, safety = NULL)
     K <- c(nrow(object$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
-    expectation <- colMeans(xtabs(~ rep + Tox, data=ensemble))/K
-    expectation <- c(expectation, Total = sum(expectation))
-    expectation <- t(as.matrix(expectation))
-    rownames(expectation) <- "Expected participants"
+    # TODO: Would I speed things up by using a data.table approach here?
+    toxTab <- xtabs(~ rep + Tox, data=ensemble) %>%
+      addmargins(margin = 2, FUN = list(Total=sum))
+    # TODO: Is this whole business of a separate K simply unnecessary?
+    #       Should there be only 1 rep ever per hyperprior sample?
+    KN <- K*nrow(toxTab)
+    expectation <- rbind("Expected participants" = colMeans(toxTab)/K
+                        ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(KN)
+                        )
     summary$safety <- expectation
+    summary$toxTab <- toxTab # (for DEBUGGING purposes)
   }
   summary
 }
