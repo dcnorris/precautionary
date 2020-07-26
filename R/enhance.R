@@ -291,16 +291,11 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
                      )
   ensemble <- rbindlist(lapply(x$fits, extractor), idcol = "rep")
   # Go 'straight to dose-space' by generating MTDi,g columns
+  MTDi <- NULL # avert spurious R CMD check "no visible binding" NOTEs
   if( is(x,"hyper") ){ # TODO: Consider handling this via 'as.data.table.hyper'
-    K <- length(x$hyper$mtdi_samples)
-    M <- max(ensemble$rep)/K  # so now K*M is nrow(ensemble)
-    k <- MTDi <- NULL # avert spurious R CMD check "no visible binding" NOTEs
-    ensemble[, k := 1 + (rep-1) %/% M]
-    ensemble[, rep := 1 + (rep-1) %% M]
-    setcolorder(ensemble,c("k","rep")) # so key .(k,rep) is on far left
-    ensemble[, MTDi := x$hyper$mtdi_samples[[k]]@dist$quantile(u_i), by = k]
+    ensemble[, MTDi := x$hyper$mtdi_samples[[rep]]@dist$quantile(u_i), by = rep]
   } else {
-    ensemble[, MTDi := x$mtdi_dist@dist$quantile(ensemble$u_i)]
+    ensemble[, MTDi := x$mtdi_dist@dist$quantile(u_i)]
   }
   if( is.null(ordinalizer) )
     return(ensemble)
@@ -354,15 +349,11 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
   ensemble <- as.data.table(object, ordinalizer = ordinalizer, ...)
   if( !is.null(ordinalizer) ){
     summary <- list(escalation = summary, safety = NULL)
-    K <- c(nrow(object$hyper$true_prob_tox), 1)[1] # NB: c(NULL,1) = c(1)
     # TODO: Would I speed things up by using a data.table approach here?
     toxTab <- xtabs(~ rep + Tox, data=ensemble) %>%
       addmargins(margin = 2, FUN = list(Total=sum))
-    # TODO: Is this whole business of a separate K simply unnecessary?
-    #       Should there be only 1 rep ever per hyperprior sample?
-    KN <- K*nrow(toxTab)
-    expectation <- rbind("Expected participants" = colMeans(toxTab)/K
-                        ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(KN)
+    expectation <- rbind("Expected participants" = colMeans(toxTab)
+                        ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(nrow(toxTab))
                         )
     summary$safety <- expectation
     # Issue a warning() in case Total's MCSE is not larger than all components'.

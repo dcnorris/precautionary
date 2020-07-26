@@ -81,23 +81,21 @@ setMethod(
       true_prob_tox="hyper_mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     protocol <- u_i(selector_factory) # separate naming from implementation details
-    stopifnot("num_sims must be of length 1 or 2" = length(num_sims) %in% 1:2)
-    M <- num_sims[1]
-    K <- num_sims[2]; if(is.na(K)) K <- num_sims[1]
+    stopifnot("num_sims must be of length 1" = length(num_sims) == 1)
     # The most parsimonious generalization of the default function
     # will substitute a *matrix* for the default result's vector
     # attribute 'true_prob_tox'.
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
-    mtdi_samples <- draw_samples(hyper = true_prob_tox, K = K)
+    mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
     P_ <- seq_along(dose_levels)
     fits <- list()
     ordtox <- list()
     tpts <- list()
-    if(interactive()) pb <- txtProgressBar(max=K, style=3)
-    for(k in 1:K){
+    if(interactive()) pb <- txtProgressBar(max = num_sims, style = 3)
+    for(k in 1:num_sims){
       sims_k <- callGeneric(selector_factory = protocol
-                           ,num_sims = M
+                           ,num_sims = 1
                            ,true_prob_tox = mtdi_samples[[k]]
                            ,...)
       fits <- c(fits, sims_k[[1]])
@@ -124,7 +122,7 @@ setMethod(
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
     if(!is.null(unlist(ordtox))){
-      attr(sims,'ordtox') <- rbindlist(ordtox, idcol = "k")
+      attr(sims,'ordtox') <- rbindlist(ordtox, idcol = "rep")
     }
     class(sims) <- "simulations" # impose class (we did not use constructor)
     prependClass(c("hyper","precautionary"), sims)

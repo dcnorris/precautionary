@@ -40,11 +40,11 @@ setClass("mtdi_distribution",
 
 setGeneric("plot")
 
-#' Visualize K samples from an \code{mtdi_generator} object
+#' Visualize n samples from an \code{mtdi_generator} object
 #'
 #' @param x An \code{mtdi_generator} object
 #' @param y Included for compatibility with generic signature
-#' @param K Number of samples to draw from hyperprior for visualization
+#' @param n Number of samples to draw from hyperprior for visualization
 #' @param col Color of lines used to depict samples
 #' @param \dots Additional arguments passed onward to \code{plot}
 #'
@@ -55,17 +55,17 @@ setGeneric("plot")
 #'                                 ,median_mtd = 5
 #'                                 ,median_sdlog = 0.5
 #'                                 ,units="mg/kg")
-#' plot(mtdi_gen, K=100, col=adjustcolor("red", alpha=0.5))
+#' plot(mtdi_gen, n=100, col=adjustcolor("red", alpha=0.5))
 #' } 
 #' @export
-setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, col="gray", ...) {
+setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
   xlab <- paste0("Dose (", x@units, ")")
   ylab <- "CDF"
   params <- paste0("CV ~ Raleigh(mode=", x@CV, ");  median = "
                    , x@median_mtd, x@units, " \u00b1 " # <-- plus/minus character
                    , 100*x@median_sdlog, "%")
-  mtdi_samples <- draw_samples(x, K = K)
-  title <- paste(K, class(mtdi_samples[[1]]@dist)[1]
+  mtdi_samples <- draw_samples(x, n = n)
+  title <- paste(n, class(mtdi_samples[[1]]@dist)[1]
                  , "MTDi distributions sampled from hyperprior")
   CDFs <- seq(0.01, 0.99, 0.01)
   quantiles <- lapply(mtdi_samples
@@ -86,8 +86,8 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, K=20, col="gray", ...) {
   minor_ticks <- as.vector(outer(2:9, exponents, function(x,y) x*10^y))
   axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
   dose_levels <- getOption('dose_levels')
-  for(k in 2:K){
-    lines(CDFs ~ quantiles[[k]], col = col, ...)
+  for(i in 2:n){
+    lines(CDFs ~ quantiles[[i]], col = col, ...)
   }
   if( !is.null(dose_levels) ){
     abline(v = dose_levels, lty = 3)
@@ -168,7 +168,7 @@ setClass("hyper_mtdi_distribution",
   contains = c("mtdi_generator","VIRTUAL")
   )
 
-setGeneric("draw_samples", function(hyper, K, ...) {
+setGeneric("draw_samples", function(hyper, n, ...) {
   standardGeneric("draw_samples")
 })
 
@@ -209,11 +209,11 @@ setMethod("initialize", "hyper_mtdi_lognormal",
 setMethod(
   "draw_samples"
   , c("hyper_mtdi_lognormal","numeric"),
-  function(hyper, K=NULL, ...) {
-    if(missing(K)) K <- 1
+  function(hyper, n=NULL, ...) {
+    if(missing(n)) n <- 1
     mapply(mtdi_lognormal
-          , CV = Rayleigh$new(mode = hyper@CV)$rand(n=K, simplify=TRUE)
-          , median = rlnorm(n=K
+          , CV = Rayleigh$new(mode = hyper@CV)$rand(n=n, simplify=TRUE)
+          , median = rlnorm(n=n
                             , meanlog=log(hyper@median_mtd)
                             , sdlog=hyper@median_sdlog)
           , MoreArgs = list(units = hyper@units
