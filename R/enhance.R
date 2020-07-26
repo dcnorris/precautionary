@@ -365,6 +365,21 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
                         ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(KN)
                         )
     summary$safety <- expectation
+    # Issue a warning() in case Total's MCSE is not larger than all components'.
+    # (In theory, I suppose, 2 tox grades could have negatively correlated counts,
+    # such that they individually have large variances but their sum contributes a
+    # small net variance to the Total; thus, a *warning* rather than an assertion.)
+    # Such a warning is needed indeed only when these component variances exceeded
+    # the target (say, 0.05) needed to obtain a significant 1st decimal place.
+    # The warning could simply be in the nature of advising the simulation be extended!
+    if( !all(expectation['MCSE',] <= expectation['MCSE','Total']) &&
+        any(expectation['MCSE',-ncol(expectation)] > 0.05) &&
+        expectation['MCSE','Total'] < 0.05)
+      warning(
+        "Although expected Total enrollment has a significant tenths place",
+        ", one or more of the expected toxicity-grade counts lacks this precision.",
+        " Consider extending the simulation or investigating a perhaps implausibly",
+        " strong negative correlation between several toxicity grades.")
     summary$toxTab <- toxTab # (for DEBUGGING purposes)
   }
   summary
