@@ -43,8 +43,8 @@ setOldClass(c('stop_at_n_selector_factory',
 #'                                  , median_mtd = 6, median_sdlog = 0.5
 #'                                  , units="mg/kg")
 #' num_sims <- ifelse(interactive()
-#' , c(15, 20)
-#' , c( 3,  5) # avoid taxing CRAN servers
+#' , 300
+#' , 15 # avoid taxing CRAN servers
 #' )
 #' hsims <- get_three_plus_three(num_doses = 6) %>%
 #'   simulate_trials(
@@ -54,6 +54,10 @@ setOldClass(c('stop_at_n_selector_factory',
 #' summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
 #'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
 #' )
+#' hsims <- hsims %>% extend(num_sims = num_sims)
+#' summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
+#'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
+#' )$safety
 #' # Set a CRM skeleton from the average probs in above simulation
 #' num_sims <- ifelse(interactive()
 #' , 16
@@ -87,10 +91,11 @@ setMethod(
     # attribute 'true_prob_tox'.
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
+    cat("Drawing samples from hyperprior ... ")
     mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
+    cat("DONE.\n")
     P_ <- seq_along(dose_levels)
     fits <- list()
-    ordtox <- list()
     tpts <- list()
     if(interactive()) pb <- txtProgressBar(max = num_sims, style = 3)
     for(k in 1:num_sims){
@@ -99,7 +104,6 @@ setMethod(
                            ,true_prob_tox = mtdi_samples[[k]]
                            ,...)
       fits <- c(fits, sims_k[[1]])
-      ordtox[[k]] <- attr(sims_k,'ordtox')
       tpts[[k]] <- sims_k$true_prob_tox
       if(interactive()) setTxtProgressBar(pb, k)
     }
@@ -107,7 +111,6 @@ setMethod(
     colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
     sims <- list(
       fits = fits
-    , ordtox_check = ordtox
     # NB: We take the trouble to select the leftmost length(dose_levels) columns
     #     in order to allow for the possibility that the tpt_matrix in general
     #     may also include hyperparameters in columns to the right. This was a
@@ -118,12 +121,11 @@ setMethod(
                   ,mtdi = true_prob_tox
                   ,mtdi_samples = mtdi_samples
                   )
+    , protocol = protocol
+    , extra_params = list(...)
     )
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
-    if(!is.null(unlist(ordtox))){
-      attr(sims,'ordtox') <- rbindlist(ordtox, idcol = "rep")
-    }
     class(sims) <- "simulations" # impose class (we did not use constructor)
     prependClass(c("hyper","precautionary"), sims)
   }
@@ -169,6 +171,11 @@ setMethod(
 #' , ordinalizer = function(MTDi, r0 = sqrt(2))
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
+#' crm_sims <- crm_sims %>% extend(num_sims = 30)
+#' summary(crm_sims
+#' , ordinalizer = function(MTDi, r0 = sqrt(2))
+#'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+#' )$safety
 #' options(old)
 #' @rdname simulate_trials
 #' @export
@@ -178,19 +185,77 @@ setMethod(
       num_sims="numeric",
       true_prob_tox="mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
+    protocol <- u_i(selector_factory) # separate naming from implementation details
     # TODO: Try moving this next line into the argument defaults
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
     tpt_vector <- true_prob_tox@dist$cdf(dose_levels)
-    sims <- simulate_trials(selector_factory = u_i(selector_factory)
+    sims <- simulate_trials(selector_factory = protocol
                             , num_sims = num_sims
                             , true_prob_tox = tpt_vector
                             , ... # including, e.g., i_like_big_trials param?
     )
+    sims$protocol <- protocol
+    sims$extra_params = list(...)
     sims$dose_levels <- dose_levels
     sims$dose_units <- true_prob_tox@units
     sims$mtdi_dist <- true_prob_tox
     prependClass("precautionary", sims)
   }
 )
+
+#' Extend an existing simulation, using one of several stopping criteria
+#'
+#' A trial simulation carried through a predetermined number of replications
+#' may not achieve desired precision as judged by Monte Carlo standard errors
+#' (MCSE) of estimated toxicity counts. This method enables simulations of
+#' class \code{c('precautionary','simulations')} to be extended until a given
+#' level of precision has been achieved on expected counts of enrollment and
+#' DLTs, or (optionally) for a fixed additional number of simulations.
+#'
+#' @param sims An existing object of class \code{c('precautionary','simulations')}
+#' @param num_sims Optionally, a fixed number of additional replications to accumulate
+#' @param toxcount_mcse Optionally, an MCSE constraint on both DLTs and total enrollment
+#'
+#' @return An extended simulation of same class as \code{sims}
+#' @export
+#'
+#' @examples
+#' # See examples under 'simulate_trials'
+extend <- function(sims, num_sims = NULL, toxcount_mcse = NULL) {
+  UseMethod('extend')
+}
+
+#' @export
+extend.precautionary <- function(sims, num_sims, toxcount_mcse = NULL) {
+  # Initially, let us simply extend by a fixed num_sims:
+  more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
+                                          ,num_sims = num_sims
+                                          ,true_prob_tox = sims$mtdi_dist)
+                                     ,sims$extra_params
+                                     )
+                  )
+  sims$fits <- c(sims$fits, more$fits)
+  sims
+}
+
+#' @export
+extend.hyper <- function(sims, num_sims, toxcount_mcse = NULL) {
+  # Initially, let us simply extend by a fixed num_sims:
+  more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
+                                         ,num_sims = num_sims
+                                         ,true_prob_tox = sims$hyper$mtdi)
+                                     ,sims$extra_params
+                                     )
+                  )
+  N1 <- length(sims$fits)
+  N2 <- length(more$fits)
+  sims$avg_prob_tox <- (sims$avg_prob_tox*N1 + more$avg_prob_tox*N2)/(N1+N2)
+  sims$fits <- c(sims$fits, more$fits)
+  sims$hyper$true_prob_tox <- rbind(sims$hyper$true_prob_tox
+                                   ,more$hyper$true_prob_tox)
+  sims$hyper$mtdi_samples <- c(sims$hyper$mtdi_sample
+                              ,more$hyper$mtdi_sample)
+  sims
+}
 
