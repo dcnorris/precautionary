@@ -119,7 +119,8 @@ setMethod(
     , avg_prob_tox = colMeans(tpt_matrix[, seq_along(dose_levels)])
     , hyper = list(true_prob_tox = tpt_matrix
                   ,mtdi = true_prob_tox
-                  ,mtdi_samples = mtdi_samples
+                  ,mtdi_samples = t(sapply(mtdi_samples,function(.)
+                    c(CV = .@CV, median = .@median)))
                   )
     , protocol = protocol
     , extra_params = list(...)
@@ -195,6 +196,21 @@ setMethod(
                             , true_prob_tox = tpt_vector
                             , ... # including, e.g., i_like_big_trials param?
     )
+    # In order NOT to have to keep lots of S4 mtdi_distribution objects lying around,
+    # especially in the hyperprior-based simulations, we calculate MTDi corresponding
+    # to the given u_i, using the current @dist:
+    # TODO: Develop accessor methods to abstract away these details of internal structure:
+    if( is(sims$fits[[1]][[1]]$fit, "derived_dose_selector") ){
+      for(i in seq_along(sims$fits)){
+        u_i <- sims$fits[[i]][[1]]$fit$parent$outcomes$u_i
+        sims$fits[[i]][[1]]$fit$parent$outcomes$MTDi <- true_prob_tox@dist$quantile(u_i)
+      }
+    } else {
+      for(i in seq_along(sims$fits)){
+        u_i <- sims$fits[[i]][[1]]$fit$outcomes$u_i
+        sims$fits[[i]][[1]]$fit$outcomes$MTDi <- true_prob_tox@dist$quantile(u_i)
+      }
+    }
     sims$protocol <- protocol
     sims$extra_params = list(...)
     sims$dose_levels <- dose_levels

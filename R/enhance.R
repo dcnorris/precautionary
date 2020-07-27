@@ -290,13 +290,6 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
                      ,function(.) .[[1]]$fit$outcomes
                      )
   ensemble <- rbindlist(lapply(x$fits, extractor), idcol = "rep")
-  # Go 'straight to dose-space' by generating MTDi,g columns
-  MTDi <- NULL # avert spurious R CMD check "no visible binding" NOTEs
-  if( is(x,"hyper") ){ # TODO: Consider handling this via 'as.data.table.hyper'
-    ensemble[, MTDi := x$hyper$mtdi_samples[[rep]]@dist$quantile(u_i), by = rep]
-  } else {
-    ensemble[, MTDi := x$mtdi_dist@dist$quantile(u_i)]
-  }
   if( is.null(ordinalizer) )
     return(ensemble)
   # TODO: Do add these columns to 'ensemble', so that the whole table
