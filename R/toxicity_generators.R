@@ -33,7 +33,7 @@ setClass("mtdi_distribution",
   slots = list(
     CV = "numeric"      # Establish CV and median as universal parameters
   , median = "numeric"  # for specifying MTDi distributions.
-  , dist = "SDistribution"
+  , dist = "list" #"SDistribution"
   ),
   contains = c("mtdi_generator","VIRTUAL")
 )
@@ -65,7 +65,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
                    , x@median_mtd, x@units, " \u00b1 " # <-- plus/minus character
                    , 100*x@median_sdlog, "%")
   mtdi_samples <- draw_samples(x, n = n)
-  title <- paste(n, class(mtdi_samples[[1]]@dist)[1]
+  title <- paste(n, mtdi_samples[[1]]@dist$name
                  , "MTDi distributions sampled from hyperprior")
   CDFs <- seq(0.01, 0.99, 0.01)
   quantiles <- lapply(mtdi_samples
@@ -115,7 +115,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
 setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
   xlab <- paste0("Dose (", x@units, ")")
   ylab <- "CDF"
-  title <- paste(class(x@dist)[1], "MTDi Distribution")
+  title <- paste(x@dist$name, "MTDi Distribution")
   params <- paste0("CV = ", x@CV, "; median = ", x@median, x@units)
   # I will presume most pharmacology should be done in log-dose space...
   CDFs <- seq(0.01, 0.99, 0.01)
@@ -151,15 +151,23 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
 #' @export mtdi_lognormal
 mtdi_lognormal <- setClass("mtdi_lognormal",
   slots = list(
-    dist = "Lognormal"
+    dist = "list" #"Lognormal"
   ),
   contains = "mtdi_distribution"
 )
 
+#' @importFrom stats qlnorm plnorm
 setMethod("initialize", "mtdi_lognormal",
   function(.Object, CV, median, ...) {
-    .Object@dist <- Lognormal$new(meanlog = log(median),
-                                  sdlog = sqrt(log(CV^2 + 1)))
+    # .Object@dist <- Lognormal$new(meanlog = log(median),
+    #                               sdlog = sqrt(log(CV^2 + 1)))
+    meanlog <- log(median)
+    sdlog <- sqrt(log(CV^2 + 1))
+    .Object@dist <- list(
+      quantile = function(p) qlnorm(p, meanlog = meanlog, sdlog = sdlog)
+    , cdf = function(q) plnorm(q, meanlog = meanlog, sdlog = sdlog)
+    , name = "Lognormal"
+    )
     # Initialize 'bottom-up' to avoid a premature validity check:
     .Object <- callNextMethod(.Object, CV=CV, median=median, ...)
   })
@@ -221,3 +229,14 @@ setMethod(
           , SIMPLIFY = FALSE)
   })
 
+#' Test performance of \code{draw_samples} function
+#' 
+#' @param n Number of samples to draw
+#'
+#' @export
+test_draw_samples <- function(n = 500){
+  mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+                                   , median_mtd = 6, median_sdlog = 0.5
+                                   , units="mg/kg")
+  invisible(draw_samples(mtdi_gen, n = n))
+}
