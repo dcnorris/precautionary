@@ -91,9 +91,7 @@ setMethod(
     # attribute 'true_prob_tox'.
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
-    cat("Drawing samples from hyperprior ... ")
     mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
-    cat("DONE.\n")
     P_ <- seq_along(dose_levels)
     fits <- list()
     tpts <- list()

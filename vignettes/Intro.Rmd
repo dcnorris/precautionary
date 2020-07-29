@@ -204,13 +204,12 @@ Here, $\sigma_{\mathrm{med}}$ expresses *in relative terms*^[For example, settin
 
 ```{r Raleigh-distribution, echo=FALSE, message=FALSE}
 # Plot the Raleigh density for a suitable range of sigma_CV values
-library(distr6)
 sigmas <- c(0.1, 0.25, 0.5, 1)
 curves <- as.data.table(expand.grid(x = seq(0, 2, 0.01)
                                    ,mode = sigmas
                                    )
                         )
-curves[, pdf := Rayleigh$new(mode = mode)$pdf(x), by = mode]
+curves[, pdf := 2*(x/mode^2)*dchisq((x/mode)^2, df=2), by = mode]
 plot(pdf ~ x, data = curves[mode == sigmas[1]], type = 'l'
      , main = "Probability density function of the Rayleigh distribution")
 for(sigma in sigmas[-1])
@@ -221,7 +220,7 @@ text(x=0.75, y=1.4, expression(sigma == 0.5))
 text(x=1.5, y=0.9, expression(sigma == 1))
 ```
 
-Happily, the Raleigh distribution's $\sigma$ parameter coincides with its mode, and its standard deviation is about $\frac{2}{3} \sigma$, which seems a reasonable degree of relative uncertainty about CV(MTD$_i$).^[The exact figure is $\sqrt{1-\pi/2} \approx 0.655$. Given how little is known generally---or even acknowledged!---about inter-individual variation in optimal dosing, it seems reasonable to suppose that you will allow a ± of 66% on any value you choose as most likely for $\mathrm{CV}(\mathrm{MTD}_i)$.] We take advantage of this when we implement these features in package `precautionary`, avoiding the need to ask users to specify a separate uncertainty parameter for CV:
+Happily, the Raleigh distribution's $\sigma$ parameter coincides with its *mode* (likeliest value), and its standard deviation is about $\frac{2}{3} \sigma$, which seems a reasonable degree of relative uncertainty about CV(MTD$_i$).^[The exact figure is $\sqrt{2-\pi/2} \approx 0.655$. Given how little is known generally---or even acknowledged!---about inter-individual variation in optimal dosing, it seems reasonable to suppose that you will allow a ± of 66% on any value you choose as most likely for $\mathrm{CV}(\mathrm{MTD}_i)$.] We take advantage of this when we implement these features in package `precautionary`, avoiding the need to ask users to specify a separate uncertainty parameter for CV:
 
 ```{r hyperprior, fig.cap="Multiple samples from a *hyperprior* over the distribution of MTD$_i$. Consider the implications for the customary practice of pulling 'true toxicity probabilities' out of thin air!"}
 mtdi_gen <- hyper_mtdi_lognormal(CV = 1

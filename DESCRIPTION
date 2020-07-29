@@ -10,7 +10,7 @@ Authors@R: person("David C.", "Norris"
                  )
 Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: magrittr, escalation, data.table
-Imports: methods, distr6, dplyr, rlang
+Imports: methods, dplyr, rlang
 Suggests: 
     knitr,
     rmarkdown,

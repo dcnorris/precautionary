@@ -20,8 +20,6 @@
 # In constructing this class, I may wish to anticipate the need to abstract
 # the parameter specification to facilitate (1a).
 #
-#' @importFrom distr6 SDistribution Lognormal Rayleigh
-setOldClass(c("Lognormal","SDistribution"))
 
 setClass("mtdi_generator",
   slots = list(
@@ -33,7 +31,7 @@ setClass("mtdi_distribution",
   slots = list(
     CV = "numeric"      # Establish CV and median as universal parameters
   , median = "numeric"  # for specifying MTDi distributions.
-  , dist = "list" #"SDistribution"
+  , dist = "list" # think 'distr6::SDistribution'
   ),
   contains = c("mtdi_generator","VIRTUAL")
 )
@@ -146,12 +144,13 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
 
 #' A lognormal MTDi distribution
 #' 
-#' @slot dist An object of class \code{distr6::Lognormal}
+#' @slot dist A list with \code{cdf}, \code{quantile} and \code{name} components
+#'  intended to provide that portion of the interface of \code{distr6::Lognormal}.
 #'
 #' @export mtdi_lognormal
 mtdi_lognormal <- setClass("mtdi_lognormal",
   slots = list(
-    dist = "list" #"Lognormal"
+    dist = "list" # think 'distr6::Lognormal'
   ),
   contains = "mtdi_distribution"
 )
@@ -159,8 +158,6 @@ mtdi_lognormal <- setClass("mtdi_lognormal",
 #' @importFrom stats qlnorm plnorm
 setMethod("initialize", "mtdi_lognormal",
   function(.Object, CV, median, ...) {
-    # .Object@dist <- Lognormal$new(meanlog = log(median),
-    #                               sdlog = sqrt(log(CV^2 + 1)))
     meanlog <- log(median)
     sdlog <- sqrt(log(CV^2 + 1))
     .Object@dist <- list(
@@ -183,13 +180,20 @@ setGeneric("draw_samples", function(hyper, n, ...) {
 #' Hyperprior for lognormal MTDi distributions
 #' 
 #' This hyperprior generates lognormal MTDi distributions with their
-#' coefficient of variation being drawn from a Rayleigh distribution
-#' with mode parameter \code{CV}. Because the standard deviation of
-#' this distribution is
-#' 
-#' this implicitly link our uncertainty about \code{CV} to its value.
-#' 
-#' The medians of the lognormal distributions generated are themselves
+#' coefficients of variation being drawn from a Rayleigh distribution
+#' with mode parameter set to
+#'  \deqn{\sigma := CV.}
+#' Because the standard deviation of this distribution is
+#'  \deqn{sd = \sigma \sqrt{(2 - \pi/2)} \approx 0.655 \sigma,}{%
+#'        sd = \sigma \sqrt(2 - \pi/2) ≈ 0.655 \sigma,}
+#' this conveniently links our uncertainty about \code{CV} to its \emph{mode},
+#' and indeed to other measures of centrality that are proportional to this:
+#'  \deqn{mean = \sigma \sqrt{\pi/2} ≈ 1.25 \sigma}{%
+#'        mean = \sigma \sqrt(\pi/2) ≈ 1.25 \sigma}
+#'        
+#'  \deqn{median = \sigma \sqrt{2 log(2)} ≈ 1.18 \sigma.}{%
+#'        median = \sigma \sqrt(2 log(2)) ≈ 1.18 \sigma.}
+#' The \emph{medians} of the lognormal distributions generated are themselves
 #' drawn from a lognormal distribution with \code{meanlog = log(median_mtd)}
 #' and \code{sdlog = median_sdlog}. Thus, parameter \code{median_sdlog}
 #' represents a proportional uncertainty in \code{median_mtd}.
@@ -213,14 +217,15 @@ setMethod("initialize", "hyper_mtdi_lognormal",
     .Object <- callNextMethod(.Object, ...)
   })
 
-#' @importFrom stats rlnorm
+#' @importFrom stats rlnorm rchisq
 setMethod(
   "draw_samples"
   , c("hyper_mtdi_lognormal","numeric"),
   function(hyper, n=NULL, ...) {
     if(missing(n)) n <- 1
     mapply(mtdi_lognormal
-          , CV = Rayleigh$new(mode = hyper@CV)$rand(n=n, simplify=TRUE)
+          #, CV = Rayleigh$new(mode = hyper@CV)$rand(n=n, simplify=TRUE)
+          , CV = sqrt(rchisq(n=n, df=2))*hyper@CV # Rayleigh(1) is chi dist w/ 2 d.f.
           , median = rlnorm(n=n
                             , meanlog=log(hyper@median_mtd)
                             , sdlog=hyper@median_sdlog)
