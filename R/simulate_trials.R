@@ -95,7 +95,9 @@ setMethod(
     P_ <- seq_along(dose_levels)
     fits <- list()
     tpts <- list()
-    if(interactive()) pb <- txtProgressBar(max = num_sims, style = 3)
+    # TODO: By inspecting environment of caller, determine whether these
+    #       progress bars would be nested, and suppress them accordingly.
+    ##if(interactive()) pb <- txtProgressBar(max = num_sims, style = 3)
     for(k in 1:num_sims){
       sims_k <- callGeneric(selector_factory = protocol
                            ,num_sims = 1
@@ -103,8 +105,9 @@ setMethod(
                            ,...)
       fits <- c(fits, sims_k[[1]])
       tpts[[k]] <- sims_k$true_prob_tox
-      if(interactive()) setTxtProgressBar(pb, k)
+      ##if(interactive()) setTxtProgressBar(pb, k)
     }
+    ##if (interactive()) close(pb)
     tpt_matrix <- do.call(rbind, tpts)
     colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
     sims <- list(
@@ -236,40 +239,85 @@ setMethod(
 #'
 #' @examples
 #' # See examples under 'simulate_trials'
-extend <- function(sims, num_sims = NULL, toxcount_mcse = NULL) {
+extend <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   UseMethod('extend')
 }
 
+toxcount_mcse <- function(sims) {
+  se <- function(x) sqrt(var(x)/length(x))
+  mcse <- as.data.table(sims, ordinalizer = NULL)[
+    , .(tox=sum(tox), notox=sum(!tox), total=.N), by = rep][
+      , .(tox=se(tox), notox=se(notox), total=se(total))
+      ]
+  # Given that trial duration will be inversely correlated with
+  # observed toxicity rate, we may generally expect the MCSE of
+  # non-DLT counts to be greater than that of DLT counts.
+  if (mcse$tox > mcse$notox)
+    warning("MCSE of DLT counts exceeds that of non-DLTs.",
+            " This is contrary to expectations, given that",
+            " the sum of these 2 counts is trial enrollment,",
+            " which will generally be inversely correlated",
+            " to observed DLT rate.")
+  max(mcse)
+}
+
+extension_to_target_mcse <- function(sims, target_mcse) {
+  current_mcse <- toxcount_mcse(sims)
+  if ( current_mcse < target_mcse )
+    return(0)
+  extension_factor <- ( current_mcse / target_mcse )^2 - 1
+  num_sims <- length(sims$fits) * extension_factor
+  num_sims <- ceiling(num_sims) # awkward to do fractional sims ;^)
+  num_sims
+}
+
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
-extend.precautionary <- function(sims, num_sims, toxcount_mcse = NULL) {
-  # Initially, let us simply extend by a fixed num_sims:
-  more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
-                                          ,num_sims = num_sims
-                                          ,true_prob_tox = sims$mtdi_dist)
-                                     ,sims$extra_params
-                                     )
-                  )
-  sims$fits <- c(sims$fits, more$fits)
+extend.precautionary <- function(sims, num_sims = NULL, target_mcse = 0.05) {
+  if (!missing(num_sims)) { # base case for recursion
+    more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
+                                            ,num_sims = num_sims
+                                            ,true_prob_tox = sims$mtdi_dist)
+                                       ,sims$extra_params
+                                       )
+                    )
+    sims$fits <- c(sims$fits, more$fits)
+    return(sims)
+  }
+  # The more sensible use case: extending sim to target MCSEs
+  sims_todo_est <- extension_to_target_mcse(sims, target_mcse = target_mcse)
+  if(interactive()) pb <- txtProgressBar(max = 1, style = 3)
+  while (sims_todo_est > 0) {
+    sims <- extend(sims, num_sims = 10)
+    sims_done <- length(sims$fits)
+    sims_todo_est <-extension_to_target_mcse(sims, target_mcse = target_mcse)
+    fraction_complete <- sims_done / (sims_done + sims_todo_est)
+    if (interactive()) setTxtProgressBar(pb, fraction_complete)
+  }
+  if (interactive()) close(pb)
   sims
 }
 
 #' @export
-extend.hyper <- function(sims, num_sims, toxcount_mcse = NULL) {
-  # Initially, let us simply extend by a fixed num_sims:
-  more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
-                                         ,num_sims = num_sims
-                                         ,true_prob_tox = sims$hyper$mtdi)
-                                     ,sims$extra_params
-                                     )
-                  )
-  N1 <- length(sims$fits)
-  N2 <- length(more$fits)
-  sims$avg_prob_tox <- (sims$avg_prob_tox*N1 + more$avg_prob_tox*N2)/(N1+N2)
-  sims$fits <- c(sims$fits, more$fits)
-  sims$hyper$true_prob_tox <- rbind(sims$hyper$true_prob_tox
-                                   ,more$hyper$true_prob_tox)
-  sims$hyper$mtdi_samples <- c(sims$hyper$mtdi_sample
-                              ,more$hyper$mtdi_sample)
-  sims
+extend.hyper <- function(sims, num_sims = NULL, target_mcse = 0.05) {
+  if (!missing(num_sims)) { # base case for recursion
+    more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
+                                            ,num_sims = num_sims
+                                            ,true_prob_tox = sims$hyper$mtdi)
+                                       ,sims$extra_params
+                                       )
+                    )
+    N1 <- length(sims$fits)
+    N2 <- length(more$fits)
+    sims$avg_prob_tox <- (sims$avg_prob_tox*N1 + more$avg_prob_tox*N2)/(N1+N2)
+    sims$fits <- c(sims$fits, more$fits)
+    sims$hyper$true_prob_tox <- rbind(sims$hyper$true_prob_tox
+                                      ,more$hyper$true_prob_tox)
+    sims$hyper$mtdi_samples <- c(sims$hyper$mtdi_sample
+                                 ,more$hyper$mtdi_sample)
+    return(sims)
+  }
+  # The more sensible use case: extending sim to target MCSEs
+  NextMethod() # recursive case handled fine by extend.precautionary
 }
 
