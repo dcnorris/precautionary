@@ -5,9 +5,15 @@ NULL
 #' 
 #' @docType methods
 #' @param selector_factory An object of S3 class \code{selector_factory}
-#' @param num_sims A vector of simulation dimensions
+#' @param num_sims Number of simulations to run
 #' @param true_prob_tox A generator of toxicity distributions
 #' @param ... Passed to subroutines
+#' 
+#' @details If invoked interactively with \code{num_sims} > 10, then a
+#' \code{txtProgressBar} is displayed in the console. The condition on
+#' \code{num_sims} has the useful side effect of allowing this function
+#' to be invoked iteratively by [extend] (with \code{num_sims} = 10)
+#' without the nuisance of nested progress bars.
 #' 
 #' @importFrom escalation simulate_trials selector_factory
 #' @export
@@ -95,9 +101,7 @@ setMethod(
     P_ <- seq_along(dose_levels)
     fits <- list()
     tpts <- list()
-    # TODO: By inspecting environment of caller, determine whether these
-    #       progress bars would be nested, and suppress them accordingly.
-    ##if(interactive()) pb <- txtProgressBar(max = num_sims, style = 3)
+    if (interactive() && num_sims > 10) pb <- txtProgressBar(max = num_sims, style = 3)
     for(k in 1:num_sims){
       sims_k <- callGeneric(selector_factory = protocol
                            ,num_sims = 1
@@ -105,9 +109,9 @@ setMethod(
                            ,...)
       fits <- c(fits, sims_k[[1]])
       tpts[[k]] <- sims_k$true_prob_tox
-      ##if(interactive()) setTxtProgressBar(pb, k)
+      if (exists("pb")) setTxtProgressBar(pb, k)
     }
-    ##if (interactive()) close(pb)
+    if (exists("pb")) close(pb)
     tpt_matrix <- do.call(rbind, tpts)
     colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
     sims <- list(
@@ -232,7 +236,8 @@ setMethod(
 #'
 #' @param sims An existing object of class \code{c('precautionary','simulations')}
 #' @param num_sims Optionally, a fixed number of additional replications to accumulate
-#' @param toxcount_mcse Optionally, an MCSE constraint on both DLTs and total enrollment
+#' @param target_mcse Optionally, an MCSE constraint to be imposed on expected counts
+#'  of DLTs, non-DLTs, and total enrollment.
 #'
 #' @return An extended simulation of same class as \code{sims}
 #' @export
@@ -245,9 +250,10 @@ extend <- function(sims, num_sims = NULL, target_mcse = 0.05) {
 
 toxcount_mcse <- function(sims) {
   se <- function(x) sqrt(var(x)/length(x))
+  tox <- notox <- total <- NULL # avoid 'no visible binding for global var' NOTEs 
   mcse <- as.data.table(sims, ordinalizer = NULL)[
-    , .(tox=sum(tox), notox=sum(!tox), total=.N), by = rep][
-      , .(tox=se(tox), notox=se(notox), total=se(total))
+    , list(tox=sum(tox), notox=sum(!tox), total=.N), by = rep][
+      , list(tox=se(tox), notox=se(notox), total=se(total))
       ]
   # Given that trial duration will be inversely correlated with
   # observed toxicity rate, we may generally expect the MCSE of
@@ -288,7 +294,7 @@ extend.precautionary <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   sims_todo_est <- extension_to_target_mcse(sims, target_mcse = target_mcse)
   if(interactive()) pb <- txtProgressBar(max = 1, style = 3)
   while (sims_todo_est > 0) {
-    sims <- extend(sims, num_sims = 10)
+    sims <- extend(sims, num_sims = 10) # NB: num_sims < 11 avoids nested progress bar
     sims_done <- length(sims$fits)
     sims_todo_est <-extension_to_target_mcse(sims, target_mcse = target_mcse)
     fraction_complete <- sims_done / (sims_done + sims_todo_est)
