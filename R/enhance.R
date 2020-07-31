@@ -358,7 +358,7 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
 #' The essential insight of package [precautionary] is distilled into the
 #' \emph{safety tabulation} which it generates from trial simulations, reporting
 #' the expected number of patients who will experience each grade of toxicity.
-#' To render this table for easy interpetation, these expectations are simply
+#' To render this table for easy interpretation, these expectations are simply
 #' displayed with a number of significant digits appropriate to their Monte Carlo
 #' standard errors (MCSEs). 
 #'
@@ -412,7 +412,7 @@ print.safetytab <- function(x, ...) {
   invisible(x)
 }
 
-#' Output a 'kable' for a simulation summary of class 'safetytab'
+#' Output a \code{kable} for a simulation summary of class \code{safetytab}
 #'
 #' @param safetytab An object of S3 class \code{safetytab}
 #'
