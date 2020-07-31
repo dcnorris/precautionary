@@ -12,14 +12,6 @@
 # (c) The scaling of the pharmacological effects of these doses
 # (d) Elaboration of pharmacologic effects (e.g., *graded* toxicities)
 #
-# I have dealt with (1b) in isolation already, by generalizing 'simulate_trials'
-# to the case where 'true_tox_probs' is (effectively) a matrix.
-#
-# A next step may be to handle (2a,b) *together*, in a class which allows for
-# specification of an MTDi distribution over real doses.
-# In constructing this class, I may wish to anticipate the need to abstract
-# the parameter specification to facilitate (1a).
-#
 
 setClass("mtdi_generator",
   slots = list(

@@ -342,7 +342,6 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
   ensemble <- as.data.table(object, ordinalizer = ordinalizer, ...)
   if( !is.null(ordinalizer) ){
     summary <- list(escalation = summary, safety = NULL)
-    # TODO: Would I speed things up by using a data.table approach here?
     toxTab <- xtabs(~ rep + Tox, data=ensemble) %>%
       addmargins(margin = 2, FUN = list(Total=sum))
     expectation <- rbind("Expected participants" = colMeans(toxTab)
