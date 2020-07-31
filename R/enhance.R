@@ -348,26 +348,88 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
     expectation <- rbind("Expected participants" = colMeans(toxTab)
                         ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(nrow(toxTab))
                         )
-    summary$safety <- expectation
-    # Issue a warning() in case Total's MCSE is not larger than all components'.
-    # (In theory, I suppose, 2 tox grades could have negatively correlated counts,
-    # such that they individually have large variances but their sum contributes a
-    # small net variance to the Total; thus, a *warning* rather than an assertion.)
-    # Such a warning is needed indeed only when these component variances exceeded
-    # the target (say, 0.05) needed to obtain a significant 1st decimal place.
-    # The warning could simply be in the nature of advising the simulation be extended!
-    if( !all(expectation['MCSE',] <= expectation['MCSE','Total']) &&
-        any(expectation['MCSE',-ncol(expectation)] > 0.05) &&
-        expectation['MCSE','Total'] < 0.05)
-      warning(
-        "Although expected Total enrollment has a significant tenths place",
-        ", one or more of the expected toxicity-grade counts lacks this precision.",
-        " Consider extending the simulation or investigating a perhaps implausibly",
-        " strong negative correlation between several toxicity grades.")
+    summary$safety <- prependClass("safetytab", expectation)
     summary$toxTab <- toxTab # (for DEBUGGING purposes)
   }
   summary
 }
+
+#' Format a phase 1 trial safety tabulation to show significant digits only
+#'
+#' The essential insight of package [precautionary] is distilled into the
+#' \emph{safety tabulation} which it generates from trial simulations, reporting
+#' the expected number of patients who will experience each grade of toxicity.
+#' To render this table for easy interpetation, these expectations are simply
+#' displayed with a number of significant digits appropriate to their Monte Carlo
+#' standard errors (MCSEs). 
+#'
+#' @param x A safety tabulation as found in the \code{safety} component of the
+#'  list returned by [summary.precautionary].
+#'
+#' @param ... Unused; included for compatibility with generic signature
+#'
+#' @note The MCSEs of safety tabulations remain available for inspection
+#'  (see example), but are omitted from standard displays because they may lend
+#'  themselves to misinterpretation as \emph{confidence bounds} on the number
+#'  of patients who will experience each toxicity grade \emph{in any given trial}.
+#'
+#' @examples 
+#' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+#'                                 ,median_mtd = 5
+#'                                 ,median_sdlog = 0.5
+#'                                 ,units="mg/kg")
+#' ordinalizer <- function(MTDi, r0 = 1.5)
+#'   MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+#' old <- options(dose_levels = c(0.5, 1, 2, 4, 6)
+#'               ,ordinalizer = ordinalizer)
+#' get_boin(num_doses = 5, target = 0.25) %>%
+#'   stop_at_n(n = 24) %>%
+#'   simulate_trials(
+#'     num_sims = 100
+#'   , true_prob_tox = mtdi_gen) -> boin_hsims
+#' safety <- summary(boin_hsims)$safety
+#' safety # The print method invokes 'format.safetytab' ..
+#' # .. but we can also inspect the underlying matrix by indexing:
+#' safety[,]  # indexing strips 'safetytab' class, returning plain matrix
+#' # Note that, by extend()ing the simulation we can increase precision:
+#' if (interactive()) { # may run a bit too long for CRAN servers' taste
+#'   boin_hsims %>% extend(target_mcse = 0.1) -> boin_hsimsX 
+#'   summary(boin_hsimsX)$safety
+#' }
+#' options(old)
+#' @export
+format.safetytab <- function(x, ...){
+  sigtenths <- x['MCSE',] < 0.1
+  mapply(function(x, d) format(round(x, digits=d), nsmall=d), x[1,], 0+sigtenths)
+}
+
+#' @importFrom stringr str_pad
+#' @export
+print.safetytab <- function(x, ...) {
+  fx <- format(x, ...)
+  width <- 2 + nchar(names(fx))
+  writeLines(paste(str_pad(names(fx), width=width, "left"), collapse=""))
+  writeLines(paste(str_pad(unname(fx), width=width, "left"), collapse=""))
+  invisible(x)
+}
+
+#' Output a 'kable' for a simulation summary of class 'safetytab'
+#'
+#' @param safetytab An object of S3 class \code{safetytab}
+#'
+#' @param ... Additional parameters passed to [knitr::kable]
+#'
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_styling add_header_above
+#' @export
+safety_kable <- function(safetytab, ...) {
+  safetytab %>% format() %>% t() %>%
+    kable(align='r', ...) %>% kable_styling(position = "left", full_width = FALSE) %>%
+    add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
+}
+
+#' @export
+t.safetytab <- function(x) t(x[,]) # plain-matrix transpose (drops 'safetytab' class)
 
 #' @importFrom escalation num_doses
 num_doses.three_plus_three_selector_factory <- function(x, ...) {

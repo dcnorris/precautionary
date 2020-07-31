@@ -122,7 +122,7 @@ summary(SIMS
        ,ordinalizer = tox_threshold_scaling
        ,r0 = 2      # supply a value for ordinalizer's r0 parameter
        )$safety %>% # select the 'safety' component of the summary
-  kable(digits=2) %>% add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+  safety_kable()
 ```
 
 Clearly, we have now made some genuine progress. Of special interest from a safety perspective are the numbers of Grade 4 (severe) and Grade 5 (fatal) toxicities expected in the trial.
@@ -247,8 +247,7 @@ options(ordinalizer = function(MTDi, r0 = 1.5) {
 })
 
 summary(HYPERSIMS)$safety -> etc.
-etc. %>% kable(digits=2) %>%
-  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+etc. %>% safety_kable()
 ```
 
 ## Uncertainty about the ordinalizer
@@ -263,7 +262,7 @@ rbind(summary(HYPERSIMS, r0=r0[1])$safety[1,]
      ,summary(HYPERSIMS, r0=r0[4])$safety[1,]
      ) -> safety
 cbind(data.table(`$r_0$` = r0), safety) %>% kable(digits=2) %>%
-  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+  add_header_above(c(" "=1, "Expected counts by toxicity grade"=6, " "=1))
 ```
 
 # Beyond 3 + 3
@@ -279,8 +278,7 @@ crm_design %>% simulate_trials(
 ) -> CRM_HYPERSIMS
 
 summary(CRM_HYPERSIMS)$safety -> etc.
-etc. %>% kable(digits=2) %>%
-  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+etc. %>% safety_kable()
 ```
 
 The BOIN design of [@liu_bayesian_2015] is also supported:
@@ -294,8 +292,7 @@ boin_design %>% simulate_trials(
 ) -> BOIN_HYPERSIMS
 
 summary(BOIN_HYPERSIMS)$safety -> etc.
-etc. %>% kable(digits=2) %>%
-  add_header_above(c(" "=1, "By toxicity grade"=6, " "=1))
+etc. %>% safety_kable()
 ```
 
 # Implications of package `precautionary`

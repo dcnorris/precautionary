@@ -237,13 +237,24 @@ setMethod(
 #' @param sims An existing object of class \code{c('precautionary','simulations')}
 #' @param num_sims Optionally, a fixed number of additional replications to accumulate
 #' @param target_mcse Optionally, an MCSE constraint to be imposed on expected counts
-#'  of DLTs, non-DLTs, and total enrollment.
+#'  of DLTs, non-DLTs, and Total enrollment.
 #'
-#' @return An extended simulation of same class as \code{sims}
+#' @return An extended simulation of same class as \code{sims}.
+#' 
+#' @note The MCSE constraint is imposed during trial \emph{simulation}, at which
+#'  point only \emph{binary} toxicities are available. Thus, as a practical matter,
+#'  \code{extend} can target MCSEs only for DLTs, non-DLTs and Total enrollment.
+#'  The subsequent subdivision of these categories during trial \emph{summary}
+#'  (at which point the ordinalizer comes into play along with its parameters) thus
+#'  may generate expected counts with MCSEs exceeding \code{target_mcse}.
+#'  In practice, however, this tends to affect the estimated counts only for the
+#'  \emph{lowest} toxicity grades---those of least concern from a trial-safety
+#'  perspective.
+#' 
 #' @export
 #'
-#' @examples
-#' # See examples under 'simulate_trials'
+#' @seealso
+#' See examples under [simulate_trials] and [format.safetytab].
 extend <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   UseMethod('extend')
 }
@@ -280,6 +291,7 @@ extension_to_target_mcse <- function(sims, target_mcse) {
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 extend.precautionary <- function(sims, num_sims = NULL, target_mcse = 0.05) {
+  options(dose_levels = sims$dose_levels)
   if (!missing(num_sims)) { # base case for recursion
     more <- do.call(simulate_trials, c(list(selector_factory = sims$protocol
                                             ,num_sims = num_sims
