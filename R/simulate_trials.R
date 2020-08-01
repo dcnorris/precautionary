@@ -177,11 +177,13 @@ setMethod(
 #' , ordinalizer = function(MTDi, r0 = sqrt(2))
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )
-#' crm_sims <- crm_sims %>% extend(num_sims = 30)
+#' if (interactive()) { # don't overtax CRAN servers
+#' crm_sims <- crm_sims %>% extend(target_mcse = 0.1)
 #' summary(crm_sims
 #' , ordinalizer = function(MTDi, r0 = sqrt(2))
 #'     MTDi * r0^c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
 #' )$safety
+#' }
 #' options(old)
 #' @rdname simulate_trials
 #' @export
