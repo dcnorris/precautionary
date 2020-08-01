@@ -2,7 +2,7 @@ Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
 Version: 0.1-2
-Date: 2020-07-31
+Date: 2020-08-01
 Authors@R: person("David C.", "Norris"
                  , role = c("aut", "cre", "cph")
                  , email = "david@precisionmethods.guru"

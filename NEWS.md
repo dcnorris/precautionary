@@ -3,9 +3,10 @@
 ## Changes
 
 * Simulations are now extensible, via extend.(precautionary|hyper) methods
-* Factored out dependency on distr6, eliminating object creation overhead
-* Expunged superfluous 'K' dimension from hyper-simulations
-* Sim summary()'s $safety component has class 'safetytab', with format & print methods
+* No longer using or depending on distr6, eliminating object creation overhead
+* Hyper-simulations no longer have a superfluous 'K' (within-hyperprior-draw) dimension
+* Sim summary()'s $safety component has prepended class 'safetytab'
+* The format.safetytab() method shows significant digits in accordance with MCSEs
 
 # precautionary 0.1-1
 
