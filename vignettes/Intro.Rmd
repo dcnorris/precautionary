@@ -8,6 +8,9 @@ vignette: <
   %\VignetteIndexEntry{Introduction to package 'precautionary'}
   \usepackage[utf8]{inputenc}
 bibliography: precautionary-package.bib
+header-includes:
+  \newcommand{\MTDi}{\mathrm{MTD}_i}
+  \newcommand{\MTDig}[1][g]{\mathrm{MTD}_i^{#1}}
 ---
 
 ```{r setup, include=FALSE}
@@ -77,7 +80,7 @@ Likewise, the pre-specified doses for our dose-escalation design must be specifi
 options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
 ```
 
-A plot of the MTD$_i$ distribution makes clear the connection with toxicity probabilities:
+A plot of the $\MTDi$ distribution makes clear the connection with toxicity probabilities:
 
 ```{r}
 plot(mtdi_dist)
@@ -89,7 +92,7 @@ names(probs) <- paste(getOption('dose_levels'), mtdi_dist@units)
 t(probs) %>% kable(digits = 4)
 ```
 
-## Extending `escalation` to support the MTD$_i$ concept
+## Extending `escalation` to support the $\MTDi$ concept
 
 Package `precautionary` provides additional methods for `escalation` functions, so that an `mtdi_distribution` may be used instead of out-of-thin-air probabilities:
 
@@ -106,13 +109,13 @@ etc. %>% kable(caption = "A simulation summary under the MTD$_i$ regime of packa
 
 ```
 
-Judging from Table \@ref(tab:MTDi-regime), however, introducing the MTD$_i$ concept has by itself generated little progress. The only apparent improvement compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses. To make further progress *while continuing to operate within the dose-escalation paradigm*, we need to introduce another concept.
+Judging from Table \@ref(tab:MTDi-regime), however, introducing the $\MTDi$ concept has by itself generated little progress. The only apparent improvement compared with Table \@ref(tab:basic-sim) is the addition of a column with *actual* doses. To make further progress *while continuing to operate within the dose-escalation paradigm*, we need to introduce another concept.
 
 ## Introducing graded toxicities
 
-When its full implications are allowed to develop, the latent toxicity threshold MTD$_i$ has far-reaching consequences for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017; @norris_precautionary_2017].
+When its full implications are allowed to develop, the latent toxicity threshold $\MTDi$ has far-reaching consequences for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-*titration* designs that abandon cohortwise dose-escalation altogether [@norris_dose_2017; @norris_precautionary_2017].
 
-For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of MTD$_i$, and relegates the MTD$_i$ concept *standing alone* to the status of a mere formalism. But in conjunction with *a dose scaling that links different toxicity grades at the individual level*, the MTD$_i$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
+For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of $\MTDi$, and relegates the $\MTDi$ concept *standing alone* to the status of a mere formalism. But in conjunction with *a dose scaling that links different toxicity grades at the individual level*, the $\MTDi$ can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package `precautionary`, such scaling functions are called 'ordinalizers', and may be applied at the time when simulations are summarized:
 
 ```{r}
 tox_threshold_scaling <- function(MTDi, r0) {
@@ -151,13 +154,13 @@ tox_threshold_scaling <-
   }
 ```
 
-In general, an ordinalizer returns a named vector^[The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.] that links the different dose thresholds at which an individual will experience each grade of toxicity. In [@norris_retrospective_2020], these concepts are laid out in terms of MTD$_i^g$ with the index $g$ running over toxicity grades:
+In general, an ordinalizer returns a named vector^[The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.] that links the different dose thresholds at which an individual will experience each grade of toxicity. In [@norris_retrospective_2020], these concepts are laid out in terms of $\MTDig$ with the index $g$ running over toxicity grades:
 
 $$
-\mathrm{MTD}_i^g, g \in \{1,...,5\},
+\MTDig, g \in \{1,...,5\},
 $$
 
-and defined as the dose threshold where a grade-$(g-1)$ toxicity would convert to grade-$g$.^[To preserve the intuition of the term 'maximum tolerated dose', you could say MTD$_i^g$ is the maximum dose that individual $i$ can tolerate if 'tolerability' is defined as toxicity *below* grade-$g$.] Thus, in the usual case where the binary 'dose-limiting toxicity' (DLT) of a dose-escalation design is defined as CTCAE Grade ≥ 3, we identify 'MTD$_i$' with MTD$_i^3$ .
+and defined as the dose threshold where a grade-$(g-1)$ toxicity would convert to grade-$g$.^[To preserve the intuition of the term 'maximum tolerated dose', you could say $\MTDig$ is the maximum dose that individual $i$ can tolerate if 'tolerability' is defined as toxicity *below* grade-$g$.] Thus, in the usual case where the binary 'dose-limiting toxicity' (DLT) of a dose-escalation design is defined as CTCAE Grade ≥ 3, we identify '$\MTDi$' with $\MTDig[3]$ .
 
 ## Taking stock of parameter counts
 
@@ -178,7 +181,7 @@ As we count design parameters, we also ought not overlook the pre-specified dose
 
 # Modeling uncertainty
 
-When you ask people to start thinking, sometimes they keep going. No sooner will you have elicited values for the `CV` and `median` parametrizing a lognormal MTD$_i$ distribution
+When you ask people to start thinking, sometimes they keep going. No sooner will you have elicited values for the `CV` and `median` parametrizing a lognormal $\MTDi$ distribution
 
 $$
 \begin{align}
@@ -200,7 +203,7 @@ $$
 \end{align}
 $$
 
-Here, $\sigma_{\mathrm{med}}$ expresses *in relative terms*^[For example, setting $\sigma_{\mathrm{med}} = 0.5$ would express a ±50% uncertainty in our guessed median MTD$_i$.] our uncertainty about the median of MTD$_i$, while $\sigma_{\mathrm{CV}}$ is the parameter of the [Raleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution):
+Here, $\sigma_{\mathrm{med}}$ expresses *in relative terms*^[For example, setting $\sigma_{\mathrm{med}} = 0.5$ would express a ±50% uncertainty in our guessed median $\MTDi$.] our uncertainty about the median of $\MTDi$, while $\sigma_{\mathrm{CV}}$ is the parameter of the [Raleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution):
 
 ```{r Raleigh-distribution, echo=FALSE, message=FALSE}
 # Plot the Raleigh density for a suitable range of sigma_CV values
@@ -220,7 +223,7 @@ text(x=0.75, y=1.4, expression(sigma == 0.5))
 text(x=1.5, y=0.9, expression(sigma == 1))
 ```
 
-Happily, the Raleigh distribution's $\sigma$ parameter coincides with its *mode* (likeliest value), and its standard deviation is about $\frac{2}{3} \sigma$, which seems a reasonable degree of relative uncertainty about CV(MTD$_i$).^[The exact figure is $\sqrt{2-\pi/2} \approx 0.655$. Given how little is known generally---or even acknowledged!---about inter-individual variation in optimal dosing, it seems reasonable to suppose that you will allow a ± of 66% on any value you choose as most likely for $\mathrm{CV}(\mathrm{MTD}_i)$.] We take advantage of this when we implement these features in package `precautionary`, avoiding the need to ask users to specify a separate uncertainty parameter for CV:
+Happily, the Raleigh distribution's $\sigma$ parameter coincides with its *mode* (likeliest value), and its standard deviation is about $\frac{2}{3} \sigma$, which seems a reasonable degree of relative uncertainty about CV($\MTDi$).^[The exact figure is $\sqrt{2-\pi/2} \approx 0.655$. Given how little is known generally---or even acknowledged!---about inter-individual variation in optimal dosing, it seems reasonable to suppose that you will allow a ± of 66% on any value you choose as most likely for $\mathrm{CV}(\mathrm{MTD}_i)$.] We take advantage of this when we implement these features in package `precautionary`, avoiding the need to ask users to specify a separate uncertainty parameter for CV:
 
 ```{r hyperprior, fig.cap="Multiple samples from a *hyperprior* over the distribution of MTD$_i$. Consider the implications for the customary practice of pulling 'true toxicity probabilities' out of thin air!"}
 mtdi_gen <- hyper_mtdi_lognormal(CV = 1
