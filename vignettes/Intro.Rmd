@@ -174,7 +174,7 @@ function(MTDi3, r12, r4, r5) {
 }
 ```
 
-As we count design parameters, we also ought not overlook the pre-specified dose levels themselves, which are indeed parameters of our design. But package `prcautionary` changes the manner in which these parameters enter into simulation-based trial design. In the usual approach, every new set of pre-specified dose levels requires its own set of 'true toxicity probabilities' to be pulled anew out of thin air. But in package `precautionary`, the linkage between dose levels and probabilities is provided through a model. In theory, this would allow us to obtain our dose levels as *results* of simulation-based design, instead of providing them as *inputs*.
+As we count design parameters, we also ought not overlook the pre-specified dose levels themselves, which are indeed parameters of our design. But package `precautionary` changes the manner in which these parameters enter into simulation-based trial design. In the usual approach, every new set of pre-specified dose levels requires its own set of 'true toxicity probabilities' to be pulled anew out of thin air. But in package `precautionary`, the linkage between dose levels and probabilities is provided through a model. In theory, this would allow us to obtain our dose levels as *results* of simulation-based design, instead of providing them as *inputs*.
 
 # Modeling uncertainty
 
