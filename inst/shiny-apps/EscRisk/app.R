@@ -51,16 +51,18 @@ ui <- fluidPage(
       splitLayout(
         numericInput(inputId = "num_doses"
                      ,label = "Number of doses"
-                     ,value = 6
+                     ,value = 5
                      ,min = 2
-                     ,max = 8
+                     ,max = 7
                      ,step = 1)
         , radioButtons(inputId = "range_scaling"
                        ,label = "Dose level sequence"
                        ,choices = c("geometric","arithmetic")
                        ,selected = "geometric"
                        ,inline = TRUE)
+        , cellWidths = c("40%","60%")
       ),
+      uiOutput("dose_levels"),
       hr(),
       splitLayout(
         textInput(inputId = "median_mtd"
@@ -133,6 +135,34 @@ server <- function(input, output) {
       shinyjs::enable("ttr")
   })
   
+  # TODO: Try building HTML with subscripts for dose numbering: D_1, ..., D_n
+  dose_display <- reactive(paste0("D", seq_len(input$num_doses)))
+  
+  mindose <- reactive(as.numeric(input$mindose)) # TODO: do validation within these
+  maxdose <- reactive(as.numeric(input$maxdose)) #       reactive computations?
+  
+  dose_levels <- reactive(
+    switch(input$range_scaling,
+           geometric = exp(seq(from = log(mindose())
+                               , to = log(maxdose())
+                               , length.out = input$num_doses)),
+           arithmetic = seq(from = mindose()
+                            , to = maxdose()
+                            , length.out = input$num_doses))
+  )
+  
+  output$dose_levels <- renderUI({
+    do.call(splitLayout, lapply(seq_len(input$num_doses), function(k, ...)
+      textInput(inputId = paste0("D", k)
+                , label = HTML(paste0("D<sub>", k,"</sub>"))
+                , value = dose_levels()[k]
+                , ...)))
+  })
+  
+  # observeEvent(output$dose_levels, {
+  #   shinyjs::disable("D1")
+  # })
+  
   observeEvent(input$simulate, {
     # The 'main event'!
     cat(file = stderr(), "input$mindose:", input$mindose, "\n")
@@ -148,14 +178,7 @@ server <- function(input, output) {
       ,need(0 < (sigma_CV <- 0.01*as.numeric(input$sigma_CV))
             , HTML("Please input a valid &sigma;<sub>CV</sub>"))
     )
-    dose_levels <- switch(input$range_scaling,
-                          geometric = exp(seq(from = log(mindose)
-                                              , to = log(maxdose)
-                                              , length.out = input$num_doses)),
-                          arithmetic = seq(from = mindose
-                                           , to = maxdose
-                                           , length.out = input$num_doses))
-    options(dose_levels = dose_levels)
+    options(dose_levels = dose_levels())
     # TODO: Would separately reactive dose_levels & mtdi_gen lend clarity?
     mtdi_gen <- hyper_mtdi_lognormal(CV = sigma_CV
                                      , median_mtd = median_mtd
