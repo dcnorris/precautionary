@@ -27,6 +27,7 @@ library(precautionary)
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
+  shinyFeedback::useShinyFeedback(),
   
   includeCSS("www/tweaks.css"),
   
@@ -126,7 +127,7 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   observeEvent(input$design, {
     if(input$design == "3 + 3")
@@ -135,11 +136,28 @@ server <- function(input, output) {
       shinyjs::enable("ttr")
   })
   
-  # TODO: Try building HTML with subscripts for dose numbering: D_1, ..., D_n
-  dose_display <- reactive(paste0("D", seq_len(input$num_doses)))
+  dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
   
-  mindose <- reactive(as.numeric(input$mindose)) # TODO: do validation within these
-  maxdose <- reactive(as.numeric(input$maxdose)) #       reactive computations?
+  # TODO: Perform validation of these inputs as per
+  # https://mastering-shiny.org/action-feedback.html#validate
+  mindose <- reactive({
+    mindose <- as.numeric(input$mindose)
+    isnum <- !is.na(mindose)
+    ispos <- mindose > 0
+    shinyFeedback::feedbackWarning("mindose", !isnum, "Invalid dose")
+    shinyFeedback::feedbackWarning("mindose", !ispos, "Seriously?")
+    req(isnum && ispos)
+    mindose
+  })
+  maxdose <- reactive({
+    maxdose <- as.numeric(input$maxdose)
+    isnum <- !is.na(maxdose)
+    gtmin <- maxdose > mindose()
+    shinyFeedback::feedbackWarning("maxdose", !isnum, "Invalid dose")
+    shinyFeedback::feedbackWarning("maxdose", !gtmin, "max < min!")
+    req(isnum && gtmin)
+    maxdose
+  })
   
   dose_levels <- reactive(
     switch(input$range_scaling,
@@ -152,7 +170,7 @@ server <- function(input, output) {
   )
 
   output$dose_levels <- renderUI({
-    do.call(splitLayout, lapply(seq_len(input$num_doses), function(k, ...)
+    do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       textInput(inputId = paste0("D", k)
                 , label = HTML(paste0("D<sub>", k,"</sub>"))
                 , value = dose_levels()[k]
@@ -188,15 +206,16 @@ server <- function(input, output) {
         num_sims = 100 # ... to start
       , true_prob_tox = mtdi_gen())
     summary(hsims, ordinalizer = function(dose, r0 = input$r0) {
-      c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
+      c(`Grade 1`=dose/r0^2
+      , `Grade 2`=dose/r0
+      , `Grade 3`=dose
+      , `Grade 4`=dose*r0
+      , `Grade 5`=dose*r0^2)
     })$safety -> safety
     # hsims <- hsims %>% extend(num_sims = num_sims)
     # summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
     #   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
     # )$safety
-    print(safety)
-    #print(safety_kable(safety))
-    #output$tbl <- renderTable(safety)
     output$safety <- renderText(safety_kable(safety))
   })
   
@@ -214,6 +233,13 @@ server <- function(input, output) {
       options(dose_levels = dose_levels())
       plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
     })
+  })
+  
+  observeEvent(input$r0, {
+    summary(hsims, ordinalizer = function(dose, r0 = input$r0) {
+      c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
+    })$safety -> safety
+    output$safety <- renderText(safety_kable(safety))
   })
   
 }
