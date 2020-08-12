@@ -7,20 +7,20 @@
 #/2. Inputs for median(MTDi), sigma_med and sigma_CV.
 #/3. Simulate 3+3 trial for M=100 reps, show table
 #  -> https://shiny.rstudio.com/articles/render-table.html
-# 4. Feedback on actual doses triggered by selection of geom/arith
+#/4. Feedback on actual doses triggered by selection of geom/arith
 #  -> Consider for-now disabled textInputs as means for display
-# 5. Option to specify CRM or BOIN with target toxicity rate
-# 6. Recursively update table until standard errors < 0.05
-# 7. Show a progress bar marked in standard errors
+# 5. Recursively update table until standard errors < 0.05
+# 6. Show a progress bar marked in standard errors
 #  -> https://shiny.rstudio.com/articles/progress.html
-# 8. Use tabSetPanel to show details like hyperprior draws? (TMI?)
+# 7. Option to specify CRM or BOIN with target toxicity rate
+# 8. Exhibit ~100 draws from hyperprior *dynamically* at lower right
 #/9. Improve spacing via CSS
 # 10. Pop-up (or roll-over?) explanations -- via (?) or (i) symbol
-# 11. Inactivate TTL when 3+3 design selected
+#/11. Inactivate TTL when 3+3 design selected
 # 12. Option to specify n doses verbatim
 #  -> Could this be via enabled editing of feedback area?
 # 13. Foolproof inputs constraints & checks!
-# 14. Implement *reactivity* to improve clarity & performance
+# 14. Refine reactivity cascades to improve clarity & performance
 
 library(shiny)
 library(precautionary)
@@ -120,8 +120,8 @@ ui <- fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
+      plotOutput("hyperprior"),
       htmlOutput("safety")
-      #tableOutput("tbl")
     )
   )
 )
@@ -150,7 +150,7 @@ server <- function(input, output) {
                             , to = maxdose()
                             , length.out = input$num_doses))
   )
-  
+
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(seq_len(input$num_doses), function(k, ...)
       textInput(inputId = paste0("D", k)
@@ -158,6 +158,14 @@ server <- function(input, output) {
                 , value = dose_levels()[k]
                 , ...)))
   })
+  
+  # TODO: Should the inputs be validated here?
+  mtdi_gen <- reactive(
+    hyper_mtdi_lognormal(CV = 0.01*as.numeric(input$sigma_CV)
+                         , median_mtd = as.numeric(input$median_mtd)
+                         , median_sdlog = 0.01*as.numeric(input$sigma_median)
+                         , units = input$dose_units)
+  )
   
   observeEvent(input$simulate, {
     # The 'main event'!
@@ -175,15 +183,10 @@ server <- function(input, output) {
             , HTML("Please input a valid &sigma;<sub>CV</sub>"))
     )
     options(dose_levels = dose_levels())
-    # TODO: Would separately reactive dose_levels & mtdi_gen lend clarity?
-    mtdi_gen <- hyper_mtdi_lognormal(CV = sigma_CV
-                                     , median_mtd = median_mtd
-                                     , median_sdlog = sigma_median
-                                     , units = input$dose_units)
     hsims <- get_three_plus_three(num_doses = input$num_doses) %>%
       simulate_trials(
         num_sims = 100 # ... to start
-      , true_prob_tox = mtdi_gen)
+      , true_prob_tox = mtdi_gen())
     summary(hsims, ordinalizer = function(dose, r0 = input$r0) {
       c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
     })$safety -> safety
@@ -205,6 +208,14 @@ server <- function(input, output) {
     shinyjs::delay(0, shinyjs::disable(paste0("D", num_doses())))
   })
 
+  observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
+    output$hyperprior <- renderPlot({
+      set.seed(2020) # avoid distracting dance of the samples
+      options(dose_levels = dose_levels())
+      plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
+    })
+  })
+  
 }
 
 # Run the application 
