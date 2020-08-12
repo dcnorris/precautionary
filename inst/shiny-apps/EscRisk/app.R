@@ -58,10 +58,10 @@ ui <- fluidPage(
                      ,step = 1)
         , radioButtons(inputId = "range_scaling"
                        ,label = "Dose level sequence"
-                       ,choices = c("geometric","arithmetic")
-                       ,selected = "geometric"
+                       ,choices = c("geom","arith","custom")
+                       ,selected = "geom"
                        ,inline = TRUE)
-        , cellWidths = c("40%","60%")
+        , cellWidths = c("35%","65%")
       ),
       uiOutput("dose_levels"),
       hr(),
@@ -159,14 +159,20 @@ server <- function(input, output, session) {
     maxdose
   })
   
+  readDoseLevels <- reactive(
+    sapply(dose_counter(), function(k) as.numeric(input[[paste0("D",k)]]))
+  )
+  
   dose_levels <- reactive(
     switch(input$range_scaling,
-           geometric = exp(seq(from = log(mindose())
-                               , to = log(maxdose())
-                               , length.out = input$num_doses)),
-           arithmetic = seq(from = mindose()
-                            , to = maxdose()
-                            , length.out = input$num_doses))
+           geom = exp(seq(from = log(mindose())
+                          , to = log(maxdose())
+                          , length.out = input$num_doses)),
+           arith = seq(from = mindose()
+                       , to = maxdose()
+                       , length.out = input$num_doses),
+           custom = readDoseLevels()
+    )
   )
 
   output$dose_levels <- renderUI({
@@ -223,8 +229,14 @@ server <- function(input, output, session) {
   # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
   num_doses <- reactive(input$num_doses)
   observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
-    shinyjs::delay(0, shinyjs::disable("D1"))
-    shinyjs::delay(0, shinyjs::disable(paste0("D", num_doses())))
+    shinyjs::delay(0, {
+      shinyjs::disable("D1")
+      if (input$range_scaling == "custom")
+        for(k in 2:(input$num_doses-1)) shinyjs::enable(paste0("D", k))
+      else
+        for(k in 2:(input$num_doses-1)) shinyjs::disable(paste0("D", k))
+      shinyjs::disable(paste0("D", input$num_doses))
+    })
   })
 
   observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
