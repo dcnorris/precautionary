@@ -159,10 +159,6 @@ server <- function(input, output) {
                 , ...)))
   })
   
-  # observeEvent(output$dose_levels, {
-  #   shinyjs::disable("D1")
-  # })
-  
   observeEvent(input$simulate, {
     # The 'main event'!
     cat(file = stderr(), "input$mindose:", input$mindose, "\n")
@@ -201,6 +197,14 @@ server <- function(input, output) {
     output$safety <- renderText(safety_kable(safety))
   })
   
+  # For Dean Attali's explanation of the timing issue addressed here, see
+  # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
+  num_doses <- reactive(input$num_doses)
+  observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
+    shinyjs::delay(0, shinyjs::disable("D1"))
+    shinyjs::delay(0, shinyjs::disable(paste0("D", num_doses())))
+  })
+
 }
 
 # Run the application 
