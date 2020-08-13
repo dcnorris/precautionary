@@ -9,18 +9,19 @@
 #  -> https://shiny.rstudio.com/articles/render-table.html
 #/4. Feedback on actual doses triggered by selection of geom/arith
 #  -> Consider for-now disabled textInputs as means for display
-# 5. Recursively update table until standard errors < 0.05
+#/5. Recursively update table (with start/stop button)
 # 6. Show a progress bar marked in standard errors
 #  -> https://shiny.rstudio.com/articles/progress.html
-# 7. Option to specify CRM or BOIN with target toxicity rate
-# 8. Exhibit ~100 draws from hyperprior *dynamically* at lower right
+#/7. Option to specify CRM or BOIN with target toxicity rate
+#/8. Exhibit ~100 draws from hyperprior *dynamically* at lower right
 #/9. Improve spacing via CSS
 # 10. Pop-up (or roll-over?) explanations -- via (?) or (i) symbol
 #/11. Inactivate TTL when 3+3 design selected
 # 12. Option to specify n doses verbatim
 #  -> Could this be via enabled editing of feedback area?
 # 13. Foolproof inputs constraints & checks!
-# 14. Refine reactivity cascades to improve clarity & performance
+# 14. Introduce 'Continue' state for StartStopButton
+# 15. Stop sim automatically when stderr < 0.05
 
 library(shiny)
 library(precautionary)
@@ -95,12 +96,7 @@ ui <- fluidPage(
                       ,value = 25)
         , cellWidths = c("50%","50%")
       ),
-      splitLayout(
-        actionButton(inputId = "simulate"
-                     ,label = "Simulate") # TODO: Change to "Continue sim" after [Halt]
-        , actionButton(inputId = "halt"
-                     ,label = "Halt")
-      ),
+      uiOutput('StartStopButton'),
       hr(),
       sliderInput(inputId = "r0"
                   ,label = HTML("r<sub>0</sub> parameter of ordinalizer")
@@ -128,6 +124,27 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+
+  # Let me try implementing a self-toggling Start/Stop button in 'pure Shiny',
+  # without exploiting Javascript. This would seem to require maintaining the
+  # desired state as a reactiveVal, and re-rendering the button accordingly.
+  state <- reactiveValues(sim = 'ready') # 'ready' | 'running'
+  
+  output$StartStopButton <- renderUI({
+    if (state$sim == 'ready')
+      actionButton("start_stop", label = "Start"
+                   , style = "color: #fff; background-color: #00aa00")
+    else
+      actionButton("start_stop", label = "STOP"
+                   , style = "color: #fff; background-color: #cd0000")
+  })
+  
+  observeEvent(input$start_stop, {
+    if (isolate(state$sim) == 'ready')
+      state$sim <- 'running'
+    else
+      state$sim <- 'ready'
+  })
   
   blank_safety <- rep("--", 7)
   names(blank_safety) <- c("None", paste("Grade", 1:5), "Total")
@@ -229,7 +246,11 @@ server <- function(input, output, session) {
   # and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
   hsims <- reactiveVal(NULL)
   
-  observeEvent(input$simulate, {
+  observe({
+    # Keep extending the sim indefinitely while state$sim == 'running'
+    invalidateLater(1000, session)
+    
+    if (state$sim == 'running') {
     hsims(
       if (!is.null(isolate(hsims()))) {
         isolate(hsims()) %>% extend(num_sims = 20)
@@ -247,6 +268,7 @@ server <- function(input, output, session) {
     # -> Is 'observeEvent' an eager-eval context?
     # ** Can I nevertheless 'kick off' a lazy-update cascade?
     output$safety <- renderText(safety_kable(safety()))
+    }
   })
   
   safety <- reactive({
