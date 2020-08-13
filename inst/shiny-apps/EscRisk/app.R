@@ -85,10 +85,10 @@ ui <- fluidPage(
       hr(),
       splitLayout(
         radioButtons(inputId = "design"
-                       ,label = "Dose-escalation design"
-                       ,choices = c("3 + 3","CRM","BOIN")
-                       ,selected = "3 + 3"
-                       ,inline = TRUE)
+                     ,label = "Dose-escalation design"
+                     ,choices = c("3 + 3","CRM","BOIN")
+                     ,selected = "3 + 3"
+                     ,inline = TRUE)
         , sliderInput(inputId = "ttr"
                       ,label = "Target toxicity rate (%)"
                       ,min = 15
@@ -124,7 +124,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-
+  
   # Let me try implementing a self-toggling Start/Stop button in 'pure Shiny',
   # without exploiting Javascript. This would seem to require maintaining the
   # desired state as a reactiveVal, and re-rendering the button accordingly.
@@ -159,7 +159,7 @@ server <- function(input, output, session) {
       , `Grade 4` = dose*r0
       , `Grade 5` = dose*r0^2)
   })
-    
+  
   observeEvent(input$design, {
     if(input$design == "3 + 3")
       shinyjs::disable("ttr")
@@ -209,7 +209,7 @@ server <- function(input, output, session) {
   observe(
     options(dose_levels = dose_levels())
   )
-
+  
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       textInput(inputId = paste0("D", k)
@@ -251,23 +251,23 @@ server <- function(input, output, session) {
     invalidateLater(1000, session)
     
     if (state$sim == 'running') {
-    hsims(
-      if (!is.null(isolate(hsims()))) {
-        isolate(hsims()) %>% extend(num_sims = 20)
-      } else { # iteration base case
-        design() %>%
-          simulate_trials(
-            num_sims = 20,
-            true_prob_tox = mtdi_gen()
-          )
-      }
-    )
-    # TODO: Understand why this update doesn't happen automatically,
-    #       due to the reactive context provided by 'renderText'.
-    # -> Does this have something to do with lazy-vs-eager eval?
-    # -> Is 'observeEvent' an eager-eval context?
-    # ** Can I nevertheless 'kick off' a lazy-update cascade?
-    output$safety <- renderText(safety_kable(safety()))
+      hsims(
+        if (!is.null(isolate(hsims()))) {
+          isolate(hsims()) %>% extend(num_sims = 20)
+        } else { # iteration base case
+          design() %>%
+            simulate_trials(
+              num_sims = 20,
+              true_prob_tox = mtdi_gen()
+            )
+        }
+      )
+      # TODO: Understand why this update doesn't happen automatically,
+      #       due to the reactive context provided by 'renderText'.
+      # -> Does this have something to do with lazy-vs-eager eval?
+      # -> Is 'observeEvent' an eager-eval context?
+      # ** Can I nevertheless 'kick off' a lazy-update cascade?
+      output$safety <- renderText(safety_kable(safety()))
     }
   })
   
@@ -278,11 +278,11 @@ server <- function(input, output, session) {
     print(s)
     s
   })
-
+  
   output$safety <- renderText(safety_kable(safety()))
-
+  
   num_doses <- reactive(input$num_doses)
-
+  
   # A host of UI events invalidate the safety table:
   observeEvent({
     input$num_doses; input$range_scaling; input$mindose; input$maxdose
@@ -299,7 +299,7 @@ server <- function(input, output, session) {
     })
     output$safety <- renderText(blank_kable)
   })
-
+  
   observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
     output$hyperprior <- renderPlot({
       set.seed(2020) # avoid distracting dance of the samples
