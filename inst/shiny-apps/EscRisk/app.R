@@ -129,6 +129,20 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  blank_safety <- rep("--", 7)
+  names(blank_safety) <- c("None", paste("Grade", 1:5), "Total")
+  blank_kable <- blank_safety %>% t %>% knitr::kable(align='r') %>%
+    kable_styling(position = "left", full_width = FALSE) %>%
+    add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
+  
+  options(ordinalizer = function(dose, r0) { # NB: no r0 default
+    c(`Grade 1` = dose/r0^2
+      , `Grade 2` = dose/r0
+      , `Grade 3` = dose
+      , `Grade 4` = dose*r0
+      , `Grade 5` = dose*r0^2)
+  })
+    
   observeEvent(input$design, {
     if(input$design == "3 + 3")
       shinyjs::disable("ttr")
@@ -174,6 +188,10 @@ server <- function(input, output, session) {
            custom = readDoseLevels()
     )
   )
+  
+  observe(
+    options(dose_levels = dose_levels())
+  )
 
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
@@ -191,45 +209,50 @@ server <- function(input, output, session) {
                          , units = input$dose_units)
   )
   
+  design <- reactive(
+    get_three_plus_three(num_doses = input$num_doses)
+  )
+  
+  # Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
+  # and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
+  hsims <- reactiveVal(NULL)
+  
   observeEvent(input$simulate, {
-    # The 'main event'!
-    cat(file = stderr(), "input$mindose:", input$mindose, "\n")
-    shiny::validate(
-      need(0 < (mindose <- as.numeric(input$mindose))
-           , "Please provide a positive minimum dose")
-      ,need(mindose < (maxdose <- as.numeric(input$maxdose))
-            , "Please provide a maximum dose greater than minimum")
-      ,need(0 < (median_mtd <- as.numeric(input$median_mtd))
-            , "Please input a valid median MTD")
-      ,need(0 < (sigma_median <- 0.01*as.numeric(input$sigma_median))
-            , HTML("Please input a valid &sigma;<sub>median</sub>"))
-      ,need(0 < (sigma_CV <- 0.01*as.numeric(input$sigma_CV))
-            , HTML("Please input a valid &sigma;<sub>CV</sub>"))
+    hsims(
+      if (!is.null(isolate(hsims()))) {
+        isolate(hsims()) %>% extend(num_sims = 20)
+      } else { # iteration base case
+        design() %>%
+          simulate_trials(
+            num_sims = 20,
+            true_prob_tox = mtdi_gen()
+          )
+      }
     )
-    options(dose_levels = dose_levels())
-    hsims <- get_three_plus_three(num_doses = input$num_doses) %>%
-      simulate_trials(
-        num_sims = 100 # ... to start
-      , true_prob_tox = mtdi_gen())
-    summary(hsims, ordinalizer = function(dose, r0 = input$r0) {
-      c(`Grade 1`=dose/r0^2
-      , `Grade 2`=dose/r0
-      , `Grade 3`=dose
-      , `Grade 4`=dose*r0
-      , `Grade 5`=dose*r0^2)
-    })$safety -> safety
-    # hsims <- hsims %>% extend(num_sims = num_sims)
-    # summary(hsims, ordinalizer = function(dose, r0 = sqrt(2))
-    #   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
-    # )$safety
-    output$safety <- renderText(safety_kable(safety))
+    # TODO: Understand why this update doesn't happen automatically,
+    #       due to the reactive context provided by 'renderText'.
+    # -> Does this have something to do with lazy-vs-eager eval?
+    # -> Is 'observeEvent' an eager-eval context?
+    # ** Can I nevertheless 'kick off' a lazy-update cascade?
+    output$safety <- renderText(safety_kable(safety()))
   })
   
-  # For Dean Attali's explanation of the timing issue addressed here, see
-  # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
+  safety <- reactive({
+    cat("Doing summary with r0 = ", input$r0, "...\n")
+    s <- summary(hsims(), r0 = input$r0)$safety
+    cat("Summary:\n")
+    print(s)
+    s
+  })
+
+  output$safety <- renderText(safety_kable(safety()))
+
   num_doses <- reactive(input$num_doses)
+
+  # A host of UI events invalidate the safety table:
   observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
-    shinyjs::delay(0, {
+    hsims(NULL)
+    shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
       if (input$range_scaling == "custom")
         for(k in 2:(input$num_doses-1)) shinyjs::enable(paste0("D", k))
@@ -237,6 +260,7 @@ server <- function(input, output, session) {
         for(k in 2:(input$num_doses-1)) shinyjs::disable(paste0("D", k))
       shinyjs::disable(paste0("D", input$num_doses))
     })
+    output$safety <- renderText(blank_kable)
   })
 
   observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
@@ -245,13 +269,6 @@ server <- function(input, output, session) {
       options(dose_levels = dose_levels())
       plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
     })
-  })
-  
-  observeEvent(input$r0, {
-    summary(hsims, ordinalizer = function(dose, r0 = input$r0) {
-      c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
-    })$safety -> safety
-    output$safety <- renderText(safety_kable(safety))
   })
   
 }
