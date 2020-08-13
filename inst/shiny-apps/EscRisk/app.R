@@ -210,7 +210,19 @@ server <- function(input, output, session) {
   )
   
   design <- reactive(
-    get_three_plus_three(num_doses = input$num_doses)
+    switch(input$design,
+           `3 + 3` = get_three_plus_three(num_doses = input$num_doses),
+           CRM = get_dfcrm(
+             skeleton = rowMeans( # TODO: Abstract this to 'precautionary' package
+               sapply(precautionary:::draw_samples(mtdi_gen(), n=100)
+                      , function(mtdi) mtdi@dist$cdf(dose_levels()))),
+             target = 0.01*input$ttr) %>%
+             stop_at_n(n = 24),
+           BOIN = get_boin(
+             num_doses = 5,
+             target = 0.01*input$ttr) %>%
+             stop_at_n(n = 24)
+    )
   )
   
   # Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
@@ -250,7 +262,10 @@ server <- function(input, output, session) {
   num_doses <- reactive(input$num_doses)
 
   # A host of UI events invalidate the safety table:
-  observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
+  observeEvent({
+    input$num_doses; input$range_scaling; input$mindose; input$maxdose
+    input$design; input$ttr
+  }, {
     hsims(NULL)
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
