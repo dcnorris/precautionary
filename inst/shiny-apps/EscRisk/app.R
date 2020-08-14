@@ -276,22 +276,20 @@ server <- function(input, output, session) {
   })
   
   observe({
-    # Keep extending the sim indefinitely while state$sim == 'running'
-    invalidateLater(200, session)
-    
     if (state$sim == 'running') {
       hsims(
         if (!is.null(isolate(hsims()))) {
           isolate(hsims()) %>% extend(num_sims = 10) # <11 ==> no txtProgressBar
         } else { # iteration base case
-          design() %>%
+          isolate(design()) %>%
             simulate_trials(
               num_sims = 20,
-              true_prob_tox = mtdi_gen()
+              true_prob_tox = isolate(mtdi_gen())
             )
         }
       )
     }
+    invalidateLater(200, session) # repeat
   })
   
   output$safety <- renderText({
