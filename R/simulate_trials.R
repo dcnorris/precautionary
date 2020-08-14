@@ -310,11 +310,11 @@ extend.precautionary <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   while (sims_todo_est > 0) {
     sims <- extend(sims, num_sims = 10) # NB: num_sims < 11 avoids nested progress bar
     sims_done <- length(sims$fits)
-    sims_todo_est <-extension_to_target_mcse(sims, target_mcse = target_mcse)
+    sims_todo_est <- extension_to_target_mcse(sims, target_mcse = target_mcse)
     fraction_complete <- sims_done / (sims_done + sims_todo_est)
-    if (interactive()) setTxtProgressBar(pb, fraction_complete)
+    if (exists("pb")) setTxtProgressBar(pb, fraction_complete)
   }
-  if (interactive()) close(pb)
+  if (exists("pb")) close(pb)
   sims
 }
 
