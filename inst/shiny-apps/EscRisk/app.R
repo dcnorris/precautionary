@@ -17,11 +17,12 @@
 #/9. Improve spacing via CSS
 # 10. Pop-up (or roll-over?) explanations -- via (?) or (i) symbol
 #/11. Inactivate TTL when 3+3 design selected
-# 12. Option to specify n doses verbatim
+#/12. Option to specify n doses verbatim
 #  -> Could this be via enabled editing of feedback area?
 # 13. Foolproof inputs constraints & checks!
+#  -> Why do min/max not cascade to D1 & Dn when 'custom' selected?
 # 14. Introduce 'Continue' state for StartStopButton
-# 15. Stop sim automatically when stderr < 0.05
+#/15. Stop sim automatically when stderr < 0.05
 
 library(shiny)
 library(precautionary)
@@ -191,8 +192,12 @@ server <- function(input, output, session) {
     maxdose
   })
   
+  # NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
-    sapply(dose_counter(), function(k) as.numeric(input[[paste0("D",k)]]))
+    c(mindose()
+      , sapply(2:(input$num_doses-1), function(k) as.numeric(input[[paste0("D",k)]]))
+      , maxdose()
+      )
   )
   
   dose_levels <- reactive(
