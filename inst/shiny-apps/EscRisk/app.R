@@ -20,8 +20,8 @@
 #/12. Option to specify n doses verbatim
 #  -> Could this be via enabled editing of feedback area?
 # 13. Foolproof inputs constraints & checks!
-#  -> Why do min/max not cascade to D1 & Dn when 'custom' selected?
-# 14. Introduce 'Continue' state for StartStopButton
+# /-> Why do min/max not cascade to D1 & Dn when 'custom' selected?
+#x14. Introduce 'Continue' state for StartStopButton
 #/15. Stop sim automatically when stderr < 0.05
 
 library(shiny)
@@ -97,7 +97,7 @@ ui <- fluidPage(
                       ,value = 25)
         , cellWidths = c("50%","50%")
       ),
-      uiOutput('StartStopButton'),
+      uiOutput('RunStopButton'),
       hr(),
       sliderInput(inputId = "r0"
                   ,label = HTML("r<sub>0</sub> parameter of ordinalizer")
@@ -127,21 +127,21 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # Let me try implementing a self-toggling Start/Stop button in 'pure Shiny',
+  # Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
   # without exploiting Javascript. This would seem to require maintaining the
   # desired state as a reactiveVal, and re-rendering the button accordingly.
   state <- reactiveValues(sim = 'ready') # 'ready' | 'running'
   
-  output$StartStopButton <- renderUI({
+  output$RunStopButton <- renderUI({
     if (state$sim == 'ready')
-      actionButton("start_stop", label = "Start"
+      actionButton("run_stop", label = "RUN simulation"
                    , style = "color: #fff; background-color: #00aa00")
     else
-      actionButton("start_stop", label = "STOP"
+      actionButton("run_stop", label = "STOP simulation"
                    , style = "color: #fff; background-color: #cd0000")
   })
   
-  observeEvent(input$start_stop, {
+  observeEvent(input$run_stop, {
     if (isolate(state$sim) == 'ready')
       state$sim <- 'running'
     else
