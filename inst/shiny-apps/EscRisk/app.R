@@ -283,13 +283,13 @@ server <- function(input, output, session) {
         } else { # iteration base case
           isolate(design()) %>%
             simulate_trials(
-              num_sims = 20,
+              num_sims = 10,
               true_prob_tox = isolate(mtdi_gen())
             )
         }
       )
+      invalidateLater(300, session) # repeat
     }
-    invalidateLater(200, session) # repeat
   })
   
   output$safety <- renderText({
