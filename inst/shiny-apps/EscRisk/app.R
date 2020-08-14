@@ -247,6 +247,18 @@ server <- function(input, output, session) {
   # and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
   hsims <- reactiveVal(NULL)
   
+  safety <- reactive({
+    if (is.null(hsims()))
+      return(NULL)
+    summary(hsims(), r0 = input$r0)$safety
+  })
+  
+  worst_mcse <- reactive({
+    if (is.null(safety()))
+      return(NA)
+    max(safety()['MCSE', 2:6])
+  })
+  
   observe({
     # Keep extending the sim indefinitely while state$sim == 'running'
     invalidateLater(200, session)
@@ -266,12 +278,10 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(safety(), {
-    cat("Observing event safety() := ", safety(), " ...\n")
-    if (is.null(safety()))
-      output$safety <- renderText(blank_kable)
-    else
-      output$safety <- renderText(safety_kable(safety()))
+  output$safety <- renderText({
+    ifelse(is.null(safety()),
+           blank_kable,
+           safety_kable(safety()))
   })
   
   observeEvent(worst_mcse(), {
@@ -294,31 +304,11 @@ server <- function(input, output, session) {
          , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
   }
   
-  safety <- reactive({
-    if (is.null(hsims())) {
-      cat("SAFETY := NULL\n")
-      return(NULL)
-    }
-    summary(hsims(), r0 = input$r0)$safety
-  })
-  
-  worst_mcse <- reactive({
-    if (is.null(safety()))
-      return(NA)
-    max(safety()['MCSE', 2:6])
-  })
-  
   output$simprogress <- renderPlot(plotProgress(worst_mcse()))
 
-  # TODO: Understand why this does nothing.
-  #       This fact may open a window on the mysteries of Shiny reactivity!
-  ##output$safety <- renderText(safety_kable(safety()))
-  
-  ##num_doses <- reactive(input$num_doses)
-  
   # Any one of these many UI events will invalidate the safety table:
   observeEvent({
-    input$num_doses; input$range_scaling; input$mindose; input$maxdose
+    dose_levels();
     input$design; input$ttr
   }, {
     hsims(NULL)
@@ -330,7 +320,6 @@ server <- function(input, output, session) {
         for(k in 2:(input$num_doses-1)) shinyjs::disable(paste0("D", k))
       shinyjs::disable(paste0("D", input$num_doses))
     })
-    output$safety <- renderText(blank_kable)
   })
   
   output$hyperprior <- renderPlot({
