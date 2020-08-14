@@ -263,19 +263,19 @@ server <- function(input, output, session) {
             )
         }
       )
-      # TODO: Understand why this update doesn't happen automatically,
-      #       due to the reactive context provided by 'renderText'.
-      # -> Does this have something to do with lazy-vs-eager eval?
-      # -> Is 'observeEvent' an eager-eval context?
-      # ** Can I nevertheless 'kick off' a lazy-update cascade?
-      output$safety <- renderText(safety_kable(safety()))
-      # Update the progress bar.
-      # Note that here, unlike the case with general simulation extension,
-      # we DO have an r0 and ordinalizer set. Thus, we can calculate actual
-      # maximum MCSE across toxicity categories 1--5.
-      output$simprogress <- renderPlot(plotProgress(worst_mcse()))
-      if (worst_mcse() < 0.05) state$sim <- 'ready'  # HALT sim
     }
+  })
+  
+  observeEvent(safety(), {
+    cat("Observing event safety() := ", safety(), " ...\n")
+    if (is.null(safety()))
+      output$safety <- renderText(blank_kable)
+    else
+      output$safety <- renderText(safety_kable(safety()))
+  })
+  
+  observeEvent(worst_mcse(), {
+    if (!is.na(worst_mcse()) && worst_mcse() < 0.05) state$sim <- 'ready' # HALT sim
   })
   
   plotProgress <- function(worst_mcse) {
@@ -295,8 +295,10 @@ server <- function(input, output, session) {
   }
   
   safety <- reactive({
-    if (is.null(hsims()))
+    if (is.null(hsims())) {
+      cat("SAFETY := NULL\n")
       return(NULL)
+    }
     summary(hsims(), r0 = input$r0)$safety
   })
   
@@ -306,17 +308,15 @@ server <- function(input, output, session) {
     max(safety()['MCSE', 2:6])
   })
   
-  observeEvent(input$r0, {
-    output$simprogress <- renderPlot(plotProgress(worst_mcse()))
-  })
-  
+  output$simprogress <- renderPlot(plotProgress(worst_mcse()))
+
   # TODO: Understand why this does nothing.
   #       This fact may open a window on the mysteries of Shiny reactivity!
   ##output$safety <- renderText(safety_kable(safety()))
   
-  num_doses <- reactive(input$num_doses)
+  ##num_doses <- reactive(input$num_doses)
   
-  # A host of UI events invalidate the safety table:
+  # Any one of these many UI events will invalidate the safety table:
   observeEvent({
     input$num_doses; input$range_scaling; input$mindose; input$maxdose
     input$design; input$ttr
@@ -333,12 +333,10 @@ server <- function(input, output, session) {
     output$safety <- renderText(blank_kable)
   })
   
-  observeEvent({input$num_doses; input$range_scaling; input$mindose; input$maxdose}, {
-    output$hyperprior <- renderPlot({
-      set.seed(2020) # avoid distracting dance of the samples
-      options(dose_levels = dose_levels())
-      plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
-    })
+  output$hyperprior <- renderPlot({
+    set.seed(2020) # avoid distracting dance of the samples
+    options(dose_levels = dose_levels())
+    plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
   })
   
 }
