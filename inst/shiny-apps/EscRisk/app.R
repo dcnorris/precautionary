@@ -118,6 +118,7 @@ ui <- fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       plotOutput("hyperprior"),
+      plotOutput("simprogress", height = "150px"),
       htmlOutput("safety")
     )
   )
@@ -248,12 +249,12 @@ server <- function(input, output, session) {
   
   observe({
     # Keep extending the sim indefinitely while state$sim == 'running'
-    invalidateLater(1000, session)
+    invalidateLater(200, session)
     
     if (state$sim == 'running') {
       hsims(
         if (!is.null(isolate(hsims()))) {
-          isolate(hsims()) %>% extend(num_sims = 20)
+          isolate(hsims()) %>% extend(num_sims = 10) # <11 ==> no txtProgressBar
         } else { # iteration base case
           design() %>%
             simulate_trials(
@@ -268,6 +269,31 @@ server <- function(input, output, session) {
       # -> Is 'observeEvent' an eager-eval context?
       # ** Can I nevertheless 'kick off' a lazy-update cascade?
       output$safety <- renderText(safety_kable(safety()))
+      # Update the progress bar.
+      # Note that here, unlike the case with general simulation extension,
+      # we DO have an r0 and ordinalizer set. Thus, we can calculate actual
+      # maximum MCSE across all categories.
+      worst_mcse <- max(safety()['MCSE', 2:6])
+      cat("MCSE bound: ", worst_mcse, "\n")
+      if (worst_mcse < 0.05) {
+        cat("Stopping sim ...\n")
+        state$sim <- 'ready'
+      }
+      reps_so_far <- length(hsims()$fits)
+      reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
+      fraction_done <- reps_so_far / reps_needed
+      output$simprogress <- renderPlot({
+        barplot(fraction_done, width = 0.9
+                , ylim = c(0,1), xlim = c(0,1)
+                , horiz = TRUE, asp = 0.04
+                , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
+                , main = paste0(reps_so_far, " trials")
+                , axes = FALSE # will be drawn separately
+        )
+        tics <- c(Inf, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05)
+        axis(side = 1, at = (0.05/tics)^2
+             , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
+      })
     }
   })
   
@@ -275,7 +301,7 @@ server <- function(input, output, session) {
     cat("Doing summary with r0 = ", input$r0, "...\n")
     s <- summary(hsims(), r0 = input$r0)$safety
     cat("Summary:\n")
-    print(s)
+    print(s[])
     s
   })
   
