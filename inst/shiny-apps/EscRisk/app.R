@@ -273,11 +273,8 @@ server <- function(input, output, session) {
       # Note that here, unlike the case with general simulation extension,
       # we DO have an r0 and ordinalizer set. Thus, we can calculate actual
       # maximum MCSE across toxicity categories 1--5.
-      worst_mcse <- max(safety()['MCSE', 2:6])
-      output$simprogress <- renderPlot(plotProgress(worst_mcse))
-      if (worst_mcse < 0.05) {
-        state$sim <- 'ready'  # HALT sim
-      }
+      output$simprogress <- renderPlot(plotProgress(worst_mcse()))
+      if (worst_mcse() < 0.05) state$sim <- 'ready'  # HALT sim
     }
   })
   
@@ -300,15 +297,22 @@ server <- function(input, output, session) {
   safety <- reactive({
     if (is.null(hsims()))
       return(NULL)
-    s <- summary(hsims(), r0 = input$r0)$safety
-    output$simprogress <- renderPlot({
-      worst_mcse <- max(s['MCSE', 2:6])
-      plotProgress(worst_mcse)
-    })
-    s
+    summary(hsims(), r0 = input$r0)$safety
   })
   
-  output$safety <- renderText(safety_kable(safety()))
+  worst_mcse <- reactive({
+    if (is.null(safety()))
+      return(NA)
+    max(safety()['MCSE', 2:6])
+  })
+  
+  observeEvent(input$r0, {
+    output$simprogress <- renderPlot(plotProgress(worst_mcse()))
+  })
+  
+  # TODO: Understand why this does nothing.
+  #       This fact may open a window on the mysteries of Shiny reactivity!
+  ##output$safety <- renderText(safety_kable(safety()))
   
   num_doses <- reactive(input$num_doses)
   
