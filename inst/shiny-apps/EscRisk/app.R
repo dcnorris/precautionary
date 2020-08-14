@@ -10,7 +10,7 @@
 #/4. Feedback on actual doses triggered by selection of geom/arith
 #  -> Consider for-now disabled textInputs as means for display
 #/5. Recursively update table (with start/stop button)
-# 6. Show a progress bar marked in standard errors
+#/6. Show a progress bar marked in standard errors
 #  -> https://shiny.rstudio.com/articles/progress.html
 #/7. Option to specify CRM or BOIN with target toxicity rate
 #/8. Exhibit ~100 draws from hyperprior *dynamically* at lower right
@@ -272,36 +272,39 @@ server <- function(input, output, session) {
       # Update the progress bar.
       # Note that here, unlike the case with general simulation extension,
       # we DO have an r0 and ordinalizer set. Thus, we can calculate actual
-      # maximum MCSE across all categories.
+      # maximum MCSE across toxicity categories 1--5.
       worst_mcse <- max(safety()['MCSE', 2:6])
-      cat("MCSE bound: ", worst_mcse, "\n")
+      output$simprogress <- renderPlot(plotProgress(worst_mcse))
       if (worst_mcse < 0.05) {
-        cat("Stopping sim ...\n")
-        state$sim <- 'ready'
+        state$sim <- 'ready'  # HALT sim
       }
-      reps_so_far <- length(hsims()$fits)
-      reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
-      fraction_done <- reps_so_far / reps_needed
-      output$simprogress <- renderPlot({
-        barplot(fraction_done, width = 0.9
-                , ylim = c(0,1), xlim = c(0,1)
-                , horiz = TRUE, asp = 0.04
-                , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
-                , main = paste0(reps_so_far, " trials")
-                , axes = FALSE # will be drawn separately
-        )
-        tics <- c(Inf, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05)
-        axis(side = 1, at = (0.05/tics)^2
-             , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
-      })
     }
   })
   
+  plotProgress <- function(worst_mcse) {
+    reps_so_far <- length(hsims()$fits)
+    reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
+    fraction_done <- reps_so_far / reps_needed
+    barplot(fraction_done, width = 0.9
+            , ylim = c(0,1), xlim = c(0,1)
+            , horiz = TRUE, asp = 0.04
+            , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
+            , main = paste0(reps_so_far, " trials")
+            , axes = FALSE # will be drawn separately
+    )
+    tics <- c(Inf, seq(0.1, 0.05, -0.01))
+    axis(side = 1, at = (0.05/tics)^2
+         , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
+  }
+  
   safety <- reactive({
-    cat("Doing summary with r0 = ", input$r0, "...\n")
+    if (is.null(hsims()))
+      return(NULL)
     s <- summary(hsims(), r0 = input$r0)$safety
-    cat("Summary:\n")
-    print(s[])
+    output$simprogress <- renderPlot({
+      worst_mcse <- max(s['MCSE', 2:6])
+      plotProgress(worst_mcse)
+    })
     s
   })
   
