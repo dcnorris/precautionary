@@ -28,6 +28,7 @@
 
 library(shiny)
 library(precautionary)
+library(kableExtra)
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
@@ -288,7 +289,7 @@ server <- function(input, output, session) {
             )
         }
       )
-      invalidateLater(300, session) # repeat
+      invalidateLater(500, session) # repeat
     }
   })
   
