@@ -21,6 +21,7 @@
 #  -> Could this be via enabled editing of feedback area?
 # 13. Foolproof inputs constraints & checks!
 # /-> Why do min/max not cascade to D1 & Dn when 'custom' selected?
+# /-> median_mtd and sigma_* changes ought to invalidate hsims, too!
 #x14. Introduce 'Continue' state for StartStopButton
 #/15. Stop sim automatically when stderr < 0.05
 #/16. Add enrollment max for CRM/BOIN
@@ -323,8 +324,9 @@ server <- function(input, output, session) {
 
   # Any one of these many UI events will invalidate the safety table:
   observeEvent({
-    dose_levels();
-    input$design; input$ttr; input$enroll_max
+    dose_levels()
+    mtdi_gen()
+    design()
   }, {
     hsims(NULL)
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
