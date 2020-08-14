@@ -23,6 +23,8 @@
 # /-> Why do min/max not cascade to D1 & Dn when 'custom' selected?
 #x14. Introduce 'Continue' state for StartStopButton
 #/15. Stop sim automatically when stderr < 0.05
+#/16. Add enrollment max for CRM/BOIN
+# 17. Understand & reduce latency of sim [Run|Stop]
 
 library(shiny)
 library(precautionary)
@@ -86,16 +88,22 @@ ui <- fluidPage(
       hr(),
       splitLayout(
         radioButtons(inputId = "design"
-                     ,label = "Dose-escalation design"
+                     ,label = "Dose escalation"
                      ,choices = c("3 + 3","CRM","BOIN")
                      ,selected = "3 + 3"
-                     ,inline = TRUE)
+                     ,inline = FALSE)
         , sliderInput(inputId = "ttr"
                       ,label = "Target toxicity rate (%)"
                       ,min = 15
                       ,max = 33
                       ,value = 25)
-        , cellWidths = c("50%","50%")
+        , numericInput(inputId = "enroll_max"
+                       ,label = HTML("Max. enroll")
+                       ,value = 24
+                       ,min = 18
+                       ,max = 36
+                       ,step = 3)
+        , cellWidths = c("30%","45%","25%")
       ),
       uiOutput('RunStopButton'),
       hr(),
@@ -163,10 +171,13 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$design, {
-    if(input$design == "3 + 3")
+    if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
-    else
+      shinyjs::disable("enroll_max")
+    } else {
       shinyjs::enable("ttr")
+      shinyjs::enable("enroll_max")
+    }
   })
   
   dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
@@ -240,7 +251,7 @@ server <- function(input, output, session) {
                sapply(precautionary:::draw_samples(mtdi_gen(), n=100)
                       , function(mtdi) mtdi@dist$cdf(dose_levels()))),
              target = 0.01*input$ttr) %>%
-             stop_at_n(n = 24),
+             stop_at_n(n = input$enroll_max),
            BOIN = get_boin(
              num_doses = 5,
              target = 0.01*input$ttr) %>%
@@ -314,7 +325,7 @@ server <- function(input, output, session) {
   # Any one of these many UI events will invalidate the safety table:
   observeEvent({
     dose_levels();
-    input$design; input$ttr
+    input$design; input$ttr; input$enroll_max
   }, {
     hsims(NULL)
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
