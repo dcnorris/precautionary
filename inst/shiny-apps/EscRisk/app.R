@@ -3,29 +3,11 @@
 # simulation capabilities of the 'precautionary' package.
 #
 # TODO:
-#/1. Inputs for min, max, # doses, geometric vs arithmetic sequence
-#/2. Inputs for median(MTDi), sigma_med and sigma_CV.
-#/3. Simulate 3+3 trial for M=100 reps, show table
-#  -> https://shiny.rstudio.com/articles/render-table.html
-#/4. Feedback on actual doses triggered by selection of geom/arith
-#  -> Consider for-now disabled textInputs as means for display
-#/5. Recursively update table (with start/stop button)
-#/6. Show a progress bar marked in standard errors
-#  -> https://shiny.rstudio.com/articles/progress.html
-#/7. Option to specify CRM or BOIN with target toxicity rate
-#/8. Exhibit ~100 draws from hyperprior *dynamically* at lower right
-#/9. Improve spacing via CSS
-# 10. Pop-up (or roll-over?) explanations -- via (?) or (i) symbol
-#/11. Inactivate TTL when 3+3 design selected
-#/12. Option to specify n doses verbatim
-#  -> Could this be via enabled editing of feedback area?
-# 13. Foolproof inputs constraints & checks!
-# /-> Why do min/max not cascade to D1 & Dn when 'custom' selected?
-# /-> median_mtd and sigma_* changes ought to invalidate hsims, too!
-#x14. Introduce 'Continue' state for StartStopButton
-#/15. Stop sim automatically when stderr < 0.05
-#/16. Add enrollment max for CRM/BOIN
-# 17. Understand & reduce latency of sim [Run|Stop]
+#x1. Logarithmic scaling of TI slider
+#  -> Remarkably, no such slider is available off-the-shelf!
+# 2. Craft a complete intro/tutorial https://shiny.rstudio.com/articles/js-introjs.html
+# (a) Implement the intro using package::introJS
+# (b) Factor out the dependency on this (non-CRAN!) package
 
 library(shiny)
 library(precautionary)
@@ -38,7 +20,7 @@ ui <- fluidPage(
   includeCSS("www/tweaks.css"),
   
   # Application title
-  titlePanel("Predict Risks of High-Grade Toxicities in Dose-Escalation"),
+  titlePanel("Predict Risks of High-Grade Toxicities in Dose-Escalation Trials"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
@@ -95,10 +77,11 @@ ui <- fluidPage(
                      ,selected = "3 + 3"
                      ,inline = FALSE)
         , sliderInput(inputId = "ttr"
-                      ,label = "Target toxicity rate (%)"
+                      ,label = "Target toxicity rate"
                       ,min = 15
                       ,max = 33
-                      ,value = 25)
+                      ,value = 25
+                      ,post = "%")
         , numericInput(inputId = "enroll_max"
                        ,label = HTML("Max. enroll")
                        ,value = 24
@@ -110,7 +93,7 @@ ui <- fluidPage(
       uiOutput('RunStopButton'),
       hr(),
       sliderInput(inputId = "r0"
-                  ,label = HTML("r<sub>0</sub> parameter of ordinalizer")
+                  ,label = HTML("Therapeutic Index r<sub>0</sub>")
                   ,min = 1.1
                   ,max = 5.0
                   ,value = 1.5),
@@ -118,10 +101,13 @@ ui <- fluidPage(
       tags$div(class = "header", checked = NA,
                tags$p(tags$b("See:"),
                       "Norris DC. Retrospective analysis of a fatal dose-finding trial",
-                      tags$i("arXiv:2004.12755 [stat, q-bio]."),
-                      "April 2020.",
                       tags$a(href="http://arxiv.org/abs/2004.12755",
-                             "http://arxiv.org/abs/2004.12755")
+                             tags$i("arXiv:2004.12755 [stat, q-bio]")),
+                      "April 2020."
+               ),
+               tags$p(tags$b("See also:"),
+                      tags$a(href="https://cran.r-project.org/web/packages/precautionary/vignettes/Intro.html",
+                             "Introduction to package 'precautionary'")
                )
       )
     ),
