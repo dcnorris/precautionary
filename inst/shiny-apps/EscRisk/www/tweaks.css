@@ -1,4 +1,25 @@
+/*
 .shiny-input-container {
     margin-left: 4px;
     margin-right: 4px;
+}
+*/
+
+fieldset {
+    font-family: sans-serif;
+    border: 2px solid #ccc;
+    border-radius: 2px;
+    padding: 2px;
+}
+
+fieldset legend {
+    display: block;
+    color: #aaa; /* text color */
+    font-size: 12px;
+    font-weight: bold;
+    font-variant: small-caps;
+    border: none;
+    text-align: center;
+    padding: 4px;
+    width: auto;
 }

@@ -6,8 +6,8 @@
 #x1. Logarithmic scaling of TI slider
 #  -> Remarkably, no such slider is available off-the-shelf!
 # 2. Craft a complete intro/tutorial https://shiny.rstudio.com/articles/js-introjs.html
-# (a) Implement the intro using package::introJS
-# (b) Factor out the dependency on this (non-CRAN!) package
+#/(a) Implement a skeleton intro
+# (b) Restructure sidebar's div<>s for intro
 
 library(shiny)
 library(precautionary)
@@ -31,12 +31,14 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
+      tags$fieldset(id="dose-levels",
+      tags$legend("prespecified dose levels"),
       splitLayout(
         textInput(inputId = "mindose"
-                  ,label = "Min. dose"
+                  ,label = "Min dose"
                   ,value = "50") # ""
         , textInput(inputId = "maxdose"
-                    ,label = "Max. dose"
+                    ,label = "Max dose"
                     ,value = "300") # ""
         , textInput(inputId = "dose_units"
                     ,label = "Dose units"
@@ -58,7 +60,9 @@ ui <- fluidPage(
         , cellWidths = c("35%","65%")
       ),
       uiOutput("dose_levels"),
-      hr(),
+      ), # </fieldset>
+      tags$fieldset(id="optimal-dose-heterogeneity",
+      tags$legend("optimal-dose heterogeneity"),
       splitLayout(
         textInput(inputId = "median_mtd"
                   ,label = HTML("median MTD<sub>i</sub>")
@@ -74,11 +78,13 @@ ui <- fluidPage(
                        ,min = 10
                        ,max = 200)
         , cellWidths = c("35%","35%","30%")
-      ),
-      hr(),
+      )
+      ), # </fieldset>
+      tags$fieldset(id="dose-escalation-design",
+      tags$legend("dose-escalation design"),
       splitLayout(
         radioButtons(inputId = "design"
-                     ,label = "Dose escalation"
+                     ,label = "Method"
                      ,choices = c("3 + 3","CRM","BOIN")
                      ,selected = "3 + 3"
                      ,inline = FALSE)
@@ -89,13 +95,14 @@ ui <- fluidPage(
                       ,value = 25
                       ,post = "%")
         , numericInput(inputId = "enroll_max"
-                       ,label = HTML("Max. enroll")
+                       ,label = HTML("Max enroll")
                        ,value = 24
                        ,min = 18
                        ,max = 36
                        ,step = 3)
         , cellWidths = c("30%","45%","25%")
-      ),
+      )
+      ), # </fieldset>
       uiOutput('RunStopButton'),
       # centered button
       div(class="flexcontainer", 
