@@ -16,7 +16,13 @@ library(kableExtra)
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   shinyFeedback::useShinyFeedback(),
+
+  includeCSS("www/introjs.css"), # TODO: includeCSS("www/introjs.min.css"),
+  includeScript("www/intro.js"), # TODO: includeScript("www/intro.min.js"),
   
+  # Message handlers and help-system data
+  includeScript("www/help.js"),
+
   includeCSS("www/tweaks.css"),
   
   # Application title
@@ -91,6 +97,12 @@ ui <- fluidPage(
         , cellWidths = c("30%","45%","25%")
       ),
       uiOutput('RunStopButton'),
+      # centered button
+      div(class="flexcontainer", 
+          
+          # action button
+          actionButton(inputId="startHelp", label="start", class="btn-success")
+      ),
       hr(),
       sliderInput(inputId = "r0"
                   ,label = HTML("Therapeutic Index r<sub>0</sub>")
@@ -122,6 +134,10 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  
+  observeEvent(input$startHelp,{
+    session$sendCustomMessage(type = 'startHelp', message = list(""))
+  })
   
   # Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
   # without exploiting Javascript. This would seem to require maintaining the
