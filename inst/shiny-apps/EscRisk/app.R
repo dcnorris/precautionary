@@ -100,23 +100,28 @@ ui <- fluidPage(
                        ,min = 18
                        ,max = 36
                        ,step = 3)
-        , cellWidths = c("30%","45%","25%")
+        , cellWidths = c("20%","55%","25%")
       )
       ), # </fieldset>
+      splitLayout(
       uiOutput('RunStopButton'),
       # centered button
       div(class="flexcontainer", 
           
           # action button
-          actionButton(inputId="startHelp", label="start", class="btn-success")
+          actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
       ),
-      hr(),
+      cellWidths = c("50%","50%"),
+      cellArgs = list(style = "padding: 4px", align = "center")
+      ),
+      tags$fieldset(id="ordinalize", style="padding-left: 6px; padding-right: 6px",
+      tags$legend("ordinalize toxicities"),
       sliderInput(inputId = "r0"
                   ,label = HTML("Therapeutic Index r<sub>0</sub>")
                   ,min = 1.1
                   ,max = 5.0
                   ,value = 1.5),
-      hr(),
+      ), # </fieldset>
       tags$div(class = "header", checked = NA,
                tags$p(tags$b("See:"),
                       "Norris DC. Retrospective analysis of a fatal dose-finding trial",

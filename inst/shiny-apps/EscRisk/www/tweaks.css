@@ -1,15 +1,24 @@
-/*
-.shiny-input-container {
-    margin-left: 4px;
-    margin-right: 4px;
+.shiny-split-layout {
+  padding-left: 4px;
+  padding-right: 4px;
 }
-*/
+
+.shiny-split-layout div {
+  margin-left: 0;
+  margin-right: -4px;
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.shiny-options-group {
+  margin: 8px;
+}
 
 fieldset {
     font-family: sans-serif;
-    border: 2px solid #ccc;
-    border-radius: 2px;
-    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 0;
 }
 
 fieldset legend {
@@ -22,4 +31,5 @@ fieldset legend {
     text-align: center;
     padding: 4px;
     width: auto;
+    margin-bottom: 0;
 }
