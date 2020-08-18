@@ -20,9 +20,6 @@ ui <- fluidPage(
   includeCSS("www/introjs.css"), # TODO: includeCSS("www/introjs.min.css"),
   includeScript("www/intro.js"), # TODO: includeScript("www/intro.min.js"),
   
-  # Message handlers and help-system data
-  includeScript("www/help.js"),
-
   includeCSS("www/tweaks.css"),
   
   # Application title
@@ -49,7 +46,7 @@ ui <- fluidPage(
         numericInput(inputId = "num_doses"
                      ,label = "Number of doses"
                      ,value = 5
-                     ,min = 2
+                     ,min = 3
                      ,max = 7
                      ,step = 1)
         , radioButtons(inputId = "range_scaling"
@@ -142,7 +139,11 @@ ui <- fluidPage(
       plotOutput("simprogress", height = "150px"),
       htmlOutput("safety")
     )
-  )
+  ),
+  
+  # Define message handlers and overlay help-system data on now-defined UI
+  includeScript("www/help.js")
+  
 )
 
 server <- function(input, output, session) {
