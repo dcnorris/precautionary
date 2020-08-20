@@ -17,10 +17,10 @@ ui <- fluidPage(
   shinyjs::useShinyjs(),
   shinyFeedback::useShinyFeedback(),
 
-  includeCSS("www/introjs.css"), # TODO: includeCSS("www/introjs.min.css"),
-  includeScript("www/intro.js"), # TODO: includeScript("www/intro.min.js"),
+  singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "introjs.css"))),
+  singleton(tags$head(tags$script(src="intro.js"))),
   
-  includeCSS("www/tweaks.css"),
+  singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "tweaks.css"))),
   
   # Application title
   titlePanel("Predict Risks of High-Grade Toxicities in Dose-Escalation Trials"),
@@ -142,7 +142,7 @@ ui <- fluidPage(
   ),
   
   # Define message handlers and overlay help-system data on now-defined UI
-  includeScript("www/help.js")
+  tags$body(tags$script(src="help.js")),
   
 )
 
