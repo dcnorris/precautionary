@@ -3,3 +3,4 @@
 ^TODO$
 ^cran-comments.md
 ^publicity
+^inst/shiny-apps/.*/rsconnect
