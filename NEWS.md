@@ -1,3 +1,7 @@
+# precautionary 0.1-3
+
+TODO: Ping Piotr Juszczak <piotr.juszczak@roche.com> upon release.
+
 # precautionary 0.1-2
 
 ## Changes
