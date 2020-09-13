@@ -17,9 +17,9 @@ u_i <- function(selector_factory) {
 
 #' Get a function that simulates dose-escalation trials using latent \code{u_i}
 #' 
-#' Overrides \code{escalation::simulation_function.tox_selector_factory}
+#' Overrides \code{\link[escalation:simulation_function]{simulation_function.tox_selector_factory}}
 #' to return a [phase1_sim()] that employs latent \code{u_i} in place of
-#' the version native to package \code{escalation}, which merely invokes
+#' the version native to package \CRANpkg{escalation}, which merely invokes
 #' \code{rbinom}.
 #' 
 #' This function is exported for the purpose of effecting this override,
@@ -35,9 +35,9 @@ simulation_function.u_i <- function(selector_factory) {
   return(phase1_sim) # returns an override defined in this package
 }
 
-#' Override \code{escalation::cohorts_of_n} to include latent toxicity tolerances
+#' Override \code{\link[escalation]{cohorts_of_n}} to include latent toxicity tolerances
 #' 
-#' The original function in package \code{escalation} recognizes that individual
+#' The original function in package \CRANpkg{escalation} recognizes that individual
 #' trial participants arrive at distinct times. Building upon this acknowledgment
 #' of individuality, this override adds an extra line of code to draw as well a
 #' latent toxicity tolerance \code{u_i} for each individual participant.
@@ -63,9 +63,9 @@ cohorts_of_n <- function(n = 3, mean_time_delta = 1) {
   data.frame(u_i = u_i, time_delta = time_delta)
 }
 
-#' Override \code{escalation::phase1_sim} to incorporate latent toxicity tolerances
+#' Override \code{escalation:::phase1_sim} to incorporate latent toxicity tolerances
 #'
-#' @param selector_factory An \code{escalation::selector_factory} object
+#' @param selector_factory An \code{\link[escalation]{selector_factory}} object
 #' @param true_prob_tox A vector of toxicity probabilities for the doses
 #'  defined in \code{selector_factory} 
 #' @param sample_patient_arrivals A function implementing an arrivals process
@@ -187,7 +187,7 @@ prob_administer.precautionary <- function(x, ...) {
   prob_admin
 }
 
-#' Specialize print method for objects of class \code{escalation::simulations}
+#' Specialize print method for objects of class \code{\link[escalation]{simulations}}
 #'
 #' @param x An object of class  c("precautionary","simulations")
 #'
@@ -228,7 +228,7 @@ print.precautionary <- function(x, ...) {
 }
 
 
-#' Specialize print method defined for class \code{escalation::simulations}
+#' Specialize print method defined for class \code{\link[escalation]{simulations}}
 #'
 #' @param x An object of class  c("hyper","precautionary","simulations")
 #'
@@ -318,7 +318,7 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
 #' simulated individual trial participant. In conjunction with an
 #' \sQuote{ordinalizer} function, these extra data enable questions to be asked
 #' about trial safety, in terms of the probabilities of high-grade toxicities.
-#' This function specializes the \code{escalation::summary.simulations} method
+#' This function specializes the \code{escalation:::summary.simulations} method
 #' accordingly.
 #' 
 #' @param object An object of class c('precautionary','simulations') 

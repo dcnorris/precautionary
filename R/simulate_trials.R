@@ -1,10 +1,16 @@
 #' @include toxicity_generators.R
 NULL
 
-#' Simulate trials defined via package \code{escalation}
+#' Simulate trials defined via package \CRANpkg{escalation}
+#' 
+#' An S4 generic method providing a more abstract interface to trial simulation than
+#' the \code{\link[escalation]{simulate_trials}} function of package \code{escalation}.
+#' This abstraction is needed to support simulations in which \code{escalation}'s simple
+#' vectors of \sQuote{true toxicity probabilities} are replaced by \code{precautionary}'s
+#' more realistic toxicity-distribution generators.
 #' 
 #' @docType methods
-#' @param selector_factory An object of S3 class \code{selector_factory}
+#' @param selector_factory An object of S3 class \code{\link[escalation]{selector_factory}}
 #' @param num_sims Number of simulations to run
 #' @param true_prob_tox A generator of toxicity distributions
 #' @param ... Passed to subroutines

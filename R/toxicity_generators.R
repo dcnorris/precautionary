@@ -38,7 +38,7 @@ setGeneric("plot")
 #' @param col Color of lines used to depict samples
 #' @param \dots Additional arguments passed onward to \code{plot}
 #'
-#' @importFrom graphics abline axis lines plot.default
+#' @importFrom graphics abline axis lines mtext plot.default
 #' @examples
 #' if (interactive()) {
 #' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
@@ -61,8 +61,9 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
   quantiles <- lapply(mtdi_samples
                       , function(mtdi) mtdi@dist$quantile(CDFs))
   xlim <- range(do.call(c, quantiles))
+  oldpar <- par(mar = c(5,5,4,1) + 0.1)
   plot.default(CDFs ~ quantiles[[1]], type="l", log="x"
-               , xlab = xlab, ylab = ylab, main = title
+               , xlab = xlab, ylab = "", main = title
                , xlim = xlim
                , sub = params, font.sub = 3
                , las = 1
@@ -70,6 +71,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
                , col = col
                , ...
   )
+  mtext(ylab, side = 2, line = 2.5, las = 1) # Horizontal axis title as per Tufte
   # Locate old-fashioned, decade-wise logarithmic axis minor ticks
   erange <- floor(log10(range(quantiles)))
   exponents <- erange[1]:erange[2]
@@ -82,6 +84,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
   if( !is.null(dose_levels) ){
     abline(v = dose_levels, lty = 3)
   }
+  par(oldpar)
 })
 
 #' Visualize an \code{mtdi_distribution} object
@@ -90,6 +93,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
 #' @param y Included for compatibility with generic signature
 #' @param \dots Additional arguments passed onward to \code{plot}
 #'
+#' @importFrom graphics axis lines mtext plot.default
 #' @examples 
 #' if (interactive()) {
 #' mtdi_dist <- mtdi_lognormal(CV = 2
@@ -110,13 +114,15 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
   # I will presume most pharmacology should be done in log-dose space...
   CDFs <- seq(0.01, 0.99, 0.01)
   quantiles <- x@dist$quantile(CDFs)
+  oldpar <- par(mar = c(5,5,4,1) + 0.1)
   plot.default(CDFs ~ quantiles, type="l", log="x"
-               , xlab = xlab, ylab = ylab, main = title
+               , xlab = xlab, ylab = "", main = title
                , sub = params, font.sub = 3
                , las = 1
                , lab = c(x=20, y=6, len=3)
                , ...
                )
+  mtext(ylab, side = 2, line = 2.5, las = 1) # Horizontal axis title as per Tufte
   # Locate old-fashioned, decade-wise logarithmic axis minor ticks
   erange <- floor(log10(range(quantiles)))
   exponents <- erange[1]:erange[2]
@@ -131,6 +137,7 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
             lty = 3)
     }
   }
+  par(oldpar)
 })
 
 
