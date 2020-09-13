@@ -38,7 +38,7 @@ setGeneric("plot")
 #' @param col Color of lines used to depict samples
 #' @param \dots Additional arguments passed onward to \code{plot}
 #'
-#' @importFrom graphics abline axis lines mtext plot.default
+#' @importFrom graphics abline axis lines mtext par plot.default
 #' @examples
 #' if (interactive()) {
 #' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
@@ -93,7 +93,7 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
 #' @param y Included for compatibility with generic signature
 #' @param \dots Additional arguments passed onward to \code{plot}
 #'
-#' @importFrom graphics axis lines mtext plot.default
+#' @importFrom graphics axis lines mtext par plot.default
 #' @examples 
 #' if (interactive()) {
 #' mtdi_dist <- mtdi_lognormal(CV = 2

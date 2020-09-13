@@ -1,11 +1,8 @@
 # precautionary 0.1-3
 
-TODO: Ping Piotr Juszczak <piotr.juszczak@roche.com> upon release.
-
 ## Changes
 
 * Added the EscRisk shiny app, runnable by demo(EscRisk)
-* 
 
 # precautionary 0.1-2
 
