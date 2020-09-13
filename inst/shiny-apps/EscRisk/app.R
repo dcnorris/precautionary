@@ -122,8 +122,8 @@ ui <- fluidPage(
       tags$div(class = "header", checked = NA,
                tags$p(tags$b("See:"),
                       "Norris DC. Retrospective analysis of a fatal dose-finding trial",
-                      tags$a(href="http://arxiv.org/abs/2004.12755",
-                             tags$i("arXiv:2004.12755 [stat, q-bio]")),
+                      tags$a(href="https://arxiv.org/abs/2004.12755",
+                             tags$i("arXiv:2004.12755 [stat.ME]")),
                       "April 2020."
                ),
                tags$p(tags$b("See also:"),

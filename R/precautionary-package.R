@@ -16,11 +16,11 @@
 #' 
 #' 2. Norris DC. Costing \sQuote{the} MTD. \emph{bioRxiv}. August 2017:150821.
 #'    \doi{10.1101/150821}.
-#'    \url{http://www.biorxiv.org/content/early/2017/08/22/150821}
+#'    \url{https://www.biorxiv.org/content/10.1101/150821v3}
 #' 
 #' 3. Norris DC. Precautionary Coherence Unravels Dose Escalation Designs.
 #'    \emph{bioRxiv}. December 2017:240846. \doi{10.1101/240846}.
-#'    \url{https://www.biorxiv.org/content/early/2017/12/29/240846}
+#'    \url{https://www.biorxiv.org/content/10.1101/240846v1}
 #' 
 #' 4. Norris DC. One-size-fits-all dosing in oncology wastes money, innovation
 #'    and lives. \emph{Drug Discov Today}. 2018;23(1):4-6.
@@ -29,7 +29,7 @@
 #' 
 #' 5. Norris DC. Costing \sQuote{the} MTD ... in 2-D. \emph{bioRxiv}. July 2018:370817.
 #'    \doi{10.1101/370817}.
-#'    \url{https://www.biorxiv.org/content/early/2018/07/17/370817}
+#'    \url{https://www.biorxiv.org/content/10.1101/370817v1}
 #' 
 #' 6. Norris DC. Ethical Review and Methodologic Innovation in Phase 1 Cancer Trials.
 #'    \emph{JAMA Pediatrics}. 2019;173(6):609
@@ -41,8 +41,8 @@
 #'    \doi{10.1002/pst.2016}.
 #'    
 #' 8. Norris DC. Retrospective analysis of a fatal dose-finding trial.
-#'    arXiv:2004.12755 \[stat, q-bio\]. April 2020.
-#'    \url{http://arxiv.org/abs/2004.12755}
+#'    arXiv:2004.12755 \[stat.ME\]. April 2020.
+#'    \url{https://arxiv.org/abs/2004.12755}
 #' 
 #' @import methods
 #' @import magrittr
