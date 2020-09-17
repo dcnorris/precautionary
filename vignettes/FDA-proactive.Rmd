@@ -43,11 +43,11 @@ local({
 
 Models of the kind employed in [@norris_retrospective_2020], however, are unlikely to be entertained or even understood by the sort of trial sponsors who use 3+3 designs like the one in question. Indeed, even the FDA seems to have [limited enthusiasm](https://precisionmethods.guru/2020/04/21/fda-oce-response-on-dose-individualization/) for modeling that so frankly acknowledges uncontrolled inter-individual heterogeneity in the context of early-phase trials. Thus, the question arises whether a simpler analysis might have enabled the sponsor, or FDA, to recognize this trial's unsafe design from the outset.
 
-# Applying the `precautionary` package
+# Mapping the trial to the `precautionary` package
 
 The trial used two modifications that do not map directly to designs implemented in the `escalation` package on which `precautionary` is based. Firstly, whereas the design specified an initial 'accelerated titration' phase [@simon_accelerated_1997], we will simply simulate a standard '3+3' design. Secondly, the trial employed step-up dosing such that patients initiated treatment at 1/3 of their cohort's target dose, stepping up to the full dose after 1 week on this reduced dose. Whereas the abovementioned Bayesian model exploited the extra information available from this step-up protocol, we will for present purposes regard each cohort as defined simply by its target dose:
 
-```{r}
+```{r design}
 library(precautionary)
 design <- get_three_plus_three(num_doses = 6)
 options(dose_levels = c(2, 6, 20, 60, 180, 400)) # ng/kg/week
@@ -74,11 +74,16 @@ options(ordinalizer = function(MTDi, r0 = 1.5) {
 
 # Simulating safety
 
-```{r}
+<!-- TODO: Don't cache in a production release -->
+
+```{r simulate, cache=TRUE}
 design %>% simulate_trials(
-  num_sims = 400
+  num_sims = 100
 , true_prob_tox = mtdi_gen
-) -> SIMS
+) %>% extend(target_mcse = 0.05) -> SIMS
+```
+
+```{r summarize}
 summary(SIMS,r0 = 2)$safety %>%
   safety_kable() 
 ```
@@ -87,17 +92,30 @@ summary(SIMS,r0 = 2)$safety %>%
 
 What about our uncertainty over the parameter $r_0$? Here, it seems entirely reasonable simply to explore a range of values:
 
-```{r}
-r0 <- c(1.25, 1.5, 1.75, 2.0)
-rbind(summary(SIMS, r0=r0[1])$safety[1,]
-     ,summary(SIMS, r0=r0[2])$safety[1,]
-     ,summary(SIMS, r0=r0[3])$safety[1,]
-     ,summary(SIMS, r0=r0[4])$safety[1,]
-     ) -> safety
-cbind(data.table(`$r_0$` = r0), safety) %>% kable(digits=2) %>%
+```{r tabulate-safety}
+r0 <- seq(1.2, 2.0, 0.2); names(r0) <- format(r0, 2)
+safetytabs <- sapply(r0, FUN = function(.) summary(SIMS, r0=.)$safety
+                     , simplify = "array", USE.NAMES = TRUE)
+cbind(data.table(`$r_0$` = r0), t(safetytabs[1,,])) %>% kable(digits=2) %>%
   add_header_above(c(" "=1, "Expected counts by toxicity grade"=6, " "=1))
 ```
 
+Focusing on the expected numbers of fatal toxicities, and with proper attention to Monte Carlo standard errors (MCSEs) of these expectations, we might tabulate as follows:
+
+```{r focus-fatality}
+cbind(data.table(`$r_0$` = r0), t(safetytabs[,'Gr5',])) %>%
+  kable(digits=2, col.names = c('$r_0$', 'Expected fatal toxicities', 'MCSE')) %>%
+  kable_styling(full_width = FALSE, position = "left")
+```
+
+# Applying the simulation results
+
+Safety expectations for a phase 1 trial necessarily depend on the clinical context and the unmet need addressed by the investigational drug. Suppose, for the sake of discussion, that FDA would have required an expected probability of any fatality below 15% for this trial. Then FDA might have requested that the sponsor support an expectation that $r_0 > 2$ (e.g., based on preclinical evidence), or else modify the trial design.
+
+# TODO
+
+* Address questions of how the prespecified dose levels might constrain choices for simulation parameters
+* Include a discussion of the relevant CFR 21 section; this might well be something that belongs in a marginal note
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
