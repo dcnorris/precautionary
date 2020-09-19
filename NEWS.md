@@ -1,3 +1,9 @@
+# precautionary 0.1-4
+
+## Changes
+
+* Added vignette for a regulatory application
+
 # precautionary 0.1-3
 
 ## Changes
