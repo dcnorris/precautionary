@@ -1,11 +1,11 @@
 ---
-title: "How FDA could vet dose-escalation protocols for safety"
+title: "How FDA can vet dose-escalation trials for safety"
 author: "David C. Norris"
-date: "9/16/2020"
+date: "9/20/2020"
 output: bookdown::tufte_html2
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{FDA proactive review}
+  %\VignetteIndexEntry{FDA proactive clinical hold}
   \usepackage[utf8]{inputenc}
 bibliography: precautionary-package.bib
 header-includes:
@@ -39,13 +39,13 @@ local({
 
 # Background
 
-@norris_retrospective_2020 examines a fatal dose-finding trial ([AFM11-102](https://clinicaltrials.gov/ct2/show/NCT02848911)) in retrospect, through the lens of a somewhat realistic Bayesian model of ordinal toxicity outcomes. When this model is estimated using only data from the first 5 dose cohorts, it suggests that the fatal toxicity which occurred in the 6th cohort was foreseeable as reasonably likely. Thus, the design was inherently unsafe, but this fact was not appreciated without the 'situational awareness' that a realistic model can deliver.
+@norris_retrospective_2020 examines a fatal dose-finding trial ([AFM11-102](https://clinicaltrials.gov/ct2/show/NCT02848911)) in retrospect, through the lens of a somewhat realistic Bayesian model of ordinal toxicity outcomes. When this model is estimated *using only data from the first 5 dose cohorts*, it foresees as reasonably likely the fatal toxicity which actually occurred in the 6th cohort. Thus, even in this inherently unsafe trial, disaster might still have been averted through the dynamic 'situational awareness' a realistic model can deliver.
 
-Unfortunately, realistic models of the kind employed in [@norris_retrospective_2020] are unlikely to be contemplated or even understood by the sort of trial sponsors who deploy 3+3 designs like the one in question. Indeed, even the FDA expresses at best [limited enthusiasm](https://precisionmethods.guru/2020/04/21/fda-oce-response-on-dose-individualization/) for modeling that acknowledges inter-individual heterogeneity in the context of early-phase trials. Thus, the question arises whether a simpler analysis might have enabled the sponsor, or FDA, to recognize this trial's unsafe design from the outset.
+Unfortunately, realistic models of the kind employed in @norris_retrospective_2020 are unlikely to be contemplated or even understood by trial sponsors who deploy 3+3 designs like the one in question. Indeed, even FDA's Oncology Center of Excellence (OCE) expresses at best [limited enthusiasm](https://precisionmethods.guru/2020/04/21/fda-oce-response-on-dose-individualization/) for early-phase trial designs that are cognizant of inter-individual heterogeneity. Thus, the question arises: would a less sophisticated analysis have enabled the sponsor, or FDA, to recognize this trial's unsafe design from the outset?
 
 # Mapping the trial to the `precautionary` package
 
-AFM11-102 used two modifications that do not map directly to designs implemented in the `escalation` package on which `precautionary` is based. Firstly, whereas the design specified an initial 'accelerated titration' phase [@simon_accelerated_1997], we will simply simulate a standard '3+3' design.^[Note that omitting the accelerated titration makes our simulated trial safer, thus biasing our analysis toward a finding of safety.] Secondly, the trial employed step-up dosing such that patients initiated treatment at 1/3 of their cohort's target dose, stepping up to the full dose after 1 week on this reduced dose. Whereas the abovementioned Bayesian model exploited the extra information available from this step-up protocol, we will for present purposes regard each cohort as defined simply by its target dose:
+AFM11-102 used two modifications that do not map readily to designs implemented in the `escalation` package on which `precautionary` is based. Firstly, whereas the design specified an initial 'accelerated titration' phase [@simon_accelerated_1997], we will simply simulate a standard '3+3' design.^[Note that omitting the accelerated titration makes our simulated trial safer, thus biasing our analysis toward a finding of safety.] Secondly, the trial employed step-up dosing such that patients initiated treatment at 1/3 of their cohort's target dose, stepping up to the full dose after 1 week. Whereas the abovementioned Bayesian model exploited the extra information available from this step-up protocol, we will for present purposes regard each cohort as characterized simply by its target dose:
 
 ```{r design}
 library(precautionary)
@@ -53,7 +53,7 @@ design <- get_three_plus_three(num_doses = 6)
 options(dose_levels = c(2, 6, 20, 60, 180, 400)) # ng/kg/week
 ```
 
-As in [@norris_retrospective_2020], we suppose $\MTDi$ is lognormally distributed, with a coefficient of variation (CV) of 1/2, and a median centered at the next-to-highest dose of 180 ng/kg/week. Here we allow for a ±60% uncertainty in the median.^[That is, $\log(median) \sim \mathscr{N}(\log 180, 0.6)$.]
+As in @norris_retrospective_2020, we suppose $\MTDi$ is lognormally distributed, with a coefficient of variation (CV) of 1/2, and a median centered at the next-to-highest dose of 180 ng/kg/week. We allow for a ±60% uncertainty in this median.^[That is, $\log(median) \sim \mathscr{N}(\log 180, 0.6)$.]
 
 ```{r hyperprior, fig.cap="Multiple samples from a *hyperprior* over the distribution of MTD$_i$."}
 mtdi_gen <- hyper_mtdi_lognormal(CV = 0.5
@@ -64,7 +64,7 @@ mtdi_gen <- hyper_mtdi_lognormal(CV = 0.5
 plot(mtdi_gen, n=100, col=adjustcolor("red", alpha=0.25))
 ```
 
-Finally, we introduce a standard 'ordinalizer' that assumes toxicity-grade thresholds for any individual patient are a geometric sequence of doses with ratio $r_0$.^[With our focus being *safety*, it is important only that this hold roughly from Grades 3 to 4, and Grades 4 to 5.]
+Finally, we introduce a standard 'ordinalizer' that assumes the toxicity-grade thresholds for any individual patient are a geometric sequence of doses with ratio $r_0$.^[With our focus being *safety*, it is important mainly that these dose ratios hold between the *higher* grades, linking Grades 3--4, and Grades 4--5.]
 
 ```{r ordinalizer}
 options(ordinalizer = function(MTDi, r0 = 1.5) {
@@ -74,9 +74,7 @@ options(ordinalizer = function(MTDi, r0 = 1.5) {
 
 # Simulating safety
 
-<!-- TODO: Don't cache in a production release -->
-
-```{r simulate, cache=TRUE}
+```{r simulate}
 set.seed(2020)
 design %>% simulate_trials(
   num_sims = 100
@@ -91,32 +89,31 @@ summary(SIMS,r0 = 2)$safety %>%
 
 ## Uncertainty about the ordinalizer
 
-What about our uncertainty over the parameter $r_0$? Here, it seems entirely reasonable simply to explore a range of values:
+What about our uncertainty over the therapeutic index $r_0$? Here, it seems entirely reasonable simply to explore a range of values:
 
-```{r tabulate-safety, cache=TRUE}
+```{r tabulate-safety}
 r0 <- seq(1.2, 2.0, 0.2); names(r0) <- format(r0, 2)
 safetytabs <- sapply(r0, FUN = function(.) summary(SIMS, r0=.)$safety
                      , simplify = "array", USE.NAMES = TRUE)
-cbind(data.table(`$r_0$` = r0), t(safetytabs[1,,])) %>% kable(digits=2) %>%
-  add_header_above(c(" "=1, "Expected counts by toxicity grade"=6, " "=1))
+cbind(data.table(`$r_0$` = r0), t(safetytabs[1,,])) %>%
+  kable(digits=2) %>% add_header_above(
+    c(" "=1, "Expected counts by toxicity grade"=6, " "=1))
 ```
 
 Focusing on the expected numbers of fatal toxicities, and with proper attention to Monte Carlo standard errors (MCSEs) of these expectations, we might tabulate as follows:
 
 ```{r focus-fatality}
 cbind(data.table(`$r_0$` = r0), t(safetytabs[,'Gr5',])) %>%
-  kable(digits=2, col.names = c('$r_0$', 'Expected fatal toxicities', 'MCSE')) %>%
+  kable(digits=2,
+        col.names = c('$r_0$',
+                      'Expected fatal toxicities',
+                      'MCSE')) %>%
   kable_styling(full_width = FALSE, position = "left")
 ```
 
 # Applying the simulation results
 
-Safety expectations for a phase 1 trial necessarily depend on the clinical context and the unmet need addressed by the investigational drug. Suppose, for the sake of discussion, that FDA would have required an expected probability of any fatality below 15% for this trial. Then FDA might have requested that the sponsor support an expectation that $r_0 > 2$ (e.g., based on preclinical evidence), or else modify the trial design.
-
-# TODO
-
-* Address questions of how the prespecified dose levels might constrain choices for simulation parameters
-* Include a discussion of the relevant CFR 21 section; this might well be something that belongs in a marginal note
+Safety parameters for any given phase 1 trial necessarily depend on the clinical context and unmet need addressed by the investigational drug [@muller_determination_2012]. For sake of discussion, suppose FDA would have required an expected probability of any fatality in AFM11-102 to be below 15%. Then FDA might have requested that the sponsor support an expectation that $r_0 > 2$ (e.g., based on preclinical evidence), or else modify the trial design.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
