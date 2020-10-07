@@ -59,54 +59,43 @@ esc(D, Lo..Hi) --> ...
 
 */
 
-sample(D, Set) :-
-    D in Set,
-    indomain(D).
+% Let esc(D, Lo..Hi) *describe* a list of 3+3 cohorts starting from dose D in Lo..Hi.
+% Read esc(D, Lo..Hi) as escalating FROM D to min(D+1,Hi).
 
-% Let esc(D, Lo..Hi) *describe* a list of 3+3 cohorts starting from dose D in Lo..Hi
-:- discontiguous esc//2.
+%% TODO: WLOG set Lo == 1 by convention.
 
-% Treat escalation past Hi via 'peg' nonterminal.
-esc(D, Lo..Hi) --> { D #= Hi + 1 }, peg(Hi, Lo).
+esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi, T in 0..3, indomain(T) }, % * is a ^ that went *splat*
+		    (   { T in 0..1 } -> [mtd_notfound(Hi)]
+		    ;   des(Hi, Lo)
+		    ).
+esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1, D1 in Lo..Hi, T in 0..3, indomain(T) },
+		   (   { T #= 0 } -> esc(D1, Lo..Hi)
+		   ;   { T #= 1 } -> sta(D1, Lo..Hi)
+		   ;   des(D1, Lo)
+		   ).
 
-%peg(D, _) --> { T in 0..1, indomain(T) }, [D * T], [mtd_notreachedPEG(D)].
-%peg(D, Lo) --> { T in 2..3, indomain(T) }, [D * T], { D_1 #= D - 1 }, des(D_1, Lo).
+% TODO: Do I really need the special case of sta(D, _..D)?
+sta(D, _..D) --> [D - 0], [mtd_notfound(D)].
+sta(D, Lo..Hi) --> [D - 0], { D #< Hi, D in Lo..Hi, indomain(D) }, esc(D, D..Hi).
+sta(D, Lo.._) --> [D - T], { T in 1..3, indomain(T) }, des(D, Lo).
 
-%% NB: The following seems clearer to me than separate goals as above.
-%%     But are there any strong reasons to prefer separate goals?
-peg(D, Lo) --> [D * T], { T in 0..3, indomain(T) },
-	       (   { T in 0..1 } -> [mtd_notreachedPEG(D)]
-	       ;   { T in 2..3 } -> { D_1 #= D - 1 }, des(D_1, Lo)
-	       ).
-
-% Deal first with case of escalating to the highest allowed dose
-esc(D, Lo..Hi) --> [D ^ 0], { D in Lo..Hi, D1 #= D + 1 }, esc(D1, Lo..Hi).
-esc(D, Lo..Hi) --> [D ^ 1], { D in Lo..Hi }, sta(D, Lo..Hi).
-%% I SUSPECT THE PROBLEM IS IN THIS VICINITY ...
-%% Specifically, I see several clauses that allow T in 0..1.
-esc(D, Lo..D) --> [D ^ T], { T in 2..3, indomain(T), D_1 #= D - 1 }, des(D_1, Lo).
-%% esc(D, Lo..Hi) --> [D ^ T], { D in Lo..Hi, T in 2..3, indomain(T) },
-%% 	   (   { T #= 0 } -> (   { D1 #= D + 1 } -> esc(D1, Lo..Hi)
-%% 			     ;	 [mtd_notreachedESC(D)]
-%% 			     )
-%% 	   ;   { T #= 1 } -> sta(D, Lo..Hi)
-%% 	   ;   { D_1 #= D - 1 } -> des(D_1, Lo)
-%% 	   ).
-sta(D, _..D) --> [D - 0], [mtd_notreachedSTA(D)].
-sta(D, Lo..D) --> [D - T], { T in 1..3, indomain(T), D_1 #= D - 1 }, des(D_1, Lo).
-sta(D, Lo..Hi) --> [D - T], { D in Lo..Hi, D #< Hi, T in 0..3, indomain(T) },
-	   (   { T #= 0 } -> (   { D1 #= D + 1, D1 #=< Hi } -> esc(D1, D..Hi)
-			     ;	 [declare_mtd(D)]
-			     )
-	   ;   { D_1 #= D - 1, D_1 #>= Lo } -> [declare_mtd(D_1)]
-	   ).
-% NB: Implicit in de-escalation to D is that Hi #= D.
-des(D, Lo) --> { D #< Lo }, [declare_mtd(D)].
-des(D, Lo) --> { D #>= Lo }, [D : T], { T in 0..3, indomain(T) },
-	       (   { T in 0..1 } -> [declare_mtd(D)]
-	       ;   { D_1 #= D - 1 }, des(D_1, Lo)
+% As a mirror image of esc, des(D, Lo) moves downward FROM D to max(D-1,Lo).
+% NB: Implicit in de-escalation to D-1 is that Hi #= D - 1.
+des(D, Lo) --> { D_1 #= D - 1 },
+	       (   { D_1 #= Lo } -> [declare_mtd(Lo)]
+	       ;   [D_1 : T], { T in 0..3, indomain(T) },
+		   (   { T in 0..1 } -> [declare_mtd(D_1)]
+		   ;   des(D_1, Lo)
+		   )
 	       ).
 
 %% TODO: Write cohorts as (Dose ^ Tox / Enrolled).
 %%       This will enable cohorts of size other than 3,
 %%       as needed e.g. to describe an accelerated titration phase.
+
+% n_trials(+Drange, XY)
+n_trials(Drange, XY) :-
+    Dmax in Drange, indomain(Dmax),
+    findall(Tr, phrase(esc(0, 0..Dmax), Tr), Trials),
+    length(Trials, N),
+    XY = (Dmax, N).
