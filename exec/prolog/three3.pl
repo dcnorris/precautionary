@@ -99,3 +99,139 @@ n_trials(Drange, XY) :-
     findall(Tr, phrase(esc(0, 0..Dmax), Tr), Trials),
     length(Trials, N),
     XY = (Dmax, N).
+
+/*******
+
+I don't feel entirely happy with the way I have intertwined the
+escalation rules with MTD-declaration logic above. It would be
+preferable (if feasible) to define alternating 'coroutines' of
+dose escalation and attempted MTD declaration.
+
+Under such a scheme, we would at each step attempt to declare an
+MTD, and -- failing that -- apply the dose-escalation rules.
+
+A quite natural way to implement this, perhaps, is to build the
+list of cohorts 'in reverse', with the latest cohort at the head
+of the list.
+
+IDEALLY, the program would directly express the *intuition* beneath
+the dose-escalation rules, rather than merely implement the rules.
+
+Another interesting approach would be to try to PROVE various local
+properties of the existing DCG.
+
+*/
+
+de([], [1^T]) :- T in 0..3, indomain(T).
+de([D^0|E], [D1^T,D^0|E]) :- D1 #= D + 1, D1 #=< 4, T in 0..3, indomain(T).
+de([D^1|E], [D^T,D^1|E]) :- T in 0..3, indomain(T).
+de([D^T|E], [D_1^T_1,D^T|E]) :- T in 2..3, D_1 #= D - 1, D_1 #> 0, T_1 in 0..3, indomain(T_1).
+
+/*******
+
+What if I acknowledge the dose-centeredness of these designs,
+and build my program on this concept?
+
+The representation of dose range becomes important.
+
+One simple way to do it would be to write a list initially of the form
+[0/0, 0/0, ..., 0/0], with one slot per nonzero dose level.
+
+We then reason over this representation, implementing state transformations
+according to the pharmacologic intuitions behind 'judging' dose levels by
+the counts of toxicities.
+
+What categorical 'judgements' do we make?
+
+a. A dose level with 0/6 or 1/6 toxicities is SAFE
+b. A dose level with 0/3 toxicities is LOW -- i.e., too low to enroll next cohort
+c. A dose level with 2+ toxicities is UNSAFE
+
+I believe that these are the underlying pharmacologic intuitions of the 3+3 &al.
+
+The basic attitude--or *approach*--of 3+3 is to whittle away at our uncertainty
+about some prespecified set of dose levels, until it is fully resolved.
+
+We recognize that resolution in the form of:
+1. A list [SAFE, UNSAFE] in which case the SAFE dose in MTD ** def'n of MTD! **
+2. A singleton list with SAFE dose => no MTD found
+3. A singleton list with UNSAFE dose => MTD is ZERO
+
+Is there any advantage to seeing the list as a STACK? One problem with this is
+that it's likely to impinge on generality. Nevertheless, it does nicely express
+the intuition that we work stepwise from the 'safe end' of the dose range, which
+is foundational to the dose-escalation concept. Thus, 'entangling' the program
+implementation with this intuition could even be a good thing if 'speculative
+generality' continues to apply as a valid criticism in logic programming!
+
+*/
+
+%% Hmmm... Maybe I need to reference higher doses here, as well!
+%% Perhaps a dose is safe also if any HIGHER dose is safe.
+:- true.
+
+% Notice how nicely the code below lays out our dose-finding intuitions!
+% This is EXACTLY the type of benefit one hopes to gain from Prolog.
+% Observe how all the reasoning happens over ASCENDING SEQUENCES OF DOSES;
+% this is an essential characteristic of the underlying intuitions.
+
+% Note that we would avoid the need for some special-case handling
+% if we imposed the interpretation on the 'missing' dose past the end
+% of the list, that it represents a dose known to be unsafe.
+% But this need not hold GENERALLY, since another reason for capping
+% the dose sequence considered is that any higher doses are known to
+% be on an efficacy plateau. Thus, this *special* interpretation, tho
+% leading to 'more elegant' code, harms the generality of the program.
+
+safe(T/6) :- T #=< 1. % TODO: Is this 'defaulty'?
+safe([D|H]) :-  % Head dose in a sequence is safe, provided
+    (	safe(D) % either D < 2/6 ..
+    ;	safe(H) % ..or some later dose meets that criterion.
+    ).
+unsafe(T / N) :- N #>= 3, T #> 1. % 2+/_ is unsafe
+% The head dose level in a sequence is too low to enroll if
+low([D|E]) :- safe([D|E]). % ..it's safe,
+low([0/3, T/N | _]) :- \+ unsafe(T/N). % ..or 0/3 and next dose is not unsafe.
+
+mtd([S,U|_]) :- % MTD is found at head of dose sequence considered
+    safe(S),
+    unsafe(U).
+mtd([U|_], 0) :- unsafe(U).
+mtd([S,U|_], 1) :- mtd([S,U|_]).
+mtd([_|E], N) :-
+    N #> 1,
+    N_1 #= N - 1,
+    mtd(E, N_1).
+
+% Enrolling N and observing T toxicities updates our dose range
+% from R0 to R, and said enrollment was indeed permitted by R0.
+%%range0_cohort_range(R0, T/+N, R)
+
+range0_cohort_range([L|R0], T/N, [L|R]) :- % we bypass low dose levels L
+    low([L|R0]),
+    range0_cohort_range(R0, T/N, R).
+
+range0_cohort_range([T0/N0 | R0], T/N, [T1/N1 | R0]) :-
+    \+ low([T0/N0 | R0]),
+    T in 0..N, indomain(T),
+    T1 #= T0 + T,
+    N1 #= N0 + N.
+
+% Now define a trial RECURSIVELY, with an eye to employing DCG
+% for state threading ...
+
+% A completed trial is a list of dose ranges with successive updates
+% consistent with the dose-escalation rules.
+initialize(1, [0/0]).
+initialize(N, [0/0 | S]) :- N #> 1, N_1 #= N - 1, initialize(N_1, S).
+trial(N) --> { initialize(N, Start) }, [Start], step(Start).
+step(R0) -->
+    (	{ mtd(R0, MTD) } -> [declare_mtd(MTD)]
+    % TODO: Understand the loss of backtracking over _ below.
+    %       I have that -> 'destroys choice points', in context that makes
+    %       this sound like a GOOD thing! But here, isn't this clearly BAD?
+    ;	{ range0_cohort_range(R0, _/3, R) } -> [R], step(R)
+    ;	[mtd_notfound(R0)] % if we can't declare or enroll, we're done!
+    ).
+
+
