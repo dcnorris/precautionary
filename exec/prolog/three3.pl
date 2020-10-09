@@ -191,7 +191,10 @@ safe([D|H]) :-  % Head dose in a sequence is safe, provided
 unsafe(T / N) :- N #>= 3, T #> 1. % 2+/_ is unsafe
 % The head dose level in a sequence is too low to enroll if
 low([D|E]) :- safe([D|E]). % ..it's safe,
-low([0/3, T/N | _]) :- \+ unsafe(T/N). % ..or 0/3 and next dose is not unsafe.
+low([0/3, T/N | _]) :- \+ unsafe(T/N). % ..or 0/3 and next-higher dose is not unsafe.
+% Note in particular that 0/3 without a successor (i.e., 0/3 at top dose)
+% is NOT too low to enroll. This little predicate does a lot of work,
+% since it's what forces escalation.
 
 mtd([S,U|_]) :- % MTD is found at head of dose sequence considered
     safe(S),
@@ -212,7 +215,8 @@ range0_cohort_range([L|R0], T/N, [L|R]) :- % we bypass low dose levels L
     range0_cohort_range(R0, T/N, R).
 
 range0_cohort_range([T0/N0 | R0], T/N, [T1/N1 | R0]) :-
-    \+ low([T0/N0 | R0]),
+    \+ low([T0/N0 | R0]), % why doesn't failure of above clause ensure this?
+    \+ unsafe(T0/N0),
     T in 0..N, indomain(T),
     T1 #= T0 + T,
     N1 #= N0 + N.
@@ -227,11 +231,43 @@ initialize(N, [0/0 | S]) :- N #> 1, N_1 #= N - 1, initialize(N_1, S).
 trial(N) --> { initialize(N, Start) }, [Start], step(Start).
 step(R0) -->
     (	{ mtd(R0, MTD) } -> [declare_mtd(MTD)]
-    % TODO: Understand the loss of backtracking over _ below.
-    %       I have that -> 'destroys choice points', in context that makes
-    %       this sound like a GOOD thing! But here, isn't this clearly BAD?
-    ;	{ range0_cohort_range(R0, _/3, R) } -> [R], step(R)
-    ;	[mtd_notfound(R0)] % if we can't declare or enroll, we're done!
+    ;	{ range0_cohort_range(R0, _/3, R) }, [R], step(R) % preserve choice point!
+    ;	{ \+ range0_cohort_range(R0, _/3, _), length(R0, D) }, [mtd_notfound(D)]
     ).
 
+% I do like the pattern of describing a step via range0_cohort_range,
+% and then leaving mtd_notfound as a kind of 'failure mode'. But the
+% SYNTAX of the above feels deficient, or at least 'inelegant'!
+
+n_trials_both(Drange, XAB) :-
+    Dmax in Drange, indomain(Dmax),
+    findall(Tr, phrase(esc(0, 0..Dmax), Tr), TrialsA),
+    length(TrialsA, Na),
+    findall(Tr, phrase(trial(Dmax), Tr), TrialsB),
+    length(TrialsB, Nb),
+    XAB = (Dmax, Na, Nb).
+
+% NB: The above fails for ranges with 3 or more doses:
+/*
+?- n_trials_both(1..4, XAB).
+XAB =  (1, 10, 10) ;
+XAB =  (2, 46, 46) ;
+XAB =  (3, 154, 206) ;
+XAB =  (4, 442, 3850).
+*/
+
+% CORRECTION plan ...
+% 1. Find counts within categories (MTD at each level, and not-found)
+% 2. Transform between the representations
+
+% AHA! I find extra mtd_notfound's, at least!
+/*
+?- findall(T, (phrase(esc(0, 0..3), T), append(T0, [mtd_notfound(3)], T)), Ts), length(Ts, N).
+Ts = [[1^0, 2^0, 3^0, 3*0, mtd_notfound(3)], [1^0, 2^0, 3^0, 3*1, mtd_notfound(3)], [1^0, 2^0, 3^1, 3-0, mtd_notfound(3)], [1^0, 2^1, 2-0, 3^0, ... * ...|...], [1^0, 2^1, 2-0, ... ^ ...|...], [1^0, 2^1, ... - ...|...], [1^1, ... - ...|...], [... ^ ...|...], [...|...]|...],
+N = 12.
+
+?- findall(T, (phrase(trial(3), T), append(T0, [mtd_notfound(3)], T)), Ts), length(Ts, N).
+Ts = [[[0/0, 0/0, 0/0], [0/3, 0/0, 0/0], [0/3, 0/3, 0/0], [0/3, 0/3, 0/3], [0/3, 0/3, ... / ...], mtd_notfound(3)], [[0/0, 0/0, 0/0], [0/3, 0/0, 0/0], [0/3, 0/3, 0/0], [0/3, 0/3, ... / ...], [0/3, ... / ...|...], mtd_notfound(3)], [[0/0, 0/0, 0/0], [0/3, 0/0, 0/0], [0/3, 0/3, ... / ...], [0/3, ... / ...|...], [... / ...|...], mtd_notfound(...)], [[0/0, 0/0, 0/0], [0/3, 0/0, ... / ...], [0/3, ... / ...|...], [... / ...|...], [...|...]|...], [[0/0, 0/0, ... / ...], [0/3, ... / ...|...], [... / ...|...], [...|...]|...], [[0/0, ... / ...|...], [... / ...|...], [...|...]|...], [[... / ...|...], [...|...]|...], [[...|...]|...], [...|...]|...],
+N = 30.
+*/
 
