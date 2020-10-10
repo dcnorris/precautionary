@@ -1,0 +1,87 @@
+---
+title: "What priors are implicit in a given 3+3 design?"
+author: "David C. Norris"
+date: "10/10/2020"
+output: bookdown::tufte_html2
+vignette: <
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{FDA proactive clinical hold}
+  \usepackage[utf8]{inputenc}
+bibliography: precautionary-package.bib
+header-includes:
+  \newcommand{\MTDi}{\mathrm{MTD}_i}
+  \newcommand{\MTDig}[1][g]{\mathrm{MTD}_i^{#1}}
+---
+
+```{r setup, include=FALSE}
+old <- options(rmarkdown.html_vignette.check_title = FALSE) # suppress un-needed warning
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
+
+library(precautionary)
+library(knitr)
+library(kableExtra)
+
+options(ordinalizer = NULL) # vignette presumes this is not already set
+
+# Echo source focused on package functionality by redacting calls to kable()
+# see https://bookdown.org/yihui/rmarkdown-cookbook/hook-hide.html:
+local({
+  hook_source <- knitr::knit_hooks$get('source')
+  knitr::knit_hooks$set(source = function(x, options) {
+    x <- gsub(" -> etc.", "", x)
+    x <- x[!grepl("^etc. %>%", x)] # strip lines starting "etc. %>% ..."
+    x <- x[!grepl("\\(etc.,", x)]  # strip lines with fun(etc., ...)
+    hook_source(x, options)
+  })
+})
+```
+
+# Background
+
+The safety characteristics of a dose-finding study are a function jointly of how the study is designed, and of how certain pharmacologic parameters are distributed in the study population. Given an explicit set of (hyper)priors over those distributions, one can carry out simulations to exhibit the safety characteristics of any given design: 
+
+$$
+(\mathrm{design}, \mathrm{hyperpriors}) \xrightarrow{simulation} \mathrm{safety}
+$$
+
+Alternatively, we can express this by saying that *given any trial design,* our safety expectations are a function $F_{\mathrm{design}}$ of the hyperpriors:
+
+$$
+\mathrm{hyperpriors} \xrightarrow{F_{\mathrm{design}}} \mathrm{safety}.
+(\#eq:forward)
+$$
+
+In oncology dose finding, however, population heterogeneity is rarely acknowledged, let alone modeled explicitly as Bayesian priors.^[Some reasons for this state of affairs are discussed in a classic paper by Sheiner -@sheiner_intellectual_1991.] Nevertheless, restrictions on these priors are *implicit* in any bounds we can identify on acceptable safety characteristics. Thus, community standards that limit the numbers of severe or fatal toxicities acceptable in a given clinical context provide information about what pharmacologic hyperpriors one could reasonably entertain while proposing a given trial design. To some extent, this amounts to solving an [inverse problem](https://en.wikipedia.org/wiki/Inverse_problem)
+
+\begin{align}
+\mathrm{hyperpriors} &\xleftarrow{F_{\mathrm{design}}^{-1}} \mathrm{safety}
+\\
+&\mathrm{or} (\#eq:inverse)
+\\
+\mathrm{hyperpriors} &= F_{\mathrm{design}}^{-1} (\mathrm{safety})
+\end{align}
+
+corresponding to the 'forward problem' of Equation \@ref(eq:forward).
+
+# Sources of community standards
+
+Explicit discussion of standards for early-phase oncology trial safety are as rare as explicit discussions of pharmacologic priors.^[Indeed, when considering ordinal toxicities, the dose-finding literature typically excludes fatal toxicities from the realm of possibility [@bekele_dose-finding_2004;@van_meter_dose-finding_2012].] Thus Equation \@ref(eq:inverse) appears vulnerable to a symmetry argument, to the effect that it merely presents a mirror-image of the very same difficulties posed by Equation \@ref(eq:forward). Each Equation derives one set of priors from another, the difference being whether we start from objective pharmacologic priors \@ref(eq:forward) or from subjective safety priors \@ref(eq:inverse). Since neither set of priors receives any amount of explicit discussion, both starting points seem equally inaccessible.
+
+This criticism is valid inasmuch as it reveals our problem to be one of *prior elicitation*. But *as a practical matter* the supposed symmetry between Equations \@ref(eq:forward) and \@ref(eq:inverse) is broken by the primacy of *safety* in drug-development. While it remains---however remarkably---entirely possible to evade explicit prior elicitation around pharmacologic priors, it is not politically feasible to brush aside questions of safety once they have been posed.
+
+We see a clear example of this in the FDA's reflexive responsiveness to fatalities in early-phase oncology trials. FDA guidance on early-phase dose-finding studies discusses the incorporation of preclinical pharmacology results only in generic or indefinite ways.^[For example, **TODO...**] Yet once the 'question has been posed' by the actual *occurrence* of a fatal toxicity, FDA acts swiftly to place a clinical hold.
+
+# Interactions with economic priors
+
+While the willingness of phase 1 physician-investigators to enroll their patients on a trial may be expected to be entirely patient-centered, the considerations of a commercial trial sponsor will be informed partly or primarily by economic considerations. Commercial considerations may also impinge more directly on pharmacologic priors. For example, the decision to pursue a one-size-fits-all dosing in the face of the economic losses this entails [@norris_one-size-fits-all_2018] places some upper bound on reasonable prior beliefs about the coefficient of variation (CV) of optimal dosing within the population.
+
+# Conclusion
+
+What we learn from this exercise is that part of the pharmacologic priors that are revealed by design choices under the existing regime of safety scrutiny.
+
+```{r echo=FALSE, results='hide'}
+options(old) # restore user's original options before finishing, per CRAN
+```
+
+# References
