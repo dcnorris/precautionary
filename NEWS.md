@@ -1,3 +1,7 @@
+# precautionary 0.2-0
+
+* Added vignette on pharm priors implicit in safety expectations
+
 # precautionary 0.1-4
 
 ## Changes
