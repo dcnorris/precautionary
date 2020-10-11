@@ -11,6 +11,8 @@ bibliography: precautionary-package.bib
 header-includes:
   \newcommand{\MTDi}{\mathrm{MTD}_i}
   \newcommand{\MTDig}[1][g]{\mathrm{MTD}_i^{#1}}
+  \newcommand{\CV}{\mathrm{CV}}
+
 ---
 
 ```{r setup, include=FALSE}
@@ -75,6 +77,39 @@ We see a clear example of this in the FDA's reflexive responsiveness to fataliti
 # Interactions with economic priors
 
 While the willingness of phase 1 physician-investigators to enroll their patients on a trial may be expected to be entirely patient-centered, the considerations of a commercial trial sponsor will be informed partly or primarily by economic considerations. Commercial considerations may also impinge more directly on pharmacologic priors. For example, the decision to pursue a one-size-fits-all dosing in the face of the economic losses this entails [@norris_one-size-fits-all_2018] places some upper bound on reasonable prior beliefs about the coefficient of variation (CV) of optimal dosing within the population.
+
+# Other sources of bounds on pharmacologic priors
+
+The data-generating process (DGP) for the ordinal outcomes in a dose-escalation trial requires no fewer than 3 parameters to specify:
+
+* $(\mu, \CV)$: *centrality* and *dispersion* for the distribution of $\MTDi$
+* $r_0$: a *therapeutic index* of the drug.
+
+A generic Bayesian hyperprior would draw each these 3 parameters from a distribution itself characterized by centrality and dispersion parameters, multiplying the requirement to a total of 6 hyperparameters. But this total can be reduced to 4 by drawing $\CV$ from the 1-parameter [Rayleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution),^[This distribution has a standard deviation in the fixed ratio $\sqrt{2-\pi/2} \approx 0.655$ to its mode.] and by conditioning the analysis on $r_0$ as if it were known.^[Equivalently, we might regard $r_0$ as having a vague prior over $(r_{\mathrm{min}},\infty)$.] Together, these identifying restrictions allow us to abtain a workable hyperparameter space with the addition of just 1 further parameter:
+
+* $\sigma$: uncertainty about the centrality parameter $\mu$.
+
+What information does a dose-escalation design offer us, regarding implicit beliefs about $\{\mu, \sigma, \CV, r_0\}$?
+
+## The dose range
+
+A rationally pre-specified dose range in a dose-escalation trial design ought to span the central area of the prior over $\MTDi$. Thus, we might identify the limits of this range with $\mu \pm 2\sigma$.
+
+## The dose-escalation increments
+
+The choice of dose-escalation increment is most closely linked to the therapeutic index $r_0$. Even under a $\CV \ll 1$ regime of low inter-individual variability in toxicity thresholds, aggressive dose escalation by a multiplier greatly exceeding $r_0$ would risk converting what ought to be low-grade sentinel toxicities to dangerous high grades. The presence of substantial inter-individual variability only exacerbates such concerns. Thus, we may expect the pre-specified dose-escalation increments to provide information especially about $r_0$, but also to some extent jointly about $\CV$.
+
+## One-size-fits-all dose finding
+
+We may obtain more focused insight into the drug developers' beliefs about $\CV$, from the sheer fact of their having opted for a 1-size-fit-all dose-finding design in the first place.
+Given the severe losses incurred by 1-size-fits-all dosing when $\CV > 1$ [@norris_one-size-fits-all_2018], $\CV < 1$ must be accorded a high probability by a drug developer that opts for a 1-size-fits-all dose-finding design. Accordingly, we may take the implicit prior on $\CV$ to be:
+
+$$
+\CV \sim \mathscr{R}(0.33),
+$$
+
+which has only 1% probability in the upper tail $\CV > 1$.
+
 
 # Conclusion
 
