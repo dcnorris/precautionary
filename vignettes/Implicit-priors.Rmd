@@ -101,8 +101,7 @@ The choice of dose-escalation increment is most closely linked to the therapeuti
 
 ## One-size-fits-all dose finding
 
-We may obtain more focused insight into the drug developers' beliefs about $\CV$, from the sheer fact of their having opted for a 1-size-fit-all dose-finding design in the first place.
-Given the severe losses incurred by 1-size-fits-all dosing when $\CV > 1$ [@norris_one-size-fits-all_2018], $\CV < 1$ must be accorded a high probability by a drug developer that opts for a 1-size-fits-all dose-finding design. Accordingly, we may take the implicit prior on $\CV$ to be:
+We may obtain more focused insight into the drug developers' beliefs about $\CV$, from the sheer fact of their having opted for a one-size-fit-all dose-finding design in the first place. Given the severe losses incurred by one-size-fits-all dosing when $\CV > 1$ [@norris_precautionary_2017;@norris_one-size-fits-all_2018], such high values must be accorded a low probability by a drug developer that opts for one-size-fits-all dose finding. Accordingly, we may take the implicit prior on $\CV$ to be:
 
 $$
 \CV \sim \mathscr{R}(0.33),
@@ -110,6 +109,94 @@ $$
 
 which has only 1% probability in the upper tail $\CV > 1$.
 
+# Simulations
+
+In light of the (hyper)parametrization above, Equation \@ref(eq:inverse) can be written
+
+$$
+\begin{align}
+(\mu, \CV, \sigma, r_0) &\xleftarrow{F_{\mathrm{design}}^{-1}} \mathrm{safety}
+\\
+&\mathrm{or} (\#eq:inverseB)
+\\
+\mathrm{r_0} = &F_{\mathrm{design}\,|\,\mu,\CV,\sigma}^{-1} (\mathrm{safety}),
+\end{align}
+$$
+
+with the latter form emphasizing that (rational) beliefs about $r_0$ have become a function of community standards about trial safety, conditional on the design and on what it implies for $(\mu, \CV, \sigma)$. 
+
+In order to solve this inverse problem, we will employ a graphical technique which depends on an efficient solution to the forward (simulation) problem of Equation \@ref(eq:forward).
+
+## Efficient simulation of 3+3 safety
+
+The logic of rule-based dose-escalation designs allows their possible paths to be enumerated, and assigned exactly calculated probabilities. Thus, the forward simulation of Equation \@ref(eq:forward) does not require *nested* simulation loops, but may be carried out by exact computations done within a single, hyperprior-sampling loop.
+
+In the 3+3 design, each cohort has 1 of 4 possible outcomes, according to the count of dose-limiting toxicities (DLTs): {0/3, 1/3, 2/3 or 3/3}. Each dose may enroll 0, 1 or 2 cohorts. Thus, it is possible to represent the events on path $j$ by a $2 \times D$ matrix $(T_{c,d}^j)$with rows indexed by cohort $c$, columns by dose level $d$, and elements drawn from $\{0, 1, 2, 3, -\}$. For example, the matrix
+
+$$
+\left(
+\begin{array}{c c c c}0 & 1 & 2 & -\\
+- & 0 & - & -
+\end{array}
+\right)
+$$
+
+represents a path in a 4-dose 3+3 trial, where the following events occur:
+
+1. Initial cohort at $d=1$ results 0/3
+2. Escalation to $d=2$ results 1/3
+3. Additional cohort at $d=2$ results 0/3 for net 1/6 at this dose
+4. Escalation to $d=3$ results 2/3; MTD declared at $d=1$.
+
+The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref{tab:JvD}).
+
+```{r JvD, echo=FALSE}
+JvD <- data.frame(
+  D = 1:10
+, J = c(10, 46, 154, 442, 1162, 2890, 6922, 16138, 36874, 82954) # TODO: Obtain from package data
+)
+JvD$`log(J)` <- log(JvD$J)
+JvD$`∆ log(J)` <- c(NA, diff(JvD$`log(J)`))
+knitr::kable(JvD)
+```
+
+Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
+
+For example, writing the $D$-vector of DLT probabilities as $(p_d)$, and the complementary probabilites as $(q_d) \equiv (1-p_d)$, then the vector $(\pi^j)$ of path probabilities may be written^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed.]
+
+$$
+\begin{align}
+p_d &= P_{\mu,\CV}(\MTDi < D_d)\\
+q_d &= 1 - p_d\\
+\pi^j &= \prod_{c,d} {3 \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(3-T_{c,d}^j)}
+\end{align}
+$$
+
+Indeed, taking logs enables $(\pi^j)$ to be expressed via matrix multiplication of the blocked $J \times 2D$ matrix $U_D = \sum_c[T_{c,d},3-T_{c,d}]$ with the $2D$-vector formed by stacking $(p_d)$ and $(q_d)$:
+
+$$
+\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b}_D + U_D\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right].
+$$
+
+Of note, the $J \times 2D$ matrix $U_D$ and the $J$-vector $\mathbf{b}_D$ are characteristic *constants* of the 3+3 design for the given value of $D$.
+
+Furthermore, the left half of $U_D$ is a $(J \times D)$ matrix $Y_D = (y_d^j)$ which is itself of interest, since each row tells how many DLTs occur at each dose on one possible path of the trial. Of all DLTs (toxicities of grade $\ge$ 3) at dose $D_d$, the fatal (grade-5) fraction $f_d$ is:
+
+$$
+f_d = \frac{P_{\mu,\CV}(\MTDi <  r_0^2 D_d)}{P_{\mu,\CV}(\MTDi < D_d)},
+$$
+
+in terms of which we may write the expected number of fatal toxicities as:
+
+$$
+\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f}.
+$$
+
+## Issues of degeneracy
+
+Some degeneracy is created by multiple paths that have equivalent toxicity counts per dose level. All that matters for this calculation is the net probability of all paths leading to given counts per toxicity level. Note that the individual-path probabilities must be calculated before aggregation, but that this aggregation may occur before the mapping to counts of graded toxicities.
+
+**TODO:** Assess the amount and importance of the degeneracy that can be exploited. Does this allow me to cut the size of stored matrices in half, or better?
 
 # Conclusion
 
