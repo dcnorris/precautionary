@@ -1,5 +1,6 @@
 % Attempt an enumeration of ALL 3+3 trials
 :- use_module(library(clpfd)).
+:- use_module(library(pio)).
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
@@ -269,9 +270,41 @@ path_matrix_([D-T|Rest], (C1,C2)) :-
 path_matrix_([D*T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
 path_matrix_([D:T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
 
+path_matrix_([declare_mtd(_)], _).
+path_matrix_([mtd_notfound(_)], _).
+
 path_matrix_([], (_,_)).
 
 ground_or_nil(Term) :- ground(Term).
 ground_or_nil(nil) :- true.
 
+rep(E, N, L) :-
+    (	N #= 0 -> L = []
+    ;	N #> 0 -> (N_1 #= N - 1, L = [E|Es], rep(E, N_1, Es))
+    ).		  
+
 %% Write out separate R input files for D in 2..7
+write_escalation_array(D) :-
+    atom_concat('T', D, Filename),
+    atom_concat(Filename, '.tab', File),
+    open(File, write, OS),
+    findall(P, phrase(esc(0, 0..D), P), Paths),
+    length(Paths, Len),
+    write(Len),
+    rep(D, Len, Ds),
+    maplist(path_matrix, Paths, Ds, Ms),
+    write_escalation_matrices(Ms, OS).
+
+write_escalation_matrices([(C1,C2)|Ms], OS) :-
+    write_matrix_row(C1, OS),
+    write_matrix_row(C2, OS),
+    write_escalation_matrices(Ms, OS).
+
+write_escalation_matrices([], OS) :- close(OS).
+
+write_matrix_row([E|Es], OS) :-
+    write(OS, E),
+    (	Es = [] -> nl(OS)
+    ;	write(OS, '\t'),
+	write_matrix_row(Es, OS)
+    ).
