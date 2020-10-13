@@ -247,3 +247,31 @@ n_trials_both(Drange, XAB) :-
     length(TrialsB, Nb),
     XAB = (Dmax, Na, Nb).
 
+
+%% Transform the A path representations to the arrays T(c,d,j).
+
+path_matrix(P, D, M) :-
+    length(C1,D),
+    length(C2,D),
+    M = (C1,C2),
+    path_matrix_(P, M),
+    maplist(ground_or_nil, C1),
+    maplist(ground_or_nil, C2).
+
+path_matrix_([D^T|Rest], (C1,C2)) :-
+    nth1(D, C1, T),
+    path_matrix_(Rest, (C1,C2)).
+
+path_matrix_([D-T|Rest], (C1,C2)) :-
+    nth1(D, C2, T),
+    path_matrix_(Rest, (C1,C2)).
+
+path_matrix_([D*T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
+path_matrix_([D:T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
+
+path_matrix_([], (_,_)).
+
+ground_or_nil(Term) :- ground(Term).
+ground_or_nil(nil) :- true.
+
+%% Write out separate R input files for D in 2..7
