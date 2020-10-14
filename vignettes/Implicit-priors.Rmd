@@ -148,7 +148,7 @@ represents a path in a 4-dose 3+3 trial, where the following events occur:
 3. Additional cohort at $d=2$ results 0/3 for net 1/6 at this dose
 4. Escalation to $d=3$ results 2/3; MTD declared at $d=1$.
 
-The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref{tab:JvD}).
+The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref(tab:JvD).
 
 ```{r JvD, echo=FALSE}
 JvD <- data.frame(
@@ -157,7 +157,7 @@ JvD <- data.frame(
 )
 JvD$`log(J)` <- log(JvD$J)
 JvD$`∆ log(J)` <- c(NA, diff(JvD$`log(J)`))
-knitr::kable(JvD)
+knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the standard 3+3 design, as a function of the number $D$ of prespecified doses.")
 ```
 
 Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
@@ -175,7 +175,7 @@ $$
 Indeed, taking logs enables $(\pi^j)$ to be expressed via matrix multiplication of the blocked $J \times 2D$ matrix $U_D = \sum_c[T_{c,d},3-T_{c,d}]$ with the $2D$-vector formed by stacking $(p_d)$ and $(q_d)$:
 
 $$
-\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b}_D + U_D\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right].
+\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b}_D + U_D\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right]. (\#eq:logpi)
 $$
 
 Of note, the $J \times 2D$ matrix $U_D$ and the $J$-vector $\mathbf{b}_D$ are characteristic *constants* of the 3+3 design for the given value of $D$.
@@ -189,7 +189,7 @@ $$
 in terms of which we may write the expected number of fatal toxicities as:
 
 $$
-\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f}.
+\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f}.  (\#eq:fatalities)
 $$
 
 ## Issues of degeneracy
@@ -197,6 +197,48 @@ $$
 Some degeneracy is created by multiple paths that have equivalent toxicity counts per dose level. All that matters for this calculation is the net probability of all paths leading to given counts per toxicity level. Note that the individual-path probabilities must be calculated before aggregation, but that this aggregation may occur before the mapping to counts of graded toxicities.
 
 **TODO:** Assess the amount and importance of the degeneracy that can be exploited. Does this allow me to cut the size of stored matrices in half, or better?
+
+```{r read-arrays}
+A <- U <- b <- list()
+for(D in 2:7){
+  T <- read.table(paste0("../exec/prolog/T", D, ".tab"))
+  J <- nrow(T)/2
+  A[[D]] <- aperm(array(as.matrix(T), dim = c(2, J, D)
+                        , dimnames = list(c = 1:2, j = NULL, d = paste0("D",1:D)))
+                  , perm = c("c","d","j"))
+  U[[D]] <- cbind(apply(A[[D]], c("j","d"), sum, na.rm=TRUE),
+                  apply(3 - A[[D]], c("j","d"), sum, na.rm=TRUE))
+  dimnames(U[[D]]) <- list(j = NULL, pq = c(paste0("D", rep(1:D, 2))))
+  b[[D]] <- apply(log(choose(3, A[[D]])), "j", sum, na.rm=TRUE)
+}
+```
+
+Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \time 2D)$ matrices $\mathrm{U}_D$, we now have to demonstrate that Equations \@ref(eq:logpi)--\@ref(eq:fatalities) yield results consistent with simulation studies. This comparison should also gauge the speedup achieved through this rather large amount of effort!
+
+```{r compare-sim}
+library(precautionary)
+design <- get_three_plus_three(num_doses = 5)
+
+mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
+                           ,median = 5      # median DLT threshold
+                           ,units = "mg/kg" # real doses have units!
+                           )
+options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
+
+design %>% simulate_trials(
+  num_sims = 100
+, true_prob_tox = mtdi_dist # pull tox probs from a MODEL, not thin air
+) -> SIMS
+
+tox_threshold_scaling <- function(MTDi, r0) {
+  MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+}
+summary(SIMS
+       ,ordinalizer = tox_threshold_scaling
+       ,r0 = 2      # supply a value for ordinalizer's r0 parameter
+       )$safety %>% # select the 'safety' component of the summary
+  safety_kable()
+```
 
 # Conclusion
 

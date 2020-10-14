@@ -276,7 +276,7 @@ path_matrix_([mtd_notfound(_)], _).
 path_matrix_([], (_,_)).
 
 ground_or_nil(Term) :- ground(Term).
-ground_or_nil(nil) :- true.
+ground_or_nil('NA') :- true.
 
 rep(E, N, L) :-
     (	N #= 0 -> L = []
