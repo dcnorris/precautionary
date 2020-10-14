@@ -183,7 +183,7 @@ Of note, the $J \times 2D$ matrix $U_D$ and the $J$-vector $\mathbf{b}_D$ are ch
 Furthermore, the left half of $U_D$ is a $(J \times D)$ matrix $Y_D = (y_d^j)$ which is itself of interest, since each row tells how many DLTs occur at each dose on one possible path of the trial. Of all DLTs (toxicities of grade $\ge$ 3) at dose $D_d$, the fatal (grade-5) fraction $f_d$ is:
 
 $$
-f_d = \frac{P_{\mu,\CV}(\MTDi <  r_0^2 D_d)}{P_{\mu,\CV}(\MTDi < D_d)},
+f_d = \frac{P_{\mu,\CV}(\MTDi <  r_0^2 D_d)}{P_{\mu,\CV}(\MTDi < D_d)}, (\#eq:fatalfraction)
 $$
 
 in terms of which we may write the expected number of fatal toxicities as:
@@ -213,7 +213,7 @@ for(D in 2:7){
 }
 ```
 
-Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \time 2D)$ matrices $\mathrm{U}_D$, we now have to demonstrate that Equations \@ref(eq:logpi)--\@ref(eq:fatalities) yield results consistent with simulation studies. This comparison should also gauge the speedup achieved through this rather large amount of effort!
+Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \times 2D)$ matrices $\mathrm{U}_D$, we now have to demonstrate that Equations \@ref(eq:logpi)--\@ref(eq:fatalities) yield results consistent with simulation studies. This comparison should also gauge the speedup achieved through this rather large amount of effort!
 
 ```{r compare-sim}
 library(precautionary)
@@ -226,7 +226,7 @@ mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
 options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
 
 design %>% simulate_trials(
-  num_sims = 100
+  num_sims = 1000
 , true_prob_tox = mtdi_dist # pull tox probs from a MODEL, not thin air
 ) -> SIMS
 
@@ -235,9 +235,64 @@ tox_threshold_scaling <- function(MTDi, r0) {
 }
 summary(SIMS
        ,ordinalizer = tox_threshold_scaling
-       ,r0 = 2      # supply a value for ordinalizer's r0 parameter
-       )$safety %>% # select the 'safety' component of the summary
-  safety_kable()
+       ,r0 = 1.5
+       )$safety %>% safety_kable()
+```
+
+```{r true-tox-probs}
+probs <- mtdi_dist@dist$cdf(getOption('dose_levels'))
+names(probs) <- paste(getOption('dose_levels'), mtdi_dist@units)
+t(probs) %>% kable(digits = 4)
+```
+
+```{r G-estimation}
+# No, not that kind ... better!
+# Let's calculate a *matrix* G that could be used in place of f
+# to obtain the full breakdown of toxicities by grade.
+G <- function(mtdi_dist, r0) {
+  # 1. Get a (D x 5) matrix of doses rescaled by r0^(3-g), g in 1:5
+  # 2. Get the CDF values on this matrix
+  G5 <- mtdi_dist@dist$cdf(getOption("dose_levels") %o% r0^(2:-2))
+  # 3. Attach trivial columns of 1's and 0's; label for clarity
+  G7 <- cbind(rep(1,nrow(G5)), G5, rep(0,nrow(G5)))
+  dimnames(G7) <- list(D = paste(getOption('dose_levels'), mtdi_dist@units), Gr = 0:6)
+  # The (now) 7 columns give the probabilities of toxicity Gr=0+, Gr=1+, ..., Gr=6+.
+  # The trivial leftmost and rightmost columns assist with difference-taking below.
+  # 4. By taking differences, we obtain probabilities for the grades *categorically*
+  G <- G7[,1:6] - G7[,2:7]
+  # 5. Form the (2D x 6) blocked matrix (note, this remains a very small matrix!)
+  Z <- matrix(0, nrow = nrow(G), ncol = 3)
+  dimnames(Z) <- dimnames(G)[1]
+  G <- rbind(cbind(Z, G[,4:6]),
+             cbind(G[,1:3], Z))
+  # 6. Normalize the rows
+  G <- G / rowSums(G)
+  dimnames(G) <- list(Dose = dimnames(G)[[1]], Gr = 0:5)
+  return(G)
+}
+G(mtdi_dist, r0=1.5)
+```
+
+```{r minding-pq}
+log_pq <- function(mtdi_dist) {
+  p <- mtdi_dist@dist$cdf(getOption("dose_levels"))
+  q <- 1 - p
+  log_pq <- c(log(p), log(q))
+  names(log_pq) <- rep(paste(getOption('dose_levels'), mtdi_dist@units), 2)
+  log_pq
+}
+log_pq(mtdi_dist)
+```
+
+```{r compare-exact}
+D <- length(getOption("dose_levels"))
+log_pi <- b[[D]] + U[[D]] %*% log_pq(mtdi_dist)
+t(exp(log_pi)) %*% U[[D]] %*% G(mtdi_dist, r0=1.5)
+```
+
+```{r super-sim}
+SIMS %>% extend(target_mcse = 0.02) -> SUPERSIMS
+summary(SUPERSIMS, ordinalizer = tox_threshold_scaling, r0 = 1.5)$safety[,]
 ```
 
 # Conclusion
