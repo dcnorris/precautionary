@@ -4,3 +4,4 @@
 ^cran-comments.md
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
+^data-raw$

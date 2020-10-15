@@ -233,6 +233,70 @@ setMethod(
   }
 )
 
+#' @examples
+#' old <- options(
+#'   dose_levels = c(0.5, 1, 2, 4, 6),
+#'   ordinalizer = function(MTDi, r0 = 1.5) {
+#'     MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+#'   })
+#' mtdi_dist <- mtdi_lognormal(CV = 2
+#'                             ,median = 5
+#'                             ,units = "mg/kg")
+#' design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
+#' # Note use of wrapper function 'exact'; see ?precautionary::exact.
+#' exact(design) %>% simulate_trials(
+#'   num_sims = Inf # finite num_sims for exact sim provokes a warning()
+#'   , true_prob_tox = mtdi_dist
+#' ) -> EXACT
+#' summary(EXACT)$safety
+#' if (interactive()) { # don't overtax CRAN servers
+#' # Compare with result of discrete-event simulation
+#' design %>% simulate_trials(
+#'   num_sims = 200
+#'   , true_prob_tox = mtdi_dist
+#' ) -> SIMS
+#' summary(SIMS)$safety
+#' }
+#' options(old)
+#' @rdname simulate_trials
+#' @export
+setMethod(
+  "simulate_trials"
+  # TODO: Is there any way for S4 signature to select on an S3 class hierarchy?
+  #, c(selector_factory=c("exact","three_plus_three_selector_factory"),
+  , c(selector_factory="exact",
+      num_sims="numeric",
+      true_prob_tox="mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    protocol <- selector_factory # separate naming from implementation details
+    # TODO: Try moving this next line into the argument defaults
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
+    # TODO: Can I make num_sims OPTIONAL in the signature of this S4 method?
+    if (!is.null(num_sims) && is.finite(num_sims))
+      warning("Parameter 'num_sims' is ignored in exact simulation")
+    D <- length(dose_levels)
+    log_pi <- b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
+    safety <- t(exp(log_pi)) %*% U[[D]] %*% G(true_prob_tox, ...)
+    # TODO: Apply labels c('None', <Gr1--5 named per ordinalizer>)
+    # Hmmm: Consider imposing these via G(.)
+    exact <- list(
+      log_pi = log_pi
+    , safety = safety
+    , fits = "unimplemented"
+    , protocol = protocol
+    , extra_params = list(...)
+    , dose_levels = dose_levels
+    , dose_units = true_prob_tox@units
+    , mtdi_dist = true_prob_tox
+    )
+    # TODO: Consider whether an 'exact' object ought to incorporate other data
+    #       such as would be useful for vetting the result, or even supporting
+    #       certain summary methods of package:escalation.
+    prependClass('exact', exact)
+  }
+)
+
 #' Extend an existing simulation, using one of several stopping criteria
 #'
 #' A trial simulation carried through a predetermined number of replications

@@ -9,7 +9,11 @@ Authors@R: person("David C.", "Norris"
                  , comment = c(ORCID = "0000-0001-9593-6343")
                  )
 Maintainer: David C. Norris <david@precisionmethods.guru>
-Depends: magrittr, escalation, data.table
+Depends: 
+    magrittr,
+    escalation,
+    data.table,
+    R (>= 2.10)
 Imports: methods, dplyr, rlang, stringr, knitr, kableExtra
 Suggests: 
     rmarkdown,
@@ -31,6 +35,7 @@ NeedsCompilation: no
 RoxygenNote: 7.1.1
 Collate: 
     'enhance.R'
+    'exact.R'
     'precautionary-package.R'
     'toxicity_generators.R'
     'simulate_trials.R'

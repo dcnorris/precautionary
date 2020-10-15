@@ -5,7 +5,7 @@ date: "10/10/2020"
 output: bookdown::tufte_html2
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{FDA proactive clinical hold}
+  %\VignetteIndexEntry{Deriving priors implicit in a 3+3 design}
   \usepackage[utf8]{inputenc}
 bibliography: precautionary-package.bib
 header-includes:
@@ -229,73 +229,29 @@ mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
 options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
 
 design %>% simulate_trials(
-  num_sims = 1000
-, true_prob_tox = mtdi_dist # pull tox probs from a MODEL, not thin air
+  num_sims = 200
+, true_prob_tox = mtdi_dist
 ) -> SIMS
 
-tox_threshold_scaling <- function(MTDi, r0) {
+options(ordinalizer = function(MTDi, r0 = 1.5) {
   MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
-}
-summary(SIMS
-       ,ordinalizer = tox_threshold_scaling
-       ,r0 = 1.5
-       )$safety %>% safety_kable()
-```
+})
 
-```{r true-tox-probs}
-probs <- mtdi_dist@dist$cdf(getOption('dose_levels'))
-names(probs) <- paste(getOption('dose_levels'), mtdi_dist@units)
-t(probs) %>% kable(digits = 4)
-```
-
-```{r G-estimation}
-# No, not that kind ... better!
-# Let's calculate a *matrix* G that could be used in place of f
-# to obtain the full breakdown of toxicities by grade.
-G <- function(mtdi_dist, r0) {
-  # 1. Get a (D x 5) matrix of doses rescaled by r0^(3-g), g in 1:5
-  # 2. Get the CDF values on this matrix
-  G5 <- mtdi_dist@dist$cdf(getOption("dose_levels") %o% r0^(2:-2))
-  # 3. Attach trivial columns of 1's and 0's; label for clarity
-  G7 <- cbind(rep(1,nrow(G5)), G5, rep(0,nrow(G5)))
-  dimnames(G7) <- list(D = paste(getOption('dose_levels'), mtdi_dist@units), Gr = 0:6)
-  # The (now) 7 columns give the probabilities of toxicity Gr=0+, Gr=1+, ..., Gr=6+.
-  # The trivial leftmost and rightmost columns assist with difference-taking below.
-  # 4. By taking differences, we obtain probabilities for the grades *categorically*
-  G <- G7[,1:6] - G7[,2:7]
-  # 5. Form the (2D x 6) blocked matrix (note, this remains a very small matrix!)
-  Z <- matrix(0, nrow = nrow(G), ncol = 3)
-  dimnames(Z) <- dimnames(G)[1]
-  G <- rbind(cbind(Z, G[,4:6]),
-             cbind(G[,1:3], Z))
-  # 6. Normalize the rows
-  G <- G / rowSums(G)
-  dimnames(G) <- list(Dose = dimnames(G)[[1]], Gr = 0:5)
-  return(G)
-}
-G(mtdi_dist, r0=1.5)
-```
-
-```{r minding-pq}
-log_pq <- function(mtdi_dist) {
-  p <- mtdi_dist@dist$cdf(getOption("dose_levels"))
-  q <- 1 - p
-  log_pq <- c(log(p), log(q))
-  names(log_pq) <- rep(paste(getOption('dose_levels'), mtdi_dist@units), 2)
-  log_pq
-}
-log_pq(mtdi_dist)
+summary(SIMS)$safety %>% safety_kable()
 ```
 
 ```{r compare-exact}
-D <- length(getOption("dose_levels"))
-log_pi <- b[[D]] + U[[D]] %*% log_pq(mtdi_dist)
-t(exp(log_pi)) %*% U[[D]] %*% G(mtdi_dist, r0=1.5)
+exact(design) %>% simulate_trials(
+  num_sims = Inf
+, true_prob_tox = mtdi_dist
+) -> EXACT
+
+summary(EXACT)$safety
 ```
 
 ```{r super-sim}
-SIMS %>% extend(target_mcse = 0.05) -> SUPERSIMS
-summary(SUPERSIMS, ordinalizer = tox_threshold_scaling, r0 = 1.5)$safety[,]
+SIMS %>% extend(target_mcse = 0.1) -> SUPERSIMS
+summary(SUPERSIMS)$safety[,]
 ```
 
 Finding the source of the discrepancy requires first checking whether the 'escalation' package's 3+3 simulation is indeed the same as mine! To do this, I might begin by transforming the `SUPERSIMS$fits[[i]][[1]]$fit$outcomes` to (2 x D) matrices of the form A[,,j], and indeed finding the index j for each one.
@@ -319,10 +275,13 @@ m <- function(fit) {
 }
 j <- function(m) {
   D <- ncol(m)
-  J <- dim(A[[D]])[3]
-  which(sapply(1:J, function(j) identical(m, A[[D]][,,j])))
+  J <- dim(precautionary:::A[[D]])[3]
+  which(sapply(1:J, function(j)
+    identical(m, precautionary:::A[[D]][,,j])))
 }
-j(m(fit))
+hmm <- m(fit)
+j(hmm)
+##j(m(fit))
 ```
 
 # Conclusion
