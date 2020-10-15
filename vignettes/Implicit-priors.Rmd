@@ -217,7 +217,10 @@ Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \times 2D)$ matrices $\
 
 ```{r compare-sim}
 library(precautionary)
-design <- get_three_plus_three(num_doses = 5)
+# Note we override the default to use what Korn &al (1994) Stat Med
+# called the 'more common' variant of the "standard method". This also
+# aligns with the 3+3 method as defined in Skolnik &al (2008) JCO.
+design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
 
 mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
                            ,median = 5      # median DLT threshold
@@ -291,8 +294,35 @@ t(exp(log_pi)) %*% U[[D]] %*% G(mtdi_dist, r0=1.5)
 ```
 
 ```{r super-sim}
-SIMS %>% extend(target_mcse = 0.02) -> SUPERSIMS
+SIMS %>% extend(target_mcse = 0.05) -> SUPERSIMS
 summary(SUPERSIMS, ordinalizer = tox_threshold_scaling, r0 = 1.5)$safety[,]
+```
+
+Finding the source of the discrepancy requires first checking whether the 'escalation' package's 3+3 simulation is indeed the same as mine! To do this, I might begin by transforming the `SUPERSIMS$fits[[i]][[1]]$fit$outcomes` to (2 x D) matrices of the form A[,,j], and indeed finding the index j for each one.
+
+```{r haystack}
+fit <- SUPERSIMS$fits[[1]][[1]]$fit
+m <- function(fit) {
+  oc <- fit$outcomes
+  ag <- aggregate(oc$tox, by=oc[,c("cohort","dose")], FUN=sum)
+  ag$cohort <- NULL # drop this column
+  # For any doses appearing just once, add an NA dose
+  jo <- which(tabulate(ag$dose) == 1) # jo = 'just once'
+  ag <- rbind(ag, data.frame(dose = jo, x = NA))
+  # For doses that never appeared, add 2 NAs
+  doses <- 1:fit$num_doses
+  nd <- doses[doses > max(ag$dose)]
+  ag <- rbind(ag, data.frame(dose = rep(nd, 2), x = NA))
+  m <- matrix(ag[order(ag$dose),"x"], nrow = 2)
+  dimnames(m) <- list(c = 1:2, d = paste0("D",doses))
+  m
+}
+j <- function(m) {
+  D <- ncol(m)
+  J <- dim(A[[D]])[3]
+  which(sapply(1:J, function(j) identical(m, A[[D]][,,j])))
+}
+j(m(fit))
 ```
 
 # Conclusion
