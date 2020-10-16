@@ -50,25 +50,11 @@ log_pq <- function(mtdi_dist) {
   log_pq
 }
 
-
-#' Get a function that simulates dose-escalation trials using latent \code{u_i}
-#' 
-#' Overrides \code{\link[escalation:simulation_function]{simulation_function.tox_selector_factory}}
-#' to return a [phase1_sim()] that employs latent \code{u_i} in place of
-#' the version native to package \CRANpkg{escalation}, which merely invokes
-#' \code{rbinom}.
-#' 
-#' This function is exported for the purpose of effecting this override,
-#' and is not meant to be invoked directly by the user.
-#' 
-#' @param selector_factory Presently, this must be a \code{tox_selector_factory};
-#' no equivalent for \code{simulation_function.derived_dose_selector_factory}
-#' is yet implemented.
-#'
-#' @importFrom escalation simulation_function
-#' @export
-simulation_function.exact <- function(selector_factory) {
-  return(phase1_sim) # returns an override defined in this package
+# Exact calculation of safety table
+exact_safety <- function(mtdi_dist, ordinalizer = getOption("ordinalizer"), ...) {
+  D <- length(getOption("dose_levels"))
+  log_pi <- b[[D]] + U[[D]] %*% log_pq(mtdi_dist)
+  safety <- t(exp(log_pi)) %*% U[[D]] %*% G(mtdi_dist, ...)
 }
 
 #' @importFrom escalation prob_recommend
@@ -210,17 +196,13 @@ as.data.table.exact <- function(x, keep.rownames = FALSE
   ensemble
 }
 
-#' Specialize a method defined in package 'escalation' for class 'simulations'
+#' Summarize an exact treatment of a dose-escalation design
 #' 
-#' Simulations produced by package \code{precautionary} incorporate a \sQuote{u_i}
-#' latent toxicity tolerance that characterizes the toxic dose-response of each
-#' simulated individual trial participant. In conjunction with an
-#' \sQuote{ordinalizer} function, these extra data enable questions to be asked
-#' about trial safety, in terms of the probabilities of high-grade toxicities.
-#' This function specializes the \code{escalation:::summary.simulations} method
-#' accordingly.
+#' Algorithmic (or 'rule-based') dose-escalation designs admit exact computation
+#' of their outcomes. This method summarizes such an exact treatment in a manner
+#' roughly parallel to that of \code{summary.precautionary}.
 #' 
-#' @param object An object of class c('exact','precautionary','simulations') 
+#' @param object An object of class 'exact' 
 #'
 #' @param ordinalizer An ordinalizer function
 #' @param ... Additional parameters passed to the ordinalizer
@@ -234,8 +216,21 @@ summary.exact <- function(object, ordinalizer = getOption('ordinalizer'), ...) {
   ##summary <- NextMethod()
   # TODO: Consider implementing the 'escalation' & 'toxTab' components.
   #       (I believe both are obtainable in the exact formulation.)
+  # I need to deal with the 'hyper' case separately.
   summary <- list(escalation = "not yet implemented",
-                  safety = object$safety %>%
-                    addmargins(margin = 2, FUN = list(Total=sum)),
+                  safety = NULL, # to be calculated ...
                   toxTab = "not yet implemented")
+  if (is(object, 'hyper')) {
+    toxTab <- object$hyper$safety %>%
+      addmargins(margin = 2, FUN = list(Total=sum))
+    summary$safety <- rbind(
+      "Expected participants" = colMeans(toxTab)
+      ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(nrow(toxTab))
+    )
+  } else {
+    summary$safety <- object$safety %>%
+      addmargins(margin = 2, FUN = list(Total=sum))
+  }
+  summary
 }
+

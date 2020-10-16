@@ -58,7 +58,8 @@ setOldClass(c('stop_at_n_selector_factory',
 #' , 300
 #' , 15 # avoid taxing CRAN servers
 #' )
-#' hsims <- get_three_plus_three(num_doses = 6) %>%
+#' hsims <- get_three_plus_three(num_doses = 6,
+#'                               allow_deescalate = TRUE) %>%
 #'   simulate_trials(
 #'     num_sims = num_sims
 #'   , true_prob_tox = mtdi_gen)
@@ -104,7 +105,6 @@ setMethod(
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
     mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
-    P_ <- seq_along(dose_levels)
     fits <- list()
     tpts <- list()
     if (interactive() && num_sims > 10) pb <- txtProgressBar(max = num_sims, style = 3)
@@ -269,31 +269,98 @@ setMethod(
       true_prob_tox="mtdi_distribution"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     protocol <- selector_factory # separate naming from implementation details
-    # TODO: Try moving this next line into the argument defaults
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
     # TODO: Can I make num_sims OPTIONAL in the signature of this S4 method?
     if (!is.null(num_sims) && is.finite(num_sims))
       warning("Parameter 'num_sims' is ignored in exact simulation")
     D <- length(dose_levels)
-    log_pi <- b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
-    safety <- t(exp(log_pi)) %*% U[[D]] %*% G(true_prob_tox, ...)
-    # TODO: Apply labels c('None', <Gr1--5 named per ordinalizer>)
-    # Hmmm: Consider imposing these via G(.)
     exact <- list(
-      log_pi = log_pi
-    , safety = safety
+      log_pi = b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
+    , safety = exact_safety(true_prob_tox, ...)
     , fits = "unimplemented"
     , protocol = protocol
     , extra_params = list(...)
     , dose_levels = dose_levels
     , dose_units = true_prob_tox@units
     , mtdi_dist = true_prob_tox
+    , true_prob_tox = true_prob_tox@dist$cdf(getOption("dose_levels"))
     )
     # TODO: Consider whether an 'exact' object ought to incorporate other data
     #       such as would be useful for vetting the result, or even supporting
     #       certain summary methods of package:escalation.
-    prependClass('exact', exact)
+    prependClass("exact", exact)
+  }
+)
+
+#' @examples
+#' old <- options(dose_levels = c(0.5, 1, 2, 4, 6, 8))
+#' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+#'                                  , median_mtd = 6, median_sdlog = 0.5
+#'                                  , units="mg/kg")
+#' options(ordinalizer = function(dose, r0 = sqrt(2))
+#'   c(Gr1=dose/r0^2, Gr2=dose/r0, Gr3=dose, Gr4=dose*r0, Gr5=dose*r0^2)
+#' )
+#' design <- get_three_plus_three(num_doses = 6, allow_deescalate = TRUE)
+#' ehsims <- simulate_trials(
+#'   exact(design)
+#'   , num_sims = 50
+#'   , true_prob_tox = mtdi_gen
+#' )
+#' summary(ehsims)$safety
+#' options(old)
+#' @rdname simulate_trials
+#' @importFrom utils setTxtProgressBar txtProgressBar
+#' @export
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="exact",
+      num_sims="numeric",
+      true_prob_tox="hyper_mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    protocol <- selector_factory # separate naming from implementation details
+    stopifnot("num_sims must be of length 1" = length(num_sims) == 1)
+    # The most parsimonious generalization of the default function
+    # will substitute a *matrix* for the default result's vector
+    # attribute 'true_prob_tox'.
+    dose_levels <- getOption("dose_levels", default = stop(
+      "simulate_trials methods require option(dose_levels)."))
+    mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
+    tpts <- safetys <- list()
+    # TODO: Since exact sims are so fast, should I increase '10' below?
+    if (interactive() && num_sims > 10) pb <- txtProgressBar(max = num_sims, style = 3)
+    for(k in 1:num_sims){
+      exact_k <- simulate_trials(selector_factory = protocol
+                                 ,num_sims = Inf
+                                 ,true_prob_tox = mtdi_samples[[k]]
+                                 ,...)
+      tpts[[k]] <- exact_k$true_prob_tox
+      safetys[[k]] <- exact_k$safety
+      if (exists("pb")) setTxtProgressBar(pb, k)
+    }
+    if (exists("pb")) close(pb)
+    tpt_matrix <- do.call(rbind, tpts)
+    colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
+    exact <- list(
+      fits = "unimplemented"
+      # NB: We take the trouble to select the leftmost length(dose_levels) columns
+      #     in order to allow for the possibility that the tpt_matrix in general
+      #     may also include hyperparameters in columns to the right. This was a
+      #     feature (mainly for debugging) of earlier versions of this code, but
+      #     seems worth allowing for, pace 'speculative generality'.
+      , avg_prob_tox = colMeans(tpt_matrix[, seq_along(dose_levels)])
+      , hyper = list(true_prob_tox = tpt_matrix
+                     ,mtdi = true_prob_tox
+                     ,mtdi_samples = t(sapply(mtdi_samples,function(.)
+                       c(CV = .@CV, median = .@median)))
+                     ,safety = do.call(rbind, safetys)
+      )
+      , protocol = protocol
+      , extra_params = list(...)
+    )
+    exact$dose_levels <- dose_levels
+    exact$dose_units <- true_prob_tox@units
+    prependClass(c("hyper","exact"), exact)
   }
 )
 
