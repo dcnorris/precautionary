@@ -3,6 +3,7 @@
 S3method(as.data.table,exact)
 S3method(as.data.table,precautionary)
 S3method(dose_indices,default)
+S3method(extend,exact)
 S3method(extend,hyper)
 S3method(extend,precautionary)
 S3method(format,safetytab)

@@ -278,7 +278,7 @@ setMethod(
     exact <- list(
       log_pi = b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
     , safety = exact_safety(true_prob_tox, ...)
-    , fits = "unimplemented"
+    , fits = NULL
     , protocol = protocol
     , extra_params = list(...)
     , dose_levels = dose_levels
@@ -327,8 +327,8 @@ setMethod(
       "simulate_trials methods require option(dose_levels)."))
     mtdi_samples <- draw_samples(hyper = true_prob_tox, n = num_sims)
     tpts <- safetys <- list()
-    # TODO: Since exact sims are so fast, should I increase '10' below?
-    if (interactive() && num_sims > 10) pb <- txtProgressBar(max = num_sims, style = 3)
+    # TODO: Consider increasing the 100 below even further
+    if (interactive() && num_sims > 100) pb <- txtProgressBar(max = num_sims, style = 3)
     for(k in 1:num_sims){
       exact_k <- simulate_trials(selector_factory = protocol
                                  ,num_sims = Inf
@@ -342,7 +342,7 @@ setMethod(
     tpt_matrix <- do.call(rbind, tpts)
     colnames(tpt_matrix) <- paste0(dose_levels, true_prob_tox@units)
     exact <- list(
-      fits = "unimplemented"
+      fits = NULL
       # NB: We take the trouble to select the leftmost length(dose_levels) columns
       #     in order to allow for the possibility that the tpt_matrix in general
       #     may also include hyperparameters in columns to the right. This was a
@@ -464,17 +464,55 @@ extend.hyper <- function(sims, num_sims = NULL, target_mcse = 0.05) {
                                        ,sims$extra_params
                                        )
                     )
-    N1 <- length(sims$fits)
-    N2 <- length(more$fits)
+    N1 <- nrow(sims$hyper$true_prob_tox) # TODO: add an N.hyper method for this
+    N2 <- nrow(more$hyper$true_prob_tox)
     sims$avg_prob_tox <- (sims$avg_prob_tox*N1 + more$avg_prob_tox*N2)/(N1+N2)
     sims$fits <- c(sims$fits, more$fits)
     sims$hyper$true_prob_tox <- rbind(sims$hyper$true_prob_tox
                                       ,more$hyper$true_prob_tox)
-    sims$hyper$mtdi_samples <- c(sims$hyper$mtdi_sample
-                                 ,more$hyper$mtdi_sample)
+    sims$hyper$mtdi_samples <- rbind(sims$hyper$mtdi_sample
+                                     ,more$hyper$mtdi_sample)
+    # In case of 'exact' sim, we will have also a $hyper$safety matrix
+    # TODO: Dispense with the conditional, given the idempotency of NULL?
+    if (!is.null(sims$hyper$safety))
+      sims$hyper$safety <- rbind(sims$hyper$safety
+                                 ,more$hyper$safety)
     return(sims)
   }
   # The more sensible use case: extending sim to target MCSEs
   NextMethod() # recursive case handled fine by extend.precautionary
+}
+
+# TODO: Render an 'exact' alternative to extend.precautionary,
+#       such that the recursive call to NextMethod() at the
+#       bottom of extend.hyper works fine for exact case too.
+# TODO: Would it be proper NOT to export this, to prevent users
+#       from calling it directly?
+#' @export
+extend.exact <- function(sims, num_sims = NULL, target_mcse = 0.05) {
+  stopifnot("Extending a non-hyper exact sim is pointless" = is(sims,'hyper'))
+  stopifnot("'extend.exact' should never see non-NULL num_sims" = is.null(num_sims))
+  # The more sensible use case: extending sim to target MCSEs
+  # TODO: Exploit the existing sims$safety['MCSE',] component
+  x_to_tgt <- function(sims, target_mcse) {
+    current_mcse <- max(sims$safety['MCSE',])
+    if ( current_mcse < target_mcse )
+      return(0)
+    extension_factor <- ( current_mcse / target_mcse )^2 - 1
+    sims_todo_est <- nrow(sims$hyper$true_prob_tox) * extension_factor
+    sims_todo_est <- ceiling(sims_todo_est) # awkward to do fractional sims ;^)
+    sims_todo_est
+  }
+  sims_todo_est <- x_to_tgt(sims, target_mcse)
+  if(interactive()) pb <- txtProgressBar(max = 1, style = 3)
+  while (sims_todo_est > 0) {
+    sims <- extend(sims, num_sims = 100) # for 'exact', num_sims < 101 avoids nested progress bar
+    sims_done <- length(sims$fits)
+    sims_todo_est <- extension_to_target_mcse(sims, target_mcse = target_mcse)
+    fraction_complete <- sims_done / (sims_done + sims_todo_est)
+    if (exists("pb")) setTxtProgressBar(pb, fraction_complete)
+  }
+  if (exists("pb")) close(pb)
+  sims
 }
 
