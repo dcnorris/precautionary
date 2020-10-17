@@ -157,7 +157,8 @@ JvD <- data.frame(
 )
 JvD$`log(J)` <- log(JvD$J)
 JvD$`∆ log(J)` <- c(NA, diff(JvD$`log(J)`))
-knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the standard 3+3 design, as a function of the number $D$ of prespecified doses.")
+knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the standard 3+3 design, as a function of the number $D$ of prespecified doses.", digits = 2) %>%
+  kable_styling(full_width = FALSE)
 ```
 
 Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
@@ -198,19 +199,20 @@ Some degeneracy is created by multiple paths that have equivalent toxicity count
 
 **TODO:** Assess the amount and importance of the degeneracy that can be exploited. Does this allow me to cut the size of stored matrices in half, or better?
 
-```{r read-arrays}
-A <- U <- b <- list()
-for(D in 2:7){
-  T <- read.table(paste0("../exec/prolog/T", D, ".tab"))
-  J <- nrow(T)/2
-  A[[D]] <- aperm(array(as.matrix(T), dim = c(2, J, D)
-                        , dimnames = list(c = 1:2, j = NULL, d = paste0("D",1:D)))
-                  , perm = c("c","d","j"))
-  U[[D]] <- cbind(apply(A[[D]], c("j","d"), sum, na.rm=TRUE),
-                  apply(3 - A[[D]], c("j","d"), sum, na.rm=TRUE))
-  dimnames(U[[D]]) <- list(j = NULL, pq = c(paste0("D", rep(1:D, 2))))
-  b[[D]] <- apply(log(choose(3, A[[D]])), "j", sum, na.rm=TRUE)
-}
+```{r A-degeneracy}
+degen <- data.frame(D = 2:7)
+degen$Unique_paths <- sapply(degen$D, function(D)
+  dim(precautionary:::A[[D]])[3])
+degen$Unique_toxcounts <- sapply(degen$D, function(D) {
+  # Obtain (D*J) matrix T of dose-wise toxcounts
+  T <- apply(precautionary:::A[[D]]
+             , MARGIN = 2:3 # sum on 1st dim (cohorts 1:2)
+             , FUN = sum, na.rm = TRUE) # regard NA = 0
+  ncol(unique(T, MARGIN = 2)) # count unique D-toxcounts
+})
+degen$Inflation <- with(degen, Unique_paths / Unique_toxcounts)
+knitr::kable(degen, caption = "Degeneracy of dose-escalation paths, relative to dose-wise toxicity counts, for the standard 3+3 design with 2--7 prespecified doses.", digits = 2) %>%
+  kable_styling(full_width = FALSE)
 ```
 
 In what follows, we override the default 3+3 design of package `escalation`, to use what @korn_comparison_1994 called the "more common" of two "variants of the standard method." This also aligns with the 3+3 method as defined in @skolnik_shortening_2008 [p.191]:
