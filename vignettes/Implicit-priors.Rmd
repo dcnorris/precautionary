@@ -215,11 +215,15 @@ for(D in 2:7){
 
 Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \times 2D)$ matrices $\mathrm{U}_D$, we now have to demonstrate that Equations \@ref(eq:logpi)--\@ref(eq:fatalities) yield results consistent with simulation studies. This comparison should also gauge the speedup achieved through this rather large amount of effort!
 
+In what follows, we override the default 3+3 design of package `escalation`, to use what @korn_comparison_1994 called the "more common" of two "variants of the standard method." This also aligns with the 3+3 method as defined in @skolnik_shortening_2008 [p.191]:
+
+> "The MTD is defined as the dose level at which none or one of six participants (0% to 17%)
+> experience a DLT, *when at least two of three to six participants (33% to 67%) experience
+> a DLT at the next highest dose.*" [emphasis is mine]
+
+
 ```{r compare-sim}
 library(precautionary)
-# Note we override the default to use what Korn &al (1994) Stat Med
-# called the 'more common' variant of the "standard method". This also
-# aligns with the 3+3 method as defined in Skolnik &al (2008) JCO.
 design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
 
 mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
@@ -250,7 +254,7 @@ summary(EXACT)$safety
 ```
 
 ```{r super-sim}
-SIMS %>% extend(target_mcse = 0.1) -> SUPERSIMS
+SIMS %>% extend(target_mcse = 0.2) -> SUPERSIMS
 summary(SUPERSIMS)$safety[,]
 ```
 
@@ -268,7 +272,8 @@ m <- function(fit) {
   # For doses that never appeared, add 2 NAs
   doses <- 1:fit$num_doses
   nd <- doses[doses > max(ag$dose)]
-  ag <- rbind(ag, data.frame(dose = rep(nd, 2), x = NA))
+  if (length(nd))
+    ag <- rbind(ag, data.frame(dose = rep(nd, 2), x = NA))
   m <- matrix(ag[order(ag$dose),"x"], nrow = 2)
   dimnames(m) <- list(c = 1:2, d = paste0("D",doses))
   m
