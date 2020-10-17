@@ -495,7 +495,7 @@ extend.exact <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   # The more sensible use case: extending sim to target MCSEs
   # TODO: Exploit the existing sims$safety['MCSE',] component
   x_to_tgt <- function(sims, target_mcse) {
-    current_mcse <- max(sims$safety['MCSE',])
+    current_mcse <- max(summary(sims)$safety['MCSE',])
     if ( current_mcse < target_mcse )
       return(0)
     extension_factor <- ( current_mcse / target_mcse )^2 - 1
@@ -507,8 +507,8 @@ extend.exact <- function(sims, num_sims = NULL, target_mcse = 0.05) {
   if(interactive()) pb <- txtProgressBar(max = 1, style = 3)
   while (sims_todo_est > 0) {
     sims <- extend(sims, num_sims = 100) # for 'exact', num_sims < 101 avoids nested progress bar
-    sims_done <- length(sims$fits)
-    sims_todo_est <- extension_to_target_mcse(sims, target_mcse = target_mcse)
+    sims_done <- nrow(sims$hyper$true_prob_tox)
+    sims_todo_est <- x_to_tgt(sims, target_mcse)
     fraction_complete <- sims_done / (sims_done + sims_todo_est)
     if (exists("pb")) setTxtProgressBar(pb, fraction_complete)
   }
