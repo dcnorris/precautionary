@@ -213,8 +213,6 @@ for(D in 2:7){
 }
 ```
 
-Having calculated the $J$-vectors $\mathbf{b}_D$ and $(J \times 2D)$ matrices $\mathrm{U}_D$, we now have to demonstrate that Equations \@ref(eq:logpi)--\@ref(eq:fatalities) yield results consistent with simulation studies. This comparison should also gauge the speedup achieved through this rather large amount of effort!
-
 In what follows, we override the default 3+3 design of package `escalation`, to use what @korn_comparison_1994 called the "more common" of two "variants of the standard method." This also aligns with the 3+3 method as defined in @skolnik_shortening_2008 [p.191]:
 
 > "The MTD is defined as the dose level at which none or one of six participants (0% to 17%)
@@ -222,42 +220,10 @@ In what follows, we override the default 3+3 design of package `escalation`, to 
 > a DLT at the next highest dose.*" [emphasis is mine]
 
 
-```{r compare-sim}
-library(precautionary)
-design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
 
-mtdi_dist <- mtdi_lognormal(CV = 2          # coefficient of variation
-                           ,median = 5      # median DLT threshold
-                           ,units = "mg/kg" # real doses have units!
-                           )
-options(dose_levels = c(0.5, 1, 2, 4, 6)) # specify actual dosing
-
-design %>% simulate_trials(
-  num_sims = 200
-, true_prob_tox = mtdi_dist
-) -> SIMS
-
-options(ordinalizer = function(MTDi, r0 = 1.5) {
-  MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
-})
-
-summary(SIMS)$safety %>% safety_kable()
-```
-
-```{r compare-exact}
-exact(design) %>% simulate_trials(true_prob_tox = mtdi_dist) -> EXACT
-
-summary(EXACT)$safety
-```
-
-```{r super-sim}
-SIMS %>% extend(target_mcse = 0.2) -> SUPERSIMS
-summary(SUPERSIMS)$safety[,]
-```
-
-Finding the source of the discrepancy requires first checking whether the 'escalation' package's 3+3 simulation is indeed the same as mine! To do this, I might begin by transforming the `SUPERSIMS$fits[[i]][[1]]$fit$outcomes` to (2 x D) matrices of the form A[,,j], and indeed finding the index j for each one.
-
-```{r haystack}
+```{r haystack, eval=FALSE}
+# TODO: Move this code into the package, where it may serve to link a simulation
+#       to the A[,,j] matrices for debugging (and other?) purposes.
 fit <- SUPERSIMS$fits[[1]][[1]]$fit
 m <- function(fit) {
   oc <- fit$outcomes
@@ -265,7 +231,8 @@ m <- function(fit) {
   ag$cohort <- NULL # drop this column
   # For any doses appearing just once, add an NA dose
   jo <- which(tabulate(ag$dose) == 1) # jo = 'just once'
-  ag <- rbind(ag, data.frame(dose = jo, x = NA))
+  if (length(jo))
+    ag <- rbind(ag, data.frame(dose = jo, x = NA))
   # For doses that never appeared, add 2 NAs
   doses <- 1:fit$num_doses
   nd <- doses[doses > max(ag$dose)]
