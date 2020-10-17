@@ -66,3 +66,27 @@ NULL
 #' @name ordinalizer
 #' @aliases ordinalizers ordinalization
 NULL
+
+#' Plan
+#' 
+#' @section Document:
+#' * Under \link{exact}, a 'Details' section detailing the matrix math
+#' 
+#' @section Refactor:
+#' * Remove the `$safety` component of exact trials?
+#'   - Perhaps this ought to be calculated 'on the fly' by the summary method.
+#'   - On-the-fly calculation would postpone use of ordinalizer, in keeping with
+#'     the pattern established already for (non-exact) simulations.
+#' * 
+#' * 
+#' 
+#' @section Extend:
+#' * Implement exact 3+3 variant with \code{allow_deescalation=FALSE}
+#' * Implement rolling 6
+#' * Index `sims$fits` to exact outcomes in `A[[D]]` when appropriate
+#' 
+#' @section Robustify:
+#' 
+#' @name plan
+#' @aliases todo
+NULL
