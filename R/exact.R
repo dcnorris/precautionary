@@ -52,23 +52,6 @@ G <- function(mtdi_dist, ordinalizer = getOption("ordinalizer"), ...) {
   return(G)
 }
 
-# Calculate the length-2D vector c(log(p), log(1-p))
-log_pq <- function(mtdi_dist) {
-  p <- mtdi_dist@dist$cdf(getOption("dose_levels"))
-  q <- 1 - p
-  log_pq <- c(log(p), log(q))
-  log_pq <- pmax(log_pq, -500) # clamp -Inf to -500 to avoid NaN's in U %*% log_pq
-  names(log_pq) <- rep(paste(getOption('dose_levels'), mtdi_dist@units), 2)
-  log_pq
-}
-
-# Exact calculation of safety table
-exact_safety <- function(mtdi_dist, ordinalizer = getOption("ordinalizer"), ...) {
-  D <- length(getOption("dose_levels"))
-  log_pi <- b[[D]] + U[[D]] %*% log_pq(mtdi_dist)
-  safety <- t(exp(log_pi)) %*% U[[D]] %*% G(mtdi_dist, ...)
-}
-
 #' @importFrom escalation prob_recommend
 prob_recommend.exact <- function(x, ...) {
   prob_recs <- NextMethod()

@@ -269,9 +269,15 @@ setMethod(
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
     D <- length(dose_levels)
+    # Calculate the length-2D vector c(log(p), log(1-p))
+    p <- true_prob_tox@dist$cdf(dose_levels)
+    q <- 1 - p
+    log_pq <- c(log(p), log(q))
+    names(log_pq) <- rep(paste(getOption('dose_levels'), true_prob_tox@units), 2)
+    log_pi = b[[D]] + U[[D]] %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's
     exact <- list(
-      log_pi = b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
-    , safety = exact_safety(true_prob_tox, ...)
+      log_pi = log_pi
+    , safety = t(exp(log_pi)) %*% U[[D]] %*% G(true_prob_tox, ...)
     , fits = NULL
     , protocol = protocol
     , extra_params = list(...)
