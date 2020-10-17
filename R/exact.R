@@ -22,6 +22,8 @@ exact <- function(selector_factory) {
 G <- function(mtdi_dist, ordinalizer = getOption("ordinalizer"), ...) {
   # 1. Get a (D x 5) matrix of doses rescaled by r0^(3-g), g in 1:5
   # 2. Get the CDF values on this matrix
+  # Note that the following assumes ordinalizers multiply by a 5-vector
+  # of the form c(r_2, r_1, 1, r1, r2), where r_2 < r_1 < 1 < r1 < r2.
   r0_spread <- 1/ordinalizer(1, ...)
   G5 <- mtdi_dist@dist$cdf(getOption("dose_levels") %o% r0_spread)
   # 3. Attach trivial columns of 1's and 0's; label for clarity
@@ -38,6 +40,15 @@ G <- function(mtdi_dist, ordinalizer = getOption("ordinalizer"), ...) {
              cbind(G[,1:3], Z))
   # 6. Normalize the rows
   G <- G / rowSums(G)
+  # If we do not bound CV away from zero, then it is possible to draw an mtdi_dist
+  # that e.g. makes non-DLTs *impossible* at some high dose -- i.e., all toxicities
+  # are of grade 3 or higher. In such extreme cases, the normalizing factor rowSums(G)
+  # will have zero in components corresponding to such doses. (The converse may also
+  # occur, in which low doses *cannot* cause a DLT.) This results in NaN's in the G
+  # matrix, which cascade into results despite multiplication by zero probabilities
+  # (corresponding to impossible events) in the U matrix. To avoid this, we set these
+  # elements of the matrix to 0.
+  G[is.nan(G)] <- 0
   return(G)
 }
 
@@ -46,6 +57,7 @@ log_pq <- function(mtdi_dist) {
   p <- mtdi_dist@dist$cdf(getOption("dose_levels"))
   q <- 1 - p
   log_pq <- c(log(p), log(q))
+  log_pq <- pmax(log_pq, -500) # clamp -Inf to -500 to avoid NaN's in U %*% log_pq
   names(log_pq) <- rep(paste(getOption('dose_levels'), mtdi_dist@units), 2)
   log_pq
 }
