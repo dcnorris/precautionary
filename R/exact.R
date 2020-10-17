@@ -229,3 +229,31 @@ summary.exact <- function(object, ordinalizer = getOption('ordinalizer'), ...) {
   summary
 }
 
+# TODO: Incorporate this logic to map 3+3 sim outcomes indices j in A[[D]][,,j]
+haystack <- function(sims) {
+  fit <- sims$fits[[1]][[1]]$fit
+  m <- function(fit) {
+    oc <- fit$outcomes
+    ag <- aggregate(oc$tox, by=oc[,c("cohort","dose")], FUN=sum)
+    ag$cohort <- NULL # drop this column
+    # For any doses appearing just once, add an NA dose
+    jo <- which(tabulate(ag$dose) == 1) # jo = 'just once'
+    if (length(jo))
+      ag <- rbind(ag, data.frame(dose = jo, x = NA))
+    # For doses that never appeared, add 2 NAs
+    doses <- 1:fit$num_doses
+    nd <- doses[doses > max(ag$dose)]
+    if (length(nd))
+      ag <- rbind(ag, data.frame(dose = rep(nd, 2), x = NA))
+    m <- matrix(ag[order(ag$dose),"x"], nrow = 2)
+    dimnames(m) <- list(c = 1:2, d = paste0("D",doses))
+    m
+  }
+  j <- function(m) {
+    D <- ncol(m)
+    J <- dim(precautionary:::A[[D]])[3]
+    which(sapply(1:J, function(j)
+      identical(m, precautionary:::A[[D]][,,j])))
+  }
+  j(m(fit))
+}

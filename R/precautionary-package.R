@@ -83,7 +83,12 @@ NULL
 #' @section Extend:
 #' * Implement exact 3+3 variant with \code{allow_deescalation=FALSE}
 #' * Implement rolling 6
-#' * Index `sims$fits` to exact outcomes in `A[[D]]` when appropriate
+#' * Allow an accelerated titration phase
+#'   - Note that this requires access to graded toxicities at simulation time,
+#'     and therefore constitutes a substantial challenge to the generalizability
+#'     of this software design.
+#' * Index `sims$fits` to exact outcomes in `A[[D]]` where appropriate
+#'   - See the `haystack` function in `exact.R`
 #' 
 #' @section Robustify:
 #' 
