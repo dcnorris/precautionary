@@ -244,10 +244,7 @@ setMethod(
 #'                             ,units = "mg/kg")
 #' design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
 #' # Note use of wrapper function 'exact'; see ?precautionary::exact.
-#' exact(design) %>% simulate_trials(
-#'   num_sims = Inf # finite num_sims for exact sim provokes a warning()
-#'   , true_prob_tox = mtdi_dist
-#' ) -> EXACT
+#' exact(design) %>% simulate_trials(true_prob_tox = mtdi_dist) -> EXACT
 #' summary(EXACT)$safety
 #' if (interactive()) { # don't overtax CRAN servers
 #' # Compare with result of discrete-event simulation
@@ -265,15 +262,12 @@ setMethod(
   # TODO: Is there any way for S4 signature to select on an S3 class hierarchy?
   #, c(selector_factory=c("exact","three_plus_three_selector_factory"),
   , c(selector_factory="exact",
-      num_sims="numeric",
+      num_sims="missing",
       true_prob_tox="mtdi_distribution"),
-  function(selector_factory, num_sims, true_prob_tox, ...){
+  function(selector_factory, true_prob_tox, ...){
     protocol <- selector_factory # separate naming from implementation details
     dose_levels <- getOption("dose_levels", default = stop(
       "simulate_trials methods require option(dose_levels)."))
-    # TODO: Can I make num_sims OPTIONAL in the signature of this S4 method?
-    if (!is.null(num_sims) && is.finite(num_sims))
-      warning("Parameter 'num_sims' is ignored in exact simulation")
     D <- length(dose_levels)
     exact <- list(
       log_pi = b[[D]] + U[[D]] %*% log_pq(true_prob_tox)
@@ -290,6 +284,22 @@ setMethod(
     #       such as would be useful for vetting the result, or even supporting
     #       certain summary methods of package:escalation.
     prependClass("exact", exact)
+  }
+)
+
+# Throw error in case user invokes this nonsense signature.
+# This is all too easy to invoke, because the difference is
+# between mtdi_distribution and hyper_mtdi_distribution
+# in the 3rd parameter.
+#' @rdname simulate_trials
+#' @export
+setMethod(
+  "simulate_trials"
+  , c(selector_factory="exact",
+      num_sims="numeric",
+      true_prob_tox="mtdi_distribution"),
+  function(selector_factory, num_sims, true_prob_tox, ...){
+    stop("num_sims makes no sense for exact simulation of mtdi_distribution")
   }
 )
 
@@ -331,7 +341,6 @@ setMethod(
     if (interactive() && num_sims > 100) pb <- txtProgressBar(max = num_sims, style = 3)
     for(k in 1:num_sims){
       exact_k <- simulate_trials(selector_factory = protocol
-                                 ,num_sims = Inf
                                  ,true_prob_tox = mtdi_samples[[k]]
                                  ,...)
       tpts[[k]] <- exact_k$true_prob_tox

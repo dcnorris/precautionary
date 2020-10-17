@@ -245,10 +245,7 @@ summary(SIMS)$safety %>% safety_kable()
 ```
 
 ```{r compare-exact}
-exact(design) %>% simulate_trials(
-  num_sims = Inf
-, true_prob_tox = mtdi_dist
-) -> EXACT
+exact(design) %>% simulate_trials(true_prob_tox = mtdi_dist) -> EXACT
 
 summary(EXACT)$safety
 ```
