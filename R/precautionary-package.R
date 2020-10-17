@@ -49,3 +49,20 @@
 #' @import data.table
 NULL
 
+#' Ordinalizers
+#' 
+#' TODO: Explain ordinalization and ordinalizers here.
+#' 
+#' @section Limitations:
+#' TODO: Be sure to note the highly restrictive assumptions made about
+#' ordinalizer functions, especially as noted e.g. in connection with
+#' the internal function G (defined in 'exact.R').
+#' 
+#' @section Validity:
+#' The validity of an ordinalizer might well be programmatically testable.
+#' If so, all this discussion might well be carried out in documentation
+#' for a validity-testing function.
+#' 
+#' @name ordinalizer
+#' @aliases ordinalizers ordinalization
+NULL
