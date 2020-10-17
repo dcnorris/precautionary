@@ -228,8 +228,64 @@ I hope that, for a given $D$, and a geometric sequence of doses with a given rat
 
 The essential approach, then, is to calculate a relatively dense array of points in this plane, to support the drawing of contours. I am prepared for the possibility that this has to be done outside of R, perhaps even by a Mercury program. But at least some initial indications of the structure of these contour plots should be obtainable as a `levelplot` on a coarse grid.
 
-```{r levelplot}
+```{r levelplot, eval=FALSE}
 # TODO: Do a levelplot on a coarse 10 x 10 grid.
+# IDEA: For each draw from the mtdi_generator, calculate safety values
+#       fo a whole range of r0. This will help as a variance control measure,
+#       and perhaps also enable some re-use of calculations that may yield a
+#       speedup from avoiding some recalculation.
+# IDEA: This is the place to work out how best to modularize exact computations
+#       for 3+3 trials. The computational demands motivate the rationalization
+#       (and thus *clarification*) of these computations.
+# IDEA: This may also be the application to motivate factoring out the degeneracy
+#       revealed above, in order to realize (and measure) whatever speedup results.
+doses <- c(1, 2, 4, 8)
+options(dose_levels = doses)
+design <- get_three_plus_three(num_doses = length(doses), allow_deescalate = TRUE)
+# TODO: Examine these heuristics more closely
+median_mtd <- exp(mean(log(range(doses)))) # geometric midpoint of dose range
+median_sdlog <- diff(log(range(doses)))/4 # suppose dose range is +/-2 sdlogs
+# TODO: It's just fine to begin with nested for loops that clarify the scope
+#       of various cached matrices/vectors. But of course conversion to matrix
+#       math (where possible) will be highly desirable!
+b <- precautionary:::b
+U <- precautionary:::U
+for (CV in seq(0.3, 1.0, 0.1)) {
+  mtdi_gen <- hyper_mtdi_lognormal(CV = 1
+                                  , median_mtd = median_mtd
+                                  , median_sdlog = median_sdlog
+                                  , units="mg")
+  mtdi_dists <- precautionary:::draw_samples(hyper = mtdi_gen, n = 100)
+  for (mtdi_dist in mtdi_dists) {
+    p <- mtdi_dist@dist$cdf(doses); q <- 1 - p
+    log_pq <- c(log(p), log(q))
+    names(log_pq) <- rep(paste(doses, "mg"), 2)
+    log_pi = b[[D]] + U[[D]] %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's
+    piTxU <- t(exp(log_pi)) %*% U[[D]] # collapses J; now just a row vector of length 2D!
+    for (r0 in c(1.3, 1.5, 1.7, 2.0)) {
+      r0_spread <- r0^(2:-2)
+      G5 <- mtdi_dist@dist$cdf(getOption("dose_levels") %o% r0_spread)
+      G7 <- cbind(None=rep(1,nrow(G5)), G5, rep(0,nrow(G5)))
+      dimnames(G7)[1] <- list(D = names(log_pq))
+      # The (now) 7 columns give the probabilities of toxicity Gr=0+, Gr=1+, ..., Gr=6+.
+      # The trivial leftmost and rightmost columns assist with difference-taking below.
+      # By taking differences, we obtain probabilities for the grades *categorically*
+      G <- G7[,1:6] - G7[,2:7]
+      # Form the (2D x 6) blocked matrix (note, this remains a very small matrix!)
+      Z <- matrix(0, nrow = nrow(G), ncol = 3)
+      dimnames(Z) <- dimnames(G[,1:3])
+      G <- rbind(cbind(Z, G[,4:6]),
+                 cbind(G[,1:3], Z))
+      G <- G / rowSums(G)
+      G[is.nan(G)] <- 0
+      # Now G is ready to go!
+      safety <- piTxU %*% G # a small product -- 2D row-vector x (2D*6) matrix
+    }
+  }
+  
+}
+
+
 ```
 
 # Conclusion
