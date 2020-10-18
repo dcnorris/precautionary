@@ -25,7 +25,7 @@ test_that("exact 3+3 ('more common variant') safety matches simulated", {
   abserrs <- abs(SIMS_safety[1,] - summary(EXACT)$safety)
   relerrs <- abserrs / SIMS_safety['MCSE',]
   
-  expect(max(relerrs) < 3,
+  expect(all(max(relerrs) < 3),
          "entries in simulated 3+3 safety table are exact ± 3 MCSEs")
   
 })
