@@ -231,8 +231,9 @@ The essential approach, then, is to calculate a relatively dense array of points
 ```{r contourplot, echo=FALSE, fig.asp=1, fig.cap="Contours of expected fatalities per trial."}
 # IDEA: This may well be the application to motivate factoring out the degeneracy
 #       revealed above, in order to realize (and measure) whatever speedup results.
+rho <- 1.5 # ratio between geometric sequence of doses
 D <- length(
-  doses <- c(1, 2, 4, 8))
+  doses <- rho ^ (0:3))
 options(dose_levels = doses)
 design <- get_three_plus_three(num_doses = length(doses), allow_deescalate = TRUE)
 # TODO: Examine these heuristics more closely
@@ -243,10 +244,28 @@ median_sdlog <- diff(log(range(doses)))/4 # suppose dose range is +/-2 sdlogs
 #       math (where possible) will be highly desirable!
 b <- precautionary:::b
 U <- precautionary:::U
+# Hmm! If I'm looking for dimensionless invariants, I may need to abandon
+# the CV in favor of outright sdlog! In the existing code, at what point
+# do I make the conversion between (supposedly) user-friendly CV and the
+# 'more correct' sdlog?
+# Unfortunately, CV is well entrenched in the draw_samples method.
+# I may well find that the present effort forces me to revise or generalize
+# my previous approach to the treatment of CV. Also unfortunately, 1/sqrt(tau(cv))
+# well approximates the identity function for CV < 0.5 or so. Consequently,
+# the desired bounding away from zero won't arise 'for free' out of the
+# transformation to sdlog. But surely tau might be strongly bounded away
+# from +Inf (by any of the customary distributions!), and this could then
+# be the way to present these ideas to users.
+# Of course, precision has unintuitive units, and so is more abstract than
+# I would prefer.
+# ===
+# But in order to explore initially the type of invariance I'm seeking,
+# let me suppose tau scales with rho^-2 ...
+tau_scenarios <- 1/log(seq(0.3, 1.2, 0.05)^2 + 1) / (2/rho)^2
 S <- length(
-  CV_scenarios <- seq(0.3, 1.2, 0.05))
+  CV_scenarios <- sqrt(exp(1/tau_scenarios) - 1))
 R <- length(
-  r0_scenarios <- seq(1.3, 2.0, 0.05))
+  r0_scenarios <- seq(0.65, 1.0, 0.05)*rho)
 fatal_topo <- matrix(nrow = R, ncol = S)
 for (l in 1:S) {
   mtdi_gen <- hyper_mtdi_lognormal(CV = CV_scenarios[l]
@@ -272,10 +291,11 @@ for (l in 1:S) {
   # in each of the R 0_scenarios, under the value of CV from the outer loop.
   fatal_topo[,l] <- colMeans(fatality)
 }
-contour(x = CV_scenarios, y = r0_scenarios, z=t(fatal_topo)
+par(mar = c(5,5,2,2)) # make room for horizontal left-axis title
+contour(x = CV_scenarios, y = r0_scenarios/rho, z=t(fatal_topo)
         , xlab = "CV", ylab = " " #expression(r[0])
         , las = 1)
-mtext(expression(r[0]), side = 2, line = 3, las = 1)
+mtext(expression(r[0]/rho), side = 2, line = 3, las = 1)
 ```
 
 # Conclusion
