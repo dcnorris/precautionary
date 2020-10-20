@@ -228,71 +228,65 @@ I hope that, for a given $D$, and a geometric sequence of doses with a given rat
 
 The essential approach, then, is to calculate a relatively dense array of points in this plane, to support the drawing of contours. I am prepared for the possibility that this has to be done outside of R, perhaps even by a Mercury program. But at least some initial indications of the structure of these contour plots should be obtainable as a `levelplot` on a coarse grid.
 
+Whereas $r_0/\rho$ does indeed seem to be an invariant, the same cannot be said for transformations of CV. One barrier to finding invariant axes for this plot may well be the overlaid integration against a prior. Accordingly, let me aim instead to *postpone* any such integration until the plot has been drawn.
+
+This postponement allows the problem of dimensionality to resurface, however. A great benefit of the early integration was the dimension reduction it accomplished by integrating out the `median_mtd` parameter. If I want a diagram on which the points correspond to a strictly simulated 'known truth', then I seem to be stuck with both parameters of the lognormal MTDi distribution. This, in turn, means that quantities like $r_0$ (and perhaps other parameters of the hyperprior?) no longer appear on the axes of a single, simple plot. Perhaps I end up with an array of plots (indexed by $D$ and $r_0/\rho$, say) that you could use for any given design.
+
+But note that there is a great deal of value in the *concreteness* of points in the plane corresponding to unknown pharmacological states-of-the-world. At the *concluding* level of this paper, I do expect to require a plot where the points represent priors. But in the **development** toward that conclusion, I will need explanatory (and *exploratory*!) figures where the points represent more concrete, objective realities.
+
+The most flexible approach to this initial exploration may be to build a high-dimensional *array* that I can freely slice, aggregate, etc. What are its dimensions?
+
+* $D$ ranging over 3--8 doses, say
+* $\rho$ ranging 1.4--3
+* $r_0$ some range of values (hope to collapse with above!)
+* `meanlog` $\MTDi$ ranging from lowest to highest dose?
+* `sdlog` of $\MTDi$
+
+**Crucially, for every invariance (dimensionless constant of the field) I manage to demonstrate, I can freely eliminate one of these dimensions.**
+
+Fixing $D$ initially, and *anticipating* that safety will prove to be a function of $r_0/\rho$, I can operate initially with 3 dimensions in the array.
+
 ```{r contourplot, echo=FALSE, fig.asp=1, fig.cap="Contours of expected fatalities per trial."}
-# IDEA: This may well be the application to motivate factoring out the degeneracy
-#       revealed above, in order to realize (and measure) whatever speedup results.
 rho <- 1.5 # ratio between geometric sequence of doses
-D <- length(
-  doses <- rho ^ (0:3))
-options(dose_levels = doses)
-design <- get_three_plus_three(num_doses = length(doses), allow_deescalate = TRUE)
+D <- 4
+rho <- 1.5
+doses <- rho^(seq(D) - (D+1)/2)
+stopifnot(all.equal(0, mean(log(doses)))) # geometric mean of dose range is 1
+###options(dose_levels = doses)
+###design <- get_three_plus_three(num_doses = D, allow_deescalate = TRUE)
 # TODO: Examine these heuristics more closely
-median_mtd <- exp(mean(log(range(doses)))) # geometric midpoint of dose range
-median_sdlog <- diff(log(range(doses)))/4 # suppose dose range is +/-2 sdlogs
-# TODO: It's just fine to begin with nested for loops that clarify the scope
-#       of various cached matrices/vectors. But of course conversion to matrix
-#       math (where possible) will be highly desirable!
+median_MTDs <- seq(min(doses), max(doses), length.out = 11)
+median_SDlogs <- seq(0.3, 1.2, 0.1)
 b <- precautionary:::b
 U <- precautionary:::U
-# Hmm! If I'm looking for dimensionless invariants, I may need to abandon
-# the CV in favor of outright sdlog! In the existing code, at what point
-# do I make the conversion between (supposedly) user-friendly CV and the
-# 'more correct' sdlog?
-# Unfortunately, CV is well entrenched in the draw_samples method.
-# I may well find that the present effort forces me to revise or generalize
-# my previous approach to the treatment of CV. Also unfortunately, 1/sqrt(tau(cv))
-# well approximates the identity function for CV < 0.5 or so. Consequently,
-# the desired bounding away from zero won't arise 'for free' out of the
-# transformation to sdlog. But surely tau might be strongly bounded away
-# from +Inf (by any of the customary distributions!), and this could then
-# be the way to present these ideas to users.
-# Of course, precision has unintuitive units, and so is more abstract than
-# I would prefer.
-# ===
-# But in order to explore initially the type of invariance I'm seeking,
-# let me suppose tau scales with rho^-2 ...
-tau_scenarios <- 1/log(seq(0.3, 1.2, 0.05)^2 + 1) / (2/rho)^2
-S <- length(
-  CV_scenarios <- sqrt(exp(1/tau_scenarios) - 1))
+T <- length(median_MTDs)
+S <- length(median_SDlogs)
 R <- length(
-  r0_scenarios <- seq(0.65, 1.0, 0.05)*rho)
-fatal_topo <- matrix(nrow = R, ncol = S)
-for (l in 1:S) {
-  mtdi_gen <- hyper_mtdi_lognormal(CV = CV_scenarios[l]
-                                  , median_mtd = median_mtd
-                                  , median_sdlog = median_sdlog
-                                  , units="mg")
-  # TODO: Consider regularized--not random--sampling on a CV*median grid
-  K <- 1000
-  mtdi_dists <- precautionary:::draw_samples(hyper = mtdi_gen, n = K)
-  fatality <- matrix(nrow = K, ncol = R)
-  for (k in 1:K) {
-    mtdi_dist <- mtdi_dists[[k]]
-    p <- mtdi_dist@dist$cdf(doses)
+  r0_scenarios <- seq(1.3, 3.0, 0.1))
+fatal_detail <- array(dim = c(length(r0_scenarios),
+                              length(median_MTDs),
+                              length(median_SDlogs)),
+                      dimnames = list(r0=r0_scenarios,
+                                      medianMTD=median_MTDs,
+                                      medianSDlog=median_SDlogs)
+                      )
+for (s in 1:S) {
+  for (t in 1:T) {
+    p <- plnorm(doses, meanlog = log(median_MTDs[t]), sdlog = median_SDlogs[s])
     log_pq <- c(log(p), log(1-p))
     log_pi = b[[D]] + U[[D]] %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's
     piTxU <- t(exp(log_pi)) %*% U[[D]][,1:D] # collapses J => now just a length-D row vector!
-    Ftox <- mtdi_dist@dist$cdf(doses %o% r0_scenarios^-2) # CDF pullback to fatal thresholds
+    Ftox <- plnorm((doses %o% r0_scenarios^-2), # CDF pullback to fatal thresholds
+                   meanlog = log(median_MTDs[t]),
+                   sdlog = median_SDlogs[s])
     # Ftox is a (D x R) matrix of probabilities of fatal toxicity at the D doses
     # under each of R r0_scenarios.
-    fatality[k,] <- piTxU %*% Ftox # a SMALL product -- D row-vector x (D*R) matrix
+    fatal_detail[,t,s] <- piTxU %*% Ftox # D row-vector x (D*R) matrix
   }
-  # At this point, colMeans(fatality) is our expectation of trial fatalities
-  # in each of the R 0_scenarios, under the value of CV from the outer loop.
-  fatal_topo[,l] <- colMeans(fatality)
 }
 par(mar = c(5,5,2,2)) # make room for horizontal left-axis title
-contour(x = CV_scenarios, y = r0_scenarios/rho, z=t(fatal_topo)
+contour(x = median_SDlogs, y = r0_scenarios/rho
+        , z=t(apply(fatal_detail, MARGIN=c(1,3), FUN=mean))
         , xlab = "CV", ylab = " " #expression(r[0])
         , las = 1)
 mtext(expression(r[0]/rho), side = 2, line = 3, las = 1)
