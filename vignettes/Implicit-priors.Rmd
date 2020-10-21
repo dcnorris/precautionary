@@ -278,9 +278,9 @@ D <- 4
 # 
 from_dB <- function(dB) 10^(dB/10)
 rho_dB <- 1 # fix rho WLOG at 10^0.1 = 1.26
-rel_r0 <- seq(0.5, 1.2, 0.1) # relative to rho **on the dB scale**
-MTD_median <- seq(1, D, 0.25) # express dose on scale of dose number 1--D (fractions ok!)
-rel_SDlog <- seq(0.5, 1.5, 0.1) # TODO: Better scaled relative to rho, r0, or both?
+rel_r0 <- seq(0.5, 1.3, 0.1) # relative to rho **on the dB scale**
+MTD_median <- seq(1, D, 0.05) # express dose on scale of dose number 1--D (fractions ok!)
+rel_SDlog <- seq(0.4, 2.0, 0.05) # TODO: Better scaled relative to rho, r0, or both?
 F <- array(dim = sapply(list(rel_r0, MTD_median, rel_SDlog), length),
            dimnames = list(rel_r0=rel_r0,
                            MTD_median=MTD_median,
