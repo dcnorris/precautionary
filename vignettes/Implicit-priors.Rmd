@@ -275,7 +275,13 @@ D <- 4
 # easy visual checks of invariance to this dimensionless quantity.
 ## Hmm ...
 # I think the symmetry is captured by log(r0)/log(rho), rather than by r0/rho.
-# 
+# This concept is important enough that I feel justified introducing new notation
+# to express it. Let me call it ∆, and let it be measured *logarithmically* in
+# dose-interval units. I may need to introduce some conventions, by which (say)
+# capital Greek letters are measured in dB. Alternatively, we might set ∆ as the
+# (logarithmic) dose interval (WLOG measured in dB), and referencing all other
+# logarithmic quantities to that unit. Thus we would write ∑ = 1.2∆ for sdlog_dB,
+# and (λ, Λ) for what I'm now calling (rho, rho_dB).
 from_dB <- function(dB) 10^(dB/10)
 rho_dB <- 1 # fix rho WLOG at 10^0.1 = 1.26
 rel_r0 <- seq(0.5, 1.3, 0.1) # relative to rho **on the dB scale**
@@ -310,7 +316,7 @@ library(lattice)
 library(latticeExtra)
 fataltab <- as.data.table(F)
 fataltab[, `:=`(
-  rel_r0 = ordered(paste("r0[dB]/rho[dB] =", round(as.numeric(rel_r0),2)))
+  rel_r0 = ordered(paste("Λ =", round(as.numeric(rel_r0),2), "∆"))
 , MTD_median = as.numeric(MTD_median)
 , rel_SDlog = as.numeric(rel_SDlog)
 )]
@@ -318,9 +324,11 @@ contourplot(value ~ MTD_median + rel_SDlog | rel_r0
             , data = fataltab
             , cuts = 10
             , par.strip.text = list(cex=0.7)
-            , xlab = expression(median(MTD[i])~"[dose level]")
-            , ylab = list(expression(frac(sigma[dB], rho[dB])), rot=0)
+            , xlab = expression("median"~MTD[i]~"[dose level]")
+            , ylab = list(expression(frac(Sigma, Delta)), rot=0)
             , scales = list(x = list(at=1:D))
+            , label.style = "align"
+            , labels = list(cex=0.7)
             )
 ```
 
