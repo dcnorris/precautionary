@@ -246,7 +246,7 @@ The most flexible approach to this initial exploration may be to build a high-di
 
 Fixing $D$ initially, and *anticipating* that safety will prove to be a function of $r_0/\rho$, I can operate initially with 3 dimensions in the array.
 
-```{r contourplot, echo=FALSE, fig.asp=1, fig.cap="Contours of expected fatalities per trial."}
+```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial."}
 b <- precautionary:::b
 U <- precautionary:::U
 D <- 4
@@ -254,27 +254,33 @@ D <- 4
 # Define a range of r0 & rho values logarithmically, so that r0/rho is constant
 # along all diagonals of the matrix outer(r0, rho, FUN = `/`). This will enable
 # easy visual checks of invariance to this dimensionless quantity.
-rho <- r0 <- exp(seq(log(1.3), log(2.0), length.out = 8))
+## Hmm ...
+# I think the symmetry is captured by log(r0)/log(rho), rather than by r0/rho.
+# 
+rho <- exp(seq(log(1.3), log(2.0), length.out = 8))
+rel_r0 <- seq(0.5, 1.2, 0.1)
 MTD_median <- seq(1, D, 0.25) # express dose on scale of dose number 1--D (fractions ok!)
-MTD_SDlog <- seq(0.3, 1.2, 0.1) # TODO: Better scaled relative to rho, r0, or both?
-F <- array(dim = sapply(list(r0, rho, MTD_median, MTD_SDlog), length),
-           dimnames = list(r0=r0,
+rel_SDlog <- seq(0.5, 1.5, 0.1) # TODO: Better scaled relative to rho, r0, or both?
+F <- array(dim = sapply(list(rel_r0, rho, MTD_median, rel_SDlog), length),
+           dimnames = list(rel_r0=rel_r0,
                            rho=rho,
                            MTD_median=MTD_median,
-                           MTD_SDlog=MTD_SDlog))
+                           rel_SDlog=rel_SDlog))
 for (q in 1:length(rho)) {
   doses <- rho[q]^(seq(D) - (D+1)/2)
   stopifnot(all.equal(0, mean(log(doses)))) # geometric mean of dose range is 1
-  for (s in 1:length(MTD_SDlog)) {
+  for (s in 1:length(rel_SDlog)) {
     for (t in 1:length(MTD_median)) {
       meanlog <- log(doses[1]) + log(doses[D]/doses[1])*(MTD_median[t]-1)/(D - 1)
-      sdlog <- MTD_SDlog[s]
+      sdlog <- rel_SDlog[s]*log(rho[q])
       ## ** Here is where the various scales interact, and
       ##    where dimensionless constants are to be found! **
       p <- plnorm(doses, meanlog = meanlog, sdlog = sdlog) ## <<== **
       log_pq <- c(log(p), log(1-p))
       log_pi = b[[D]] + U[[D]] %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's
-      piTxU <- t(exp(log_pi)) %*% U[[D]][,1:D] # collapses J => now just a length-D row vector!
+      piTxU <- t(exp(log_pi)) %*% U[[D]][,1:D] # collapses J => a length-D row vector!
+      log_r0 <- log(rho[q]) * rel_r0
+      r0 <- exp(log_r0)
       Ftox <- plnorm((doses %o% r0^-2), meanlog = meanlog, sdlog = sdlog)
       # Ftox is a (D x R) matrix of probabilities of fatal toxicity at the D doses
       # under each of R r0_scenarios.
@@ -287,14 +293,16 @@ library(lattice)
 library(latticeExtra)
 fataltab <- as.data.table(F)
 fataltab[, `:=`(
-  r0 = ordered(paste("r0=", round(as.numeric(r0),2)))
+  rel_r0 = ordered(paste("rel_r0=", round(as.numeric(rel_r0),2)))
 , rho = ordered(paste("rho=", round(as.numeric(rho),2)))
 , MTD_median = as.numeric(MTD_median)
-, MTD_SDlog = as.numeric(MTD_SDlog)
+, rel_SDlog = as.numeric(rel_SDlog)
 )]
-contourplot(value ~ MTD_median + MTD_SDlog | r0 * rho
+contourplot(value ~ MTD_median + rel_SDlog | rel_r0 * rho
             , data = fataltab
-            , cuts = 10)
+            , cuts = 10
+            , par.strip.text = list(cex=0.5)
+            )
 ```
 
 # Conclusion
