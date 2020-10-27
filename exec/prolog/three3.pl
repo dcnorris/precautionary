@@ -65,27 +65,43 @@ esc(D, Lo..Hi) --> ...
 
 %% TODO: WLOG set Lo == 1 by convention.
 
-esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi, T in 0..3, indomain(T) }, % * is a ^ that went *splat*
-		    (   { T in 0..1 } -> [mtd_notfound(Hi)]
+% Mnemonic: * is ^ that 'splatted' on dose ceiling.
+esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi,
+				T in 0..3,
+				indomain(T) },
+		    (   { T in 0..1 } ->
+			[mtd_notfound(Hi)]
 		    ;   des(Hi, Lo)
 		    ).
-esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1, D1 in Lo..Hi, T in 0..3, indomain(T) },
-		   (   { T #= 0 } -> esc(D1, Lo..Hi)
-		   ;   { T #= 1 } -> sta(D1, Lo..Hi)
+esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1,
+			       D1 in Lo..Hi,
+			       T in 0..3,
+			       indomain(T) },
+		   (   {T #= 0} -> esc(D1, Lo..Hi)
+		   ;   {T #= 1} -> sta(D1, Lo..Hi)
 		   ;   des(D1, Lo)
 		   ).
 
-% TODO: Do I really need the special case of sta(D, _..D)?
+% TODO: Is special case sta(D, _..D) needed?
 sta(D, _..D) --> [D - 0], [mtd_notfound(D)].
-sta(D, Lo..Hi) --> [D - 0], { D #< Hi, D in Lo..Hi, indomain(D) }, esc(D, D..Hi).
-sta(D, Lo.._) --> [D - T], { T in 1..3, indomain(T) }, des(D, Lo).
+sta(D, Lo..Hi) --> [D - 0], { D #< Hi,
+			      D in Lo..Hi,
+			      indomain(D) },
+		   esc(D, D..Hi).
+sta(D, Lo.._) --> [D - T], { T in 1..3,
+			     indomain(T) },
+		  des(D, Lo).
 
-% As a mirror image of esc, des(D, Lo) moves downward FROM D to max(D-1,Lo).
-% NB: Implicit in de-escalation to D-1 is that Hi #= D - 1.
+% As a mirror image of esc//2, des(D, Lo) moves
+% downward FROM D, to max(D-1,Lo).
+% NB: De-escalation to D-1 implies Hi #= D - 1.
 des(D, Lo) --> { D_1 #= D - 1 },
-	       (   { D_1 #= Lo } -> [declare_mtd(Lo)]
-	       ;   [D_1 : T], { T in 0..3, indomain(T) },
-		   (   { T in 0..1 } -> [declare_mtd(D_1)]
+	       (   { D_1 #= Lo } ->
+		   [declare_mtd(Lo)]
+	       ;   [D_1 : T], { T in 0..3,
+				indomain(T) },
+		   (   { T in 0..1 } ->
+		       [declare_mtd(D_1)]
 		   ;   des(D_1, Lo)
 		   )
 	       ).
@@ -100,6 +116,16 @@ n_trials(Drange, XY) :-
     findall(Tr, phrase(esc(0, 0..Dmax), Tr), Trials),
     length(Trials, N),
     XY = (Dmax, N).
+
+?- n_trials(1..8, XY).
+%@ XY =  (1, 10) ;
+%@ XY =  (2, 46) ;
+%@ XY =  (3, 154) ;
+%@ XY =  (4, 442) ;
+%@ XY =  (5, 1162) ;
+%@ XY =  (6, 2890) ;
+%@ XY =  (7, 6922) ;
+%@ XY =  (8, 16138). 
 
 /*******
 
@@ -281,7 +307,38 @@ ground_or_nil('NA') :- true.
 rep(E, N, L) :-
     (	N #= 0 -> L = []
     ;	N #> 0 -> (N_1 #= N - 1, L = [E|Es], rep(E, N_1, Es))
-    ).		  
+    ).
+
+?- rep(a, 10, L).
+%@ L = [a, a, a, a, a, a, a, a, a|...].
+?- rep(X, N, [a,a,a,a,a]).
+%@ false.
+?- rep(a, 5, [a,a,a,a,a]).
+%@ true.
+
+repe(_, 0, []).
+repe(E, N, [E|Es]) :-
+    N #> 0,
+    N_1 #= N - 1,
+    repe(E, N_1, Es).
+
+?- repe(X, N, [a,a,a,a,a]).
+%@ X = a,
+%@ N = 5 ;
+%@ false.
+
+?- repe(E, N, Es).
+%@ N = 0,
+%@ Es = [] ;
+%@ N = 1,
+%@ Es = [E] ;
+%@ N = 2,
+%@ Es = [E, E] ;
+%@ N = 3,
+%@ Es = [E, E, E] ;
+%@ N = 4,
+%@ Es = [E, E, E, E] .
+% Dang!
 
 %% Write out separate R input files for D in 2..7
 write_escalation_array(D) :-
