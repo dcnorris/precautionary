@@ -13,6 +13,7 @@ NULL
 #' @param selector_factory An object of S3 class \code{\link[escalation]{selector_factory}}
 #' @param num_sims Number of simulations to run
 #' @param true_prob_tox A generator of toxicity distributions
+#' @param true_prob_eff Provided for compatibility with \code{\link[escalation]{simulate_trials}}
 #' @param ... Passed to subroutines
 #' 
 #' @details If invoked interactively with \code{num_sims} > 10, then a
@@ -303,7 +304,8 @@ setMethod(
   "simulate_trials"
   , c(selector_factory="exact",
       num_sims="numeric",
-      true_prob_tox="mtdi_distribution"),
+      true_prob_tox="mtdi_distribution",
+      true_prob_eff="missing"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     stop("num_sims makes no sense for exact simulation of mtdi_distribution")
   }
@@ -332,7 +334,8 @@ setMethod(
   "simulate_trials"
   , c(selector_factory="exact",
       num_sims="numeric",
-      true_prob_tox="hyper_mtdi_distribution"),
+      true_prob_tox="hyper_mtdi_distribution",
+      true_prob_eff="missing"),
   function(selector_factory, num_sims, true_prob_tox, ...){
     protocol <- selector_factory # separate naming from implementation details
     stopifnot("num_sims must be of length 1" = length(num_sims) == 1)

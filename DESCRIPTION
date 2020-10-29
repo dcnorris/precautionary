@@ -19,7 +19,9 @@ Suggests:
     rmarkdown,
     bookdown,
     tufte,
-    testthat
+    testthat,
+    lattice,
+    latticeExtra
 Description: Enhances various R packages that support the design and simulation
              of phase 1 dose-escalation trials, adding diagnostics to examine
              the safety characteristics of these designs in light of expected

@@ -91,6 +91,7 @@ NULL
 #'   - See the `haystack` function in `exact.R`
 #' 
 #' @section Robustify:
+#' * Tests using multiple CRAN packages
 #' 
 #' @name plan
 #' @aliases todo
