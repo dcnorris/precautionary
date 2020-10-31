@@ -466,8 +466,18 @@ toolow_maybe(Low, Maybe) :-
 % DLT fractions observed. There is no need to 'chop off' the Turing tape,
 % after all!
 
-% What does a cohort look like?
-cohort(DLTs/Enrolled) :-
+% What does a  cohort look like?
+cohort(DLTs/N) :-
+    N #= 3, % initially, we permit only cohorts of 3
+    DLTs in 0..N, indomain(DLTs).
+%?- cohort(C).
+%@ C = 0/3 ;
+%@ C = 1/3 ;
+%@ C = 2/3 ;
+%@ C = 3/3.
+
+% What does a DLT tally look like?
+tally(DLTs/Enrolled) :-
     Enrolled in 0..6, indomain(Enrolled),
     % -------------------------------------------------------------------------------
     Ncohorts in 0..2,         % TODO: Release this constraint to permit finer-grained
@@ -475,7 +485,7 @@ cohort(DLTs/Enrolled) :-
     Enrolled #= Ncohorts * 3, %       to model Simon &al 1997 accelerated titration.
     % -------------------------------------------------------------------------------
     DLTs in 0..Enrolled, indomain(DLTs).
-%?- cohort(C).
+%?- tally(C).
 %@ C = 0/0 ;
 %@ C = 0/3 ;
 %@ C = 1/3 ;
@@ -485,246 +495,110 @@ cohort(DLTs/Enrolled) :-
 %@ C = 1/6 ;
 %@ C = 2/6 ;
 %@ C = 3/6 ;
-%@ C = 4/6 ;
-%@ C = 5/6 ;
-%@ C = 6/6.
+%@ C = 4/6 ; % Note that none of these 3 tallies
+%@ C = 5/6 ; % could ever arise in a 3+3 trial.
+%@ C = 6/6.  % Not asking this predicate to do it all!
 
-% How do cohorts accumulate?
+% How do cohorts ACCUMULATE?
 %% Interesting! It seems I ought to implement a distinction
 %% between TALLY and COHORT.
 tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
-    cohort(T0/N0),
+    tally(T0/N0),
     cohort(T_/N_),
     T #= T0 + T_,
     N #= N0 + N_,
-    cohort(T/N).
+    tally(T/N).
 %?- tally0_cohort_tally(T0, C, T).
-%@ T0 = C, C = T, T = 0/0 ;
 %@ T0 = 0/0,
 %@ C = T, T = 0/3 ;
 %@ T0 = 0/0,
 %@ C = T, T = 1/3 ;
 %@ T0 = 0/0,
 %@ C = T, T = 2/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 3/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 0/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 1/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 2/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 3/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 4/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 5/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 6/6 ;
-%@ T0 = T, T = 0/3,
-%@ C = 0/0 ;
-%@ T0 = C, C = 0/3,
-%@ T = 0/6 ;
-%@ T0 = 0/3,
-%@ C = 1/3,
-%@ T = 1/6 ;
-%@ T0 = 0/3,
-%@ C = 2/3,
-%@ T = 2/6 ;
-%@ T0 = 0/3,
-%@ C = 3/3,
-%@ T = 3/6 ;
-%@ T0 = T, T = 1/3,
-%@ C = 0/0 ;
-%@ T0 = 1/3,
-%@ C = 0/3,
-%@ T = 1/6 ;
-%@ T0 = C, C = 1/3,
-%@ T = 2/6 ;
-%@ T0 = 1/3,
-%@ C = 2/3,
-%@ T = 3/6 ;
-%@ T0 = 1/3,
-%@ C = 3/3,
-%@ T = 4/6 ;
-%@ T0 = T, T = 2/3,
-%@ C = 0/0 ;
-%@ T0 = 2/3,
-%@ C = 0/3,
-%@ T = 2/6 ;
-%@ T0 = 2/3,
-%@ C = 1/3,
-%@ T = 3/6 ;
-%@ T0 = C, C = 2/3,
-%@ T = 4/6 ;
-%@ T0 = 2/3,
-%@ C = 3/3,
-%@ T = 5/6 ;
-%@ T0 = T, T = 3/3,
-%@ C = 0/0 ;
-%@ T0 = 3/3,
-%@ C = 0/3,
-%@ T = 3/6 ;
-%@ T0 = 3/3,
-%@ C = 1/3,
-%@ T = 4/6 ;
+% ... as expected ...
 %@ T0 = 3/3,
 %@ C = 2/3,
 %@ T = 5/6 ;
 %@ T0 = C, C = 3/3,
 %@ T = 6/6 ;
-%@ T0 = T, T = 0/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 1/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 2/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 3/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 4/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 5/6,
-%@ C = 0/0 ;
-%@ T0 = T, T = 6/6,
-%@ C = 0/0 ;
 %@ false.
-%@ T0 = C, C = T, T = 0/0 ;
-%@ T0 = 0/0,
-%@ C = T, T = 0/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 1/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 2/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 3/3 ;
-%@ T0 = 0/0,
-%@ C = T, T = 0/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 1/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 2/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 3/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 4/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 5/6 ;
-%@ T0 = 0/0,
-%@ C = T, T = 6/6 ;
-%@ T0 = T, T = 0/3,
-%@ C = 0/0 ;
-%@ T0 = C, C = 0/3,
-%@ T = 0/6 ;
-%@ T0 = 0/3,
-%@ C = 1/3,
-%@ T = 1/6 ;
-%@ T0 = 0/3,
-%@ C = 2/3,
-%@ T = 2/6 ;
-%@ T0 = 0/3,
-%@ C = 3/3,
-%@ T = 3/6 ;
-%@ T0 = 0/3,
-%@ C = 0/6,
-%@ T = 0/9 ;
-%@ T0 = 0/3,
-%@ C = 1/6,
-%@ T = 1/9 ;
-%@ T0 = 0/3,
-%@ C = 2/6,
-%@ T = 2/9 ;
-%@ T0 = 0/3,
-%@ C = 3/6,
-%@ T = 3/9 ;
-%@ T0 = 0/3,
-%@ C = 4/6,
-%@ T = 4/9 ;
-%@ T0 = 0/3,
-%@ C = 5/6,
-%@ T = 5/9 ;
-%@ T0 = 0/3,
-%@ C = 6/6,
-%@ T = 6/9 ;
-%@ T0 = T, T = 1/3,
-%@ C = 0/0 ;
-%@ T0 = 1/3,
-%@ C = 0/3,
-%@ T = 1/6 ;
-%@ T0 = C, C = 1/3,
-%@ T = 2/6 ;
-%@ T0 = 1/3,
-%@ C = 2/3,
-%@ T = 3/6 ;
-%@ T0 = 1/3,
-%@ C = 3/3,
-%@ T = 4/6 ;
-%@ T0 = 1/3,
-%@ C = 0/6,
-%@ T = 1/9 ;
-%@ T0 = 1/3,
-%@ C = 1/6,
-%@ T = 2/9 ;
-%@ T0 = 1/3,
-%@ C = 2/6,
-%@ T = 3/9 ;
-%@ T0 = 1/3,
-%@ C = 3/6,
-%@ T = 4/9 ;
-%@ T0 = 1/3,
-%@ C = 4/6,
-%@ T = 5/9 ;
-%@ T0 = 1/3,
-%@ C = 5/6,
-%@ T = 6/9 ;
-%@ T0 = 1/3,
-%@ C = 6/6,
-%@ T = 7/9 ;
-%@ T0 = T, T = 2/3,
-%@ C = 0/0 ;
-%@ T0 = 2/3,
-%@ C = 0/3,
-%@ T = 2/6 ;
-%@ T0 = 2/3,
-%@ C = 1/3,
-%@ T = 3/6 ;
-%@ T0 = C, C = 2/3,
-%@ T = 4/6 ;
-%@ T0 = 2/3,
-%@ C = 3/3,
-%@ T = 5/6 ;
-%@ T0 = 2/3,
-%@ C = 0/6,
-%@ T = 2/9 ;
-%@ T0 = 2/3,
-%@ C = 1/6,
-%@ T = 3/9 ;
-%@ T0 = 2/3,
-%@ C = 2/6,
-%@ T = 4/9 ;
-%@ T0 = 2/3,
-%@ C = 3/6,
-%@ T = 5/9 ;
-%@ T0 = 2/3,
-%@ C = 4/6,
-%@ T = 6/9 ;
-%@ T0 = 2/3,
-%@ C = 5/6,
-%@ T = 7/9 ;
-%@ T0 = 2/3,
-%@ C = 6/6,
-%@ T = 8/9 ;
-%@ T0 = T, T = 3/3,
-%@ C = 0/0 .
 
+% How do tallies COMPARE?
+safer_than(T0/N0, T1/N1) :-
+    tally(T0/N0), N0 #> 0, % NB: These N>0 conditions are implicit in the #< below,
+    tally(T1/N1), N1 #> 0, %     but are stated explicitly here to expose the logic.
+    T0*N1 #< N0*T1. % 'cross-multiply'
+%?- safer_than(Q0, Q1).
+%@ Q0 = 0/3,
+%@ Q1 = 1/3 ;
+% ...  as expected ...
+%@ Q0 = 5/6,
+%@ Q1 = 3/3 ;
+%@ Q0 = 5/6,
+%@ Q1 = 6/6 ;
+%@ false.
+%?- safer_than(Q, 1/3).
+%@ Q = 0/3 ;
+%@ Q = 0/6 ;
+%@ Q = 1/6 ;
+%@ false.
 
-% We represent a trial as a LIST of cohorts.
-cohorts([]).
-cohorts([C|Cs]) :-
-    length(Cs, _), % enumerate solutions fairly
-    cohort(C),
-    cohorts(Cs).
-%?- length(C, 1), cohorts(C).
+noworse_than(T0/N0, T1/N1) :-
+    tally(T0/N0), N0 #> 0, % NB: By contrast with the N>0 conditions in safer_than/2,
+    tally(T1/N1), N1 #> 0, %     these are strictly necessary for correctness here
+    T0*N1 #=< N0*T1.       % <-- because the weaker comparison '#=<' is used.
+%?- noworse_than(Q0, Q1), \+ safer_than(Q0, Q1), \+ Q0 = Q1. % find nontrivial set difference
+%@ Q0 = 0/3,
+%@ Q1 = 0/6 ;
+%@ Q0 = 1/3,
+%@ Q1 = 2/6 ;
+%@ Q0 = 2/3,
+%@ Q1 = 4/6 ;
+%@ Q0 = 3/3,
+%@ Q1 = 6/6 ;
+%@ Q0 = 0/6,
+%@ Q1 = 0/3 ;
+%@ Q0 = 2/6,
+%@ Q1 = 1/3 ;
+%@ Q0 = 4/6,
+%@ Q1 = 2/3 ;
+%@ Q0 = 6/6,
+%@ Q1 = 3/3 ;
+%@ false.
+%?- noworse_than(Q, 1/6).
+%@ Q = 0/3 ;
+%@ Q = 0/6 ;
+%@ Q = 1/6 ;
+%@ false.
+
+:- op(900, xfx, user:(&=<)).
+&=<(Q1, Q2) :- noworse_than(Q1, Q2).
+%?- 1/3 &=< Q.
+%@ Q = 1/3 ;
+%@ Q = 2/3 ;
+%@ Q = 3/3 ;
+%@ Q = 2/6 ;
+%@ Q = 3/6 ;
+%@ Q = 4/6 ;
+%@ Q = 5/6 ;
+%@ Q = 6/6 ;
+%@ false.
+
+:- op(900, xfx, user:(&<)).
+&<(Q1, Q2) :- safer_than(Q1, Q2).
+%?- Q &< 1/3.
+%@ Q = 0/3 ;
+%@ Q = 0/6 ;
+%@ Q = 1/6 ;
+%@ false.
+
+% Describe a LIST of TALLIES for consecutive prespecified doses:
+tallies([]).
+tallies([Q|Qs]) :-
+    length(Qs, _), % enumerate solutions fairly
+    tally(Q),
+    tallies(Qs).
+%?- length(C, 1), tallies(C).
 %@ C = [0/0] ;
 %@ C = [0/3] ;
 %@ C = [1/3] ;
@@ -737,17 +611,20 @@ cohorts([C|Cs]) :-
 %@ C = [4/6] ; % Note that none of these cases
 %@ C = [5/6] ; % could ever happen in a 3+3 trial.
 %@ C = [6/6].  % This predicate can't do it all!
-%?- length(C, 2), cohorts(C).
+%?- length(C, 2), tallies(C).
 %@ C = [0/0, 0/0] ;
 %@ C = [0/0, 0/3] ;
 %@ C = [0/0, 1/3] ;
+%@ C = [0/0, 2/3] ;
 % ... as expected ...
 %@ C = [6/6, 4/6] ;
 %@ C = [6/6, 5/6] ;
 %@ C = [6/6, 6/6]. 
+%?- length(C, 2), tallies(C), false. % Does it terminate?
+%@ false.                            % Yes.
 
 % Convenient access to the list heads would seem to advise holding the
-% current state of the trial as a pair of lists, the first descending
+% current state of the trial as a PAIR of lists, the first descending
 % and the second ascending. That is, they are two STACKS side-by-side,
 % with the top (front) elements being (on the left) the highest of the
 % lower part of doses, and (on the right) the lowest among the higher
@@ -761,36 +638,61 @@ cohorts([C|Cs]) :-
 % the ^ looks like the scales of Justice, with some kind of 'weighing' or
 % judgment made about the doses, while : looks like '...' indicating the
 % pending continuation of the trial.
-state0_action_state(Ls ^ [X|Rs], escalate, [X|Ls] : Rs) :-
-    cohorts(Ls),
-    cohorts([X|Rs]),
-    X .. T/N,
-    (	N #= 3, T #= 0
-    ;	N #= 6, T in 0..1, indomain(T)
-    ).
+state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
+    tallies(Ls),
+    tally(Q),
+    tallies(Rs),
+    Q &< 1/3.
+state0_action_state([0/3|Ls] ^ [Q|Rs], deescalate, [Ls] : [0/3,Q|Rs]) :-
+    tallies(Ls),
+    tally(Q),
+    tallies(Rs),
+    1/3 &=< Q.
 % NOTE: This currently quite trivial enrollment step may well grow
 %       more complex with introduction of an accelerated titration
 %       phase or other such variations on standard 3+3.
-state0_action_state(Ls : [0/0 | Rs], enroll, Ls ^ [T/3 | Rs]) :-
-    cohort(T/3).
-state0_action_state(Ls : [1/3 | Rs], enroll, Ls ^ [T/6 | Rs]) :-
-    cohort(T2/3),
-    T #= 1 + T2.
-% At least if the analogy with stacks makes sense, then you don't
+state0_action_state(Ls : [Q0 | Rs], enroll, Ls ^ [Q | Rs]) :-
+    (	Q0 = 0/0 % TODO: This enumeration of possibilities is overly
+    ;	Q0 = 1/3 %       restrictive, and lacking in abstraction.
+    ),           %       One consequence: poor separation of concerns.
+    tally0_cohort_tally(Q0, _, Q).
+% If we 'take seriously' the analogy with stacks, then you don't
 % realize the right-hand stack had no further doses until you pop
-% the top element off. On that account, it makes perfect sense to
-% make this determination ("I *CAN'T* continue!") on the ':' side.
-% (The simplicity of this predicate also argues in favor.)
+% the top element off and see 'nothing there'. On that account,
+% it seems natural to make this determination ("I *CAN'T* continue!")
+% on the ':' side.
+% (The sheer simplicity of this predicate also argues in favor.)
+% (Can I appeal also to the 'exceptional' nature of this determination?)
 state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
-    length(Ls, D).
+    length(Ls, D). % RP2D is highest prespecified dose, D.
+
 /*
 state0_action_state([L|Ls] : [T0/3 | Rs], declare_mtd, )
     
 state0_action_state(L ^ [R|Rs], declare_mtd(MTD), []) :-
-    cohorts(L),
-    cohorts([R|Rs]),
-    R .. 
+    tallies(L),
+    tallies([R|Rs]),
+    R =.. 
     append(L, R, Trial), % The concatenation of L & R ...
-    cohorts(Trial),      % ..constitutes a TRIAL (list of cohorts).
+    tallies(Trial),      % ..constitutes a TRIAL (list of cohorts).
         
+*/
+
+/* TODO ...
+
+1. Let the 3+3 'rules' be DEMONSTRATED by complete *singleton* solutions
+   to a sequence of Prolog QUERIES. This is the 'proof of correctness'
+   that I was supposing I had 'approximately' obtained with the matching
+   solution-set sizes for trial//1 and esc//2.
+
+2. The RATIONALITY of any 3+3 program will be tested by how readily it
+   supports generalization to other variants and extensions.
+
+a) Demonstrate that the alternate 3+3 design (without de-escalation) can
+   readily be obtained by a small (ideally, *parametrized*) modification.
+
+b) Similarly introduce the accelerated titration. Ideally here, we might
+   demonstrate COMPOSITIONALITY such that the 3+3 with an A.T. phase can
+   be expressed by sequencing within a DCG.
+
 */
