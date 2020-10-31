@@ -499,15 +499,24 @@ tally(DLTs/Enrolled) :-
 %@ C = 5/6 ; % could ever arise in a 3+3 trial.
 %@ C = 6/6.  % Not asking this predicate to do it all!
 
-% How do cohorts ACCUMULATE?
-%% Interesting! It seems I ought to implement a distinction
-%% between TALLY and COHORT.
-tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
+enrollable_tally(T0/N0) :-
     tally(T0/N0),
+    (	N0 #= 0
+    ;	N0 #= 3, T0 #=< 1
+    ).
+%?- enrollable(Q).
+%@ Q = 0/0 ;
+%@ Q = 0/3 ;
+%@ Q = 1/3 ;
+%@ false.
+
+% How do cohorts ACCUMULATE?
+tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
+    enrollable_tally(T0/N0),
     cohort(T_/N_),
+    tally(T/N),
     T #= T0 + T_,
-    N #= N0 + N_,
-    tally(T/N).
+    N #= N0 + N_.
 %?- tally0_cohort_tally(T0, C, T).
 %@ T0 = 0/0,
 %@ C = T, T = 0/3 ;
@@ -515,12 +524,30 @@ tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
 %@ C = T, T = 1/3 ;
 %@ T0 = 0/0,
 %@ C = T, T = 2/3 ;
-% ... as expected ...
-%@ T0 = 3/3,
+%@ T0 = 0/0,
+%@ C = T, T = 3/3 ;
+%@ T0 = C, C = 0/3,
+%@ T = 0/6 ;
+%@ T0 = 0/3,
+%@ C = 1/3,
+%@ T = 1/6 ;
+%@ T0 = 0/3,
 %@ C = 2/3,
-%@ T = 5/6 ;
-%@ T0 = C, C = 3/3,
-%@ T = 6/6 ;
+%@ T = 2/6 ;
+%@ T0 = 0/3,
+%@ C = 3/3,
+%@ T = 3/6 ;
+%@ T0 = 1/3,
+%@ C = 0/3,
+%@ T = 1/6 ;
+%@ T0 = C, C = 1/3,
+%@ T = 2/6 ;
+%@ T0 = 1/3,
+%@ C = 2/3,
+%@ T = 3/6 ;
+%@ T0 = 1/3,
+%@ C = 3/3,
+%@ T = 4/6 ;
 %@ false.
 
 % How do tallies COMPARE?
@@ -638,24 +665,83 @@ tallies([Q|Qs]) :-
 % the ^ looks like the scales of Justice, with some kind of 'weighing' or
 % judgment made about the doses, while : looks like '...' indicating the
 % pending continuation of the trial.
+% ***
+% I'm doubling down now on my view that (escalate | stay | deescalate)
+% register MAINTAINANCE OF OUR ATTENTION on the most interesting dose.
+% This is separate from what we DECIDE TO DO after inspecting this
+% currently-most-interesting dose. In theory, I could even rename half
+% of these functors to state0_FOCUS_state().
 state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
-    tallies(Ls),
-    tally(Q),
-    tallies(Rs),
     Q &< 1/3.
-state0_action_state([0/3|Ls] ^ [Q|Rs], deescalate, [Ls] : [0/3,Q|Rs]) :-
-    tallies(Ls),
-    tally(Q),
-    tallies(Rs),
-    1/3 &=< Q.
+state0_action_state(Ls ^ [Q|Rs], stay, [Ls] : [Q|Rs]) :-
+    Q = 1/3.
+% TODO: Express this clause more ABSTRACTLY, then later PROVE
+%       that deescalation occurs only to a pre-existing 0/3 tally.
+state0_action_state([0/3|Ls] ^ Rs, deescalate, [Ls] : [0/3|Rs]) :-
+    Rs = [Q|_],
+    1/3 &< Q.
+/****
+The following general queries seem to PROVE
+key properties of 3+3 have been attained.
+ ****/
+%?- state0_action_state(S0, deescalate, S).
+%@ S0 = [0/3|_47804]^[2/3|_47840],
+%@ S = [_47804]:[0/3, 2/3|_47840] ;
+%@ S0 = [0/3|_47804]^[3/3|_47840],
+%@ S = [_47804]:[0/3, 3/3|_47840] ;
+%@ S0 = [0/3|_47804]^[3/6|_47840],
+%@ S = [_47804]:[0/3, 3/6|_47840] ;
+%@ S0 = [0/3|_47804]^[4/6|_47840],
+%@ S = [_47804]:[0/3, 4/6|_47840] ;
+%@ S0 = [0/3|_47804]^[5/6|_47840],
+%@ S = [_47804]:[0/3, 5/6|_47840] ;
+%@ S0 = [0/3|_47804]^[6/6|_47840],
+%@ S = [_47804]:[0/3, 6/6|_47840] ;
+%@ false.
+%?- state0_action_state(S0, stay, S).
+%@ S0 = _61938^[1/3|_61946],
+%@ S = [_61938]:[1/3|_61946].
+%?- state0_action_state(S0, escalate, S).
+%@ S0 = _64680^[0/3|_64688],
+%@ S = [0/3|_64680]:_64688 ;
+%@ S0 = _64680^[0/6|_64688],
+%@ S = [0/6|_64680]:_64688 ;
+%@ S0 = _64680^[1/6|_64688],
+%@ S = [1/6|_64680]:_64688 ;
+%@ false.
+
 % NOTE: This currently quite trivial enrollment step may well grow
 %       more complex with introduction of an accelerated titration
 %       phase or other such variations on standard 3+3.
 state0_action_state(Ls : [Q0 | Rs], enroll, Ls ^ [Q | Rs]) :-
-    (	Q0 = 0/0 % TODO: This enumeration of possibilities is overly
-    ;	Q0 = 1/3 %       restrictive, and lacking in abstraction.
-    ),           %       One consequence: poor separation of concerns.
     tally0_cohort_tally(Q0, _, Q).
+%?- state0_action_state(S0, enroll, S).
+%@ S0 = _4386:[0/0|_4394],
+%@ S = _4386^[0/3|_4394] ;
+%@ S0 = _4386:[0/0|_4394],
+%@ S = _4386^[1/3|_4394] ;
+%@ S0 = _4386:[0/0|_4394],
+%@ S = _4386^[2/3|_4394] ;
+%@ S0 = _4386:[0/0|_4394],
+%@ S = _4386^[3/3|_4394] ;
+%@ S0 = _4386:[0/3|_4394], % NB: In a 3+3 trial, _:[0/3|_] shouldn't
+%@ S = _4386^[0/6|_4394] ; %     ever appear as a state0. But I think
+%@ S0 = _4386:[0/3|_4394], %     it's NOT this predicate's proper role
+%@ S = _4386^[1/6|_4394] ; %     to impose this condition.
+%@ S0 = _4386:[0/3|_4394],
+%@ S = _4386^[2/6|_4394] ;
+%@ S0 = _4386:[0/3|_4394],
+%@ S = _4386^[3/6|_4394] ;
+%@ S0 = _4386:[1/3|_4394],
+%@ S = _4386^[1/6|_4394] ;
+%@ S0 = _4386:[1/3|_4394],
+%@ S = _4386^[2/6|_4394] ;
+%@ S0 = _50:[1/3|_58],
+%@ S = _50^[3/6|_58] ;
+%@ S0 = _50:[1/3|_58],
+%@ S = _50^[4/6|_58] ;
+%@ false.
+
 % If we 'take seriously' the analogy with stacks, then you don't
 % realize the right-hand stack had no further doses until you pop
 % the top element off and see 'nothing there'. On that account,
@@ -677,6 +763,67 @@ state0_action_state(L ^ [R|Rs], declare_mtd(MTD), []) :-
     tallies(Trial),      % ..constitutes a TRIAL (list of cohorts).
         
 */
+
+actions(_) --> [].
+actions(S0) --> [(state(S0)->A->state(S))],
+        { state0_action_state(S0, A, S) },
+        actions(S).
+
+%% Let's examine conduct of a trial with 3 dose levels.
+%% (Trials always start off like [0/0, ..., 0/0] : [].)
+%?- phrase(actions([] : [0/0, 0/0, 0/0] : []), Trial).
+%@ Trial = [] ;
+%@ false.
+
+% Well okay, then! That's WRONG. Why didn't we enroll?
+%?- state0_action_state([]:[0/0, 0/0], enroll, S).
+%@ S = []^[0/3, 0/0] ;
+%@ S = []^[1/3, 0/0] ;
+%@ S = []^[2/3, 0/0] ;
+%@ S = []^[3/3, 0/0] ;
+%@ false.
+%?- state0_action_state([]^[0/3, 0/0], Action, S).
+%@ Action = escalate,
+%@ S = [0/3]:[0/0] ;
+%@ false.
+%?- state0_action_state([]:[0/3, 0/0], Action, S).
+%@ Action = enroll,
+%@ S = []^[0/6, 0/0] ;
+%@ Action = enroll,
+%@ S = []^[1/6, 0/0] ;
+%@ Action = enroll,
+%@ S = []^[2/6, 0/0] ;
+%@ Action = enroll,
+%@ S = []^[3/6, 0/0] ;
+%@ false.
+%?- state0_action_state([]^[1/6, 0/0], Action, S).
+%@ Action = escalate,
+%@ S = [1/6]:[0/0] ;
+%@ false.
+%?- state0_action_state([1/6]:[0/0], Action, S).
+%@ Action = enroll,
+%@ S = [1/6]^[0/3] ;
+%@ Action = enroll,
+%@ S = [1/6]^[1/3] ;
+%@ Action = enroll,
+%@ S = [1/6]^[2/3] ;
+%@ Action = enroll,
+%@ S = [1/6]^[3/3] ;
+%@ false.
+%?- state0_action_state([1/6]^[3/3], Action, S).
+%@ false.
+%%% AHA! The problem is, I have not fully implemented
+%%% any possible ending for the trial!
+
+%?- length(As,_), phrase(actions([]:[0/0, 0/0]), As).
+%@ As = [] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[1/3, 0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[2/3, 0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[3/3, 0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0])),  (state([]^[0/3, 0/0])->escalate->state([0/3]:[0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[1/3, 0/0])),  (state([]^[1/3, 0/0])->stay->state([[]]:[1/3, 0/0]))] ;
+%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0])),  (state([]^[0/3, 0/0])->escalate->state([0/3]:[0/0])),  (state([0/3]:[0/0])->enroll->state([0/3]^[0/3]))] .
 
 /* TODO ...
 
