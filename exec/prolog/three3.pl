@@ -365,3 +365,432 @@ write_matrix_row([E|Es], OS) :-
     ;	write(OS, '\t'),
 	write_matrix_row(Es, OS)
     ).
+
+/*
+Some attempts to be even more explicit about the reasoning
+being done in the trial//1 DCG above, while also achieving
+greater generality such as will be required for describing
+(e.g.) Simon &al accelerated titration phase.   
+*/
+
+% Initially, and strictly for convenience, I will continue
+% to model the doses as integers. But this should yield to
+% a data representation (like Peano) that supports stronger
+% proofs of correctness.
+
+% What is a valid 'top dose' in a prespecified dose range?
+topdose(TopDose) :- TopDose in 1..10, indomain(TopDose).
+%?- topdose(D).
+%@ D = 1 ;
+%@ D = 2 ;
+%@ D = 3 ;
+%@ D = 4 ;
+%@ D = 5 ;
+%@ D = 6 ;
+%@ D = 7 ;
+%@ D = 8 ;
+%@ D = 9 ;
+%@ D = 10.
+%% NB: Oncology dose-finding trials in practice rarely
+%%     pre-specify more than 10 distinct doses.
+
+% What is a conceivable set of doses we might be considering
+% (at any given moment in a dose-finding trial) as potential
+% MTDs?
+candidate_mtds([], TopDose) :- topdose(TopDose).
+candidate_mtds([Singleton], TopDose) :-
+    topdose(TopDose),
+    Singleton in 1..TopDose,
+    indomain(Singleton).
+%?- candidate_mtds(C, TD).
+%@ C = [],
+%@ TD = 1 ;
+%@ C = [],
+%@ TD = 2 ;
+%@ C = [9],
+% ...as expected...
+%@ TD = 10 ;
+%@ C = [10],
+%@ TD = 10.
+candidate_mtds([Lowest,Next|Higher], TopDose) :-
+    Lowest in 1..TopDose, indomain(Lowest),
+    Lowest #= Next - 1, % Z is overkill for this!
+    candidate_mtds([Next|Higher], TopDose).
+%?- candidate_mtds(C, 3).
+%@ C = [] ;
+%@ C = [1] ;
+%@ C = [2] ;
+%@ C = [3] ;
+%@ C = [1, 2] ;
+%@ C = [1, 2, 3] ;
+%@ C = [2, 3] ;
+%@ false.
+
+% That's an embarrassingly excessive use of Z.
+% The essential notion is that of *succession*,
+% for which lists suffice. What about even using
+% a LIST DIFFERENCE?
+% If we were currently considering [D|Ds] - Es,
+% Es is a list, then we'd be saying that D is the
+% lowest of ALL doses (D..inf) being considered,
+% while Es are the doses we regard as excessive,
+% say 5..inf. In such a case, we are (currently)
+% actively considering the doses D..4.
+% I sense distinctly the spirit of operating on
+% the tape of a Turing machine!
+
+toolow_maybe(Low, Maybe) :-
+    TopDose in 1..10, indomain(TopDose),
+    % How do I get the list [1,2,...,TopDose]?
+    append(Low, Maybe, 1..TopDose).
+
+
+% I also need to consider the manner of representing DOSES themselves!
+% This might well be a LIST of dose ALIQUOTS, such that the 'final dose'
+% is constituted by the SUM over the list. Note how this representation
+% (or 'interpretation'?) automatically builds in the monotonicity or
+% sorting of the doses.
+
+% At any point, the STATE of the trial is a pair of lists As ^ [A|More],
+% where the current dose 'under consideration' is to be understood as
+% sum(As) + A, and there are possibly additional higher doses that can
+% be 'constructed' ('administered'!) by drawing up the further aliquots
+% in the list More.
+% To the extent it proves desirable to instantiate the solutions, I can
+% very well begin with simple lists of the term 'a'!
+%
+% OTOH, maybe I don't even need the dose designations (as in 'a') apart
+% from the position in the list! If I discard the idea of truncating the
+% list as a means to indicate that some doses have been ruled out-of-bounds,
+% then I can simply preserve all information about the doses tried and the
+% DLT fractions observed. There is no need to 'chop off' the Turing tape,
+% after all!
+
+% What does a cohort look like?
+cohort(DLTs/Enrolled) :-
+    Enrolled in 0..6, indomain(Enrolled),
+    % -------------------------------------------------------------------------------
+    Ncohorts in 0..2,         % TODO: Release this constraint to permit finer-grained
+    indomain(Ncohorts),       %       enrollment 0..6 as above, which will be needed
+    Enrolled #= Ncohorts * 3, %       to model Simon &al 1997 accelerated titration.
+    % -------------------------------------------------------------------------------
+    DLTs in 0..Enrolled, indomain(DLTs).
+%?- cohort(C).
+%@ C = 0/0 ;
+%@ C = 0/3 ;
+%@ C = 1/3 ;
+%@ C = 2/3 ;
+%@ C = 3/3 ;
+%@ C = 0/6 ;
+%@ C = 1/6 ;
+%@ C = 2/6 ;
+%@ C = 3/6 ;
+%@ C = 4/6 ;
+%@ C = 5/6 ;
+%@ C = 6/6.
+
+% How do cohorts accumulate?
+%% Interesting! It seems I ought to implement a distinction
+%% between TALLY and COHORT.
+tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
+    cohort(T0/N0),
+    cohort(T_/N_),
+    T #= T0 + T_,
+    N #= N0 + N_,
+    cohort(T/N).
+%?- tally0_cohort_tally(T0, C, T).
+%@ T0 = C, C = T, T = 0/0 ;
+%@ T0 = 0/0,
+%@ C = T, T = 0/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 1/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 2/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 3/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 0/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 1/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 2/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 3/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 4/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 5/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 6/6 ;
+%@ T0 = T, T = 0/3,
+%@ C = 0/0 ;
+%@ T0 = C, C = 0/3,
+%@ T = 0/6 ;
+%@ T0 = 0/3,
+%@ C = 1/3,
+%@ T = 1/6 ;
+%@ T0 = 0/3,
+%@ C = 2/3,
+%@ T = 2/6 ;
+%@ T0 = 0/3,
+%@ C = 3/3,
+%@ T = 3/6 ;
+%@ T0 = T, T = 1/3,
+%@ C = 0/0 ;
+%@ T0 = 1/3,
+%@ C = 0/3,
+%@ T = 1/6 ;
+%@ T0 = C, C = 1/3,
+%@ T = 2/6 ;
+%@ T0 = 1/3,
+%@ C = 2/3,
+%@ T = 3/6 ;
+%@ T0 = 1/3,
+%@ C = 3/3,
+%@ T = 4/6 ;
+%@ T0 = T, T = 2/3,
+%@ C = 0/0 ;
+%@ T0 = 2/3,
+%@ C = 0/3,
+%@ T = 2/6 ;
+%@ T0 = 2/3,
+%@ C = 1/3,
+%@ T = 3/6 ;
+%@ T0 = C, C = 2/3,
+%@ T = 4/6 ;
+%@ T0 = 2/3,
+%@ C = 3/3,
+%@ T = 5/6 ;
+%@ T0 = T, T = 3/3,
+%@ C = 0/0 ;
+%@ T0 = 3/3,
+%@ C = 0/3,
+%@ T = 3/6 ;
+%@ T0 = 3/3,
+%@ C = 1/3,
+%@ T = 4/6 ;
+%@ T0 = 3/3,
+%@ C = 2/3,
+%@ T = 5/6 ;
+%@ T0 = C, C = 3/3,
+%@ T = 6/6 ;
+%@ T0 = T, T = 0/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 1/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 2/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 3/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 4/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 5/6,
+%@ C = 0/0 ;
+%@ T0 = T, T = 6/6,
+%@ C = 0/0 ;
+%@ false.
+%@ T0 = C, C = T, T = 0/0 ;
+%@ T0 = 0/0,
+%@ C = T, T = 0/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 1/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 2/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 3/3 ;
+%@ T0 = 0/0,
+%@ C = T, T = 0/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 1/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 2/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 3/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 4/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 5/6 ;
+%@ T0 = 0/0,
+%@ C = T, T = 6/6 ;
+%@ T0 = T, T = 0/3,
+%@ C = 0/0 ;
+%@ T0 = C, C = 0/3,
+%@ T = 0/6 ;
+%@ T0 = 0/3,
+%@ C = 1/3,
+%@ T = 1/6 ;
+%@ T0 = 0/3,
+%@ C = 2/3,
+%@ T = 2/6 ;
+%@ T0 = 0/3,
+%@ C = 3/3,
+%@ T = 3/6 ;
+%@ T0 = 0/3,
+%@ C = 0/6,
+%@ T = 0/9 ;
+%@ T0 = 0/3,
+%@ C = 1/6,
+%@ T = 1/9 ;
+%@ T0 = 0/3,
+%@ C = 2/6,
+%@ T = 2/9 ;
+%@ T0 = 0/3,
+%@ C = 3/6,
+%@ T = 3/9 ;
+%@ T0 = 0/3,
+%@ C = 4/6,
+%@ T = 4/9 ;
+%@ T0 = 0/3,
+%@ C = 5/6,
+%@ T = 5/9 ;
+%@ T0 = 0/3,
+%@ C = 6/6,
+%@ T = 6/9 ;
+%@ T0 = T, T = 1/3,
+%@ C = 0/0 ;
+%@ T0 = 1/3,
+%@ C = 0/3,
+%@ T = 1/6 ;
+%@ T0 = C, C = 1/3,
+%@ T = 2/6 ;
+%@ T0 = 1/3,
+%@ C = 2/3,
+%@ T = 3/6 ;
+%@ T0 = 1/3,
+%@ C = 3/3,
+%@ T = 4/6 ;
+%@ T0 = 1/3,
+%@ C = 0/6,
+%@ T = 1/9 ;
+%@ T0 = 1/3,
+%@ C = 1/6,
+%@ T = 2/9 ;
+%@ T0 = 1/3,
+%@ C = 2/6,
+%@ T = 3/9 ;
+%@ T0 = 1/3,
+%@ C = 3/6,
+%@ T = 4/9 ;
+%@ T0 = 1/3,
+%@ C = 4/6,
+%@ T = 5/9 ;
+%@ T0 = 1/3,
+%@ C = 5/6,
+%@ T = 6/9 ;
+%@ T0 = 1/3,
+%@ C = 6/6,
+%@ T = 7/9 ;
+%@ T0 = T, T = 2/3,
+%@ C = 0/0 ;
+%@ T0 = 2/3,
+%@ C = 0/3,
+%@ T = 2/6 ;
+%@ T0 = 2/3,
+%@ C = 1/3,
+%@ T = 3/6 ;
+%@ T0 = C, C = 2/3,
+%@ T = 4/6 ;
+%@ T0 = 2/3,
+%@ C = 3/3,
+%@ T = 5/6 ;
+%@ T0 = 2/3,
+%@ C = 0/6,
+%@ T = 2/9 ;
+%@ T0 = 2/3,
+%@ C = 1/6,
+%@ T = 3/9 ;
+%@ T0 = 2/3,
+%@ C = 2/6,
+%@ T = 4/9 ;
+%@ T0 = 2/3,
+%@ C = 3/6,
+%@ T = 5/9 ;
+%@ T0 = 2/3,
+%@ C = 4/6,
+%@ T = 6/9 ;
+%@ T0 = 2/3,
+%@ C = 5/6,
+%@ T = 7/9 ;
+%@ T0 = 2/3,
+%@ C = 6/6,
+%@ T = 8/9 ;
+%@ T0 = T, T = 3/3,
+%@ C = 0/0 .
+
+
+% We represent a trial as a LIST of cohorts.
+cohorts([]).
+cohorts([C|Cs]) :-
+    length(Cs, _), % enumerate solutions fairly
+    cohort(C),
+    cohorts(Cs).
+%?- length(C, 1), cohorts(C).
+%@ C = [0/0] ;
+%@ C = [0/3] ;
+%@ C = [1/3] ;
+%@ C = [2/3] ;
+%@ C = [3/3] ;
+%@ C = [0/6] ;
+%@ C = [1/6] ;
+%@ C = [2/6] ;
+%@ C = [3/6] ;
+%@ C = [4/6] ; % Note that none of these cases
+%@ C = [5/6] ; % could ever happen in a 3+3 trial.
+%@ C = [6/6].  % This predicate can't do it all!
+%?- length(C, 2), cohorts(C).
+%@ C = [0/0, 0/0] ;
+%@ C = [0/0, 0/3] ;
+%@ C = [0/0, 1/3] ;
+% ... as expected ...
+%@ C = [6/6, 4/6] ;
+%@ C = [6/6, 5/6] ;
+%@ C = [6/6, 6/6]. 
+
+% Convenient access to the list heads would seem to advise holding the
+% current state of the trial as a pair of lists, the first descending
+% and the second ascending. That is, they are two STACKS side-by-side,
+% with the top (front) elements being (on the left) the highest of the
+% lower part of doses, and (on the right) the lowest among the higher
+% doses.
+% Let me also aim to separate the stack-shuffling ACTIONS from the
+% subsequent (automatic) ENROLLMENT vs STOPPING of the trial.
+% After each ACTION, the trial is ready for CONTINUATION = ENROLL | STOP.
+% If ENROLLMENT is to take place, then it is at the top of the right stack.
+% In order to separate those events, I will encode the alternating state
+% of the trial using ^ and : infix operators. The mnemonic content is that
+% the ^ looks like the scales of Justice, with some kind of 'weighing' or
+% judgment made about the doses, while : looks like '...' indicating the
+% pending continuation of the trial.
+state0_action_state(Ls ^ [X|Rs], escalate, [X|Ls] : Rs) :-
+    cohorts(Ls),
+    cohorts([X|Rs]),
+    X .. T/N,
+    (	N #= 3, T #= 0
+    ;	N #= 6, T in 0..1, indomain(T)
+    ).
+% NOTE: This currently quite trivial enrollment step may well grow
+%       more complex with introduction of an accelerated titration
+%       phase or other such variations on standard 3+3.
+state0_action_state(Ls : [0/0 | Rs], enroll, Ls ^ [T/3 | Rs]) :-
+    cohort(T/3).
+state0_action_state(Ls : [1/3 | Rs], enroll, Ls ^ [T/6 | Rs]) :-
+    cohort(T2/3),
+    T #= 1 + T2.
+% At least if the analogy with stacks makes sense, then you don't
+% realize the right-hand stack had no further doses until you pop
+% the top element off. On that account, it makes perfect sense to
+% make this determination ("I *CAN'T* continue!") on the ':' side.
+% (The simplicity of this predicate also argues in favor.)
+state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
+    length(Ls, D).
+/*
+state0_action_state([L|Ls] : [T0/3 | Rs], declare_mtd, )
+    
+state0_action_state(L ^ [R|Rs], declare_mtd(MTD), []) :-
+    cohorts(L),
+    cohorts([R|Rs]),
+    R .. 
+    append(L, R, Trial), % The concatenation of L & R ...
+    cohorts(Trial),      % ..constitutes a TRIAL (list of cohorts).
+        
+*/
