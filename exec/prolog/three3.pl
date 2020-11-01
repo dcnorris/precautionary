@@ -673,7 +673,7 @@ tallies([Q|Qs]) :-
 % of these functors to state0_FOCUS_state().
 state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
     Q &< 1/3.
-state0_action_state(Ls ^ [Q|Rs], stay, [Ls] : [Q|Rs]) :-
+state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
     Q = 1/3.
 % TODO: Express this clause more ABSTRACTLY, then later PROVE
 %       that deescalation occurs only to a pre-existing 0/3 tally.
@@ -744,8 +744,8 @@ state0_action_state(Ls : [Q0 | Rs], enroll, Ls ^ [Q | Rs]) :-
 
 % If we 'take seriously' the analogy with stacks, then you don't
 % realize the right-hand stack had no further doses until you pop
-% the top element off and see 'nothing there'. On that account,
-% it seems natural to make this determination ("I *CAN'T* continue!")
+% the top element off and notice 'nothing there'. On that account,
+% it seems natural to make the determination "I *CAN'T* continue!"
 % on the ':' side.
 % (The sheer simplicity of this predicate also argues in favor.)
 % (Can I appeal also to the 'exceptional' nature of this determination?)
@@ -753,77 +753,54 @@ state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
     length(Ls, D). % RP2D is highest prespecified dose, D.
 
 /*
-state0_action_state([L|Ls] : [T0/3 | Rs], declare_mtd, )
-    
-state0_action_state(L ^ [R|Rs], declare_mtd(MTD), []) :-
-    tallies(L),
-    tallies([R|Rs]),
-    R =.. 
-    append(L, R, Trial), % The concatenation of L & R ...
-    tallies(Trial),      % ..constitutes a TRIAL (list of cohorts).
-        
+Instead of regarding merely TALLIES as presumably safe/toxic,
+we apply these notions rather (and more properly) to the DOSES
+themselves -- as represented through lists.
+Interestingly, this helps render state0_action_state( _ , stop, declare_mtd)
+through one goal without a special case.
 */
+presumably_safe([]). % [] corresponds to zero dose
+presumably_safe([Q|_]) :- % "no need to enroll further at this dose to say it's okay"
+    tally(Q),
+    Q = T/6,   % TODO: Might I obtain the no-deescalation variant of 3+3
+    T in 0..1. %       simply by modifying these 2 goals?
+
+presumably_toxic([Q|_]) :-
+    tally(Q),
+    Q = T/N,
+    T #> 1.
+
+%% About which (indeterminate) tallies do we presume nothing?
+%?- tally(I), \+ presumably_safe([I]), \+ presumably_toxic([I]).
+%@ I = 0/0 ;
+%@ I = 0/3 ;
+%@ I = 1/3 ;
+%@ false.
+
+state0_action_state(Ls : Rs, stop, declare_mtd(MTD)) :-
+    presumably_safe(Ls),
+    presumably_toxic(Rs),
+    length(Ls, MTD).
 
 actions(_) --> [].
-actions(S0) --> [(state(S0)->A->state(S))],
+actions(S0) --> [A->S],
         { state0_action_state(S0, A, S) },
         actions(S).
 
-%% Let's examine conduct of a trial with 3 dose levels.
+%% Let's examine conduct of a trial with 2 dose levels.
 %% (Trials always start off like [0/0, ..., 0/0] : [].)
-%?- phrase(actions([] : [0/0, 0/0, 0/0] : []), Trial).
+%?- phrase(actions([] : [0/0, 0/0]), Trial).
 %@ Trial = [] ;
-%@ false.
-
-% Well okay, then! That's WRONG. Why didn't we enroll?
-%?- state0_action_state([]:[0/0, 0/0], enroll, S).
-%@ S = []^[0/3, 0/0] ;
-%@ S = []^[1/3, 0/0] ;
-%@ S = []^[2/3, 0/0] ;
-%@ S = []^[3/3, 0/0] ;
-%@ false.
-%?- state0_action_state([]^[0/3, 0/0], Action, S).
-%@ Action = escalate,
-%@ S = [0/3]:[0/0] ;
-%@ false.
-%?- state0_action_state([]:[0/3, 0/0], Action, S).
-%@ Action = enroll,
-%@ S = []^[0/6, 0/0] ;
-%@ Action = enroll,
-%@ S = []^[1/6, 0/0] ;
-%@ Action = enroll,
-%@ S = []^[2/6, 0/0] ;
-%@ Action = enroll,
-%@ S = []^[3/6, 0/0] ;
-%@ false.
-%?- state0_action_state([]^[1/6, 0/0], Action, S).
-%@ Action = escalate,
-%@ S = [1/6]:[0/0] ;
-%@ false.
-%?- state0_action_state([1/6]:[0/0], Action, S).
-%@ Action = enroll,
-%@ S = [1/6]^[0/3] ;
-%@ Action = enroll,
-%@ S = [1/6]^[1/3] ;
-%@ Action = enroll,
-%@ S = [1/6]^[2/3] ;
-%@ Action = enroll,
-%@ S = [1/6]^[3/3] ;
-%@ false.
-%?- state0_action_state([1/6]^[3/3], Action, S).
-%@ false.
-%%% AHA! The problem is, I have not fully implemented
-%%% any possible ending for the trial!
-
-%?- length(As,_), phrase(actions([]:[0/0, 0/0]), As).
-%@ As = [] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[1/3, 0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[2/3, 0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[3/3, 0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0])),  (state([]^[0/3, 0/0])->escalate->state([0/3]:[0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[1/3, 0/0])),  (state([]^[1/3, 0/0])->stay->state([[]]:[1/3, 0/0]))] ;
-%@ As = [(state([]:[0/0, 0/0])->enroll->state([]^[0/3, 0/0])),  (state([]^[0/3, 0/0])->escalate->state([0/3]:[0/0])),  (state([0/3]:[0/0])->enroll->state([0/3]^[0/3]))] .
+%@ Trial = [(enroll->[]^[0/3, 0/0])] ;
+%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0])] ;
+%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3])] ;
+%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3]),  (escalate->[0/3, 0/3]:[])] ;
+%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3]),  (escalate->[0/3, 0/3]:[]),  (stop->mtd_notfound(2))] .
+%
+%% FASCINATING! I had never thought about this case, but the decision of the program
+%% in retrospect looks reasonable. I do rather suspect that the spirit of the '=< 1/6'
+%% definition would require that any dose 'reported out' of the trial (e.g. as RP2D)
+%% ought to have been tested in 6 patients.
 
 /* TODO ...
 
