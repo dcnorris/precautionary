@@ -1,6 +1,8 @@
-# precautionary 0.2-0
+# precautionary 0.1-5
 
-* Added vignette on pharm priors implicit in safety expectations
+## Changes
+
+* Accommodate new 'true_prob_eff' arg in escalation::simulate_trials
 
 # precautionary 0.1-4
 

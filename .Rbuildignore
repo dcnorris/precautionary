@@ -6,3 +6,4 @@
 ^inst/shiny-apps/.*/rsconnect
 ^data-raw$
 ^vignettes/Implicit-priors.Rmd
+^exec/prolog/three3.pl

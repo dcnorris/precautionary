@@ -65,44 +65,42 @@ esc(D, Lo..Hi) --> ...
 
 %% TODO: WLOG set Lo == 1 by convention.
 
+tox(T) :- T in 0..3,
+	  *indomain(T). % Can easly switch off labeling here!
+
 % Mnemonic: * is ^ that 'splatted' on dose ceiling.
 esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi,
-				T in 0..3,
-				indomain(T) },
-		    (   { T in 0..1 } ->
-			[mtd_notfound(Hi)]
-		    ;   des(Hi, Lo)
+				tox(T) },
+		    (   { T #=< 1 }, [mtd_notfound(Hi)]
+		    ;	{ T #>= 2 }, des(Hi, Lo)
 		    ).
 esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1,
 			       D1 in Lo..Hi,
-			       T in 0..3,
-			       indomain(T) },
-		   (   {T #= 0} -> esc(D1, Lo..Hi)
-		   ;   {T #= 1} -> sta(D1, Lo..Hi)
-		   ;   des(D1, Lo)
+			       tox(T) },
+		   (   {T #= 0}, esc(D1, Lo..Hi)
+		   ;   {T #= 1}, sta(D1, Lo..Hi)
+		   ;   {T #> 1}, des(D1, Lo)
 		   ).
 
 % TODO: Is special case sta(D, _..D) needed?
 sta(D, _..D) --> [D - 0], [mtd_notfound(D)].
 sta(D, Lo..Hi) --> [D - 0], { D #< Hi,
-			      D in Lo..Hi,
-			      indomain(D) },
+			      D in Lo..Hi },
 		   esc(D, D..Hi).
-sta(D, Lo.._) --> [D - T], { T in 1..3,
-			     indomain(T) },
+sta(D, Lo.._) --> [D - T], { tox(T), T #> 0 },
 		  des(D, Lo).
 
 % As a mirror image of esc//2, des(D, Lo) moves
 % downward FROM D, to max(D-1,Lo).
 % NB: De-escalation to D-1 implies Hi #= D - 1.
+%% TODO: Does this mean des could be written as des(Lo..D),
+%%       somehow exploiting the impossibility of Y..X with Y > X?
 des(D, Lo) --> { D_1 #= D - 1 },
 	       (   { D_1 #= Lo } ->
 		   [declare_mtd(Lo)]
-	       ;   [D_1 : T], { T in 0..3,
-				indomain(T) },
-		   (   { T in 0..1 } ->
-		       [declare_mtd(D_1)]
-		   ;   des(D_1, Lo)
+	       ;   [D_1 : T], { tox(T) },
+		   (   { T #=< 1 }, [declare_mtd(D_1)]
+		   ;   { T #>= 2 }, des(D_1, Lo)
 		   )
 	       ).
 
@@ -118,6 +116,59 @@ n_trials(Drange, XY) :-
     XY = (Dmax, N).
 
 ?- n_trials(1..8, XY).
+%@ XY =  (1, 5) ;
+%@ XY =  (2, 15) ;
+%@ XY =  (3, 37) ;
+%@ XY =  (4, 83) ;
+%@ XY =  (5, 177) ;
+%@ XY =  (6, 367) ;
+%@ XY =  (7, 749) ;
+%@ XY =  (8, 1515).
+%@ XY =  (1, 10) ;
+%@ XY =  (2, 46) ;
+%@ XY =  (3, 154) ;
+%@ XY =  (4, 442) ;
+%@ XY =  (5, 1162) ;
+%@ XY =  (6, 2890) ;
+%@ XY =  (7, 6922) ;
+%@ XY =  (8, 16138).
+
+?- phrase(esc(0, 0..2), Tr).
+%@ Tr = [1^0, 2^0, 2*_7658, mtd_notfound(2)],
+%@ _7658 in 0..1 ;
+%@ Tr = [1^0, 2^0, 2*_9396, 1:_9408, declare_mtd(1)],
+%@ _9396 in 2..3,
+%@ _9408 in 0..1 ;
+%@ Tr = [1^0, 2^0, 2*_10960, 1:_10972, declare_mtd(0)],
+%@ _10960 in 2..3,
+%@ _10972 in 2..3 ;
+%@ Tr = [1^0, 2^1, 2-0, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^1, 2-_13576, 1:_13588, declare_mtd(1)],
+%@ _13576 in 1..3,
+%@ _13588 in 0..1 ;
+%@ Tr = [1^0, 2^1, 2-_15140, 1:_15152, declare_mtd(0)],
+%@ _15140 in 1..3,
+%@ _15152 in 2..3 ;
+%@ Tr = [1^0, 2^_17066, 1:_17078, declare_mtd(1)],
+%@ _17066 in 2..3,
+%@ _17078 in 0..1 ;
+%@ Tr = [1^0, 2^_18618, 1:_18630, declare_mtd(0)],
+%@ _18618 in 2..3,
+%@ _18630 in 2..3 ;
+%@ Tr = [1^1, 1-0, 2^0, 2*_20676, mtd_notfound(2)],
+%@ _20676 in 0..1 ;
+%@ Tr = [1^1, 1-0, 2^0, 2*_21998, declare_mtd(1)],
+%@ _21998 in 2..3 ;
+%@ Tr = [1^1, 1-0, 2^1, 2-0, mtd_notfound(2)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-_23998, declare_mtd(1)],
+%@ _23998 in 1..3 ;
+%@ Tr = [1^1, 1-0, 2^_25308, declare_mtd(1)],
+%@ _25308 in 2..3 ;
+%@ Tr = [1^1, 1-_26568, declare_mtd(0)],
+%@ _26568 in 1..3 ;
+%@ Tr = [1^_27854, declare_mtd(0)],
+%@ _27854 in 2..3.
+
 %@ XY =  (1, 10) ;
 %@ XY =  (2, 46) ;
 %@ XY =  (3, 154) ;
@@ -126,6 +177,38 @@ n_trials(Drange, XY) :-
 %@ XY =  (6, 2890) ;
 %@ XY =  (7, 6922) ;
 %@ XY =  (8, 16138). 
+
+% The DCG esc//2 is a dose-escalation trial proceeding
+% from a condition where the current dose in arg1, and
+% the dose range still being entertained as a possible
+% MTD is arg2.
+
+% Had I tried to write this less 'economically', I may
+% have preferred something like:
+% below_current_above//3
+% below_current_above(Ls, D, Rs)
+%% We start a dose-escalation trial by escalating from the
+%% null situation of 0 toxicities at dose zero ([]).
+detrial(N) --> { length(Ds, N) }, de(<, [], [], Ds).
+% de(C, D, E) means we just observed a tox count (<,=,>)~(low,middling,high)
+% on dose length(D), with additional doses E above it still being considered.
+% Perhaps the full computation requires maintaining 3 lists, the first of which
+% is doses known to be safe, the second being those tried only once (and therefore
+% not presumed safe or unsafe) and the third being doses not yet tried.
+de(<, Ls, []) --> [mtd_notfound(Top)], { length(Ls, Top) }. % 'hit ceiling'
+de(<, Ls, [R|Rs]) --> [D^T], % escalating to dose R ==> enrolling 3, observing T DLTs,
+		      { length([R|Ls], D), T in 0..3 },
+		      zcompare(C, T, 1),
+		      de(C, [R|Ls], Rs).
+de(=, [X|Ls], Rs) --> [D-T], % NB: de(=,...) is a further cohort
+		      { length([X|Ls], D), T in 0..3 },
+		      %%zcompare(C, T, 1),
+		      (   T #< 1, de(<, [X|Ls], Rs)
+		      ;   declare(T, X)
+		      ).
+de(>, [X|Ls], Rs) --> [D:T], { T in 2..3 }. % NB: de(>,...) is a 2nd cohort on 'downslope'
+			
+
 
 /*******
 
@@ -148,11 +231,6 @@ Another interesting approach would be to try to PROVE various local
 properties of the existing DCG.
 
 */
-
-de([], [1^T]) :- T in 0..3, indomain(T).
-de([D^0|E], [D1^T,D^0|E]) :- D1 #= D + 1, D1 #=< 4, T in 0..3, indomain(T).
-de([D^1|E], [D^T,D^1|E]) :- T in 0..3, indomain(T).
-de([D^T|E], [D_1^T_1,D^T|E]) :- T in 2..3, D_1 #= D - 1, D_1 #> 0, T_1 in 0..3, indomain(T_1).
 
 /*******
 
