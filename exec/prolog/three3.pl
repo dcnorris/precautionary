@@ -677,7 +677,7 @@ state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
     Q = 1/3.
 % TODO: Express this clause more ABSTRACTLY, then later PROVE
 %       that deescalation occurs only to a pre-existing 0/3 tally.
-state0_action_state([0/3|Ls] ^ Rs, deescalate, [Ls] : [0/3|Rs]) :-
+state0_action_state([0/3|Ls] ^ Rs, deescalate, Ls : [0/3|Rs]) :-
     Rs = [Q|_],
     1/3 &< Q.
 /****
