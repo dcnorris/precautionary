@@ -93,12 +93,11 @@ sta(D, Lo.._) --> [D - T], { tox(T), T #> 0 },
 % As a mirror image of esc//2, des(D, Lo) moves
 % downward FROM D, to max(D-1,Lo).
 % NB: De-escalation to D-1 implies Hi #= D - 1.
-%% TODO: Does this mean des could be written as des(Lo..D),
+%% TODO: Does this mean des//2 could be written as des(Lo..D),
 %%       somehow exploiting the impossibility of Y..X with Y > X?
 des(D, Lo) --> { D_1 #= D - 1 },
-	       (   { D_1 #= Lo } ->
-		   [declare_mtd(Lo)]
-	       ;   [D_1 : T], { tox(T) },
+	       (   { D_1 #= Lo }, [declare_mtd(Lo)]
+	       ;   { D_1 #> Lo }, [D_1 : T], { tox(T) },
 		   (   { T #=< 1 }, [declare_mtd(D_1)]
 		   ;   { T #>= 2 }, des(D_1, Lo)
 		   )
@@ -116,6 +115,14 @@ n_trials(Drange, XY) :-
     XY = (Dmax, N).
 
 ?- n_trials(1..8, XY).
+%@ XY =  (1, 5) ;
+%@ XY =  (2, 15) ;
+%@ XY =  (3, 37) ;
+%@ XY =  (4, 83) ;
+%@ XY =  (5, 177) ;
+%@ XY =  (6, 367) ;
+%@ XY =  (7, 749) ;
+%@ XY =  (8, 1515).
 %@ XY =  (1, 5) ;
 %@ XY =  (2, 15) ;
 %@ XY =  (3, 37) ;
