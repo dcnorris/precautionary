@@ -85,7 +85,7 @@ The data-generating process (DGP) for the ordinal outcomes in a dose-escalation 
 * $(\mu, \CV)$: *centrality* and *dispersion* for the distribution of $\MTDi$
 * $r_0$: a *therapeutic index* of the drug.
 
-A generic Bayesian hyperprior would draw each these 3 parameters from a distribution itself characterized by centrality and dispersion parameters, multiplying the requirement to a total of 6 hyperparameters. But this total can be reduced to 4 by drawing $\CV$ from the 1-parameter [Rayleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution),^[This distribution has a standard deviation in the fixed ratio $\sqrt{2-\pi/2} \approx 0.655$ to its mode.] and by conditioning the analysis on $r_0$ as if it were known.^[Equivalently, we might regard $r_0$ as having a vague prior over $(r_{\mathrm{min}},\infty)$.] Together, these identifying restrictions allow us to abtain a workable hyperparameter space with the addition of just 1 further parameter:
+A generic Bayesian hyperprior would draw each these 3 parameters from a distribution itself characterized by centrality and dispersion parameters, multiplying the requirement to a total of 6 hyperparameters. But this total can be reduced to 4 by drawing $\CV$ from the 1-parameter [Rayleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution),^[This distribution has a standard deviation in the fixed ratio $\sqrt{2-\pi/2} \approx 0.655$ to its mode.] and by conditioning the analysis on $r_0$ as if it were known.^[Equivalently, we might regard $r_0$ as having a vague prior over $(r_{\mathrm{min}},\infty)$.] Together, these identifying restrictions allow us to obtain a workable hyperparameter space with the addition of just 1 further parameter:
 
 * $\sigma$: uncertainty about the centrality parameter $\mu$.
 
@@ -163,7 +163,7 @@ knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the sta
 
 Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
 
-For example, writing the $D$-vector of DLT probabilities as $(p_d)$, and the complementary probabilites as $(q_d) \equiv (1-p_d)$, then the vector $(\pi^j)$ of path probabilities may be written^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed.]
+For example, writing the $D$-vector of DLT probabilities as $(p_d)$, and the complementary probabilities as $(q_d) \equiv (1-p_d)$, then the vector $(\pi^j)$ of path probabilities may be written^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed.]
 
 $$
 \begin{align}
