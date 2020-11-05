@@ -66,7 +66,7 @@ esc(D, Lo..Hi) --> ...
 %% TODO: WLOG set Lo == 1 by convention.
 
 tox(T) :- T in 0..3,
-	  *indomain(T). % Can easly switch off labeling here!
+	  *indomain(T). % prefix w/ * to switch off labeling
 
 % Mnemonic: * is ^ that 'splatted' on dose ceiling.
 esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi,
@@ -196,26 +196,87 @@ n_trials(Drange, XY) :-
 % below_current_above(Ls, D, Rs)
 %% We start a dose-escalation trial by escalating from the
 %% null situation of 0 toxicities at dose zero ([]).
-detrial(N) --> { length(Ds, N) }, de(<, [], [], Ds).
+detrial(N) --> { length(Ds, N) }, de(>, Ds, [], []).
 % de(C, D, E) means we just observed a tox count (<,=,>)~(low,middling,high)
 % on dose length(D), with additional doses E above it still being considered.
 % Perhaps the full computation requires maintaining 3 lists, the first of which
 % is doses known to be safe, the second being those tried only once (and therefore
 % not presumed safe or unsafe) and the third being doses not yet tried.
-de(<, Ls, []) --> [mtd_notfound(Top)], { length(Ls, Top) }. % 'hit ceiling'
-de(<, Ls, [R|Rs]) --> [D^T], % escalating to dose R ==> enrolling 3, observing T DLTs,
-		      { length([R|Ls], D), T in 0..3 },
-		      zcompare(C, T, 1),
-		      de(C, [R|Ls], Rs).
-de(=, [X|Ls], Rs) --> [D-T], % NB: de(=,...) is a further cohort
-		      { length([X|Ls], D), T in 0..3 },
-		      %%zcompare(C, T, 1),
-		      (   T #< 1, de(<, [X|Ls], Rs)
-		      ;   declare(T, X)
+% That first list accomplishes essentially the tracking of the lower end
+% of the currently considered range.
+% Could I aim for greater clarity on this?
+% What if I think about the middle list as a temporary holding area for doses
+% that have been tried only once, with [in 3+3, at least] no toxicities?
+% Can I treat them initially in some 3+3-specific way, but with the hope of
+% finding more general treatments later?
+% LIST 1: Descending list of doses with head having 0/6 or 1/6
+% LIST 2: Descending list of doses all having resulted so far 0/3
+% LIST 3: Ascending list of as-yet-untried doses
+% de(<|=|>, [M|_], [V|Vs], [Z|Zs])
+%% Hmmm... It seems I get some traction by treating LIST 2 as the concatenation
+%% of LISTs 2 + 1 as described here, as if LIST 2 were a list *difference* Vs-Ms.
+%% The constraint that Ms is a tail of Vs ought to be PROVEN.
+%% What does de(C, Ms, [V|Vs], Xs) **MEAN**?
+%% - length(Ms, MTD) would be a 'safe guess' for MTD, although possibly too low
+%% - We have just done V~T with C giving a judgment via T as follows:
+%%   (<) T was low enough to drive escalation
+%%   (>) T was high enough to demand de-escalation
+%%   (=) T was 'middling' value indicating another cohort at current dose V
+%% - Xs are as-yet untried
+% It seems to me that I am losing something of the CONTEXT of the C.
+% Maybe this impression arises only because I have failed to clarify
+% exactly WHEN the C applies! Is it a description of what has just
+% occurred at the state (Ms, Vs, Xs)? YES!
+% ---
+% I think there may be some value to reordering the arguments to read
+% in descending order, and reassigning the >,=,< conditionals to say
+% which direction (greater, same, lower) we should SHIFT the current dose.
+% But WHAT IS THE CURRENT DOSE in this predicate? Can I say it's the head
+% of append(Vs, Ms)?
+% What if I say the whole dose series is always append(Zs, Vs, Ms), and
+% that the commas here are 'bookmarks' within the list?
+current_dose(Vs, Ms, D) :-
+    append(Vs, Ms, Ds),
+    length(Ds, D).
+de(>, [], Vs, Ms) --> [mtd_notfound(Top)],
+		      { current_dose(Vs, Ms, Top) }. % 'hit ceiling'
+de(>, [X|Xs], Vs, Ms) --> [D^T], % escalating to dose X ==> enrolling 3, observing T DLTs,
+			 { current_dose([X|Vs], Ms, D),
+			   tox(T),
+			   zcompare(C, 1, T) },
+			 de(C, Xs, [X|Vs], Ms).
+de(=, Zs, Vs, Ms) --> [D-T], % NB: de(=,...) is a further cohort
+		      { current_dose(Vs, Ms, D),
+			tox(T) },
+		      %zcompare(C, 1, T),
+		      (	  {0 #= T}, de(>, Zs, [], Vs)
+		      ;	  {0 #< T}, de(<, Vs, Ms)
 		      ).
-de(>, [X|Ls], Rs) --> [D:T], { T in 2..3 }. % NB: de(>,...) is a 2nd cohort on 'downslope'
-			
+% Note the 'loss of arity' of de(<, ., .) ~~ "all downhill from here.."
+de(<, [], Ms) --> [declare(MTD)], { length(Ms, MTD) }.
+de(<, [V|Vs], Ms) --> [D:T],
+		      { length([V|Vs],D),
+			tox(T) },
+		      (	  {T #= 0}, [declare(D)]
+		      ;	  {T #> 0}, de(>, Ms, Vs)
+		      ).
 
+?- phrase(detrial(2), Tr).
+%@ Tr = [1^0, 2^0, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^1, 2-0, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^1, 2-_10184, 2:0, declare(2)],
+%@ _10184 in 1..3 ;
+%@ Tr = [1^1, 1-0, 2^0, mtd_notfound(2)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-0, mtd_notfound(1)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-_14258, 1:0, declare(1)],
+%@ _14258 in 1..3 ;
+%@ Tr = [1^1, 1-_15762, 1:0, declare(1)],
+%@ _15762 in 1..3 ;
+%@ false.
+
+/* Consider doing something to obtain a fair enumeration
+ * by ordering the trials in descending order of toxicity.
+ */
 
 /*******
 
@@ -554,7 +615,8 @@ toolow_maybe(Low, Maybe) :-
 % What does a  cohort look like?
 cohort(DLTs/N) :-
     N #= 3, % initially, we permit only cohorts of 3
-    DLTs in 0..N, indomain(DLTs).
+    DLTs in 0..N,
+    *indomain(DLTs).
 %?- cohort(C).
 %@ C = 0/3 ;
 %@ C = 1/3 ;
@@ -566,10 +628,11 @@ tally(DLTs/Enrolled) :-
     Enrolled in 0..6, indomain(Enrolled),
     % -------------------------------------------------------------------------------
     Ncohorts in 0..2,         % TODO: Release this constraint to permit finer-grained
-    indomain(Ncohorts),       %       enrollment 0..6 as above, which will be needed
+    *indomain(Ncohorts),       %       enrollment 0..6 as above, which will be needed
     Enrolled #= Ncohorts * 3, %       to model Simon &al 1997 accelerated titration.
     % -------------------------------------------------------------------------------
-    DLTs in 0..Enrolled, indomain(DLTs).
+    DLTs in 0..Enrolled,
+    *indomain(DLTs).
 %?- tally(C).
 %@ C = 0/0 ;
 %@ C = 0/3 ;
@@ -594,6 +657,9 @@ enrollable_tally(T0/N0) :-
 %@ Q = 0/3 ;
 %@ Q = 1/3 ;
 %@ false.
+
+unenrollable_tally(T/3) :- T #> 1.
+unenrollable_tally(T/6).
 
 % How do cohorts ACCUMULATE?
 tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
@@ -683,6 +749,42 @@ noworse_than(T0/N0, T1/N1) :-
 %@ Q = 1/6 ;
 %@ false.
 
+on_par(T0/N0, T1/N1) :-
+    tally(T0/N0), N0 #> 0,
+    tally(T1/N1), N1 #> 0,
+    T0*N1 #= N0*T1.
+
+:- op(900, xfx, user:(&=)).
+&=(Q1, Q2) :- on_par(Q1, Q2).
+
+%% Do the following results suggest on_par/2 was a bad idea?
+%?- T1/N1 &= T2/N2.
+%@ T1 = T2,
+%@ N1 = N2, N2 = 3,
+%@ T2 in 0..3 ;
+%@ N1 = 3,
+%@ N2 = 6,
+%@ T1 in 0..3,
+%@ 2*T1#=T2,
+%@ T2 in 0..6,
+%@ 2*_8254#=T2,
+%@ _8254 in 0..3 ;
+%@ N1 = 6,
+%@ N2 = 3,
+%@ T1 in 0..6,
+%@ T1#=2*T2,
+%@ 2*_14226#=T1,
+%@ T2 in 0..3,
+%@ _14226 in 0..3 ;
+%@ T1 = T2,
+%@ N1 = N2, N2 = 6,
+%@ T2 in 0..6.
+
+%% This is really the only reason I wrote down on_par/2 in the first place.
+%?- Q &= 1/3.
+%@ Q = 1/3 ;
+%@ Q = 2/6.
+
 :- op(900, xfx, user:(&=<)).
 &=<(Q1, Q2) :- noworse_than(Q1, Q2).
 %?- 1/3 &=< Q.
@@ -759,17 +861,57 @@ tallies([Q|Qs]) :-
 state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
     Q &< 1/3.
 state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
-    Q = 1/3.
+    Q &= 1/3, % <-- Roughly a statement about meeting 'target toxicity rate'
+    enrollable_tally(Q).
 % TODO: Express this clause more ABSTRACTLY, then later PROVE
 %       that deescalation occurs only to a pre-existing 0/3 tally.
-state0_action_state([0/3|Ls] ^ Rs, deescalate, Ls : [0/3|Rs]) :-
-    Rs = [Q|_],
-    1/3 &< Q.
+state0_action_state([0/3|Ls] ^ [Q|Rs], deescalate, Ls : [0/3]) :-
+    presumably_toxic(Q).
 /****
 The following general queries seem to PROVE
 key properties of 3+3 have been attained.
  ****/
 %?- state0_action_state(S0, deescalate, S).
+%@ S0 = [0/3|_9864]^[[_9886/3|_9882]|_9876],
+%@ S = _9864:[0/3],
+%@ _9886 in 2..3 ;
+%@ S0 = [0/3|_12292]^[[_12314/6|_12310]|_12304],
+%@ S = _12292:[0/3],
+%@ _12314 in 2..6.
+/* ---
+ What does this show about de-escalation?
+ 1. It only ever occurs back to a dose where tally is 0/3
+ 2. It never occurs after any of {0,1}/3, {0,1}/6
+ 3. Resulting state S is of 'pending' type ":"
+ 4. This 0/3 tally is the 'focus dose' at head of right-hand list
+ 5. The dose we de-escalated FROM looked like T/6 with T in 3..6
+ 6. The dose we de-escalated FROM gets TRUNCATED from right-hand list
+ */
+
+%?- state0_action_state(S0, escalate, S).
+%@ S0 = _514^[0/3|_522],
+%@ S = [0/3|_514]:_522 ;
+%@ S0 = _5610^[_5622/6|_5618],
+%@ S = [_5622/6|_5610]:_5618,
+%@ _5622 in 0..1.
+/* ---
+ What does this say about escalation?
+ 1. It may occur ONLY after a 0/3, 0/6 or 1/6 observation
+    (NB: The 0/6 observation is not excluded BY THIS PREDICATE ALONE.)
+ 2. Escalation leaves us in a ':' state
+ 3. The RHS of ths ':' state MAY be empty list [].
+ */
+
+%?- state0_action_state(S0, stay, S).
+%@ S0 = _7054^[1/3|_7062],
+%@ S = _7054:[1/3|_7062] ;
+%@ false.
+/* ---
+ That result speaks for itself!
+ */
+
+
+
 %@ S0 = [0/3|_47804]^[2/3|_47840],
 %@ S = [_47804]:[0/3, 2/3|_47840] ;
 %@ S0 = [0/3|_47804]^[3/3|_47840],
@@ -855,11 +997,32 @@ presumably_toxic([Q|_]) :-
     Q = T/N,
     T #> 1.
 
+?- X is 4 rdiv 7.
+%@ X = 4r7.
+
+?- X is log(3).
+%@ X = 1.0986122886681098.
+%@ ERROR: Syntax error: Operator expected
+%@ ERROR: X is log
+%@ ERROR: ** here **
+%@ ERROR:  3 . 
+
 %% About which (indeterminate) tallies do we presume nothing?
 %?- tally(I), \+ presumably_safe([I]), \+ presumably_toxic([I]).
 %@ I = 0/0 ;
 %@ I = 0/3 ;
 %@ I = 1/3 ;
+%@ false.
+%% NOTE: These are precisely the enrollable doses!
+
+%?- enrollable_tally(T).
+%@ T = 0/0 ;
+%@ T = _8562/3,
+%@ _8562 in 0..1 ;
+%@ false.
+
+%% PROOF: Enrollable tallies are NEITHER presumably safe NOR presumably toxic.
+%?- enrollable_tally(T), (presumably_safe([T]); presumably_toxic([T])).
 %@ false.
 
 state0_action_state(Ls : Rs, stop, declare_mtd(MTD)) :-
@@ -872,16 +1035,41 @@ actions(S0) --> [A->S],
         { state0_action_state(S0, A, S) },
         actions(S).
 
+%% TODO: Separated logical properties of what I write out
+%%       from the actual writing-out of that output.
+%%       Ideal description is always formulated by pure means.
+
 %% Let's examine conduct of a trial with 2 dose levels.
 %% (Trials always start off like [0/0, ..., 0/0] : [].)
 %?- phrase(actions([] : [0/0, 0/0]), Trial).
-%@ Trial = [] ;
-%@ Trial = [(enroll->[]^[0/3, 0/0])] ;
-%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0])] ;
-%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3])] ;
-%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3]),  (escalate->[0/3, 0/3]:[])] ;
-%@ Trial = [(enroll->[]^[0/3, 0/0]),  (escalate->[0/3]:[0/0]),  (enroll->[0/3]^[0/3]),  (escalate->[0/3, 0/3]:[]),  (stop->mtd_notfound(2))] .
-%
+
+
+%?- X #< Y, Y #< X.
+%@ Y#=<X+ -1,
+%@ X#=<Y+ -1.
+
+% This models constraints as a GRAPH. "R-consistency"
+?- [X,Y,Z] ins 0..2, all_distinct([X,Y,Z]), Z in 0..1, X in 0..1.
+%@ Y = 2,
+%@ X in 0..1,
+%@ all_distinct([X, 2, Z]),
+%@ Z in 0..1.
+%@ X in 0..2,
+%@ all_distinct([X, Y, Z]),
+%@ Y in 0..2,
+%@ Z in 0..1.
+
+
+?- [X,Y,Z] ins 0..1, all_different([X,Y,Z]).
+%@ X in 0..1,
+%@ all_different([X, Y, Z]),
+%@ Y in 0..1,
+%@ Z in 0..1.
+%@ ERROR: Syntax error: Operator expected
+%@ ERROR: [X,Y,Z] ins 
+%@ ERROR: ** here **
+%@ ERROR: 0...1, all_different([X,Y,Z]) . 
+
 %% FASCINATING! I had never thought about this case, but the decision of the program
 %% in retrospect looks reasonable. I do rather suspect that the spirit of the '=< 1/6'
 %% definition would require that any dose 'reported out' of the trial (e.g. as RP2D)
