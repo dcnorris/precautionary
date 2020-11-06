@@ -426,13 +426,88 @@ key properties of 3+3 have been attained.
 %%actions(_) --> [].
 actions(mtd_notfound(_)) --> [].
 actions(declare_mtd(_)) --> [].
-actions(S0) --> [A->S],
+actions(S0) --> [S0->A->S],
         { state0_action_state(S0, A, S) },
         actions(S).
 
-%% TODO: Separated logical properties of what I write out
+%% TODO: Separate logical properties of what I write out
 %%       from the actual writing-out of that output.
 %%       Ideal description is always formulated by pure means.
+
+%% Let me BEGIN with a simple CONDENSATION of the S0->A-S terms.
+%% NB: This will help to DEFINE the condensed notation *itself*,
+%%     in terms of the domain-level concepts elaborated through
+%%     state0_action_state/3 and actions//1.
+%%
+%% Might I do this best using SEMICONTEXT NOTATION? I wonder if
+%% such a 'translation' effectively DEMONSTRATES "how to read"
+%% or "how to *interpret*" the events and course of a trial.
+%% On that view, you might even say "the more DCGs, the better",
+%% since DIVERSE 'interpretations' lend DEPTH and FALSIFIABILITY
+%% to the CONTENT of the program. Every new interpretation of
+%% the dose-escalation design generates new ways to express our
+%% expectations and understandings OBJECTIVELY.
+%%
+
+length_plus_1(L, D) :-
+    length(L, D_1),
+    D #= D_1 + 1.
+
+state_currentdose(L^_, D) :- length_plus_1(L, D).
+
+%% TODO: Make this DCG translator more abstract
+%%       by implementing a 'state-difference'
+%%       operator that yields enrolled cohort.
+%% NB: This will also reduce duplicated code!
+
+state0_cohort_state(L:[Q0|R], C, L^[Q1|R]) :-
+    tally0_cohort_tally(Q0, C, Q1).
+
+condensed, [D^T] -->
+    [ _->escalate->_, L:[T0/N0|_]->enroll->L^[T1/N1|_] ],
+    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
+      length_plus_1(L, D) }.
+condensed, [D-T] -->
+    [ _->stay->_, L:[T0/N0|_]->enroll->L^[T1/N1|_]],
+    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
+      length_plus_1(L, D) }.
+condensed, [D:T] -->
+    [ _->deescalate->_, L:[T0/N0|_]->enroll->L^[T1/N1|_]],
+    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
+      length_plus_1(L, D) }.
+
+
+%?- Use list-difference version, phrase/3 ...
+%?- phrase(condensed, [ []^[0/3,0/0]->escalate->[0/3]:[0/0], [0/3]:[0/0]->enroll->[0/3]^[1/3] ], Tx).
+%@ Tx = [2^1] ;
+%@ false.
+%@ ERROR: Unknown procedure: state0_action_state/5
+%@ ERROR:   However, there are definitions for:
+%@ ERROR:         state0_action_state/3
+%@ ERROR: 
+%@ ERROR: In:
+%@ ERROR:   [11] state0_action_state([...]:[...],enroll,[...]^[...],[],_10160)
+%@ ERROR:   [10] condensed([(... -> ...),...],_10222) at /var/folders/pb/d6v8rn4j6x10bzx8qfrs6w6w0000gn/T/ediprolog26162WGx:451
+%@ ERROR:    [9] <user>
+%@    Exception: (11) state0_action_state([0/3]:[0/0], enroll, [0/3]^[1/3], [], _10462) ? Unknown option (h for help)
+%@    Exception: (11) state0_action_state([0/3]:[0/0], enroll, [0/3]^[1/3], [], _10506) ? creepa
+%@ Tx = [2^1].
+
+%?- phrase(condensed, L, T).
+%@ L = [1^_9810|_9804],
+%@ T = [(_9832->escalate->_9840),  ([]:[_9868/_9870|_9864]->enroll->[]^[_9892/_9894|_9888])|_9804],
+%@ _9810+_9868#=_9892,
+%@ _9870+3#=_9894 .
+
+/* --------------------------------------------------
+
+ Today, my efforts have to be focused on achieving easily vettable
+ displays of TRIAL PATHS.
+
+1. Introduce a format/4 predicate that maps (S0,Act,S) --> Term.
+2. 
+
+ */
 
 %% Let's examine conduct of a trial with JUST 1 (nonzero) dose level.
 %% (Trials always start off in state []:[0/0, ..., 0/0].)
