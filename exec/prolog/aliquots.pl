@@ -45,8 +45,8 @@ enrollable_tally(T0/N0) :-
 %@ false.
 
 % Which tallies RULE OUT further enrollment at a dose?
-unenrollable_tally(T/3) :- T #> 1. % 'too toxic'
-unenrollable_tally(T/6).           % 'enough already'
+unenrollable_tally(T/3) :- tally(T/3), T #> 1. % 'too toxic'
+unenrollable_tally(T/6) :- tally(T/6). % 'enough already'
 
 %?- unenrollable_tally(Q).
 %@ Q = _5464/3,
@@ -219,8 +219,18 @@ presumably_toxic([Q|_]) :-
 %@ Q = _6862/6,
 %@ _6862 in 2..6.
 
-%% PROOF: Enrollable tallies are NEITHER presumably safe NOR presumably toxic.
-%?- enrollable_tally(T), (presumably_safe([T]); presumably_toxic([T])).
+%% PROOF: Presumable tallies are NOT enrollable
+%?- (presumably_safe([T]); presumably_toxic([T])), enrollable_tally(T).
+%@ false.
+
+%% PROOF: Enrollable and unenrollable tallies are disjoint
+%?- enrollable_tally(Q), unenrollable_tally(Q).
+%@ false.
+
+%?- enrollable_tally(T/N).
+%@ T = N, N = 0 ;
+%@ N = 3,
+%@ T in 0..1 ;
 %@ false.
 
 % Handling the (exceptional) MTD-not-found case in the ENROLLMENT
@@ -248,8 +258,9 @@ state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
 state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
     Q &= 1/3, % <-- Roughly a statement about meeting 'target toxicity rate'
     enrollable_tally(Q).
-state0_action_state([0/3|Ls] ^ [Q|Rs], deescalate, Ls : [0/3]) :-
-    presumably_toxic(Q).
+state0_action_state([L|Ls] ^ Rs, deescalate, Ls : [L]) :-
+    enrollable_tally(L),
+    presumably_toxic(Rs).
 state0_action_state(Ls ^ Rs, stop, declare_mtd(MTD)) :-
     presumably_safe(Ls),
     presumably_toxic(Rs),
@@ -263,11 +274,14 @@ key properties of 3+3 have been attained.
 %@ RP2D = 0,
 %@ S0 = []:[] ;
 %@ RP2D = 1,
-%@ S0 = [_7606]:[] ;
+%@ S0 = [_6146/6]:[],
+%@ _6146 in 0..1 ;
 %@ RP2D = 2,
-%@ S0 = [_7606, _8680]:[] ;
+%@ S0 = [_7652/6, _7658]:[],
+%@ _7652 in 0..1 ;
 %@ RP2D = 3,
-%@ S0 = [_7606, _8680, _9754]:[] ; ...
+%@ S0 = [_9170/6, _9176, _9182]:[],
+%@ _9170 in 0..1 ; ...
 
 %?- MTD in 0..sup, state0_action_state(S0, stop, declare_mtd(MTD)).
 %@ MTD = 0,
@@ -423,17 +437,17 @@ actions(S0) --> [A->S],
 %% Let's examine conduct of a trial with JUST 1 (nonzero) dose level.
 %% (Trials always start off in state []:[0/0, ..., 0/0].)
 %?- phrase(actions([] : [0/0]), Trial).
-%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_13332/6]),  (escalate->[_13332/6]:[]),  (stop->mtd_notfound(1))],
-%@ _13332 in 0..1 ;
-%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_15330/6]),  (stop->declare_mtd(0))],
-%@ _15330 in 2..3 ;
+%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_10678/6]),  (escalate->[_10678/6]:[]),  (stop->mtd_notfound(1))],
+%@ _10678 in 0..1 ;
+%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_12676/6]),  (stop->declare_mtd(0))],
+%@ _12676 in 2..3 ;
 %@ Trial = [(enroll->[]^[1/3]),  (stay->[]:[1/3]),  (enroll->[]^[1/6]),  (escalate->[1/6]:[]),  (stop->mtd_notfound(1))] ;
-%@ Trial = [(enroll->[]^[1/3]),  (stay->[]:[1/3]),  (enroll->[]^[_24348/6]),  (stop->declare_mtd(0))],
-%@ _24348 in 2..4,
-%@ 1+_24414#=_24348,
-%@ _24414 in 1..3 ;
-%@ Trial = [(enroll->[]^[_26580/3]),  (stop->declare_mtd(0))],
-%@ _26580 in 2..3 ;
+%@ Trial = [(enroll->[]^[1/3]),  (stay->[]:[1/3]),  (enroll->[]^[_21694/6]),  (stop->declare_mtd(0))],
+%@ _21694 in 2..4,
+%@ 1+_21760#=_21694,
+%@ _21760 in 1..3 ;
+%@ Trial = [(enroll->[]^[_23926/3]),  (stop->declare_mtd(0))],
+%@ _23926 in 2..3 ;
 %@ false.
 
 %?- X #< Y, Y #< X.
