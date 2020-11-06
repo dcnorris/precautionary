@@ -238,33 +238,48 @@ presumably_toxic([Q|_]) :-
 % perspective that ':' is the state upon which the 'routine' trial
 % operations act. (The literal interpretation of ':' as the phase
 % where trial administrative staff are at work is thus misleading.)
-state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
-    presumably_safe(Ls),
-    length(Ls, D). % RP2D is highest prespecified dose, D.
+%% AHA! This demands modification along with the 'conspicuous'
+%% clause below.
+%% state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
+%%     presumably_safe(Ls),
+%%     length(Ls, D). % RP2D is highest prespecified dose, D.
 % This is by far the MOST CONSPICUOUS clause of state0_action_state/3,
 % since it clearly catches an edge case _:[] and changes the stacks.
 % There is a real sense in which this exceptional case is handled as
 % an 'oopsie' here, rather than straightforwardly.
 % Perhaps we see here a tension between 'elegance' and 'bluntness',
 % BOTH of which seem like attrbutes of good Prolog programming.
-state0_action_state([Q0|Ls] : [], enroll, Ls ^ [Q]) :-
-    tally0_cohort_tally(Q0, _, Q).
+% ---
+% Now that I find this clause causing problems during DCG translation
+% to the compact D{^,-,*}T notation, I believe a special term is
+% warranted to distinguish this case.
+%% state0_action_state([Q0|Ls] : [], enroll, Ls ^ [Q]) :-
+%%     tally0_cohort_tally(Q0, _, Q).
 
-%% JUDGE the toxicities, and WEIGH the dose-escalation decision
-state0_action_state(Ls ^ [Q|Rs], escalate, [Q|Ls] : Rs) :-
+
+%% JUDGE the toxicities, and WEIGH the dose-escalation decision.
+%% NB: We require a dose R that we can escalate TO!
+state0_action_state(Ls ^ [Q,R|Rs], escalate, [Q|Ls] : [R|Rs]) :-
     Q &< 1/3.
-%state0_action_state(Ls ^ [Q], stay, Ls : [Q]) :-
-%    enrollable_tally(Q).
+% In the case where we WOULD ESCALATE, BUT CAN'T, we record this
+% as a 'clamp' action, by analogy with voltage clamping.
+state0_action_state(Ls ^ [Q], clamp, Ls : [Q]) :-
+    Q &< 1/3,
+    enrollable_tally(Q).
 state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
     Q &= 1/3, % <-- Roughly a statement about meeting 'target toxicity rate'
     enrollable_tally(Q).
 state0_action_state([L|Ls] ^ Rs, deescalate, Ls : [L]) :-
     enrollable_tally(L),
     presumably_toxic(Rs).
-state0_action_state(Ls ^ Rs, stop, declare_mtd(MTD)) :-
+state0_action_state(Ls ^ [R|Rs], stop, declare_mtd(MTD)) :-
     presumably_safe(Ls),
-    presumably_toxic(Rs),
+    presumably_toxic([R|Rs]),
     length(Ls, MTD).
+% Here again we treat specially the case where 1st arg is Ls ^ [Q] ...
+state0_action_state(Ls ^ [Q], stop, declare_mtd(MTD)) :-
+    presumably_safe([Q|Ls]),
+    length([Q|Ls], MTD).
 
 /****
 The following general queries seem to PROVE
@@ -449,55 +464,63 @@ actions(S0) --> [S0->A->S],
 %% expectations and understandings OBJECTIVELY.
 %%
 
-length_plus_1(L, D) :-
-    length(L, D_1),
-    D #= D_1 + 1.
-
-state_currentdose(L^_, D) :- length_plus_1(L, D).
-
 %% TODO: Make this DCG translator more abstract
 %%       by implementing a 'state-difference'
 %%       operator that yields enrolled cohort.
 %% NB: This will also reduce duplicated code!
 
-state0_cohort_state(L:[Q0|R], C, L^[Q1|R]) :-
-    tally0_cohort_tally(Q0, C, Q1).
+state0_cohort_state_dose(L:[Q0|R], T/N, L^[Q1|R], D) :-
+    tally0_cohort_tally(Q0, T/N, Q1),
+    length([Q1|L], D).
 
 condensed, [D^T] -->
-    [ _->escalate->_, L:[T0/N0|_]->enroll->L^[T1/N1|_] ],
-    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
-      length_plus_1(L, D) }.
+    [ _->escalate->_, S0->enroll->S ], condensed,
+    { state0_cohort_state_dose(S0, T/_, S, D) }.
+condensed, [D^T] --> % handle special case of *start* of trial
+    [ S0->enroll->S ], condensed,
+    { state0_cohort_state_dose(S0, T/_, S, D) }.
 condensed, [D-T] -->
-    [ _->stay->_, L:[T0/N0|_]->enroll->L^[T1/N1|_]],
-    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
-      length_plus_1(L, D) }.
+    [ _->stay->_, S0->enroll->S ], condensed,
+    { state0_cohort_state_dose(S0, T/_, S, D),
+      *indomain(D),
+      *indomain(T) }.
 condensed, [D:T] -->
-    [ _->deescalate->_, L:[T0/N0|_]->enroll->L^[T1/N1|_]],
-    { tally0_cohort_tally(T0/N0, T/_, T1/N1),
-      length_plus_1(L, D) }.
+    [ _->deescalate->_, S0->enroll->S ], condensed,
+    { state0_cohort_state_dose(S0, T/_, S, D) }.
+condensed, [D*T] -->
+    [ _->clamp->_, S0->enroll->S ], condensed,
+    { state0_cohort_state_dose(S0, T/_, S, D) }.
+condensed, [declare_mtd(MTD)] --> [ _->stop->declare_mtd(MTD) ].
+condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
+%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
-
-%?- Use list-difference version, phrase/3 ...
-%?- phrase(condensed, [ []^[0/3,0/0]->escalate->[0/3]:[0/0], [0/3]:[0/0]->enroll->[0/3]^[1/3] ], Tx).
-%@ Tx = [2^1] ;
+%% Examine the smallest possible trial -- a trial with just 1 dose!
+%?- phrase(actions([] : [0/0]), Trial), phrase(condensed, Trial, Translation).
+%@ Trial = [([]:[0/0]->enroll->[]^[0/3]),  ([]^[0/3]->clamp->[]:[0/3]),  ([]:[0/3]->enroll->[]^[_16320/6]),  ([]^[_16320/6]->stop->declare_mtd(0))],
+%@ Translation = [1^0, 1*_16320, declare_mtd(0)],
+%@ _16320 in 2..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[0/3]),  ([]^[0/3]->clamp->[]:[0/3]),  ([]:[0/3]->enroll->[]^[_20634/6]),  ([]^[_20634/6]->stop->declare_mtd(1))],
+%@ Translation = [1^0, 1*_20634, declare_mtd(1)],
+%@ _20634 in 0..1 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[1/3]),  ([]^[1/3]->stay->[]:[1/3]),  ([]:[1/3]->enroll->[]^[_28502/6]),  ([]^[_28502/6]->stop->declare_mtd(0))],
+%@ Translation = [1^1, 1-_28562, declare_mtd(0)],
+%@ _28502 in 2..4,
+%@ 1+_28562#=_28502,
+%@ 1+_28644#=_28502,
+%@ _28562 in 1..3,
+%@ _28644 in 1..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[1/3]),  ([]^[1/3]->stay->[]:[1/3]),  ([]:[1/3]->enroll->[]^[1/6]),  ([]^[1/6]->stop->declare_mtd(1))],
+%@ Translation = [1^1, 1-0, declare_mtd(1)] ;
+%@ Trial = [([]:[0/0]->enroll->[]^[_5564/3]),  ([]^[_5564/3]->stop->declare_mtd(0))],
+%@ Translation = [1^_5564, declare_mtd(0)],
+%@ _5564 in 2..3 ;
 %@ false.
-%@ ERROR: Unknown procedure: state0_action_state/5
-%@ ERROR:   However, there are definitions for:
-%@ ERROR:         state0_action_state/3
-%@ ERROR: 
-%@ ERROR: In:
-%@ ERROR:   [11] state0_action_state([...]:[...],enroll,[...]^[...],[],_10160)
-%@ ERROR:   [10] condensed([(... -> ...),...],_10222) at /var/folders/pb/d6v8rn4j6x10bzx8qfrs6w6w0000gn/T/ediprolog26162WGx:451
-%@ ERROR:    [9] <user>
-%@    Exception: (11) state0_action_state([0/3]:[0/0], enroll, [0/3]^[1/3], [], _10462) ? Unknown option (h for help)
-%@    Exception: (11) state0_action_state([0/3]:[0/0], enroll, [0/3]^[1/3], [], _10506) ? creepa
-%@ Tx = [2^1].
 
-%?- phrase(condensed, L, T).
-%@ L = [1^_9810|_9804],
-%@ T = [(_9832->escalate->_9840),  ([]:[_9868/_9870|_9864]->enroll->[]^[_9892/_9894|_9888])|_9804],
-%@ _9810+_9868#=_9892,
-%@ _9870+3#=_9894 .
+%% NEXT: Translate paths from the 'condensed' notation into MATRICES.
+
+%% NB: The trivial trial with no doses is 'impossible' in this formulation.
+%?- phrase(actions([] : []), Trial), phrase(condensed, Trial, Translation).
+%@ false.
 
 /* --------------------------------------------------
 
@@ -512,17 +535,17 @@ condensed, [D:T] -->
 %% Let's examine conduct of a trial with JUST 1 (nonzero) dose level.
 %% (Trials always start off in state []:[0/0, ..., 0/0].)
 %?- phrase(actions([] : [0/0]), Trial).
-%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_10678/6]),  (escalate->[_10678/6]:[]),  (stop->mtd_notfound(1))],
-%@ _10678 in 0..1 ;
-%@ Trial = [(enroll->[]^[0/3]),  (escalate->[0/3]:[]),  (enroll->[]^[_12676/6]),  (stop->declare_mtd(0))],
-%@ _12676 in 2..3 ;
-%@ Trial = [(enroll->[]^[1/3]),  (stay->[]:[1/3]),  (enroll->[]^[1/6]),  (escalate->[1/6]:[]),  (stop->mtd_notfound(1))] ;
-%@ Trial = [(enroll->[]^[1/3]),  (stay->[]:[1/3]),  (enroll->[]^[_21694/6]),  (stop->declare_mtd(0))],
-%@ _21694 in 2..4,
-%@ 1+_21760#=_21694,
-%@ _21760 in 1..3 ;
-%@ Trial = [(enroll->[]^[_23926/3]),  (stop->declare_mtd(0))],
-%@ _23926 in 2..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[_9666/3]),  ([]^[_9666/3]->clamp->[]:[_9666/3]),  ([]:[_9666/3]->enroll->[]^[_9732/6]),  ([]^[_9732/6]->stop->declare_mtd(0))],
+%@ _9666 in 0..1,
+%@ _9666+_9804#=_9732,
+%@ _9804 in 1..3,
+%@ _9732 in 2..4 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[1/3]),  ([]^[1/3]->stay->[]:[1/3]),  ([]:[1/3]->enroll->[]^[_16640/6]),  ([]^[_16640/6]->stop->declare_mtd(0))],
+%@ _16640 in 2..4,
+%@ 1+_16712#=_16640,
+%@ _16712 in 1..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[_18968/3]),  ([]^[_18968/3]->stop->declare_mtd(0))],
+%@ _18968 in 2..3 ;
 %@ false.
 
 %?- X #< Y, Y #< X.
