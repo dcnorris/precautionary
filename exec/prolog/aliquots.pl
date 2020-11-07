@@ -471,7 +471,9 @@ actions(S0) --> [S0->A->S],
 
 state0_cohort_state_dose(L:[Q0|R], T/N, L^[Q1|R], D) :-
     tally0_cohort_tally(Q0, T/N, Q1),
-    length([Q1|L], D).
+    length([Q1|L], D),
+    indomain(T), indomain(N),
+    *indomain(D).
 
 condensed, [D^T] -->
     [ _->escalate->_, S0->enroll->S ], condensed,
@@ -481,9 +483,7 @@ condensed, [D^T] --> % handle special case of *start* of trial
     { state0_cohort_state_dose(S0, T/_, S, D) }.
 condensed, [D-T] -->
     [ _->stay->_, S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D),
-      *indomain(D),
-      *indomain(T) }.
+    { state0_cohort_state_dose(S0, T/_, S, D) }.
 condensed, [D:T] -->
     [ _->deescalate->_, S0->enroll->S ], condensed,
     { state0_cohort_state_dose(S0, T/_, S, D) }.
@@ -517,6 +517,128 @@ condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
 %@ false.
 
 %% NEXT: Translate paths from the 'condensed' notation into MATRICES.
+%% Transform the A path representations to the arrays T(c,d,j).
+
+path_matrix(D, P, M) :-
+    length(C1,D),
+    length(C2,D),
+    M = (C1,C2),
+    path_matrix_(P, M),
+    maplist(ground_or_nil, C1),
+    maplist(ground_or_nil, C2).
+
+path_matrix_([D^T|Rest], (C1,C2)) :-
+    nth1(D, C1, T),
+    path_matrix_(Rest, (C1,C2)).
+
+path_matrix_([D-T|Rest], (C1,C2)) :-
+    nth1(D, C2, T),
+    path_matrix_(Rest, (C1,C2)).
+
+path_matrix_([D*T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
+path_matrix_([D:T|Rest], (C1,C2)) :- path_matrix_([D-T|Rest], (C1,C2)).
+
+path_matrix_([declare_mtd(_)], _).
+path_matrix_([mtd_notfound(_)], _).
+
+path_matrix_([], ([],[])).
+
+ground_or_nil(Term) :- ground(Term).
+ground_or_nil('NA') :- true.
+
+pathmatrix((First,Second)) -->
+    row(First),
+    row(Second).
+
+% Christmas-tree predicate!
+columns_format(1, '~w~t~3+').
+columns_format(2, '~w~t~3+~w~t~3+').
+columns_format(3, '~w~t~3+~w~t~3+~w~t~3+').
+columns_format(4, '~w~t~3+~w~t~3+~w~t~3+~w~t~3+').
+
+row(Ls) -->
+    { length(Ls,D),
+      columns_format(D,Format) },
+    format_(Format, Ls).
+
+?- phrase(row(X), Row).
+%@ X = [_8464],
+%@ Row = ['_8464'] ;
+%@ X = [_8464, _9522],
+%@ Row = ['_8464_9522'] ;
+%@ X = [_8464, _9522, _10580],
+%@ Row = ['_8464_9522_10580'] ;
+%@ X = [_8464, _9522, _10580, _11638],
+%@ Row = ['_8464_9522_10580_11638'] .
+
+format_matrix(Matrix) :- format('~s~n~s~n', Matrix).
+
+?- phrase(pathmatrix(([1,'NA'],['NA','NA'])), PM), format_matrix(PM).
+%@ 1   NA  
+%@ NA  NA  
+%@ PM = ['1   NA  ', 'NA  NA  '].
+
+?- phrase(row([this,is,a]), Row), format('~s', Row).
+%@ this is a
+
+% Approximate format_//2 as provided by Scryer's library(format):
+format_(Format, Ls) --> [ FLs ], { format(atom(FLs), Format, Ls) }.
+
+%?- phrase(actions([] : [0/0,0/0]), Trial), phrase(condensed, Trial, Translation), path_matrix(2, Translation, M), phrase(pathmatrix(M), Matrix), format_matrix(Matrix).
+%@ 0  0  
+%@ 2  2  
+%@ Trial = [([]:[0/0, 0/0]->enroll->[]^[0/3, 0/0]),  ([]^[0/3, 0/0]->escalate->[0/3]:[0/0]),  ([0/3]:[0/0]->enroll->[0/3]^[0/3]),  ([0/3]^[0/3]->clamp->[0/3]:[0/3]),  ([0/3]:[0/3]->enroll->[... / ...]^[... / ...]),  ([... / ...]^[... / ...]->deescalate->[]:[...]),  ([]:[...]->enroll-> ... ^ ...),  (... ^ ... -> ... -> ...)],
+%@ Translation = [1^0, 2^0, 2*2, 1:2, declare_mtd(0)],
+%@ M =  ([0, 0], [2, 2]),
+%@ Matrix = ['0  0  ', '2  2  '] ;
+%@ 0  0  
+%@ 2  3  
+%@ Trial = [([]:[0/0, 0/0]->enroll->[]^[0/3, 0/0]),  ([]^[0/3, 0/0]->escalate->[0/3]:[0/0]),  ([0/3]:[0/0]->enroll->[0/3]^[0/3]),  ([0/3]^[0/3]->clamp->[0/3]:[0/3]),  ([0/3]:[0/3]->enroll->[... / ...]^[... / ...]),  ([... / ...]^[... / ...]->deescalate->[]:[...]),  ([]:[...]->enroll-> ... ^ ...),  (... ^ ... -> ... -> ...)],
+%@ Translation = [1^0, 2^0, 2*3, 1:2, declare_mtd(0)],
+%@ M =  ([0, 0], [2, 3]),
+%@ Matrix = ['0  0  ', '2  3  '] ;
+%@ 0  0  
+%@ 3  2  
+%@ Trial = [([]:[0/0, 0/0]->enroll->[]^[0/3, 0/0]),  ([]^[0/3, 0/0]->escalate->[0/3]:[0/0]),  ([0/3]:[0/0]->enroll->[0/3]^[0/3]),  ([0/3]^[0/3]->clamp->[0/3]:[0/3]),  ([0/3]:[0/3]->enroll->[... / ...]^[... / ...]),  ([... / ...]^[... / ...]->deescalate->[]:[...]),  ([]:[...]->enroll-> ... ^ ...),  (... ^ ... -> ... -> ...)],
+%@ Translation = [1^0, 2^0, 2*2, 1:3, declare_mtd(0)],
+%@ M =  ([0, 0], [3, 2]),
+%@ Matrix = ['0  0  ', '3  2  '] ;
+%@ 0  0  
+%@ 3  3  
+%@ Trial = [([]:[0/0, 0/0]->enroll->[]^[0/3, 0/0]),  ([]^[0/3, 0/0]->escalate->[0/3]:[0/0]),  ([0/3]:[0/0]->enroll->[0/3]^[0/3]),  ([0/3]^[0/3]->clamp->[0/3]:[0/3]),  ([0/3]:[0/3]->enroll->[... / ...]^[... / ...]),  ([... / ...]^[... / ...]->deescalate->[]:[...]),  ([]:[...]->enroll-> ... ^ ...),  (... ^ ... -> ... -> ...)],
+%@ Translation = [1^0, 2^0, 2*3, 1:3, declare_mtd(0)],
+%@ M =  ([0, 0], [3, 3]),
+%@ Matrix = ['0  0  ', '3  3  '] ;
+%@ 0  0  
+%@ 0  2  
+%@ Trial = [([]:[0/0, 0/0]->enroll->[]^[0/3, 0/0]),  ([]^[0/3, 0/0]->escalate->[0/3]:[0/0]),  ([0/3]:[0/0]->enroll->[0/3]^[0/3]),  ([0/3]^[0/3]->clamp->[0/3]:[0/3]),  ([0/3]:[0/3]->enroll->[... / ...]^[... / ...]),  ([... / ...]^[... / ...]->deescalate->[]:[...]),  ([]:[...]->enroll-> ... ^ ...),  (... ^ ... -> ... -> ...)],
+%@ Translation = [1^0, 2^0, 2*2, 1:0, declare_mtd(1)],
+%@ M =  ([0, 0], [0, 2]),
+%@ Matrix = ['0  0  ', '0  2  '] .
+
+%?- phrase(actions([] : [0/0]), Trial), phrase(condensed, Trial, Translation).
+%@ Trial = [([]:[0/0]->enroll->[]^[0/3]),  ([]^[0/3]->clamp->[]:[0/3]),  ([]:[0/3]->enroll->[]^[_12274/6]),  ([]^[_12274/6]->stop->declare_mtd(0))],
+%@ Translation = [1^0, 1*_12274, declare_mtd(0)],
+%@ _12274 in 2..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[0/3]),  ([]^[0/3]->clamp->[]:[0/3]),  ([]:[0/3]->enroll->[]^[_17516/6]),  ([]^[_17516/6]->stop->declare_mtd(1))],
+%@ Translation = [1^0, 1*_17516, declare_mtd(1)],
+%@ _17516 in 0..1 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[1/3]),  ([]^[1/3]->stay->[]:[1/3]),  ([]:[1/3]->enroll->[]^[_27436/6]),  ([]^[_27436/6]->stop->declare_mtd(0))],
+%@ Translation = [1^1, 1-_27496, declare_mtd(0)],
+%@ _27436 in 2..4,
+%@ 1+_27496#=_27436,
+%@ 1+_27578#=_27436,
+%@ _27496 in 1..3,
+%@ _27578 in 1..3 ;
+%@ Trial = [([]:[0/0]->enroll->[]^[1/3]),  ([]^[1/3]->stay->[]:[1/3]),  ([]:[1/3]->enroll->[]^[1/6]),  ([]^[1/6]->stop->declare_mtd(1))],
+%@ Translation = [1^1, 1-0, declare_mtd(1)] ;
+%@ Trial = [([]:[0/0]->enroll->[]^[_5876/3]),  ([]^[_5876/3]->stop->declare_mtd(0))],
+%@ Translation = [1^_5876, declare_mtd(0)],
+%@ _5876 in 2..3 ;
+%@ false.
+%@ ERROR: '$clause_term_position'/3: Cannot represent due to `int'
+%@ ERROR: '$clause_term_position'/3: Cannot represent due to `int'
+
 
 %% NB: The trivial trial with no doses is 'impossible' in this formulation.
 %?- phrase(actions([] : []), Trial), phrase(condensed, Trial, Translation).
