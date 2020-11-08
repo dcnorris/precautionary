@@ -495,7 +495,7 @@ condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
 %condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- phrase(actions([] : [0/0]), Trial), phrase(condensed, Trial, Translation).
+%?- phrase(actions([]:[0/0]), Trial), phrase(condensed, Trial, Translation).
 %@ Trial = [([]:[0/0]->enroll->[]^[0/3]),  ([]^[0/3]->clamp->[]:[0/3]),  ([]:[0/3]->enroll->[]^[_16320/6]),  ([]^[_16320/6]->stop->declare_mtd(0))],
 %@ Translation = [1^0, 1*_16320, declare_mtd(0)],
 %@ _16320 in 2..3 ;
@@ -556,20 +556,25 @@ columns_format(2, '~w~t~3+~w~t~3+').
 columns_format(3, '~w~t~3+~w~t~3+~w~t~3+').
 columns_format(4, '~w~t~3+~w~t~3+~w~t~3+~w~t~3+').
 
+% Approximate format_//2 as provided by Scryer's library(format):
+format_(Format, Ls) --> [ FLs ], { format(atom(FLs), Format, Ls) }.
+
 row(Ls) -->
     { length(Ls,D),
       columns_format(D,Format) },
     format_(Format, Ls).
 
 ?- phrase(row(X), Row).
-%@ X = [_8464],
-%@ Row = ['_8464'] ;
-%@ X = [_8464, _9522],
-%@ Row = ['_8464_9522'] ;
-%@ X = [_8464, _9522, _10580],
-%@ Row = ['_8464_9522_10580'] ;
-%@ X = [_8464, _9522, _10580, _11638],
-%@ Row = ['_8464_9522_10580_11638'] .
+%@ X = [_28598],
+%@ Row = ['_28598'] .
+%@ X = [_44750],
+%@ Row = ['_44750'] ;
+%@ X = [_44750, _45792],
+%@ Row = ['_44750_45792'] ;
+%@ X = [_44750, _45792, _46834],
+%@ Row = ['_44750_45792_46834'] ;
+%@ X = [_44750, _45792, _46834, _47876],
+%@ Row = ['_44750_45792_46834_47876'] .
 
 format_matrix(Matrix) :- format('~s~n~s~n', Matrix).
 
@@ -579,10 +584,9 @@ format_matrix(Matrix) :- format('~s~n~s~n', Matrix).
 %@ PM = ['1   NA  ', 'NA  NA  '].
 
 ?- phrase(row([this,is,a]), Row), format('~s', Row).
+%@ thisis a  
+%@ Row = ['thisis a  '].
 %@ this is a
-
-% Approximate format_//2 as provided by Scryer's library(format):
-format_(Format, Ls) --> [ FLs ], { format(atom(FLs), Format, Ls) }.
 
 %?- phrase(actions([] : [0/0,0/0]), Trial), phrase(condensed, Trial, Translation), path_matrix(2, Translation, M), phrase(pathmatrix(M), Matrix), format_matrix(Matrix).
 %@ 0  0  
@@ -643,6 +647,44 @@ format_(Format, Ls) --> [ FLs ], { format(atom(FLs), Format, Ls) }.
 %% NB: The trivial trial with no doses is 'impossible' in this formulation.
 %?- phrase(actions([] : []), Trial), phrase(condensed, Trial, Translation).
 %@ false.
+
+ndoses_state0(1, []:[0/0]).
+ndoses_state0(N, []:[0/0|Init_1]) :-
+    N #> 1,
+    N_1 #= N - 1,
+    ndoses_state0(N_1, []:Init_1).
+
+%?- ndoses_state0(2,I).
+%@ I = []:[0/0, 0/0] ;
+%@ false.
+
+% n_trials(+Drange, XY)
+ndoses_ntrials(Drange, XY) :-
+    Dmax in Drange, indomain(Dmax),
+    ndoses_state0(Dmax, State0),
+    findall(Trial,
+	    (	phrase(actions(State0), Trial) % delays labeling
+		,phrase(condensed, Trial, Tx)  % forces labeling
+	    ),
+	    Paths),
+    length(Paths, N),
+    XY = (Dmax, N).
+
+?- ndoses_ntrials(1..8, XY).
+%@ XY =  (1, 10) ;
+%@ XY =  (2, 46) ;
+%@ XY =  (3, 154) ;
+%@ XY =  (4, 442) ;
+%@ XY =  (5, 1162) ;
+%@ XY =  (6, 2890) ;
+%@ XY =  (7, 6922) ;
+%@ XY =  (8, 16138) ;
+%@ false.
+%% The above match counts from esc//2
+
+%% TODO: Use sets to ensure exact matches between esc//2
+%%       and condensed//0 translation of actions//1.
+
 
 /* --------------------------------------------------
 
