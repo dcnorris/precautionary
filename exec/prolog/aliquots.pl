@@ -177,6 +177,7 @@ tallies([Q|Qs]) :-
  */
 
 
+:- discontiguous state0_action_state/3.
 % NOTE: The currently quite trivial ENROLLMENT PHASE may well grow
 %       more complex with introduction of an accelerated titration
 %       phase or other such variations on standard 3+3.
@@ -210,7 +211,7 @@ presumably_safe([Q|_]) :- % "no need to enroll further at this dose to say it's 
 presumably_toxic([]) :- false.
 presumably_toxic([Q|_]) :-
     tally(Q),
-    Q = T/N,
+    Q = T/_,
     T #> 1.
 
 %?- presumably_toxic([Q|_]).
@@ -414,10 +415,10 @@ key properties of 3+3 have been attained.
  */
 
 
-?- X is 4 rdiv 7.
+%?- X is 4 rdiv 7.
 %@ X = 4r7.
 
-?- X is log(3).
+%?- X is log(3).
 %@ X = 1.0986122886681098.
 %@ ERROR: Syntax error: Operator expected
 %@ ERROR: X is log
@@ -476,23 +477,58 @@ state0_cohort_state_dose(L:[Q0|R], T/N, L^[Q1|R], D) :-
     *indomain(D).
 
 condensed, [D^T] -->
-    [ _->escalate->_, S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D) }.
+    [ _->escalate->_, S0->enroll->S ],
+    { state0_cohort_state_dose(S0, T/_, S, D) },
+    condensed.
 condensed, [D^T] --> % handle special case of *start* of trial
-    [ S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D) }.
+    [ S0->enroll->S ],
+    { state0_cohort_state_dose(S0, T/_, S, D) },
+    condensed.
 condensed, [D-T] -->
-    [ _->stay->_, S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D) }.
+    [ _->stay->_, S0->enroll->S ],
+    { state0_cohort_state_dose(S0, T/_, S, D) },
+    condensed.
 condensed, [D:T] -->
-    [ _->deescalate->_, S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D) }.
+    [ _->deescalate->_, S0->enroll->S ],
+    { state0_cohort_state_dose(S0, T/_, S, D) },
+    condensed.
 condensed, [D*T] -->
-    [ _->clamp->_, S0->enroll->S ], condensed,
-    { state0_cohort_state_dose(S0, T/_, S, D) }.
+    [ _->clamp->_, S0->enroll->S ],
+    { state0_cohort_state_dose(S0, T/_, S, D) },
+    condensed.
 condensed, [declare_mtd(MTD)] --> [ _->stop->declare_mtd(MTD) ].
 condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
 %condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
+
+%% Example of set membership constraint.
+%?- tuples_in([[A,B,C],[D,E,F]], [[1,2,3],[4,5,6]]), indomain(A).
+%@ A = 1,
+%@ B = 2,
+%@ C = 3,
+%@ D in 1\/4,
+%@ tuples_in([[D, E, F]], [[1, 2, 3], [4, 5, 6]]),
+%@ E in 2\/5,
+%@ F in 3\/6 ;
+%@ A = 4,
+%@ B = 5,
+%@ C = 6,
+%@ D in 1\/4,
+%@ tuples_in([[D, E, F]], [[1, 2, 3], [4, 5, 6]]),
+%@ E in 2\/5,
+%@ F in 3\/6.
+
+%?- clause(condensed(Ls0,Ls), Body).
+%@ Body =  (Ls0=[(_47356->escalate->_47364),  (_47374->enroll->_47382)|_47370], state0_cohort_state_dose(_47374, _47392/_47394, _47382, _47404), _47408=_47370, condensed(_47408, _47416), Ls=[_47404^_47392|_47416]) ;
+%@ Body =  (Ls0=[(_48280->enroll->_48288)|_48276], state0_cohort_state_dose(_48280, _48298/_48300, _48288, _48310), _48314=_48276, condensed(_48314, _48322), Ls=[_48310^_48298|_48322]) ;
+%@ Body =  (Ls0=[(_49186->stay->_49194),  (_49204->enroll->_49212)|_49200], state0_cohort_state_dose(_49204, _49222/_49224, _49212, _49234), _49238=_49200, condensed(_49238, _49246), Ls=[_49234-_49222|_49246]) ;
+%@ Body =  (Ls0=[(_50110->deescalate->_50118),  (_50128->enroll->_50136)|_50124], state0_cohort_state_dose(_50128, _50146/_50148, _50136, _50158), _50162=_50124, condensed(_50162, _50170), Ls=[_50158:_50146|_50170]) ;
+%@ Body =  (Ls0=[(_51034->clamp->_51042),  (_51052->enroll->_51060)|_51048], state0_cohort_state_dose(_51052, _51070/_51072, _51060, _51082), _51086=_51048, condensed(_51086, _51094), Ls=[_51082*_51070|_51094]) ;
+%@ Ls0 = [(_51952->stop->declare_mtd(_51964))|_51948],
+%@ Ls = [declare_mtd(_51964)|_51948],
+%@ Body = true ;
+%@ Ls0 = [(_53394->stop->mtd_notfound(_53406))|_53390],
+%@ Ls = [mtd_notfound(_53406)|_53390],
+%@ Body = true.
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
 %?- phrase(actions([]:[0/0]), Trial), phrase(condensed, Trial, Translation).
@@ -564,7 +600,7 @@ row(Ls) -->
       columns_format(D,Format) },
     format_(Format, Ls).
 
-?- phrase(row(X), Row).
+%?- phrase(row(X), Row).
 %@ X = [_28598],
 %@ Row = ['_28598'] .
 %@ X = [_44750],
@@ -578,12 +614,12 @@ row(Ls) -->
 
 format_matrix(Matrix) :- format('~s~n~s~n', Matrix).
 
-?- phrase(pathmatrix(([1,'NA'],['NA','NA'])), PM), format_matrix(PM).
+%?- phrase(pathmatrix(([1,'NA'],['NA','NA'])), PM), format_matrix(PM).
 %@ 1   NA  
 %@ NA  NA  
 %@ PM = ['1   NA  ', 'NA  NA  '].
 
-?- phrase(row([this,is,a]), Row), format('~s', Row).
+%?- phrase(row([this,is,a]), Row), format('~s', Row).
 %@ thisis a  
 %@ Row = ['thisis a  '].
 %@ this is a
@@ -664,13 +700,13 @@ ndoses_ntrials(Drange, XY) :-
     ndoses_state0(Dmax, State0),
     findall(Trial,
 	    (	phrase(actions(State0), Trial) % delays labeling
-		,phrase(condensed, Trial, Tx)  % forces labeling
+		,phrase(condensed, Trial, _)  % forces labeling
 	    ),
 	    Paths),
     length(Paths, N),
     XY = (Dmax, N).
 
-?- ndoses_ntrials(1..8, XY).
+%?- ndoses_ntrials(1..8, XY). 
 %@ XY =  (1, 10) ;
 %@ XY =  (2, 46) ;
 %@ XY =  (3, 154) ;
@@ -678,9 +714,8 @@ ndoses_ntrials(Drange, XY) :-
 %@ XY =  (5, 1162) ;
 %@ XY =  (6, 2890) ;
 %@ XY =  (7, 6922) ;
-%@ XY =  (8, 16138) ;
+%@ XY =  (8, 16138) ; %% These all match counts from esc//2
 %@ false.
-%% The above match counts from esc//2
 
 %% TODO: Use sets to ensure exact matches between esc//2
 %%       and condensed//0 translation of actions//1.
