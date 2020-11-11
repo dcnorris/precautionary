@@ -1,6 +1,11 @@
 % Attempt an enumeration of ALL dose-finding designs over 2 doses
-:- use_module(library(clpfd)).
+:- use_module(library(clpz)).
+%@ caught: error(existence_error(source_sink,library(clpfd)),use_module/1)
 :- use_module(library(pio)).
+%@    true.
+:- use_module(library(pairs)).
+%@    true.
+%@ true.
 
 /* - - - - - 
 
@@ -12,8 +17,70 @@
 %%       emerge as a consequence of more basic
 %%       considerations!
 denominator((N1, N2)) :-
-    member(N1, [0, 3, 6]),
+    member(N1, [0, 3, 6]), % TODO: N1 in 0 \/ 3 \/ 6
     member(N2, [0, 3, 6]).
+%?- #\ X in 1..5.
+%@ X in inf..0\/6..sup.
+
+%% TODO: Try negating tuples_in using #\.
+%%       But be careful, as this is a less-used
+%%       part of clpfd.
+
+%% Interaction between tabling and constraints here
+%% will probably be safe here, but might not be so
+%% effective.
+
+% You don't get constraints you can reason about TOGETHER
+% when you use member/2 -- which 'hard-codes' the search,
+% ib a sense!
+% This is the connection between constraints and regular
+% prolog programming.
+
+/*
+COMPARE:
+( X#= 3 ; X #= 2)
+( X#= 3 #\/ X #= 2)
+*/
+
+%?- X in 0..3, member(X, [0,2]).
+%@ X = 0 ;
+%@ X = 2.
+
+%?- tuples_in([N1], [[0],[3],[6]]).
+%@ ERROR: Arguments are not sufficiently instantiated
+%@ ERROR: In:
+%@ ERROR:   [18] throw(error(instantiation_error,_30188))
+%@ ERROR:   [10] clpfd:tuples_in([_30224],[[0],...|...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:4063
+%@ ERROR:    [9] <user>
+%@ ERROR: 
+%@ ERROR: Note: some frames are missing due to last-call optimization.
+%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
+%@ ERROR: Arguments are not sufficiently instantiated
+%@ ERROR: In:
+%@ ERROR:   [18] throw(error(instantiation_error,_26636))
+%@ ERROR:   [10] clpfd:tuples_in([_26672],[[0],...|...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:4063
+%@ ERROR:    [9] <user>
+%@ ERROR: 
+%@ ERROR: Note: some frames are missing due to last-call optimization.
+%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
+
+%% NONDETERMINISTIC because of member/2
+%?- denominator((X,Y)).
+%@ X = Y, Y = 0 ;
+%@ X = 0,
+%@ Y = 3 ;
+%@ X = 0,
+%@ Y = 6 ;
+%@ X = 3,
+%@ Y = 0 ;
+%@ X = Y, Y = 3 ;
+%@ X = 3,
+%@ Y = 6 ;
+%@ X = 6,
+%@ Y = 0 ;
+%@ X = 6,
+%@ Y = 3 ;
+%@ X = Y, Y = 6.
 
 numerator_denominator((T1,T2), (N1,N2)) :-
     denominator((N1,N2)),
@@ -127,9 +194,7 @@ techniques or idioms (beyond zcompare/3) that facilitate a
 'subtractive' style of expression of CLPZ-type constraints
 without recourse to impure constructs ->/2 or \+? Would such
 requirements imply developing a domain-specific language?
-*/
-acceptable_tally((T1/N1, T2/N2)) :-
-    numerator_denominator((T1,T2), (N1,N2)),
+tor((T1,T2), (N1,N2)),
     T2 #< 5, % Want never to see 5+ toxicities at higher dose,
     T1 #< 4, % and never even 4+ toxicities at a lower dose.
     zcompare(C, N1, 6),
