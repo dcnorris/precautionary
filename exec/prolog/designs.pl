@@ -1,24 +1,31 @@
 % Attempt an enumeration of ALL dose-finding designs over 2 doses
-:- use_module(library(clpz)).
-%@ caught: error(existence_error(source_sink,library(clpfd)),use_module/1)
-:- use_module(library(pio)).
-%@    true.
-:- use_module(library(pairs)).
-%@    true.
-%@ true.
 
-/* - - - - - 
-
+/* DISCUSS: How to switch on Prolog system?
 */
+
+:- use_module(library(clpfd))  % SWI
+   ;use_module(library(clpz)). % Scryer
+
+%:- use_module(library(clpfd)).  % SWI
+%:- use_module(library(clpz)). % Scryer
+:- use_module(library(pio)).
+:- use_module(library(pairs)).
 
 %% I begin with designs that enroll cohorts of 3,
 %% up to a maximum of 6 patients per dose.
 %% TODO: Consider whether cohort size of 3 might
 %%       emerge as a consequence of more basic
 %%       considerations!
-denominator((N1, N2)) :-
-    member(N1, [0, 3, 6]), % TODO: N1 in 0 \/ 3 \/ 6
-    member(N2, [0, 3, 6]).
+denominator(N1 - N2) :-
+    N1 in 0 \/ 3 \/ 6,
+    N2 in 0 \/ 3 \/ 6.
+%    member(N1, [0, 3, 6]), % TODO: N1 in 0 \/ 3 \/ 6
+%    member(N2, [0, 3, 6]).
+
+%?- denominator(X - Y).
+%@ X in 0\/3\/6,
+%@ Y in 0\/3\/6.
+
 %?- #\ X in 1..5.
 %@ X in inf..0\/6..sup.
 
@@ -32,92 +39,43 @@ denominator((N1, N2)) :-
 
 % You don't get constraints you can reason about TOGETHER
 % when you use member/2 -- which 'hard-codes' the search,
-% ib a sense!
-% This is the connection between constraints and regular
-% prolog programming.
+% in a sense!
 
-/*
-COMPARE:
-( X#= 3 ; X #= 2)
-( X#= 3 #\/ X #= 2)
-*/
-
-%?- X in 0..3, member(X, [0,2]).
-%@ X = 0 ;
+%% COMPARE:
+%?- ( X#= 3 ; X #= 2).
+%@ X = 3 ;
 %@ X = 2.
+%% VS:
+%?- ( X#= 3 #\/ X #= 2).
+%@ X in 2..3.
 
-%?- tuples_in([N1], [[0],[3],[6]]).
-%@ ERROR: Arguments are not sufficiently instantiated
-%@ ERROR: In:
-%@ ERROR:   [18] throw(error(instantiation_error,_30188))
-%@ ERROR:   [10] clpfd:tuples_in([_30224],[[0],...|...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:4063
-%@ ERROR:    [9] <user>
-%@ ERROR: 
-%@ ERROR: Note: some frames are missing due to last-call optimization.
-%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
-%@ ERROR: Arguments are not sufficiently instantiated
-%@ ERROR: In:
-%@ ERROR:   [18] throw(error(instantiation_error,_26636))
-%@ ERROR:   [10] clpfd:tuples_in([_26672],[[0],...|...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:4063
-%@ ERROR:    [9] <user>
-%@ ERROR: 
-%@ ERROR: Note: some frames are missing due to last-call optimization.
-%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
+%?- tuples_in([[N1]], [[0],[3],[6]]).
+%@    clpz:(N1 in 0\/3\/6)
+%@ ;  false.
+%@ N1 in 0\/3\/6. # SWI
 
-%% NONDETERMINISTIC because of member/2
-%?- denominator((X,Y)).
-%@ X = Y, Y = 0 ;
-%@ X = 0,
-%@ Y = 3 ;
-%@ X = 0,
-%@ Y = 6 ;
-%@ X = 3,
-%@ Y = 0 ;
-%@ X = Y, Y = 3 ;
-%@ X = 3,
-%@ Y = 6 ;
-%@ X = 6,
-%@ Y = 0 ;
-%@ X = 6,
-%@ Y = 3 ;
-%@ X = Y, Y = 6.
+%?- denominator(X - Y).
+%@ X in 0\/3\/6,
+%@ Y in 0\/3\/6.
 
-numerator_denominator((T1,T2), (N1,N2)) :-
-    denominator((N1,N2)),
-    T1 in 0..N1,
-    T2 in 0..N2.
+:- debug.
+%@ true.
+numerator_denominator(T1 - T2, N1 - N2) :-
+    denominator(N1 - N2),
+    T1 #>= 0, T1 #=< N1,
+    T2 #>= 0, T2 #=< N2.
+%    T1 in 0..N1,
+%    T2 in 0..N2.
 
 %?- numerator_denominator(T, N).
-%@ T = N, N =  (0, 0) ;
-%@ T =  (0, _30674),
-%@ N =  (0, 3),
-%@ _30674 in 0..3 ;
-%@ T =  (0, _32320),
-%@ N =  (0, 6),
-%@ _32320 in 0..6 ;
-%@ T =  (_33982, 0),
-%@ N =  (3, 0),
-%@ _33982 in 0..3 ;
-%@ T =  (_35726, _35728),
-%@ N =  (3, 3),
-%@ _35726 in 0..3,
-%@ _35728 in 0..3 ;
-%@ T =  (_37658, _37660),
-%@ N =  (3, 6),
-%@ _37658 in 0..3,
-%@ _37660 in 0..6 ;
-%@ T =  (_39510, 0),
-%@ N =  (6, 0),
-%@ _39510 in 0..6 ;
-%@ T =  (_41254, _41256),
-%@ N =  (6, 3),
-%@ _41254 in 0..6,
-%@ _41256 in 0..3 ;
-%@ T =  (_43186, _43188),
-%@ N =  (6, 6),
-%@ _43186 in 0..6,
-%@ _43188 in 0..6. 
-% Good.
+%@ T = _51576-_51578,
+%@ N = _51594-_51596,
+%@ _51576 in 0..6,
+%@ _51594#>=_51576,
+%@ _51594 in 0\/3\/6,
+%@ _51578 in 0..6,
+%@ _51596#>=_51578,
+%@ _51596 in 0\/3\/6.
 
 /* - - -
 Note that numerator_denominator/2 enumerates all possible toxicity tallies
@@ -168,7 +126,7 @@ NB: Unlike the 'tally' of aliquots.pl, which corresponded to
 a quotient T/N, here a 'tally' is the quotient PAIR for both
 doses. 
 */
-unacceptable_tally((Q1, Q2)) :-
+unacceptable_tally(Q1 -  Q2) :-
     (	step_too_cautious(Q1, Q2)
     ;	step_too_bold(Q1, Q2)
     ).
@@ -181,39 +139,61 @@ step_too_bold(T/3, 3/3) :- T #> 0.
 step_too_bold(T/6, 3/3) :- T #> 1.
 
 %?- unacceptable_tally(UT).
-%@ UT =  (0/6, 0/0) ;
-%@ UT =  (_20518/3, 3/3),
-%@ _20518 in 1..sup ;
-%@ UT =  (_21714/6, 3/3),
-%@ _21714 in 2..sup.
+%@ UT = 0/6-0/0 ;
+%@ UT = _85346/3-3/3,
+%@ _85346 in 1..sup ;
+%@ UT = _86692/6-3/3,
+%@ _86692 in 2..sup.
 
 /*
-DISCUSS: From the domain-expert perspective, it is far more
-natural to describe tallies that are UNacceptable. Are there
-techniques or idioms (beyond zcompare/3) that facilitate a
-'subtractive' style of expression of CLPZ-type constraints
-without recourse to impure constructs ->/2 or \+? Would such
-requirements imply developing a domain-specific language?
-tor((T1,T2), (N1,N2)),
+From the domain-expert perspective, it is far more
+natural to describe tallies that are UNacceptable.
+
+TODO: Exploit features such as #\ and tuple_in to
+      achieve such an expression.
+*/
+
+acceptable_tally(T1 - T2, N1 - N2) :-
     T2 #< 5, % Want never to see 5+ toxicities at higher dose,
     T1 #< 4, % and never even 4+ toxicities at a lower dose.
     zcompare(C, N1, 6),
-    acceptable_tally_(C, (T1/N1, T2/N2)).
+    acceptable_tally_(C, T1/N1 - T2/N2).
 
 % What is acceptable in case N1 #= 6?
-acceptable_tally_(=, (T1/_, T2/N2)) :-
+acceptable_tally_(=, T1/_ - T2/N2) :-
     (	T1 #> 0  %% i.e., N2 = 0 ==> T1 > 0, meaning that
     ;	N2 #> 0  %% we didn't dawdle at a too-low dose.
     ).
 
 % What is acceptable in case N1 #< 6?
-acceptable_tally_(<, (T1/N1, T2/N2)) :-
+acceptable_tally_(<, T1/N1 - T2/N2) :-
     (	N2 #= 0  %% EITHER we haven't enrolled dose 2 yet...
     ;	T1 #= 0, N1 #>= 3 %% OR dose 1 had 0/3 tox tally.
     ).
 
 %% NB: Clause for the '>' case is purposely absent:
 %%acceptable_tally(>, _) :- false.
+
+%?- acceptable_tally(T, N).
+%@ T = _89184-_89186,
+%@ N = 6-_89204,
+%@ _89184 in 1..3,
+%@ _89186 in inf..4 ;
+%@ T = _91188-_91190,
+%@ N = 6-_91208,
+%@ _91188 in inf..3,
+%@ _91190 in inf..4,
+%@ _91208 in 1..sup ;
+%@ T = _93552-_93554,
+%@ N = _93570-0,
+%@ _93552 in inf..3,
+%@ _93554 in inf..4,
+%@ _93570 in inf..5 ;
+%@ T = 0-_95756,
+%@ N = _95772-_95774,
+%@ _95756 in inf..4,
+%@ _95772 in 3..5.
+%% TODO: Examine the above for correctness.
 
 /*
 
@@ -241,29 +221,72 @@ aspect is all-important!
 
 */
 
-:- table allowable_step/1.
 %@ true.
-allowable_step((S1,S2)) :-
-    S1 #>= 0,
-    S2 #>= 0,
-    denominator((N1a,N2a)),
-    denominator((N1b,N2b)),
+allowable_step(S1 - S2) :-
+    denominator(N1a - N2a),
+    denominator(N1b - N2b),
     N1b #= N1a + S1,
     N2b #= N2a + S2,
-    S1 + S2 #< 4. % let's say, 4 DLTs in 1 step is unacceptable
+    S12 #= S1 + S2,
+    S1 #>= 0,
+    S2 #>= 0,
+    S12 #< 4. % let's say, 4+ DLTs in 1 step is unacceptable
 
-%?- allowable_step(S).
-%@ S =  (3, 0) ;
-%@ S =  (0, 3) ;
-%@ S =  (0, 0).
+%?- denominator(N1a - N2a), denominator(N1b - N2b), N1b #= N1a + S1, N2b #= N2a + S2, S12 #= S1 + S2, S12 #< 4, S1 #>= 0, S2 #>= 0.
+%@ N1a in 0\/3\/6,
+%@ N1a+S1#=N1b,
+%@ S1 in 0..3,
+%@ S1+S2#=S12,
+%@ S2 in 0..3,
+%@ N2a+S2#=N2b,
+%@ N2a in 0\/3\/6,
+%@ N2b in 0\/3\/6,
+%@ S12 in 0..3,
+%@ N1b in 0\/3\/6.
 
-step((T1a/N1a,T2a/N2a), (T1b/N1b,T2b/N2b)) :-
-    denominator((N1a, N2a)),
-    denominator((N1b, N2b)),
+%?- allowable_step(A - B).
+%@ A in 0..3,
+%@ A+B#=_20888,
+%@ _20916+A#=_20912,
+%@ B in 0..3,
+%@ _20964+B#=_20960,
+%@ _20964 in 0\/3\/6,
+%@ _20960 in 0\/3\/6,
+%@ _20888 in 0..3,
+%@ _20916 in 0\/3\/6,
+%@ _20912 in 0\/3\/6.
+
+%% "Residual program"
+%% The answer is a transformation of the program!
+
+step(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b) :-
+    denominator(N1a - N2a),
+    denominator(N1b - N2b),
     S1 #= N1b - N1a,
     S2 #= N2b - N2a,
-    allowable_step((S1,S2)),
-    acceptable_tally((T1b/N1b,T2b/N2b)),
-    acceptable_tally((T1a/N1a,T2a/N2a)),
+    allowable_step(S1 - S2),
+    acceptable_tally(T1b/N1b - T2b/N2b),
+    acceptable_tally(T1a/N1a - T2a/N2a),
     true.
+
+%?- step(A, B).
+
+/* - - - -
+%% TODO: Read memoization in Markus's book
+:- dynamic memo/1.
+memo(Goal) :- ( Goal -> true ; Goal, assertz(Goal)).
+
+%% Dangeous territory!
+:- dynamic memo_/1.
+memo(Goal) :-
+( memo_(Goal) -> true
+; once(Goal),
+assertz(memo_(Goal))
+).
+*/
+
+%% Big questions: what are we talking about at all?
+
+%% We can ABSORB the unification and backtracking!
+%% Compare with the call stack of Lisp, which is implicit.
 
