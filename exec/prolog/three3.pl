@@ -66,20 +66,20 @@ esc(D, Lo..Hi) --> ...
 %% TODO: WLOG set Lo == 1 by convention.
 
 tox(T) :- T in 0..3,
-	  *indomain(T). % prefix w/ * to switch off labeling
+	  *indomain(T). % * switches off labeling
 
 % Mnemonic: * is ^ that 'splatted' on dose ceiling.
 esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi,
 				tox(T) },
-		    (   { T #=< 1 }, [mtd_notfound(Hi)]
-		    ;	{ T #>= 2 }, des(Hi, Lo)
+		    (  {T #=< 1}, [mtd_notfound(Hi)]
+		    ;  {T #>= 2}, des(Hi, Lo)
 		    ).
 esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1,
 			       D1 in Lo..Hi,
 			       tox(T) },
-		   (   {T #= 0}, esc(D1, Lo..Hi)
-		   ;   {T #= 1}, sta(D1, Lo..Hi)
-		   ;   {T #> 1}, des(D1, Lo)
+		   (  {T #= 0}, esc(D1, Lo..Hi)
+		   ;  {T #= 1}, sta(D1, Lo..Hi)
+		   ;  {T #> 1}, des(D1, Lo)
 		   ).
 
 % TODO: Is special case sta(D, _..D) needed?
@@ -96,11 +96,11 @@ sta(D, Lo.._) --> [D - T], { tox(T), T #> 0 },
 %% TODO: Does this mean des//2 could be written as des(Lo..D),
 %%       somehow exploiting the impossibility of Y..X with Y > X?
 des(D, Lo) --> { D_1 #= D - 1 },
-	       (   { D_1 #= Lo }, [declare_mtd(Lo)]
-	       ;   { D_1 #> Lo }, [D_1 : T], { tox(T) },
-		   (   { T #=< 1 }, [declare_mtd(D_1)]
-		   ;   { T #>= 2 }, des(D_1, Lo)
-		   )
+	       (  {D_1 #= Lo}, [declare_mtd(Lo)]
+	       ;  {D_1 #> Lo}, [D_1 : T], {tox(T)},
+		  (  {T #=< 1}, [declare_mtd(D_1)]
+		  ;  {T #>= 2}, des(D_1, Lo)
+		  )
 	       ).
 
 %% TODO: Write cohorts as (Dose ^ Tox / Enrolled).
