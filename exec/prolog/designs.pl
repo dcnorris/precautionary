@@ -272,11 +272,11 @@ step(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b) :-
 %?- step(A, B).
 
 /* - - - -
-%% TODO: Read memoization in Markus's book
+%% DONE: Read memoization in Markus's book
 :- dynamic memo/1.
 memo(Goal) :- ( Goal -> true ; Goal, assertz(Goal)).
 
-%% Dangeous territory!
+%% Dangerous territory!
 :- dynamic memo_/1.
 memo(Goal) :-
 ( memo_(Goal) -> true
@@ -290,3 +290,45 @@ assertz(memo_(Goal))
 %% We can ABSORB the unification and backtracking!
 %% Compare with the call stack of Lisp, which is implicit.
 
+/*
+
+Reading notes from Codish & Søndergaard:
+
+- Various safety properties might lend themselves to analysis in a 'Safety' domain like C&S's 'Parity' domain.
+
+- The abstract elements 'even', 'odd', etc., look like 'escalation', 'de-escalation', and other such 'commentary' you might offer observing the enrollment and assessment of cohorts.
+
+- Abstract interpretation as described in introduction to Section 3 looks like a method for demonstrating higher-level concepts as 'emergent' from the designs as demarcated by merely 'algorithmic' constructs.
+
+- TODO: Try to understand if/how 'fixed points' relate to the above construction of 'designs'.
+
+- In practical terms, how would a Tp semantics for dose-escalation trials differ from a 'standard meta-circular interpreter'? What does the symmetric difference of the sets of capabilities of these approaches look like? (I'm asking, what I may appreciate only in retrospect, how the considerations of Section 3.1 manifest concretely in this particular application.)
+
+- Is 'least fixed point' something like a *transitive closure* in RDBMS?
+
+- What's missing from the fixed point of append/3 as given on page 8? The possibility of 'creative' uses such as with list differences?
+
+- DISCUSS: If one does pure logic programming, does this eliminate (except say for purely technical reasons like debugging or performance) all interest in "runtime" issues such as in Section 3.3?
+
+- I could see depth-k analysis achieving a 'local' form of dose-escalation trial analysis that focuses attention on (say) the last move, present decision, and next set of outcomes/decisions. Some of the discussion initiated by Wages & Braun has this this character.
+
+- Does the "irrational assignment" question of Wages & Braun link to 'dataflow analysis'? You're asking the question, whether the outcome for the next patient changes ('flows through to') the future dosing decisions. 
+
+- I even wonder whether the DCG {esc,sta,des} amounts to an 'approximation' or could be recast as such (compare Section 4.3, where predicates are approximated by terms).
+A: But esc/sta/des are already the finest-grained things that can happen. Contrast with even/odd. When you say "approximation" you're talking about domain granularity.
+
+- Approximation within the 3+3 design could make explicit the equal treatment given to 2/3 and 3/3 cohorts -- and even pave the way for a *criticism* of this equivalence! (A similar point might well apply to representing and criticizing the dichotomization of ordinal (Gr in 0..5) toxicities via DLT in 0..1).
+A: But how much can we abstract from details, yet retain useful consequences that we can 'milk' from it.
+
+- Would it help me to know the origins of 's' and 'c' in (s|c)-semantics?
+TODO: Look up the papers (e.g. ref. 7, 30, 31).
+
+- The manner in which MI's abstract/extend search strategies seems potentially like a heuristic or metaphor for what one would like to achieve wrt dose-escalation designs. There are in general some 'absorbed' notions that remain unchanged, but other 'reified' notions that admit modification.
+
+*/
+
+/*
+TODO: Consider metagol!
+Homoiconicity.
+Functor-free subset of Prolog is Datalog!
+*/
