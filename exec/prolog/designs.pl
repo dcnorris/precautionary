@@ -1,5 +1,8 @@
 % Attempt an enumeration of ALL dose-finding designs over 2 doses
 
+% Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
+:- op(920, fy, *). *_.  % *Goal always succeeds
+
 /* I have moved these to implementation-specific init files
 :- use_module(library(clpfd)).  % SWI
 :- use_module(library(clpz)).   % Scryer
@@ -152,7 +155,7 @@ TODO: Consider whether describing a partial order
 
 %% TODO: Consider 
 
-acceptable_tally(T1 - T2, N1 - N2) :-
+acceptable_tally(T1/N1 - T2/N2) :-
     numerator_denominator(T1 - T2, N1 - N2),
     % TODO: Articulate a rationale for these 2 'never' demands:
     #\ T2 in 5..sup, % Want never to see 5+ toxicities
@@ -177,7 +180,7 @@ acceptable_tally_(<, T1/N1 - T2/N2) :-
 %% NB: Clause for the '>' case is purposely absent:
 %%acceptable_tally(>, _) :- false.
 
-%?- acceptable_tally(T1 - T2, N1 - N2).
+%?- acceptable_tally(T1/N1 - T2/N2).
 %@ N1 = 6,
 %@ T1 in 1..4,
 %@ T2 in 0..4,
@@ -290,45 +293,144 @@ allowable_step(S1 - S2) :-
 %@ A = 3,  %% Enrolling
 %@ B = 0.  %% dose-level 1.
 
-step(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b) :-
-    denominator(N1a - N2a),
-    denominator(N1b - N2b),
-    S1 #= N1b - N1a,
-    S2 #= N2b - N2a,
-    allowable_step(S1 - S2),
-    acceptable_tally(T1b - T2b, N1b - N2b),
-    acceptable_tally(T1a - T2a, N1a - N2a),
-    true.
+%?- X in 0..1, Y in 0..1, #\(X #= Y, Y #= 1), indomain(X), indomain(Y).
+%@ X = Y, Y = 0 ;
+%@ X = 0,
+%@ Y = 1 ;
+%@ false.
 
-%?- step(0/3 - 0/0, T1b/N1b - T2b/N2b), indomain(N1b), indomain(N2b).
-%@ N1b = 6,
-%@ T2b = N2b, N2b = 0,
-%@ T1b in 1..4 ;
-%@ N1b = 6,
-%@ T2b = N2b, N2b = 0,
-%@ T1b in 1..4 ;
-%@ N1b = 3,
-%@ T2b = N2b, N2b = 0,
-%@ T1b in 0..3 ;
-%@ N1b = 3,
-%@ T2b = N2b, N2b = 0,
-%@ T1b in 0..3 ;
-%@ T1b = T2b, T2b = N2b, N2b = 0,
-%@ N1b = 3 ;
-%@ T1b = 0,
-%@ N1b = N2b, N2b = 3,
-%@ T2b in 0..3 ;
-%@ T1b = T2b, T2b = N2b, N2b = 0,
-%@ N1b = 3 ;
-%@ T1b = 0,
-%@ N1b = N2b, N2b = 3,
-%@ T2b in 0..3.
+%?- X in 0..1, Y in 0..1, X + Y #< 2, indomain(X), indomain(Y).
+%@ X = Y, Y = 0 ;
+%@ X = 0,
+%@ Y = 1 ;
+%@ X = 1,
+%@ Y = 0.
+
+%% Here, we detail CONCEIVABLE OUTCOMES based on ARITHMETIC.
+tally0_tally(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b) :-
+    acceptable_tally(T1a/N1a - T2a/N2a), % No sense discussing an unacceptable tally0, tho.
+    denominator(N1b - N2b),
+    E1 #= N1b - N1a,
+    E2 #= N2b - N2a,
+    E1 #>= 0, % Enrollment must be
+    E2 #>= 0, % non-negative!
+    E1 + E2 #> 0, % Net enrollment must be nontrivial.
+    indomain(E1), % Avoid 'arguments not sufficiently
+    indomain(E2), % instantiated' error
+    T1new in 0..E1, % TODO: Try plainer constraints here,
+    T2new in 0..E2, % to avoid premature labeling above.
+    T1b #= T1a + T1new,
+    T2b #= T2a + T2new.
+
+%?- tally0_tally(0/3 - 0/0, T1/N1 - T2/N2), indomain(N1), indomain(N2).
+%@ T1 = 0,
+%@ N1 = N2, N2 = 3,
+%@ T2 in 0..3 ;
+%@ T1 = 0,
+%@ N1 = 3,
+%@ N2 = 6,
+%@ T2 in 0..6 ;
+%@ N1 = 6,
+%@ T2 = N2, N2 = 0,
+%@ T1 in 0..3 ;
+%@ N1 = 6,
+%@ N2 = 3,
+%@ T1 in 0..3,
+%@ T2 in 0..3 ;
+%@ N1 = N2, N2 = 6,
+%@ T1 in 0..3,
+%@ T2 in 0..6 ;
+%@ T1 = 0,          %% NB: We re-find all same solutions once again...
+%@ N1 = N2, N2 = 3,
+%@ T2 in 0..3 ;
+%@ T1 = 0,
+%@ N1 = 3,
+%@ N2 = 6,
+%@ T2 in 0..6 ;
+%@ N1 = 6,
+%@ T2 = N2, N2 = 0,
+%@ T1 in 0..3 ;
+%@ N1 = 6,
+%@ N2 = 3,
+%@ T1 in 0..3,
+%@ T2 in 0..3 ;
+%@ N1 = N2, N2 = 6,
+%@ T1 in 0..3,
+%@ T2 in 0..6.
+
+%% A DESIGN is a RELATION connecting acceptable tallies
+%% to subsequent denominators that constitute decisions
+%% to enroll more study participants.
+oktally_nextdenom(T1/N1 - T2/N2, N1next - N2next) :-
+    acceptable_tally(T1/N1 - T2/N2),
+    denominator(N1next - N2next),
+    N1next #>= N1,
+    N2next #>= N2,
+    %% At this point, I need to universally quantify the solution
+    %% over all possible outcomes.
+    E1 #= N1next - N1, % Enrollments at dose 1
+    E2 #= N2next - N2, % and dose 2.
+    E1 + E2 #> 0, % Exclude trivial enrollment 'steps'
+    bagof(T1next/N1next - T2next/N2next,
+	  (   tally0_tally(T1/N1 - T2/N2, T1next/N1next - T2next/N2next),
+	      indomain(T1next), % What a horror show!
+	      indomain(N1next), % There must be a
+	      indomain(T2next), % better way!
+	      indomain(N2next)
+	  ),	      
+	  Tallies),
+    maplist(acceptable_tally, Tallies).
+   
+%?- tally0_tally(0/3 - 0/0, T1/6 - 0/0).
+%@ T1 in 0..3 ;
+%@ T1 in 0..3.
+
+%?- acceptable_tally(0/6 - 0/0).
+%@ false.
+
+%?- bagof(T1/6 - 0/0, (tally0_tally(0/3 - 0/0, T1/6 - 0/0), indomain(T1)), Tallies), maplist(acceptable_tally, Tallies).
+%@ false.
+
+%?- oktally_nextdenom(0/3 - 0/0, 6 - 0).
+%@ false. % CORRECT!
+
+%?- oktally_nextdenom(0/3 - 0/0, 3 - 3).
+%@ true ;
+%@ true.
+
+%?- oktally_nextdenom(0/3 - 0/0, 3 - N2).
+%@ false. %% Non-monotonic behavior! (Blame bagof/2?)
+
+/*
+My guess about this is that, if I do want to treat the design as if it were
+itself a Prolog program, then I will have to implement some kind of MI.
+
+What can I do, short of this? Perhaps I can simply treat the design as a list
+of tuples, in a manner accessible to tuples_in/2. This is perhaps better suited
+anyway, to aims such as counting the number of possible designs, etc.
+
+I wonder if I've encountered a specific instance of a general type of tension
+that might be common in logic programming, between two conflicting aims. If so,
+how could I articulate these aims?
+*/
 
 /*
 Interesting! What we see here is a set of steps that lead to acceptable tallies.
 But what is not checked here is whether the chosen end-denominator ensures that
 ALL POSSIBLE end-tallies are acceptable! The latter is a much stronger condition,
 and is what in fact yields the USEFUL inference about the CONTENT of a design.
+
+Looking at this from a naive (pre-CLP) perspective, it would seem that I require
+the \+ operator. But 2 possibilities present themselves, both anticipated by Markus.
+
+The first is TABLING, which it seems I might use to 'mark' arrows as INVALID after
+finding a possible cohort outcome that yields an unacceptable end-tally.
+
+The second is tuples_in/2, which I think would require me to represent tallies
+as simple lists of integers.
+
+But TO BEGIN WITH, let me try a very straightforward (even if impure) approach
+based on findall/3.
 */
 
 
