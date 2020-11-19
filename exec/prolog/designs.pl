@@ -315,9 +315,10 @@ tally0_tally(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b) :-
     E1 #>= 0, % Enrollment must be
     E2 #>= 0, % non-negative!
     E1 + E2 #> 0, % Net enrollment must be nontrivial.
-    indomain(E1), % Avoid 'arguments not sufficiently
-    indomain(E2), % instantiated' error
-    T1new in 0..E1, % TODO: Try plainer constraints here,
+    maplist(indomain, [E1, E2]),
+    %indomain(E1), % Avoid 'arguments not sufficiently
+    %indomain(E2), % instantiated' error
+    T1new in 0..E1, % TODO: Try plainer constraints here,  ***
     T2new in 0..E2, % to avoid premature labeling above.
     T1b #= T1a + T1new,
     T2b #= T2a + T2new.
@@ -399,7 +400,7 @@ oktally_nextdenom(T1/N1 - T2/N2, N1next - N2next) :-
 %@ true.
 
 %?- oktally_nextdenom(0/3 - 0/0, 3 - N2).
-%@ false. %% Non-monotonic behavior! (Blame bagof/2?)
+%@ false. %% NON-MONOTONIC BEHAVIOR! (Blame \+ via bagof/2?)
 
 /*
 My guess about this is that, if I do want to treat the design as if it were
@@ -411,186 +412,31 @@ anyway, to aims such as counting the number of possible designs, etc.
 
 I wonder if I've encountered a specific instance of a general type of tension
 that might be common in logic programming, between two conflicting aims. If so,
-how could I articulate these aims?
+how could I articulate these aims? Is it a distinction between REIFICATION and
+a more 'subtle' or 'invisible' or IMPLICIT representation?
+
+Or perhaps the question is merely that of TEMPORAL vs SPATIAL REPRESENTATION?
 */
+
+%% I feel as if I'm in need of GENERAL advice about 'what to do when you feel
+%% like using an all-solutions predicate'. The alternatives that come to mind
+%% include \+ and cut -- which at least are more honest about how bad they are.
 
 /*
-Interesting! What we see here is a set of steps that lead to acceptable tallies.
-But what is not checked here is whether the chosen end-denominator ensures that
-ALL POSSIBLE end-tallies are acceptable! The latter is a much stronger condition,
-and is what in fact yields the USEFUL inference about the CONTENT of a design.
+Maybe this situation forces me to employ CLP in a more essential way.
 
-Looking at this from a naive (pre-CLP) perspective, it would seem that I require
-the \+ operator. But 2 possibilities present themselves, both anticipated by Markus.
-
-The first is TABLING, which it seems I might use to 'mark' arrows as INVALID after
-finding a possible cohort outcome that yields an unacceptable end-tally.
-
-The second is tuples_in/2, which I think would require me to represent tallies
-as simple lists of integers.
-
-But TO BEGIN WITH, let me try a very straightforward (even if impure) approach
-based on findall/3.
+As unfortunate as tuples_in/2's (unstructured) lists of integers might appear,
+they do promise a certain ease of generalizability toward D > 2.
+The transformation from tallies like T1/N1 - T2/N2 to tuples [T1, N1, T2, N2]
+isn't really so very hard to read, either!
 */
 
 
-%?- step(T1a/N1a - T2a/N2a, T1b/N1b - T2b/N2b), indomain(N1a), indomain(N2a), indomain(N1b), indomain(N2b).
-%@ N1a = N1b, N1b = 6,
-%@ T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ T1a in 1..4,
-%@ T1b in 1..4 ;
-%@ N1a = N1b, N1b = 6,
-%@ T2a = N2a, N2a = 0,
-%@ N2b = 3,
-%@ T1a in 1..4,
-%@ T1b in 1..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = 6,
-%@ N2a = N2b, N2b = 3,
-%@ T1a in 1..4,
-%@ T2a in 0..3,
-%@ T1b in 1..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = N2b, N2b = 6,
-%@ N2a = 3,
-%@ T1a in 1..4,
-%@ T2a in 0..3,
-%@ T1b in 1..4,
-%@ T2b in 0..4 ;
-%@ N1a = N2a, N2a = N1b, N1b = N2b, N2b = 6,
-%@ T1a in 1..4,
-%@ T2a in 0..4,
-%@ T1b in 1..4,
-%@ T2b in 0..4 ;
-%@ N1a = N1b, N1b = 6,
-%@ N2a = N2b, N2b = 3,
-%@ T1a in 0..4,
-%@ T2a in 0..3,
-%@ T1b in 1..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = N2b, N2b = 6,
-%@ N2a = 3,
-%@ T1a in 0..4,
-%@ T2a in 0..3,
-%@ T1b in 1..4,
-%@ T2b in 0..4 ;
-%@ N1a = N2a, N2a = N1b, N1b = N2b, N2b = 6,
-%@ T1a in 0..4,
-%@ T2a in 0..4,
-%@ T1b in 1..4,
-%@ T2b in 0..4 ;
-%@ N1a = 3,
-%@ T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ N1b = 6,
-%@ T1a in 0..3,
-%@ T1b in 1..4 ;
-%@ T1a = T2a, T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ N1a = 3,
-%@ N1b = 6,
-%@ T1b in 1..4 ;
-%@ T1a = 0,
-%@ N1a = N2a, N2a = N2b, N2b = 3,
-%@ N1b = 6,
-%@ T2a in 0..3,
-%@ T1b in 1..4,
-%@ T2b in 0..3 ;
-%@ T1a = 0,
-%@ N1a = 3,
-%@ N2a = N1b, N1b = N2b, N2b = 6,
-%@ T2a in 0..4,
-%@ T1b in 1..4,
-%@ T2b in 0..4 ;
-%@ N1a = N1b, N1b = 6,
-%@ T2a = N2a, N2a = 0,
-%@ N2b = 3,
-%@ T1a in 1..4,
-%@ T1b in 0..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = 6,
-%@ N2a = N2b, N2b = 3,
-%@ T1a in 1..4,
-%@ T2a in 0..3,
-%@ T1b in 0..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = N2b, N2b = 6,
-%@ N2a = 3,
-%@ T1a in 1..4,
-%@ T2a in 0..3,
-%@ T1b in 0..4,
-%@ T2b in 0..4 ;
-%@ N1a = N2a, N2a = N1b, N1b = N2b, N2b = 6,
-%@ T1a in 1..4,
-%@ T2a in 0..4,
-%@ T1b in 0..4,
-%@ T2b in 0..4 ;
-%@ N1a = N1b, N1b = 6,
-%@ N2a = N2b, N2b = 3,
-%@ T1a in 0..4,
-%@ T2a in 0..3,
-%@ T1b in 0..4,
-%@ T2b in 0..3 ;
-%@ N1a = N1b, N1b = N2b, N2b = 6,
-%@ N2a = 3,
-%@ T1a in 0..4,
-%@ T2a in 0..3,
-%@ T1b in 0..4,
-%@ T2b in 0..4 ;
-%@ N1a = N2a, N2a = N1b, N1b = N2b, N2b = 6,
-%@ T1a in 0..4,
-%@ T2a in 0..4,
-%@ T1b in 0..4,
-%@ T2b in 0..4 ;
-%@ T1a = 0,
-%@ N1a = N2a, N2a = N2b, N2b = 3,
-%@ N1b = 6,
-%@ T2a in 0..3,
-%@ T1b in 0..4,
-%@ T2b in 0..3 ;
-%@ T1a = 0,
-%@ N1a = 3,
-%@ N2a = N1b, N1b = N2b, N2b = 6,
-%@ T2a in 0..4,
-%@ T1b in 0..4,
-%@ T2b in 0..4 ;
-%@ T1a = N1a, N1a = T2a, T2a = N2a, N2a = T1b, T1b = N1b, N1b = T2b, T2b = N2b, N2b = 0 ;
-%@ T1a = N1a, N1a = T2a, T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ N1b = 3,
-%@ T1b in 0..3 ;
-%@ N1a = N1b, N1b = 3,
-%@ T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ T1a in 0..3,
-%@ T1b in 0..3 ;
-%@ T1a = T2a, T2a = N2a, N2a = T2b, T2b = N2b, N2b = 0,
-%@ N1a = N1b, N1b = 3,
-%@ T1b in 0..3 ;
-%@ T1a = N1a, N1a = T2a, T2a = N2a, N2a = T1b, T1b = T2b, T2b = N2b, N2b = 0,
-%@ N1b = 3 ;
-%@ N1a = N1b, N1b = 3,
-%@ T2a = N2a, N2a = T1b, T1b = T2b, T2b = N2b, N2b = 0,
-%@ T1a in 0..3 ;
-%@ N1a = N1b, N1b = N2b, N2b = 3,
-%@ T2a = N2a, N2a = T1b, T1b = 0,
-%@ T1a in 0..3,
-%@ T2b in 0..3 ;
-%@ T1a = T2a, T2a = N2a, N2a = T1b, T1b = T2b, T2b = N2b, N2b = 0,
-%@ N1a = N1b, N1b = 3 ;
-%@ T1a = T2a, T2a = N2a, N2a = T1b, T1b = 0,
-%@ N1a = N1b, N1b = N2b, N2b = 3,
-%@ T2b in 0..3 ;
-%@ T1a = T1b, T1b = 0,
-%@ N1a = N2a, N2a = N1b, N1b = N2b, N2b = 3,
-%@ T2a in 0..3,
-%@ T2b in 0..3 ;
-%@ T1a = T1b, T1b = 0,
-%@ N1a = N2a, N2a = N1b, N1b = 3,
-%@ N2b = 6,
-%@ T2a in 0..3,
-%@ T2b in 0..4 ;
-%@ T1a = T1b, T1b = 0,
-%@ N1a = N1b, N1b = 3,
-%@ N2a = N2b, N2b = 6,
-%@ T2a in 0..4,
-%@ T2b in 0..4.
+%% Suppose I tried to express the constraint via tuples_in/2?
+/*
+What about tmember/2, tfilter/3 and tpartition/4?
+*** These are in library(reif).
+*/
 
 %% Big questions: what are we talking about at all?
 
@@ -599,43 +445,16 @@ based on findall/3.
 
 /*
 
-Reading notes from Codish & Søndergaard:
-
-- Various safety properties might lend themselves to analysis in a 'Safety' domain like C&S's 'Parity' domain.
-
-- The abstract elements 'even', 'odd', etc., look like 'escalation', 'de-escalation', and other such 'commentary' you might offer observing the enrollment and assessment of cohorts.
-
-- Abstract interpretation as described in introduction to Section 3 looks like a method for demonstrating higher-level concepts as 'emergent' from the designs as demarcated by merely 'algorithmic' constructs.
-
-- TODO: Try to understand if/how 'fixed points' relate to the above construction of 'designs'.
-
-- In practical terms, how would a Tp semantics for dose-escalation trials differ from a 'standard meta-circular interpreter'? What does the symmetric difference of the sets of capabilities of these approaches look like? (I'm asking, what I may appreciate only in retrospect, how the considerations of Section 3.1 manifest concretely in this particular application.)
-
-- Is 'least fixed point' something like a *transitive closure* in RDBMS?
-
-- What's missing from the fixed point of append/3 as given on page 8? The possibility of 'creative' uses such as with list differences?
-
-- DISCUSS: If one does pure logic programming, does this eliminate (except say for purely technical reasons like debugging or performance) all interest in "runtime" issues such as in Section 3.3?
+Residual notes from C&S reading:
 
 - I could see depth-k analysis achieving a 'local' form of dose-escalation trial analysis that focuses attention on (say) the last move, present decision, and next set of outcomes/decisions. Some of the discussion initiated by Wages & Braun has this this character.
 
 - Does the "irrational assignment" question of Wages & Braun link to 'dataflow analysis'? You're asking the question, whether the outcome for the next patient changes ('flows through to') the future dosing decisions. 
 
-- I even wonder whether the DCG {esc,sta,des} amounts to an 'approximation' or could be recast as such (compare Section 4.3, where predicates are approximated by terms).
-A: But esc/sta/des are already the finest-grained things that can happen. Contrast with even/odd. When you say "approximation" you're talking about domain granularity.
-
-- Approximation within the 3+3 design could make explicit the equal treatment given to 2/3 and 3/3 cohorts -- and even pave the way for a *criticism* of this equivalence! (A similar point might well apply to representing and criticizing the dichotomization of ordinal (Gr in 0..5) toxicities via DLT in 0..1).
-A: But how much can we abstract from details, yet retain useful consequences that we can 'milk' from it.
-
-- Would it help me to know the origins of 's' and 'c' in (s|c)-semantics?
-TODO: Look up the papers (e.g. ref. 7, 30, 31).
-
 - The manner in which MI's abstract/extend search strategies seems potentially like a heuristic or metaphor for what one would like to achieve wrt dose-escalation designs. There are in general some 'absorbed' notions that remain unchanged, but other 'reified' notions that admit modification.
 
 */
-
-/*
-TODO: Consider metagol!
-Homoiconicity.
-Functor-free subset of Prolog is Datalog!
-*/
+%% Decouple the description frrom the DCG formalism.
+%% Free the description.
+%% TODO: Inspect Markus's 3 DSLs from clpz.
+%% "Finding out is always an example of search." -- MT
