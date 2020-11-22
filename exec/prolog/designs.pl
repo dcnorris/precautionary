@@ -458,3 +458,216 @@ Residual notes from C&S reading:
 %% Free the description.
 %% TODO: Inspect Markus's 3 DSLs from clpz.
 %% "Finding out is always an example of search." -- MT
+
+/*
+Notes from reading library(clpz) ...
+
+WHAT IF there turned out to be some clever encoding of 'designs'
+in terms of integer and combinatorial constraints?
+
+Perhaps some kind of (conditional?) partial ordering is conceivable,
+which would avoid the \+ problem? Another way to pose this question is:
+what conditions would have to hold for our 'unacceptabilty' notions,
+in order to ensure that tallies may be mapped to Z to render the
+acceptable sets as pre-images of INTERVALS in Z?
+
+-) I think the tallies over a given denominator might well be amenable
+   to a complete ordering -- on the basis of likelihood of toxicity.
+   If this proved to be the case, then this would constitute a marvelous
+   linkage to the analytical or topological content of pharmacology in
+   the continuum ℝ.
+-) If this mapping can be done bijectively, then I suddenly have a problem
+   entirely within the capabilities of CLP(ℤ).
+-) Even if no bijection of this kind can be stated a priori, perhaps we may
+   determine one 'dynamically', consistently with whatever acceptability
+   constraints have been imposed by the domain expert.
+-) What I may require, in order to render this possible, is some arithmetical
+   fact---with luck, a TRUE one!---about tallies in general. Do they admit an
+   ordering that renders all possible outcomes of any given cohort enrollment
+   as an interval within the order? Does this ordering enable any acceptability
+   criterion to be expressed as an interval?
+*/
+
+/*
+ADDITIONAL THOUGHTS ..
+
+What about that recursive (dynamic programming) perspective I had in mind a while back?
+Would backwards connecting eliminate the need for forwards universal quantification?
+*/
+
+/* - - - - -
+
+What if I revisit my LATTICE concept, with the assistance of an
+encoding that brings CLP(Z) more effectively into play?
+
+Let's also be less shy about using LOGICAL VARIABLES (FTW!),
+so that our DENOMINATOR LATTICE looks like this:
+
+6  I..G..E
+   .......
+   .......
+3  H..F..D
+   .......
+   .......
+0  A..B..C
+   0  3  6
+
+In part, the above ordering corresponds to lexicographic preference
+for escalating 'as little and as late' as possible. But I have also
+aimed to place the final letters {G, H, I} at the denominators least
+likely (or impossible) to reach by cautious dose-escalation steps.
+
+Can I formalize this intuition? Writing the denominators low-dose-last,
+I obtain this layout:
+
+6  60..63..66
+   ..........
+   ..........
+3  30..33..36
+   ..........
+   ..........
+0  00..03..06
+    0   3   6
+
+Interestingly, while I can see no purely arithmetical treatment of
+the denominators *themselves* which represents my intuition, I do
+find that PATH concepts help with the ordering. The letters A..E
+trace out a path of maximally-delayed dose escalation. The next path
+in that ordering is ABFDE, and the next after that ABFGE. Thus, the
+labeling of the nodes is such that, when listed in order of ascending
+'eagerness', the escalation paths introduce the later letters of the
+alphabet at the latest time possible. (The first path to 66 employs
+only the first 5 alphabet letters; the next path, the first 6 letters,
+and so on.)
+
+Notice also that the integer encoding of the denominators DOES nicely
+indicate the 'eagerness' of the paths, if the integers themselves are
+treated lexicographically:
+
+(00,03,06,36,66)
+(00,03,33,36,66)
+(00,03,33,63,66)
+(00,30,33,36,66)
+(00,30,33,63,66)
+(00,30,60,63,66).
+
+Those are the 6 possible dose-escalation paths running from 00 to 66
+that are STRICTLY INCREASING in the XY encoding. (Note that 6 is the
+binomial coefficient (4 choose 2), and that the path-counting here
+recapitulates Pascal's triangle.)
+
+Now that I'm not afraid to create 9 logical variables from the outset,
+what becomes possible in the way of posting constraints?
+
+First of all, can I exploit 'meta-logical' predicates, such that I
+ask whether VARIABLES THEMSELVES can be linked by escalation steps?
+If I can 'get away with' this, then maybe I have an escape from \+?
+
+Here's the proposed set-up: The variables A..I are bound to lists of
+numerators, coded in the XY encoding as above. Two variables V1, V2
+may be linked by a valid dose-escalation step iff there is a numerator
+in the list bound to V1 that has a NONDETERMINISTIC IMAGE entirely
+within the list bound to V2.
+
+Notice that this is a WEAKER condition than that imposed on the
+'escalation arrows' relation conceived above. The variables are
+connected if there is ANY SUCH ARROW. Thus, the 'links' I am
+discussing here are equivalence classes of a sort.
+
+===
+
+Getting into SPECIFICS now, here's how these arrows might be tested.
+
+Say B = [00,01,02,03] to begin with. As it turns out, none of these
+is (or, logically, even *could* be) unacceptable. We now ask what
+arrows might be drawn:
+
+00 -> 06 (C) x should escalate
+00 -> 33 (F)
+01 -> 06 (C)
+01 -> 33 (F) x should stay
+02 -> 06 (C) x should stop
+02 -> 33 (F) x should stop
+03 -> 06 (C) x should stop
+03 -> 33 (F) x should stop
+
+This is the full set of arrows from B-POSSIBLE TALLIES to one of
+the feasible target denominators C ('06') or F ('33'). Disallowed
+arrows are marked 'x', with an explanation.
+
+Can I exhibit CLP(Z)-type constraints that yield the x's above?
+Generating the DISALLOWED arrows ought to work just fine, provided
+that I am then willing to move to a SPATIAL representation over FD,
+and perform the necessary set-differencing.
+
+OOH! But there is clearly a problem with the feasibility of generating
+enormous solution sets, only to difference them to obtain small ones!
+Really, the first question I ought to ask is whether I can obtain the
+ALLOWED arrows via CLP(Z) constraint propagation.
+
+Perhaps I should focus for a while on the problem of achieving a
+representation of the INDETERMINACY itself. Certainly, CLP(Z) offers
+handy forms of expression, via .. , /\ and \/ notations.
+
+Do any CLP(Z) combinatorial constraints come at all close to 'forall'?
+
+-) It seems at least that all_distinct/1 does an awful lot of work!
+-) What about disjoint2(+Rectangles) ...
+
+AHA! This RECTANGLES idea makes me wonder if I have neglected to seek
+out SPATIAL INTUITIONS for this problem! Do the sets of possible cohort
+outcome tallies have geometrical analogues? Between any two denominators
+we can draw a rectangle, and the possible cohort tallies lie in the
+origin-translated image of that rectangle. What about the end-tallies
+themselves? These numerators obey the same rules. Can my rules about
+(un)acceptablity be translated to the origin as well? Are convexities
+of any sort thereby revealed? 
+
+Anticipating (for a moment) the possibilities contained in disjoint2/1,
+once the UNacceptable rectangles have been mapped out in the tally grid,
+I ought to be able to identify acceptable escalations as rectangles that
+are disjoint from the union of all the unacceptable regions. (Then again,
+maybe this will look like overkill, with the advantage of sufficient
+geometrical intuition?)
+
+===
+What are the REGRETS in the table above?
+
+00 -> 06 (C) x 06/06
+00 -> 33 (F)
+01 -> 06 (C)
+01 -> 33 (F) x 31/33, 21/33
+02 -> 06 (C) x 05/06
+02 -> 33 (F) x 32/33 (and others?)
+03 -> 06 (C) x 05/06
+03 -> 33 (F) x Hmm...
+
+Ah, I see that not every unacceptable tally is defined purely by a
+regret about the net end result. Maybe this is a fault in my present
+formulation! Perhaps REJECTING THE DECISIONS THEMSELVES 'gets ahead
+of myself' a bit, and the more coherent approach will be based upon
+true REGRETS ABOUT OUTCOMES. (Under this latter approach, criticism
+of the decisions in themselves is properly seen as a 2nd-order idea;
+the primary ideas should perhaps be our regrets about net tallies,
+irrespective of how we reached them.)
+
+The explicitly-imposed cohort-of-3 constraint means that only
+the 3*3=9 underscored points in the lattice are 'in play'.
+
+At any point in this denominator lattice, there will be a feasible
+set of tallies. Some of these tallies will however be UNACCEPTABLE,
+meaning that we disallow any design under which they are reachable.
+WLOG, then, we may confine our attention to the sets of ACCEPTABLE
+TALLIES 'located' at each point of the lattice according to their
+denominators.
+
+Incidentally, it is worth noting that rotating the above lattice
+clockwise by 135 degrees yields a TREE in which leftward movement
+corresponds to choosing the lower dose for the next cohort, and
+rightward branching to choosing the higher dose for the next cohort.
+(Also, observe that these are DISTINCT FROM 'escalation' and
+'de-escalation' because the latter concepts are PATH-DEPENDENT.)
+
+
+
+   - - - - - */
