@@ -1,7 +1,5 @@
-% Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
+% prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
-
-:- use_module(library(clpfd)).
 
 /* - - -
 
@@ -234,7 +232,7 @@ limitations of the DEAL principle.
 %% AHA! It looks to me as if I must carry along the TALLIES as CONTEXT
 %% for this DCG. Is this correct? Is there some other way?
 %% It seems I am constantly re-learning how to use DCG state vs semicontext!
-%% Intuitively--based on the SYNTAX, really!--, I feel that 'lookahead'
+%% Intuitively -- based on little more than SYNTAX -- I feel that 'lookahead'
 %% (maybe with 'replacement') is appropriate for knowing what the last
 %% enrolled dose was. OTOH, it does seem as if the current TALLIES have
 %% to be managed as STATE.
@@ -467,49 +465,17 @@ a tendency that deserved to make a more spontaneous/organic entrance.
 %@ Action (h for help) ? abort
 %@ % Execution Aborted
 
-%?- 0/3 &>= 0/99.
-%@ true.
-
-%?- 0/99 &=< 0/3.
-%@ true.
-
-%?- append(L, M, [1,2,3,4,5]).
-%@ L = [],
-%@ M = [1, 2, 3, 4, 5] ;
-%@ L = [1],
-%@ M = [2, 3, 4, 5] ;
-%@ L = [1, 2],
-%@ M = [3, 4, 5] ;
-%@ L = [1, 2, 3],
-%@ M = [4, 5] ;
-%@ L = [1, 2, 3, 4],
-%@ M = [5] ;
-%@ L = [1, 2, 3, 4, 5],
-%@ M = [] ;
-%@ false.
-
-%?- maplist(#<(1), [2,3,4]).
-%@ true.
-%@ false.
-%@ ERROR: Syntax error: Unbalanced operator
-%@ ERROR: maplist(1 #
-%@ ERROR: ** here **
-%@ ERROR: <, [2,3,4]) . 
-
 % What does a DLT tally look like?
 tally(DLTs/Enrolled) :-
-    Enrolled in 1..sup,
-    0 #=< DLTs, DLTs #=< Enrolled.
-
-%?- tally(T/N).
-%@ T in 0..sup,
-%@ N#>=T,
-%@ N in 1..sup.
+    Enrolled in 1..9,
+    %%Enrolled in 1..sup,
+    0 #=< DLTs, DLTs #=< Enrolled,
+    label([Enrolled,DLTs]). %% Does denom-first labeling improve fairness?
 
 %% Ooh.. look at this! I need to delve a bit into the details
 %% of comparing tallies. I rather think that some comparisons
 %% ought to be recognized as indeterminate. Perhaps a tally
-%% such as 0/2 is INCOMMENSURATE with 1/3! How do you know
+%% such as 0/2 is INCOMPARABLE with 1/3! How do you know
 %% that the 0/2 won't become a 1/3 with the next patient?
 /*
 Would the SETS of dose-escalations that correspond to these
@@ -524,15 +490,12 @@ Do the complementary-looking comparisons such as [&< and &>=]
 lose some of their complementarity under such an understanding?
 Or do I merely eject many pairs of tallies from all comparisons?
 */
-%?- 0/2 &< 1/3.
-%@ true.
 
 :- op(900, xfx, user:(&>=)). % '_ can't be(come) any better than _'
 &>=(T1/N1, T2/N2) :-
     tally(T1/N1),
     tally(T2/N2),
-    DT #= max(0, N1 - N2),
-    T1 #>= T2 + DT.
+    T1 #>= T2 + max(0, N1 - N2).
 
 :- op(900, xfx, user:(&=<)). % '_ can't be(come) any worse than _'
 &=<(Q1, Q2) :- Q2 &>= Q1.
@@ -565,23 +528,90 @@ Or do I merely eject many pairs of tallies from all comparisons?
 %%       do or--especially!--DO NOT prove useful may itself
 %%       yield insights.
 
-lowtally(Q) :-
-    tally(Q),
-    %(	Q &=< 0/3
-    %;	Q &=< 1/6
-    %).
-    Q &=< 0/3 #<==> B,
-    lowtally_(B, Q).
+lowtally(T/N) :-
+    tally(T/N),
+    %% Is there some facility that would let me define &=<
+    %% so that the following reifies straightforwardly?
+    %% Q &=< 0/3 #<==> B,
+    %% Instead, I am forced to duplicate a little bit of code:
+    T #= 0 #/\ N #>= 3 #<==> B, %% LHS is (T/N &=< 0/3)
+    lowtally_(B, T/N).
 
-lowtally_(1, _).
-lowtally_(0, Q) :- Q &=< 1/6.
+lowtally_(1, _).              % A low tally is &=< 0/3,
+lowtally_(0, Q) :- Q &=< 1/6. % or &=< 1/6.
+
+%% NB: 2/6 and 1/3 are MUTUALLY INCOMPARABLE
+%?- 2/6 &>= 1/3.
+%@ false.
+%?- 1/3 &>= 2/6.
+%@ false.
+
+%% BUT ... what about 2/3 and 2/6?
+%?- 2/6 &=< 2/3.
+%@ true.
+%?- 2/3 &>= 2/6.
+%@ true.
+
+toxictally(Q) :- Q &>= 2/6.
 
 tallylist_mtd(Tallies, MTD) :-
-    append(LowTallies, [T/N | _], Tallies),
-    length(LowTallies, MTD),
+    length(LowTallies, MTD), % NB: This also enforces MTD >= 0
     maplist(lowtally, LowTallies),
-    tally(T/N),
-    (	T/N &>= 1/3
-    ;	T/N &>= 2/6
-    ).
+    toxictally(Q),
+    append(LowTallies, [Q | _], Tallies).
 
+/*
+Importantly, some of the dose-escalations admitted by this relation
+are WRONG ... AND THIS IS GOOD! I want to show that incorporating
+further structure in the problem, by introducing dynamic-programming
+'lookahead' within dose-escalation sequences, excludes these cases.
+*/
+%?- tallylist_mtd([Q0, Q | _], 1).
+%@ Q0 = 0/3,
+%@ Q = 2/2 ;
+%@ Q0 = 0/3,
+%@ Q = 2/3 ;
+%@ Q0 = 0/3,
+%@ Q = 3/3 ;
+%@ Q0 = 0/3,
+%@ Q = 2/4 ; <-- WRONG, e.g.
+%% ... [many others]
+
+/*
+The following query has the effect of listing all 30
+possible toxic tallies (here halting escalation at
+dose 1) with N #=< 9.
+*/
+%?- tallylist_mtd(TallyList, 0).
+%@ TallyList = [2/2|_5010] ;
+%@ TallyList = [2/3|_6340] ;
+%% ...
+%@ TallyList = [8/9|_15506] ;
+%@ TallyList = [9/9|_1036].
+
+/*
+Notice that many 'toxic-looking' tallies don't actually meet
+the criterion established by toxictally/1. THIS IS DESIRABLE!
+I am hoping to show that the 'lookahead' logic embedded as an
+implicit part of the operational semantics of dose-escalation
+has the power to exclude these cases. An overly-strong notion
+of toxictally/1 would preclude such a demonstration.
+*/
+%?- toxictally(T/N).
+%@ T = N, N = 2 ;
+%@ T = 2,
+%@ N = 3 ;
+%@ T = N, N = 3 ;
+%% ...
+%@ T = 8,
+%@ N = 9 ;
+%@ T = N, N = 9.
+
+/*
+This relation generalizes tallylist_mtd to the case of a
+non-empty Escalation.
+*/
+tallylist_escalation_mtd(Tallies, Escalation, MTD) :-
+    phrase(dose_esc, Escalation),
+    tallylist0_escalation_tallylist(Tallies, Escalation, Tallies1),
+    tallylist_mtd(Tallies1, MTD).
