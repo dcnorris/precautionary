@@ -372,6 +372,7 @@ oktally_nextdenom(T1/N1 - T2/N2, N1next - N2next) :-
     E1 #= N1next - N1, % Enrollments at dose 1
     E2 #= N2next - N2, % and dose 2.
     E1 + E2 #> 0, % Exclude trivial enrollment 'steps'
+    %% TODO: Why can't MAPLIST do the same thing BY PURE MEANS?
     bagof(T1next/N1next - T2next/N2next,
 	  (   tally0_tally(T1/N1 - T2/N2, T1next/N1next - T2next/N2next),
 	      indomain(T1next), % What a horror show!
@@ -671,3 +672,14 @@ rightward branching to choosing the higher dose for the next cohort.
 
 
    - - - - - */
+?- clpz:must_be(X, Y, a).
+%@    X = ground.
+
+?- clpz:must_be(acyclic, Y, a).
+%@    true.
+%@ caught: error(type_error(type,acylic),must_be/2)
+%@ caught: error(type_error(type,acylic),must_be/2)
+%@ caught: error(evaluation_error((clpz:must_be)/3),must_be/3)
+
+:- use_module(library(clpz)).
+%@    true.
