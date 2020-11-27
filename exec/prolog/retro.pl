@@ -1,6 +1,13 @@
 % prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
 
+% TODO:
+% 1. DCR
+% 2. Condense commentary for current relevance
+% 3. Help tallylist_mtd/2 to terminate
+% 4. Deliver good trial sequences from safe_esc//1
+% 5. Investigate informational properties at the enrollment margin.
+
 /* - - -
 
 Toward a declarative DSL for dose-escalation trial design...
@@ -448,8 +455,8 @@ a tendency that deserved to make a more spontaneous/organic entrance.
 tally(DLTs/Enrolled) :-
     Enrolled in 1..9,
     %%Enrolled in 1..sup,
-    0 #=< DLTs, DLTs #=< Enrolled,
-    label([Enrolled,DLTs]). %% Does denom-first labeling improve fairness?
+    0 #=< DLTs, DLTs #=< Enrolled.
+    %%label([Enrolled,DLTs]). %% Does denom-first labeling improve fairness?
 
 %% Ooh.. look at this! I need to delve a bit into the details
 %% of comparing tallies. I rather think that some comparisons
@@ -534,10 +541,12 @@ lowtally_(0, Q) :- Q &=< 1/6. % or &=< 1/6.
 toxictally(Q) :- Q &>= 2/6.
 
 tallylist_mtd(Tallies, MTD) :-
+    append(LowTallies, [Q | _], Tallies),
     length(LowTallies, MTD), % NB: This also enforces MTD >= 0
+    %% TODO: Introduce a safetally/1 predicate to impose
+    %%       L &=< 1/6 on the final element of LowTallies.
     maplist(lowtally, LowTallies),
-    toxictally(Q),
-    append(LowTallies, [Q | _], Tallies).
+    toxictally(Q).
 
 /*
 Importantly, some of the dose-escalations admitted by this relation
@@ -545,16 +554,9 @@ are WRONG ... AND THIS IS GOOD! I want to show that incorporating
 further structure in the problem, by introducing dynamic-programming
 'lookahead' within dose-escalation sequences, excludes these cases.
 */
-%?- tallylist_mtd([Q0, Q | _], 1).
-%@ Q0 = 0/3,
-%@ Q = 2/2 ;
-%@ Q0 = 0/3,
-%@ Q = 2/3 ;
-%@ Q0 = 0/3,
-%@ Q = 3/3 ;
-%@ Q0 = 0/3,
-%@ Q = 2/4 ; <-- WRONG, e.g.
-%% ... [many others]
+%?- tallylist_mtd([T0/N0, T/N | _], 1), N #=< 6, N0 #=< 6, labeling([down], [N0,N,T0,T]).
+%% ....
+%% This yields many results, but eventually hangs.
 
 /*
 The following query has the effect of listing all 30
@@ -747,24 +749,215 @@ tallylist_escalation_mtd(TallyList, [], MTD) :-
     tallylist_mtd(TallyList, MTD).
 tallylist_escalation_mtd(TallyList, [E|Es], MTD) :-
     safe_nextdose(TallyList, NextDose),
+    NextDose #>= MTD, % contraction-operator logic!
     E = NextDose - T/1, tally(T/1),
     tallylist0_escalation_tallylist(TallyList, [E], TallyList1),
     tallylist_escalation_mtd(TallyList1, Es, MTD).
 
-%% True if, given TallyList, Dose looks safe.
-%% NB: This predicate DOES NOT aim to avoid low doses. This is why
-%%     I have avoided the otherwise preferable name, okay_nextdose.
-safe_nextdose([], 1). % Dose 1 presumed safe as escalation begins
-safe_nextdose([Q|Qs], Dose) :-
-    safe_nextdose_([Q|Qs], Dose, 1).
+safe_nextdose(TallyList, NextDose) :-
+    maxsafe_nextdose(TallyList, MaxNextDose),
+    NextDose in 1..MaxNextDose.
 
-safe_nextdose_([], Dose, Dose). % This clause enables ESCALATION!
-safe_nextdose_([Q|Qs], Dose, Pos) :-
-    Q &=< 1/3,
-    (	Dose #= Pos
-    ;	Pos1 #= Pos + 1,
-	safe_nextdose_(Qs, Dose, Pos1)
+%% That's all a big mess up there. What I really need is ...
+maxsafe_nextdose([], 1).
+maxsafe_nextdose([Q|Qs], Dose) :-
+    reverse([Q|Qs], Rs),
+    maxsafe_nextdose_(Rs, Dose).
+
+maxsafe_nextdose_([R|Rs], Dose) :-
+    length([R|Rs], Len),
+    (	R &=< 0/3 -> Dose #= Len + 1
+    ;	R &=< 1/3 -> Dose #= Len
+    ;	maxsafe_nextdose_(Rs, Dose)
     ).
+
+%?- maxsafe_nextdose([a, 2/3], D).
+%@ false.
+%@ D = 2.
+%@ D = 3.
+%@ D = 3.
+%@ D = 2.
+%@ X = 1 ;
+%@ X = 2 ;
+%@ X = 3.
+%@ false.
+
+%?- length(Esc, 1), tallylist_escalation_mtd([0/3,2/3], Esc, 0).
+%@ false.
+%@ Esc = [1-0/1, 1-1/1, 1-1/1] ;
+%@ Esc = [1-1/1, 1-0/1, 1-1/1] ;
+%@ false.
+%@ Esc = [1-1/1, 1-1/1] ;
+%@ false.
+
+
+/*
+It seems essential to the intuition of dynamic programming that it
+work somehow from the MTD backward.
+
+There is an interesting tension between the principle that decisions
+are made path-independently based on tallylists alone, and the practical
+requirement for fair enumerations. It might well be that predicates such
+as tallylist_mtd/2 cannot by themselves support fair enumeration!
+
+Perhaps I have a complex enough situation that some of these predicates
+must eschew the MGQ. It may well be that the dynamic programming itself
+aims to provide this.
+
+Alternatively, perhaps I achieve this by constraining the allowable
+dose-escalation sequences within the DCG itself. Thus, the DCG becomes
+the principle by which fair enumeration is possible.
+*/
+
+%?- tallylist_mtd(TL, 1), length(TL,2).
+%@ TL = [0/3, 2/2] ;
+%@ TL = [0/3, 2/3] ;
+%@ TL = [0/3, 3/3] ;
+%@ TL = [0/3, 2/4] ;
+%@ TL = [0/3, 3/4] ;
+%@ TL = [0/3, 4/4] ;
+%@ TL = [0/3, 2/5] ;
+%@ TL = [0/3, 3/5] ;
+%@ TL = [0/3, 4/5] ;
+%@ TL = [0/3, 5/5] ;
+%@ TL = [0/3, 2/6] ;
+%@ TL = [0/3, 3/6] ;
+%@ TL = [0/3, 4/6] ;
+%@ TL = [0/3, 5/6] ;
+%@ TL = [0/3, 6/6] ;
+%@ TL = [0/3, 3/7] .
+%@ TL = [0/3, 2/2],
+%@ N = 2 ;
+%@ TL = [0/3, 2/2, _5860],
+%@ N = 3 ;
+%@ TL = [0/3, 2/2, _5860, _6892],
+%@ N = 4 ;
+%@ TL = [0/3, 2/2, _5860, _6892, _7924],
+%@ N = 5 ;
+%@ TL = [0/3, 2/2, _5860, _6892, _7924, _8956],
+%@ N = 6 .
+
+%% True if Count is the MINIMUM number of patients who could be
+%% enrolled starting from TallyList, to yield declaration of MTD.
+%% TODO: Would tabling this enforce a unique minimum?
+tallylist_minstepsto_mtd(TallyList, Count, MTD) :-
+    (	tallylist_mtd(TallyList, MTD) -> Count #= 0
+    ;	tallylist_mtd(TallyList, _) -> false % If any other MTD applies, fail.
+    ;	findall(SafeDose, safe_nextdose(TallyList, SafeDose), SafeDoses),
+	% At this point, SafeDoses contains all safe doses that we could enroll next.
+	% For each one, I want to find the residual minstepsto MTD, and then I want
+	% to take the minimum over all these numbers and add 1.
+	% Why not employ a DCG at THIS POINT, fairly enumerating on the length?
+	% Wouldn't that yield the 'cleanest' expression of the idea?
+	true
+    ).
+
+%% I will use this DCG to represent all MERELY SAFE escalations
+%% starting from some given TallyList *state*, terminating when
+%% an MTD is declared. This DCG will include EXCESSIVELY SAFE
+%% escalations that do nothing to 'advance the trial'.
+
+%% REMEMBER (yet again!) that I should concern myself with what
+%% advancement in the trial is guaranteed CONDITIONAL ON D, but
+%% REGARDLESS OF NEXT T!
+
+%%safe_esc(_) --> [freeze]. % halt runaway DCG for debugging
+safe_esc(TallyList0) -->
+    (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
+    ;	{ safe_nextdose(TallyList0, SafeDose),
+	  tally(T/1),
+	  labeling([down], [SafeDose,T]),
+	  tallylist0_escalation_tallylist(TallyList0,
+					  [SafeDose - T/1],
+					  TallyList)
+	},
+	[SafeDose - T/1],
+	safe_esc(TallyList) %% TODO: Does this run depth-first?
+    ).
+
+%?- safe_nextdose([0/3,1/3], D), tallylist_mtd([0/3,1/3], MTD).
+%@ false.
+
+%?- safe_nextdose([0/3,1/3], D), tallylist0_escalation_tallylist([0/3,1/3], [D-T/1], TL).
+%@ D = 1,
+%@ T = 0,
+%@ TL = [0/4, 1/3] ;
+%@ D = 2,
+%@ T = 0,
+%@ TL = [0/3, 1/4] ;
+%@ D = T, T = 1,
+%@ TL = [1/4, 1/3] ;
+%@ D = 2,
+%@ T = 1,
+%@ TL = [0/3, 2/4] ;
+%@ false.
+%@ D = 1,
+%@ T = 0,
+%@ TL = [0/4, 1/3] ;
+%@ D = 2,
+%@ T = 0,
+%@ TL = [0/3, 1/4] ;
+%@ D = T, T = 1,
+%@ TL = [1/4, 1/3] ;
+%@ D = 2,
+%@ T = 1,
+%@ TL = [0/3, 2/4] ;
+%@ false.
+
+%?- tallylist_mtd([0/3,2/5], MTD).
+%@ MTD = 1 ;
+%@ false.
+
+%?- safe_nextdose([0/3, 1/3], D).
+%@ D in 1..2.
+
+%?- phrase(safe_esc([0/3,1/3]), Hmm).
+%@ Hmm = [2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ ERROR: Type error: `integer' expected, found `_8420674-_8420728/1' (a compound)
+%@ ERROR: In:
+%@ ERROR:   [18] throw(error(type_error(integer,...),_8420822))
+%@ ERROR:   [13] clpfd:'__aux_maplist/2_must_be_finite_fdvar+0'([_8420868- ...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:1745
+%@ ERROR:   [12] clpfd:labeling([],[_8420912- ...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:1748
+%@ ERROR:    [9] <user>
+%@ ERROR: 
+%@ ERROR: Note: some frames are missing due to last-call optimization.
+%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
+%@ Hmm = [_8412264-_8412270/1],
+%@ _8412264 in 1..2,
+%@ _8412270 in 0..1.
+%@ Hmm = [_8409696-_8409702/1|Aha],
+%@ _8409696 in 1..2,
+%@ _8409702 in 0..1.
+%@ Hmm = [freeze|Aha] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze|Aha] 
+%@ Hmm = [freeze|Aha] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze|Aha] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze|Aha] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze|Aha] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze] ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+%@ Hmm = [freeze] ;
+%@ Hmm = [declare_mtd(1)].
+%@ Hmm = [freeze] ;
+%@ Hmm = [declare_mtd(1)].
 
 %?- safe_nextdose([0/3, 1/6, 1/3], Dose).
 %@ Dose = 1 ;
@@ -860,17 +1053,16 @@ predicate.
 
 HEY, WHERE'S MY DYNAMIC PROGRAMMING?
 
+I believe it comes in now that tallylist0_escalation_tallylist/3 has been
+implemented. By doing a fair enumeration on length of the escalation,
+I can stop search at the shortest path to MTD from any given tallylist.
+
+HMMM...
+
+Could I view some of my efforts here as aiming toward FAIR ENUMERATION?
+Dose-escalation rules that press 'onward and upward' could be seen as
+avoiding unfair enumeration of escalations! Thus, we obtain a purely
+logical interpretation of dose-escalation procedures that would normally
+be understood from pharmacological or ethical perspectives.
+
 */
-dose_esc([0/0, 0/0, 0/0]) --> [1 - Tox], { Tox in 0..1 }.
-dose_esc(TallyList_1), [Dose_1 - Tox_1] -->
-                     [Dose_1 - Tox_1, Dose - Tox],
-		     { length(D, TallyList_1),
-		       Dose in 1..D,
-		       Dose #>= Dose_1 - 1, % Next dose in DE always stays
-		       Dose #=< Dose_1 + 1, % within 1 level of previous dose.
-		       Tox in 0..1 }, % TODO: Eventually, CTCAE Grades 0..5
-		     tallies0_assessment_tallies(TallyList_1, Dose - Tox, TallyList),
-		     dose_esc(TallyList).
-dose_esc(TallyList) -->
-    { tallylist_mtd(TallyList, MTD) },
-    [declare_mtd(MTD)].
