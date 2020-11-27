@@ -228,27 +228,6 @@ limitations of the DEAL principle.
 
  - - - - -*/
 
-%% I begin by modeling a dose-escalation ...
-%% AHA! It looks to me as if I must carry along the TALLIES as CONTEXT
-%% for this DCG. Is this correct? Is there some other way?
-%% It seems I am constantly re-learning how to use DCG state vs semicontext!
-%% Intuitively -- based on little more than SYNTAX -- I feel that 'lookahead'
-%% (maybe with 'replacement') is appropriate for knowing what the last
-%% enrolled dose was. OTOH, it does seem as if the current TALLIES have
-%% to be managed as STATE.
-dose_esc([0/0, 0/0, 0/0]) --> [1 - Tox], { Tox in 0..1 }.
-dose_esc(Tallies_1), [Dose_1 - Tox_1] -->
-                     [Dose_1 - Tox_1, Dose - Tox],
-		     { length(D, Tallies_1),
-		       Dose in 1..D,
-		       Dose #>= Dose_1 - 1, % Next dose in DE always stays
-		       Dose #=< Dose_1 + 1, % within 1 level of previous dose.
-		       Tox in 0..1 }, % TODO: Eventually, CTCAE Grades 0..5
-		     tallies0_assessment_tallies(Tallies_1, Dose - Tox, Tallies),
-		     dose_esc(Tallies).
-dose_esc(Tallies) --> [declare_mtd(MTD)],
-		      { mtd_tallies(MTD, Tallies) }.
-
 %% 'Union' or 'sum' relation on tallies lists: Tallies0 + Tox@Dose = Tallies.
 /*
 This has become a problem almost immediately! I ought to be able to access
@@ -607,11 +586,291 @@ of toxictally/1 would preclude such a demonstration.
 %@ N = 9 ;
 %@ T = N, N = 9.
 
+tallylist0_escalation_tallylist(TallyList, [], TallyList).
+tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
+    length(TallyList0, Dmaxyet), %% Dmaxyet is highest dose tried thus far
+    %% I have mixed feelings about hard-coding a no-dose-skipping constraint,
+    %% but it's hard to imagine that a rigorously LOGICAL approach could ever
+    %% dispense with this constraint. The fact that it feels necessary in my
+    %% logic PROGRAMMING may well be a 'sign'!
+    1 #=< Dose, Dose #=< Dmaxyet + 1,
+    tally(T/N),
+    %% TODO: Employ constraint reification to avoid delicate logic here,
+    %%       or maybe even try reif:if_/3 at long last!
+    (	nth1(Dose, TallyList0, T0/N0, Remainder),
+	N1 #= N0 + N,
+	T1 #= T0 + T,
+	nth1(Dose, TallyList_, T1/N1, Remainder)
+    ;	append(TallyList0, [T/N], TallyList_),
+	%% NB: The following renders these clauses OPERATIONALLY disjoint
+	length(TallyList_, Dose) % w/o dose-skipping, length(TallyList0, Dose-1) holds.
+    ),
+    tallylist0_escalation_tallylist(TallyList_, Cs, TallyList).
+
+%?- tallylist0_escalation_tallylist(TL0, [D - T/1], TL1).
+%@ TL0 = [],
+%@ D = 1,
+%@ T = 0,
+%@ TL1 = [0/1] ;
+%@ TL0 = [],
+%@ D = T, T = 1,
+%@ TL1 = [1/1] ;
+%@ TL0 = [_11578/_11580],
+%@ D = 1,
+%@ T = 0,
+%@ TL1 = [_11578/_11628],
+%@ _11578 in inf..sup,
+%@ _11580+1#=_11628 ;
+%@ TL0 = [_9910],
+%@ D = 2,
+%@ T = 0,
+%@ TL1 = [_9910, 0/1] ;
+%@ TL0 = [_936/_938],
+%@ D = T, T = 1,
+%@ TL1 = [_984/_986],
+%@ _936+1#=_984,
+%@ _938+1#=_986 ;
+%@ TL0 = [_100],
+%@ D = 2,
+%@ T = 1,
+%@ TL1 = [_100, 1/1] ;
+%@ TL0 = [_6266/_6268, _6272],
+%@ D = 1,
+%@ T = 0,
+%@ TL1 = [_6266/_6322, _6272],
+%@ _6266 in inf..sup,
+%@ _6268+1#=_6322 ;
+%@ TL0 = [_9440, _9452/_9454],
+%@ D = 2,
+%@ T = 0,
+%@ TL1 = [_9440, _9452/_9508],
+%@ _9452 in inf..sup,
+%@ _9454+1#=_9508 ;
+%@ TL0 = [_100, _4592],
+%@ D = 3,
+%@ T = 0,
+%@ TL1 = [_100, _4592, 0/1] 
+%@ Unknown action: q (h for help)
+%@ Action? .
+%@ TL0 = [],
+%@ Coh = 1-0/1,
+%@ TL1 = [0/1] ;
+%@ TL0 = [],
+%@ Coh = 1-1/1,
+%@ TL1 = [1/1] ;
+%@ TL0 = [],
+%@ Coh = 1-0/2,
+%@ TL1 = [0/2] ;
+%@ TL0 = [],
+%@ Coh = 1-1/2,
+%@ TL1 = [1/2] ;
+%@ TL0 = [],
+%@ Coh = 1-2/2,
+%@ TL1 = [2/2] ;
+%@ TL0 = [],
+%@ Coh = 1-0/3,
+%@ TL1 = [0/3] ;
+%@ TL0 = [],
+%@ Coh = 1-1/3,
+%@ TL1 = [1/3] ;
+%@ TL0 = [],
+%@ Coh = 1-2/3,
+%@ TL1 = [2/3] ;
+%@ TL0 = [],
+%@ Coh = 1-3/3,
+%@ TL1 = [3/3] ;
+%@ TL0 = [],
+%@ Coh = 1-0/4,
+%@ TL1 = [0/4] .
+%@ TL0 = TL1,
+%@ Esc = [] ;
+%@ TL0 = [],
+%@ Esc = [1-0/1],
+%@ TL1 = [0/1] ;
+%@ TL0 = [],
+%@ Esc = [1-0/1, 1-0/1],
+%@ TL1 = [0/2] ;
+%@ TL0 = [],
+%@ Esc = [1-0/1, 1-0/1, 1-0/1],
+%@ TL1 = [0/3] .
+%@ TL0 = TL1,
+%@ Esc = [] ;
+%@ TL0 = [_11920/_11922|_11916],
+%@ Esc = [1-0/1],
+%@ TL1 = [_11920/_11976|_11916],
+%@ _11920 in inf..sup,
+%@ _11922+1#=_11976 ;
+%@ TL0 = [_1852/_1854|_1848],
+%@ Esc = [1-0/1, 1-0/1],
+%@ TL1 = [_1852/_1902|_1848],
+%@ _1852 in inf..sup,
+%@ _1854+1#=_1920,
+%@ _1920+1#=_1902 ;
+%@ TL0 = [_5622/_5624|_5618],
+%@ Esc = [1-0/1, 1-0/1, 1-0/1],
+%@ TL1 = [_5622/_5714|_5618],
+%@ _5622 in inf..sup,
+%@ _5624+1#=_5756,
+%@ _5756+1#=_5780,
+%@ _5780+1#=_5714 ;
+%@ TL0 = [_9892/_9894|_9888],
+%@ Esc = [1-0/1, 1-0/1, 1-0/1, 1-0/1],
+%@ TL1 = [_9892/_10002|_9888],
+%@ _9892 in inf..sup,
+%@ _9894+1#=_10044,
+%@ _10044+1#=_10068,
+%@ _10068+1#=_10092,
+%@ _10092+1#=_10002 .
+
+%?- tallylist0_escalation_tallylist([0/3, 1/6], [3 - 0/3], TallyList).
+%@ TallyList = [0/3, 1/6, 0/3] ;
+%@ false.
+%@ TallyList = [0/3, 1/6, 0/3] ;
+%@ false.
+%@ TallyList = [0/3, 1/6] ;
+%@ false.
+%@ TallyList = [0/3, 1/4] ;
+%@ false.
+%@ TallyList = [0/3, 1/3, _8066/1] ;
+%@ false.
+%@ TallyList = [0/3, 1/3, _7888/1].
+%@ TallyList = [0/3, 1/4] ;
+%@ false.
+%@ true ;
+%@ true ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
+
+%% This relation generalizes tallylist_mtd in a forward-looking manner.
+%% True if, starting from TallyList, the further Escalation yields MTD.
+tallylist_escalation_mtd(TallyList, [], MTD) :-
+    tallylist_mtd(TallyList, MTD).
+tallylist_escalation_mtd(TallyList, [E|Es], MTD) :-
+    safe_nextdose(TallyList, NextDose),
+    E = NextDose - T/1, tally(T/1),
+    tallylist0_escalation_tallylist(TallyList, [E], TallyList1),
+    tallylist_escalation_mtd(TallyList1, Es, MTD).
+
+%% True if, given TallyList, Dose looks safe.
+%% NB: This predicate DOES NOT aim to avoid low doses. This is why
+%%     I have avoided the otherwise preferable name, okay_nextdose.
+safe_nextdose([], 1). % Dose 1 presumed safe as escalation begins
+safe_nextdose([Q|Qs], Dose) :-
+    safe_nextdose_([Q|Qs], Dose, 1).
+
+safe_nextdose_([], Dose, Dose). % This clause enables ESCALATION!
+safe_nextdose_([Q|Qs], Dose, Pos) :-
+    Q &=< 1/3,
+    (	Dose #= Pos
+    ;	Pos1 #= Pos + 1,
+	safe_nextdose_(Qs, Dose, Pos1)
+    ).
+
+%?- safe_nextdose([0/3, 1/6, 1/3], Dose).
+%@ Dose = 1 ;
+%@ Dose = 2 ;
+%@ Dose = 3 ;
+%@ Dose = 4.
+
+%?- tallylist_escalation_mtd(TL, [], 1).
+%@ TL = [0/3, 2/2|_8000] ;
+%@ TL = [0/3, 2/3|_9196] ;
+%@ TL = [0/3, 3/3|_9986] ;
+%@ TL = [0/3, 2/4|_11182] ;
+%@ TL = [0/3, 3/4|_12004] ;
+%@ TL = [0/3, 4/4|_12794] ;
+%@ TL = [0/3, 2/5|_13990] ;
+%@ TL = [0/3, 3/5|_14812] ;
+%@ TL = [0/3, 4/5|_15634] .
+
 /*
-This relation generalizes tallylist_mtd to the case of a
-non-empty Escalation.
+But clearly, I need some way to generate dose-escalation sequences
+while carrying along sufficient context/state to maintain a semblance
+of reasonableness.
+
+Getting the balance right, between excessive (random-walk) freedom
+in generating these sequences, and premature confinement, will take
+some experimentation.
+
+I need to remember that my CORE QUESTION at this stage is how much
+can be derived from the DEAL principle. What things *might* I hope
+to derive from DEAL? For example, if a dose level already had been
+demonstrated to be too toxic, then enrolling additional patients at
+that level does not shorten the time to declaring MTD!
+
+I think I want to use a dose_esc DCG only to create a large enough
+(but also TOO large!) set of possible future paths for the trial.
+It will then be the job of OTHER predicates to refine that large
+space of options to a smaller set of 'rational' escalations.
+
+Example heuristics include:
+
+* Always trying the highest dose that would DEFINITELY move the trial
+  forward to its conclusion
+* Always trying rather the LOWEST such dose
+* Always enrolling the dose that lies on the shortest path-to-MTD
+* Always enroll the dose lying on the LONGEST path-to-MTD. (In theory,
+  this might be justified on grounds that we want to gain sufficient
+  experience with the drug at a variety of levels. But it seems to me
+  that making this workable would require introducing some additional
+  principle that tended to bring the trial to a close.)
+
+If I assume I'm working with SHORTEST-PATH heuristics to begin with,
+then I anticipate possibly needing JUST ONE CUT in some predicate.
+This is reasonable, since I actually intend to search the solution
+space methodically (with fair enumeration, etc.) and indeed define
+a correct solution to be the first one! The 'solutions' excluded by
+the cut ARE NOT ACTUALLY CORRECT SOLUTIONS!
+
+Once again, note how the SEPARATION OF CONCERNS creates space for
+the DSL to define separately ASPECTS OF DOSE-JUDGING and ASPECTS
+OF DOSE-ESCALATION-AS-LEARNING.
+
 */
-tallylist_escalation_mtd(Tallies, Escalation, MTD) :-
-    phrase(dose_esc, Escalation),
-    tallylist0_escalation_tallylist(Tallies, Escalation, Tallies1),
-    tallylist_mtd(Tallies1, MTD).
+
+%% I begin by modeling a dose-escalation ...
+%% AHA! It looks to me as if I must carry along the TALLIES as CONTEXT
+%% for this DCG. Is this correct? Is there some other way?
+%% It seems I am constantly re-learning how to use DCG state vs semicontext!
+%% Intuitively -- based on little more than SYNTAX -- I feel that 'lookahead'
+%% (maybe with 'replacement') is appropriate for knowing what the last
+%% enrolled dose was. OTOH, it does seem as if the current TALLIES have
+%% to be managed as STATE.
+
+/*
+The FREEDOM preserved here is that this DCG doesn't need to worry about
+running away past the point where MTD should have been declared. Halting
+is not the responsibility of this DCG. That gets done in another predicate
+which I expect will need to employ cut/0.
+
+The RULES expressed in this DCG are much less stringent. For now, I will
+say that we don't enroll doses with a toxictally/1, nor with a lowtally/1.
+
+WHAT'S THE CORE INTUITION?
+
+I want this DCG to show all kinds of crazy dose-escalation paths leading
+to a given MTD, enumerating them fairly. I should be able to start this
+DCG from a 'blank slate' -- i.e., an empty TallyList = []. I should also
+be able to start it from 1 enrollment shy of declaring MTD.
+
+What this DCG should do correctly is accumulate the TallyList and keep
+the escalation 'connected' (avoid dose-skipping). Fair enumeration is
+also important. EVERYTHING ELSE is the responsibility of a supervisory
+predicate.
+
+HEY, WHERE'S MY DYNAMIC PROGRAMMING?
+
+*/
+dose_esc([0/0, 0/0, 0/0]) --> [1 - Tox], { Tox in 0..1 }.
+dose_esc(TallyList_1), [Dose_1 - Tox_1] -->
+                     [Dose_1 - Tox_1, Dose - Tox],
+		     { length(D, TallyList_1),
+		       Dose in 1..D,
+		       Dose #>= Dose_1 - 1, % Next dose in DE always stays
+		       Dose #=< Dose_1 + 1, % within 1 level of previous dose.
+		       Tox in 0..1 }, % TODO: Eventually, CTCAE Grades 0..5
+		     tallies0_assessment_tallies(TallyList_1, Dose - Tox, TallyList),
+		     dose_esc(TallyList).
+dose_esc(TallyList) -->
+    { tallylist_mtd(TallyList, MTD) },
+    [declare_mtd(MTD)].
