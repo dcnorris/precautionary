@@ -1,28 +1,94 @@
 % prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
 
-% TODO:
-% 1. DCR
-% 2. Condense commentary for current relevance
-% 3. Help tallylist_mtd/2 to terminate
-% 4. Deliver good trial sequences from safe_esc//1
-% 5. Investigate informational properties at the enrollment margin.
+/* * * * * * MOTIVATING PRINCIPLE * * * * * *
 
-/* - - -
+INTUITION: What if, at each enrollment decision, we actively engaged the
+conflict between the THERAPEUTIC vs SCIENTIFIC AIMS of the trial? Perhaps
+that is the ULTIMATE CONTENT of a proper DSL in this realm. We have to
+define these aims, and how we negotiate the conflict between them.
 
-Toward a declarative DSL for dose-escalation trial design...
+With each enrollment decision, we ask what dose seems the best THERAPEUTIC
+choice FOR THE PATIENT, while at the same time contributing to progress
+toward the DRUG-DEVELOPMENT GOAL of the trial.
 
-I'd like to achieve a mutually recursive formulation of dose-escalation,
-such that the GOAL of 'declaring an MTD' serves (as much as possible) to
-define not only the termination condition, but---recursively---also the
-process of enrollment & (de)escalation.
 
-I believe my aim could be described in similar manner to clpz's "separating
-modeling from search".
+ - - - - - - OPERATIONAL CONTENT - - - - - -
 
-Operationally, my hope is to let MTD-declaration define the final steps
-of the trial, while previous steps are 'retrospectively' constrained in
-the manner of dynamic programming. For example, a goal such as:
+Demonstrating that the above principle has OPERATIONAL SUBSTANCE requires
+showing that the LOGIC OF ESCALATION MAY BE RECOVERED DEDUCTIVELY from a
+STATEMENT OF TRIAL GOALS. To this end, I will allow for REPRESENTATION of
+a larger set of possible escalation paths, upon which the TRIAL GOALS ACT
+AS A SELECTIVE PRINCIPLE.
+
+I want to allow, e.g., an *illogical* 'random-walk' type of escalation to
+be GENERATED at some level in the program, so that at a 'higher' level it
+may demonstrably be rejected.
+
+An example of 3+3-PROTOCOL-VIOLATING escalation might be as follows...
+
+[1^0/4, 2^0/2, 1^1/2, 2^0/1, 3^2/3]
+
+(The story might be that an extra 4th patient got enrolled at dose1 by
+administrative mix-up, and this was realized after 2 patients had already
+been enrolled at dose2. So enrollment at dose2 was halted in order to
+correct this error by enrolling a 'round figure' of net 6 patients.
+After that, the trial returned to 'filling up' a first cohort of 3 patients
+at dose2, and then proceeding 'per protocol' (after 2^0/3) to enroll dose3.)
+
+I offer that story only to exhibit a 'protocol violation' that we would
+like to RECOGNIZE as a violation by suitable definition & understanding
+of the trial's GOALS and CONSTRAINTS.
+
+ - - - - - IMPLEMENTATION STRATEGY(IES) - - - - -
+
+In a similar manner to clpz's "separating modeling from search", I would
+like to achieve some separation of concerns that empowers high-level DSL
+definition (modeling) of a dose-escalation trial via automatic selective
+principles that operate transparently.
+
+Mutual recursion seems an appropriate guidance to this, as foreshadowed
+by the alternating functors of my 2-stack 'aliquots' code. In each step
+of the trial, we ought to be presented with a 'menu' of all conceivable
+choices (some of them bad!) as defined by some DCG. But concomitantly,
+these choices are considered in the context of the trial's multi-period
+operation, and its ultimate goal. This consideration must (I think) be
+inherently recursive, and DYNAMIC PROGRAMMING seems at least a sensible
+intutition if not necessarily the manner of implementation.
+
+Taken literally, this DP conception would have MTD-declaration define
+the final step of the trial, whereas previous steps are retrospectively
+constrained by deductively working backwards toward some fixed starting
+condition.
+
+~ A LIKELIHOOD-PRINCIPLE-like constraint ~ 
+
+The ORDER in which the toxicities are observed in any given dose level
+ought to be regarded as IRRELEVANT to trial decision-making. That is,
+only a TALLY such as 4-1/6 (1 DLT out of 6 enrolled at dose 4) may inform
+our evaluation of this dose, or indeed ANY decision-making in the trial.
+In addition to its resemblance to the LIKELIHOOD PRINCIPLE (LP), we may
+also note this constraint's connection with '(ir)rational dose assignment'
+issues as advanced by Wages & Braun (2018) and Wages & Bagely (2019).
+
+~ Separating SAFETY from THERAPEUTIC and SCIENTIFIC AIMS ~
+
+Since SAFETY is so fundamental a principle, we may do well to 'install'
+it at the low level of the DCG that generates conceivable escalations.
+The more interesting and computationally substantive aspects of dose-
+escalation:
+
+ - Is this dose sufficiently THERAPEUTIC?
+ - Would this enrollment decision advance us toward an RP2D?
+
+may OTOH be more suited for consideration alongside the indeterminacy
+of toxicity outcomes.
+
+ - - - - - - IMPLEMENTATION TACTICS - - - - - -
+
+[THIS PART IS A WORK IN PROGRESS ... like the code below!]
+
+For example, a goal such as:
 
 ?- mtd_fromescalation_perprotocol(3, Escalation, +Protocol).
 
@@ -40,7 +106,9 @@ for various checks to be made, with feedback informing the DSL user
 about whether the trial is well-defined (a definite decision arises
 in every possible situation) or whether it might somehow get 'stuck'
 in a state from which it can neither proceed to enroll another patient
-nor conclude with an RP2D.]
+nor conclude with an RP2D. While some of these check just possibly
+might work at compile-time, many of them surely will be of the long-
+running sort Markus Triska describes.]
 
 This is to some extent an exploration of WHAT KINDS OF GOALS might be
 set forth by clinical investigators, such that the types of designs
@@ -56,16 +124,21 @@ would themselves be informative even as to the reasonableness of the
 decision grids (and underlying models) themselves. There is certainly
 a METAGOL spirit to this sort of undertaking.]
 
-What are some basic constraints I am willing to impose from the outset?
-I could posit that the ORDER in which the toxicities are observed in any
-given dose level is IRRELEVANT to trial decision-making. That is, only
-a TALLY such as 4^1/6 (1 DLT out of 6 enrolled at dose 4) informs our
-evaluation of this dose, or indeed ANY decision-making in the trial.
-(This constraint bears a resemblance to the LIKELIHOOD PRINCIPLE.)
+ * * * * * * * * * * * * * * * * * * * * * * * /
+
+% TODO:
+% 1. DCR
+% 2. Condense commentary for current relevance
+% 3. Help tallylist_mtd/2 to terminate
+% 4. Deliver good trial sequences from safe_esc//1
+% 5. Investigate informational properties at the enrollment margin.
+
+/* - - -
+
 
 The idea that THE NEXT PATIENT is always treated at what is somehow
 thought to be 'A GOOD DOSE' ought to be preserved, however. But how
-that goodness is to be conceived deserves some free exploration.
+that 'goodness' is to be conceived deserves some free exploration.
 Perhaps there would be some value in allowing (in general) for a whole
 range of doses to be considered 'reasonable' at some given time, with
 the DSL including language elements supplying a HEURISTIC for choosing
@@ -105,43 +178,12 @@ FREEDOMS TO PRESERVE:
 3. At the very least the POSSIBILITY of allowing for dose TITRATION
    should be entertained. This might be handled most elegantly by
    treating a 'dose-titration trial' as an ensemble of N-of-1 trials
-   that pursue the aim of 'declaring MTDi'. Some kind of communication
+   that pursue the aim of 'declaring MTDi'. Some kind of COMMUNICATION
    between these individual-level titrations would be involved.
 
  - - - - */
 
 /*
-I have some hope for recovering the LOGIC OF ESCALATION *deductively*
-from A STATEMENT OF TRIAL GOALS. To this end, I will allow for a larger
-set of possible escalation paths in my representation. I want to allow,
-e.g., an *illogical* 'random-walk' type of escalation to be REPRESENTED
-so that the program logic can demonstrate its ability to exclude such
-paths from the solution.
-
-An example of 3+3-PROTOCOL-VIOLATING escalation might be as follows...
-
-[1^0/4, 2^0/2, 1^1/2, 2^0/1, 3^2/3]
-
-(The story might be that an extra 4th patient got enrolled at dose1 by
-administrative mix-up, and this was realized after 2 patients had already
-been enrolled at dose2. So enrollment at dose2 was halted in order to
-correct this error by enrolling a 'round figure' of net 6 patients.
-After that, the trial returned to 'filling up' a first cohort of 3 patients
-at dose2, and then proceeding 'per protocol' (after 2^0/3) to enroll dose3.)
-
-I offer that story only to exhibit a 'protocol violation' that we would
-like to RECOGNIZE as a violation by suitable definition & understanding
-of the trial's GOALS and CONSTRAINTS.
-
-INTUITION: What if, at each enrollment decision, we actively engaged the
-conflict between the THERAPEUTIC vs SCIENTIFIC AIMS of the trial? Perhaps
-that is the ULTIMATE CONTENT of a proper DSL in this realm. We have to
-define these aims, and how we negotiate the conflict between them.
-
-With each enrollment decision, we ask what dose seems the best THERAPEUTIC
-choice FOR THE PATIENT, while at the same time contributing to progress
-toward the DRUG-DEVELOPMENT GOAL of the trial.
-
 */
 
 /*
