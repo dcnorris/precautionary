@@ -127,10 +127,10 @@ a METAGOL spirit to this sort of undertaking.]
  * * * * * * * * * * * * * * * * * * * * * * */
 
 % TODO:
-% 1. DCR
+% 1/ DCR
 % 2. Condense commentary for current relevance
-% 3. Help tallylist_mtd/2 to terminate
-% 4. Deliver good trial sequences from safe_esc//1
+% 3/ Help tallylist_mtd/2 to terminate
+% 4/ Deliver good trial sequences from safe_esc//1
 % 5. Investigate informational properties at the enrollment margin.
 
 /* - - -
@@ -288,12 +288,42 @@ tallylist_dose_tally(Tallies, D, T/N) :-
 %% the declaration of MTD.
 
 tallylist_mtd(TallyList, MTD) :-
+    length(TallyList, _), % Enumerate fairly when TallyList is nonground.
     append(LowTallies, [Q | _], TallyList),
-    length(LowTallies, MTD), % NB: This also enforces MTD >= 0
+    length(LowTallies, MTD), % NB: enforces MTD >= 0 for nonground MTD
     % TODO: Introduce a safetally/1 predicate to impose
     %       L &=< 1/6 on the final element of LowTallies.
     maplist(lowtally, LowTallies),
     toxictally(Q).
+
+%?- tallylist_mtd([T/N | _], 0), N #=< 6, labeling([up], [N,T]).
+%@ T = N, N = 2 ;
+%@ T = 2,
+%@ N = 3 ;
+%@ T = N, N = 3 ;
+%@ T = 2,
+%@ N = 4 ;
+%@ T = 3,
+%@ N = 4 ;
+%@ T = N, N = 4 ;
+%@ T = 2,
+%@ N = 5 ;
+%@ T = 3,
+%@ N = 5 ;
+%@ T = 4,
+%@ N = 5 ;
+%@ T = N, N = 5 ;
+%@ T = 2,
+%@ N = 6 ;
+%@ T = 3,
+%@ N = 6 ;
+%@ T = 4,
+%@ N = 6 ;
+%@ T = 5,
+%@ N = 6 ;
+%@ T = N, N = 6 ;
+%% ...
+%% RE-CYCLES AS EXPECTED
 
 %?- tallylist_mtd([T/N | _], 0), N #=< 6, labeling([down], [N,T]).
 %@ T = N, N = 6 ;
@@ -320,210 +350,248 @@ tallylist_mtd(TallyList, MTD) :-
 %@ T = N, N = 3 ;
 %@ T = 2,
 %@ N = 3 ;
-%@ T = N, N = 2 ; %% EVEN THIS ONE HANGS -- SHOULD HELP WITH DEBUGGING!
-%@ Action (h for help) ? Unknown option (h for help)
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ ERROR: Unknown procedure: tallylist_mtd/2 (DWIM could not correct goal)
-
-
-/*
-Importantly, some of the dose-escalations admitted by this relation
-are WRONG ... AND THIS IS GOOD! I want to show that incorporating
-further structure in the problem, by introducing dynamic-programming
-'lookahead' within dose-escalation sequences, excludes these cases.
-*/
-%?- tallylist_mtd([T0/N0, T/N | _], 1), N #=< 6, N0 #=< 6, labeling([down], [N0,N,T0,T]).
-%% ....
-%% This yields many results, but eventually hangs.
-
-/*
-The following query has the effect of listing all 30
-possible toxic tallies (here halting escalation at
-dose 1) with N #=< 9.
-*/
-%?- tallylist_mtd(TallyList, 0).
-%@ TallyList = [2/2|_5010] ;
-%@ TallyList = [2/3|_6340] ;
-%% ...
-%@ TallyList = [8/9|_15506] ;
-%@ TallyList = [9/9|_1036].
-
-/*
-Notice that many 'toxic-looking' tallies don't actually meet
-the criterion established by toxictally/1. THIS IS DESIRABLE!
-I am hoping to show that the 'lookahead' logic embedded as an
-implicit part of the operational semantics of dose-escalation
-has the power to exclude these cases. An overly-strong notion
-of toxictally/1 would preclude such a demonstration.
-*/
-%?- toxictally(T/N).
 %@ T = N, N = 2 ;
-%@ T = 2,
-%@ N = 3 ;
-%@ T = N, N = 3 ;
-%% ...
-%@ T = 8,
-%@ N = 9 ;
-%@ T = N, N = 9.
+%@ T = N, N = 6 ;
+%@ T = 5,
+%@ N = 6 ....
+%% RE-CYCLES AS EXPECTED
+
+/* Importantly, some of the dose-escalations admitted by this relation
+   are WRONG ... AND THIS IS GOOD! I want to show that incorporating
+   further structure in the problem, by introducing dynamic-programming
+   'lookahead' within dose-escalation sequences, excludes these cases. */
+
+/* The following query has the effect of listing all 30 possible toxic
+   tallies (here halting escalation at dose 1) with N #=< 9. */
+%:- set_prolog_flag(toplevel_print_anon, false).
+%@ true.
+%?- tallylist_mtd(TallyList, 0), TallyList = [_T/_N | _], _N #=< 9, label([_N,_T]).
+%@ TallyList = [2/2] ;
+%@ TallyList = [2/3] ;
+%@ TallyList = [3/3] ;
+%@ TallyList = [2/4] ;
+%@ TallyList = [3/4] ;
+%@ TallyList = [4/4] ;
+%@ TallyList = [2/5] ;
+%@ TallyList = [3/5] ;
+%@ TallyList = [4/5] ;
+%@ TallyList = [5/5] ;
+%@ TallyList = [2/6] ;
+%@ TallyList = [3/6] ;
+%@ TallyList = [4/6] ;
+%@ TallyList = [5/6] ;
+%@ TallyList = [6/6] ;
+%@ TallyList = [3/7] ;
+%@ TallyList = [4/7] ;
+%@ TallyList = [5/7] ;
+%@ TallyList = [6/7] ;
+%@ TallyList = [7/7] ;
+%@ TallyList = [4/8] ;
+%@ TallyList = [5/8] ;
+%@ TallyList = [6/8] ;
+%@ TallyList = [7/8] ;
+%@ TallyList = [8/8] ;
+%@ TallyList = [5/9] ;
+%@ TallyList = [6/9] ;
+%@ TallyList = [7/9] ;
+%@ TallyList = [8/9] ;
+%@ TallyList = [9/9] ;
+%@ TallyList = [2/2, _424] ;
+%@ TallyList = [2/3, _424] ...
+
+%% =======================================================
+%% Based on the TallyList STATE at any given point in the trial,
+%% there will be 0 or more dose levels that 'look safe' to enroll.
+%% The safe_nextdose/2 predicate posts a CLP(Z) constraint upon
+%% allowable NextDose. This is the key mechanism for creating the
+%% options for escalation.
+
+safe_nextdose(TallyList, NextDose) :-
+    maxsafe_nextdose(TallyList, MaxNextDose),
+    NextDose in 1..MaxNextDose.
+
+maxsafe_nextdose([], 1).
+maxsafe_nextdose([Q|Qs], Dose) :-
+    reverse([Q|Qs], Rs),
+    maxsafe_nextdose_(Rs, Dose).
+
+maxsafe_nextdose_([R|Rs], Dose) :-
+    length([R|Rs], Len),
+    (	(   R &=< 0/3
+	;   R &=< 1/6
+	) -> Dose #= Len + 1
+    ;	R &=< 1/3 -> Dose #= Len
+    ;	maxsafe_nextdose_(Rs, Dose)
+    ).
+
+%?- safe_nextdose([0/3,1/6], SafeDose).
+%@ SafeDose in 1..3.
+
+%?- safe_nextdose([0/3, 1/3], SafeDose).
+%@ SafeDose in 1..2.
+
+%% ===================================================
+%% UPDATES to the TallyList STATE are described here.
+%% This is the PURELY ARITHMETICAL RELATION between
+%% TALLYLISTs and ESCALATION STEPS.
 
 tallylist0_escalation_tallylist(TallyList, [], TallyList).
 tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
     length(TallyList0, Dmaxyet), %% Dmaxyet is highest dose tried thus far
-    %% I have mixed feelings about hard-coding a no-dose-skipping constraint,
-    %% but it's hard to imagine that a rigorously LOGICAL approach could ever
-    %% dispense with this constraint. The fact that it feels necessary in my
-    %% logic PROGRAMMING may well be a 'sign'!
+    % I have mixed feelings about HARD-CODING A NO-DOSE-SKIPPING CONSTRAINT,
+    % but it's hard to imagine that a rigorously LOGICAL approach could ever
+    % dispense with this constraint. The fact that it feels so necessary in
+    % my logic PROGRAMMING may well be a 'sign'!
     1 #=< Dose, Dose #=< Dmaxyet + 1,
     tally(T/N),
-    %% TODO: Employ constraint reification to avoid delicate logic here,
-    %%       or maybe even try reif:if_/3 at long last!
+    % TODO: Employ constraint reification to avoid delicate logic here,
+    %       or maybe even try reif:if_/3 at long last!
     (	nth1(Dose, TallyList0, T0/N0, Remainder),
 	N1 #= N0 + N,
 	T1 #= T0 + T,
 	nth1(Dose, TallyList_, T1/N1, Remainder)
     ;	append(TallyList0, [T/N], TallyList_),
-	%% NB: The following renders these clauses OPERATIONALLY disjoint
+	% NB: The following goal renders these clauses OPERATIONALLY disjoint
 	length(TallyList_, Dose) % w/o dose-skipping, length(TallyList0, Dose-1) holds.
     ),
     tallylist0_escalation_tallylist(TallyList_, Cs, TallyList).
 
-%?- tallylist0_escalation_tallylist(TL0, [D - T/1], TL1).
-%@ TL0 = [],
-%@ D = 1,
-%@ T = 0,
-%@ TL1 = [0/1] ;
-%@ TL0 = [],
-%@ D = T, T = 1,
-%@ TL1 = [1/1] ;
-%@ TL0 = [_11578/_11580],
-%@ D = 1,
-%@ T = 0,
-%@ TL1 = [_11578/_11628],
-%@ _11578 in inf..sup,
-%@ _11580+1#=_11628 ;
-%@ TL0 = [_9910],
-%@ D = 2,
-%@ T = 0,
-%@ TL1 = [_9910, 0/1] ;
-%@ TL0 = [_936/_938],
-%@ D = T, T = 1,
-%@ TL1 = [_984/_986],
-%@ _936+1#=_984,
-%@ _938+1#=_986 ;
-%@ TL0 = [_100],
-%@ D = 2,
-%@ T = 1,
-%@ TL1 = [_100, 1/1] ;
-%@ TL0 = [_6266/_6268, _6272],
-%@ D = 1,
-%@ T = 0,
-%@ TL1 = [_6266/_6322, _6272],
-%@ _6266 in inf..sup,
-%@ _6268+1#=_6322 ;
-%@ TL0 = [_9440, _9452/_9454],
-%@ D = 2,
-%@ T = 0,
-%@ TL1 = [_9440, _9452/_9508],
-%@ _9452 in inf..sup,
-%@ _9454+1#=_9508 ;
-%@ TL0 = [_100, _4592],
-%@ D = 3,
-%@ T = 0,
-%@ TL1 = [_100, _4592, 0/1] 
-%@ Unknown action: q (h for help)
-%@ Action? .
-%@ TL0 = [],
-%@ Coh = 1-0/1,
-%@ TL1 = [0/1] ;
-%@ TL0 = [],
-%@ Coh = 1-1/1,
-%@ TL1 = [1/1] ;
-%@ TL0 = [],
-%@ Coh = 1-0/2,
-%@ TL1 = [0/2] ;
-%@ TL0 = [],
-%@ Coh = 1-1/2,
-%@ TL1 = [1/2] ;
-%@ TL0 = [],
-%@ Coh = 1-2/2,
-%@ TL1 = [2/2] ;
-%@ TL0 = [],
-%@ Coh = 1-0/3,
-%@ TL1 = [0/3] ;
-%@ TL0 = [],
-%@ Coh = 1-1/3,
-%@ TL1 = [1/3] ;
-%@ TL0 = [],
-%@ Coh = 1-2/3,
-%@ TL1 = [2/3] ;
-%@ TL0 = [],
-%@ Coh = 1-3/3,
-%@ TL1 = [3/3] ;
-%@ TL0 = [],
-%@ Coh = 1-0/4,
-%@ TL1 = [0/4] .
-%@ TL0 = TL1,
-%@ Esc = [] ;
-%@ TL0 = [],
-%@ Esc = [1-0/1],
-%@ TL1 = [0/1] ;
-%@ TL0 = [],
-%@ Esc = [1-0/1, 1-0/1],
-%@ TL1 = [0/2] ;
-%@ TL0 = [],
-%@ Esc = [1-0/1, 1-0/1, 1-0/1],
-%@ TL1 = [0/3] .
-%@ TL0 = TL1,
-%@ Esc = [] ;
-%@ TL0 = [_11920/_11922|_11916],
-%@ Esc = [1-0/1],
-%@ TL1 = [_11920/_11976|_11916],
-%@ _11920 in inf..sup,
-%@ _11922+1#=_11976 ;
-%@ TL0 = [_1852/_1854|_1848],
-%@ Esc = [1-0/1, 1-0/1],
-%@ TL1 = [_1852/_1902|_1848],
-%@ _1852 in inf..sup,
-%@ _1854+1#=_1920,
-%@ _1920+1#=_1902 ;
-%@ TL0 = [_5622/_5624|_5618],
-%@ Esc = [1-0/1, 1-0/1, 1-0/1],
-%@ TL1 = [_5622/_5714|_5618],
-%@ _5622 in inf..sup,
-%@ _5624+1#=_5756,
-%@ _5756+1#=_5780,
-%@ _5780+1#=_5714 ;
-%@ TL0 = [_9892/_9894|_9888],
-%@ Esc = [1-0/1, 1-0/1, 1-0/1, 1-0/1],
-%@ TL1 = [_9892/_10002|_9888],
-%@ _9892 in inf..sup,
-%@ _9894+1#=_10044,
-%@ _10044+1#=_10068,
-%@ _10068+1#=_10092,
-%@ _10092+1#=_10002 .
-
 %?- tallylist0_escalation_tallylist([0/3, 1/6], [3 - 0/3], TallyList).
 %@ TallyList = [0/3, 1/6, 0/3] ;
 %@ false.
-%@ TallyList = [0/3, 1/6, 0/3] ;
-%@ false.
-%@ TallyList = [0/3, 1/6] ;
-%@ false.
-%@ TallyList = [0/3, 1/4] ;
-%@ false.
-%@ TallyList = [0/3, 1/3, _8066/1] ;
-%@ false.
-%@ TallyList = [0/3, 1/3, _7888/1].
-%@ TallyList = [0/3, 1/4] ;
-%@ false.
-%@ true ;
-%@ true ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
 
-%% This relation generalizes tallylist_mtd in a forward-looking manner.
-%% True if, starting from TallyList, the further Escalation yields MTD.
+%% =======================================================
+%% We use this DCG to represent all MERELY SAFE escalations
+%% starting from some given TallyList STATE, terminating when
+%% an MTD is declared. This DCG will include EXCESSIVELY SAFE
+%% escalations that do nothing to 'advance (the scientfic aims
+%% of) the trial'.
+
+%%safe_esc(_) --> [freeze]. % halt runaway DCG for debugging
+safe_esc(TallyList0) -->
+    (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
+    ;	{ safe_nextdose(TallyList0, SafeDose),
+	  tally(T/1),
+	  labeling([down], [SafeDose,T]),
+	  tallylist0_escalation_tallylist(TallyList0,
+					  [SafeDose - T/1],
+					  TallyList)
+	},
+	[SafeDose - T/1],
+	safe_esc(TallyList) %% TODO: Does this run depth-first?
+    ).
+
+%?- phrase(safe_esc([0/3,2/3]), Hmm).
+%@ Hmm = [declare_mtd(1)]. %% CORRECT -- this tallylist already supports an MTD.
+
+%?- phrase(safe_esc([0/3,1/3]), Hmm).
+%@ Hmm = [2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-0/1, 3-1/1, declare_mtd(2)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-0/1, 3-0/1, 3-1/1, declare_mtd(2)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-0/1, 3-0/1, 3-0/1, 3- ... / ..., declare_mtd(...)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-0/1, 3-0/1, 3-0/1, 3- ... / ..., ... - ...|...] ...
+
+%?- length(Hmm, 6), phrase(safe_esc([0/3,1/3]), Hmm).
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ Hmm = [2-0/1, 2-0/1, 2-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 2-0/1, 1-1/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 2-0/1, 1-1/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 2-0/1, 1-1/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 2-0/1, 1-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 2-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-1/1, 2-1/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 2-1/1, 1-0/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-1/1, 2-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 2-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 2-0/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 1-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 1-0/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-1/1, 1-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-1/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 2-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-0/1, 2-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-1/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-1/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-1/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-1/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-0/1, 1-1/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [2-0/1, 1-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 2-0/1, 2-1/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 2-1/1, 1-0/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 2-0/1, 2-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 2-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 2-0/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 1-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 1-0/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 2-0/1, 1-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 2-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 1-0/1, 2-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 1-0/1, 2-0/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 1-0/1, 2-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-1/1, 1-0/1, 2-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 1-0/1, 1-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-1/1, 1-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 2-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-0/1, 2-0/1, 2-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-1/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-1/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-1/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-1/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-0/1, 1-1/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 2-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-1/1, 2-0/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-0/1, 1-1/1, 2-0/1, 2-1/1, 1-0/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-1/1, 2-0/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ Hmm = [1-0/1, 1-1/1, 2-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-1/1, 1-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-1/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 2-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 2-0/1, 1-1/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 2-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 1-1/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 1-1/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 1-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 1-0/1, 1-1/1, 2-1/1, declare_mtd(1)] ;
+%@ Hmm = [1-0/1, 1-0/1, 1-0/1, 1-0/1, 2-1/1, declare_mtd(1)] ;
+%@ false.
+
+%?- length(More, _), phrase(safe_esc([0/3,1/3]), [2-0/1, 2-0/1, 2-0/1 | More]).
+%@ More = [3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [3-1/1, 3-0/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [3-1/1, 2-0/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [3-1/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [3-1/1, 1-0/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [3-0/1, 3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [3-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [2-1/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [2-0/1, 3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [2-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-1/1, 3-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-1/1, 3-0/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-1/1, 2-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-1/1, 2-0/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-1/1, 1-0/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [1-0/1, 3-1/1, 3-1/1, declare_mtd(2)] ;
+%@ More = [1-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
+%@ More = [3-1/1, 3-0/1, 3-0/1, 3-1/1, declare_mtd(2)] ....
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%% FRIENDLY REMINDER that I should concern myself with what
+%% advancement in the trial is guaranteed CONDITIONAL ON D,
+%% but REGARDLESS OF NEXT T!
+
+
+%% =======================================================
+%% This relation generalizes tallylist_mtd/2 PROSPECTIVELY.
+%% True if, starting from TallyList, the further Escalation
+%% (2nd arg) yields MTD.
 tallylist_escalation_mtd(TallyList, [], MTD) :-
     tallylist_mtd(TallyList, MTD).
 tallylist_escalation_mtd(TallyList, [E|Es], MTD) :-
@@ -533,42 +601,11 @@ tallylist_escalation_mtd(TallyList, [E|Es], MTD) :-
     tallylist0_escalation_tallylist(TallyList, [E], TallyList1),
     tallylist_escalation_mtd(TallyList1, Es, MTD).
 
-safe_nextdose(TallyList, NextDose) :-
-    maxsafe_nextdose(TallyList, MaxNextDose),
-    NextDose in 1..MaxNextDose.
-
-%% That's all a big mess up there. What I really need is ...
-maxsafe_nextdose([], 1).
-maxsafe_nextdose([Q|Qs], Dose) :-
-    reverse([Q|Qs], Rs),
-    maxsafe_nextdose_(Rs, Dose).
-
-maxsafe_nextdose_([R|Rs], Dose) :-
-    length([R|Rs], Len),
-    (	R &=< 0/3 -> Dose #= Len + 1
-    ;	R &=< 1/3 -> Dose #= Len
-    ;	maxsafe_nextdose_(Rs, Dose)
-    ).
-
-%?- maxsafe_nextdose([a, 2/3], D).
-%@ false.
-%@ D = 2.
-%@ D = 3.
-%@ D = 3.
-%@ D = 2.
-%@ X = 1 ;
-%@ X = 2 ;
-%@ X = 3.
+%?- length(Esc, 1), tallylist_escalation_mtd([0/3,1/3], Esc, 1).
+%@ Esc = [2-1/1] ;
 %@ false.
 
-%?- length(Esc, 1), tallylist_escalation_mtd([0/3,2/3], Esc, 0).
-%@ false.
-%@ Esc = [1-0/1, 1-1/1, 1-1/1] ;
-%@ Esc = [1-1/1, 1-0/1, 1-1/1] ;
-%@ false.
-%@ Esc = [1-1/1, 1-1/1] ;
-%@ false.
-
+/* NB: tallylist_escalation_mtd/3 appears NOT TO BE NEEDED! */
 
 /*
 It seems essential to the intuition of dynamic programming that it
@@ -589,32 +626,36 @@ the principle by which fair enumeration is possible.
 */
 
 %?- tallylist_mtd(TL, 1), length(TL,2).
-%@ TL = [0/3, 2/2] ;
-%@ TL = [0/3, 2/3] ;
-%@ TL = [0/3, 3/3] ;
-%@ TL = [0/3, 2/4] ;
-%@ TL = [0/3, 3/4] ;
-%@ TL = [0/3, 4/4] ;
-%@ TL = [0/3, 2/5] ;
-%@ TL = [0/3, 3/5] ;
-%@ TL = [0/3, 4/5] ;
-%@ TL = [0/3, 5/5] ;
-%@ TL = [0/3, 2/6] ;
-%@ TL = [0/3, 3/6] ;
-%@ TL = [0/3, 4/6] ;
-%@ TL = [0/3, 5/6] ;
-%@ TL = [0/3, 6/6] ;
-%@ TL = [0/3, 3/7] .
-%@ TL = [0/3, 2/2],
-%@ N = 2 ;
-%@ TL = [0/3, 2/2, _5860],
-%@ N = 3 ;
-%@ TL = [0/3, 2/2, _5860, _6892],
-%@ N = 4 ;
-%@ TL = [0/3, 2/2, _5860, _6892, _7924],
-%@ N = 5 ;
-%@ TL = [0/3, 2/2, _5860, _6892, _7924, _8956],
-%@ N = 6 .
+%@ TL = [0/_10828, _10838/_10840],
+%@ _10828 in 3..99,
+%@ _10838 in 2..99,
+%@ _10838#>=_10906,
+%@ _10840#>=_10838,
+%@ _10906 in 2..95,
+%@ 2+_10972#=_10906,
+%@ _10972 in 0..93,
+%@ _10972#>=_11014,
+%@ _10972#=max(0, _11014),
+%@ _11014 in -4..93,
+%@ _11014+6#=_10840,
+%@ _10840 in 2..99 ;
+%@ TL = [1/_27954, _27964/_27966],
+%@ _27954 in 6..99,
+%@ _28012+_27954#=6,
+%@ _28012 in -93..0,
+%@ _27964 in 2..99,
+%@ _27964#>=_28080,
+%@ _27966#>=_27964,
+%@ _28080 in 2..95,
+%@ 2+_28146#=_28080,
+%@ _28146 in 0..93,
+%@ _28146#>=_28188,
+%@ _28146#=max(0, _28188),
+%@ _28188 in -4..93,
+%@ _28188+6#=_27966,
+%@ _27966 in 2..99 ;
+%@ Action (h for help) ? abort
+%@ % Execution Aborted
 
 %% True if Count is the MINIMUM number of patients who could be
 %% enrolled starting from TallyList, to yield declaration of MTD.
@@ -631,120 +672,371 @@ tallylist_minstepsto_mtd(TallyList, Count, MTD) :-
 	true
     ).
 
-%% I will use this DCG to represent all MERELY SAFE escalations
-%% starting from some given TallyList *state*, terminating when
-%% an MTD is declared. This DCG will include EXCESSIVELY SAFE
-%% escalations that do nothing to 'advance the trial'.
-
-%% REMEMBER (yet again!) that I should concern myself with what
-%% advancement in the trial is guaranteed CONDITIONAL ON D, but
-%% REGARDLESS OF NEXT T!
-
-%%safe_esc(_) --> [freeze]. % halt runaway DCG for debugging
-safe_esc(TallyList0) -->
-    (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
-    ;	{ safe_nextdose(TallyList0, SafeDose),
-	  tally(T/1),
-	  labeling([down], [SafeDose,T]),
-	  tallylist0_escalation_tallylist(TallyList0,
-					  [SafeDose - T/1],
-					  TallyList)
-	},
-	[SafeDose - T/1],
-	safe_esc(TallyList) %% TODO: Does this run depth-first?
-    ).
-
-%?- safe_nextdose([0/3,1/3], D), tallylist_mtd([0/3,1/3], MTD).
-%@ false.
-
-%?- safe_nextdose([0/3,1/3], D), tallylist0_escalation_tallylist([0/3,1/3], [D-T/1], TL).
-%@ D = 1,
-%@ T = 0,
-%@ TL = [0/4, 1/3] ;
-%@ D = 2,
-%@ T = 0,
-%@ TL = [0/3, 1/4] ;
-%@ D = T, T = 1,
-%@ TL = [1/4, 1/3] ;
-%@ D = 2,
-%@ T = 1,
-%@ TL = [0/3, 2/4] ;
-%@ false.
-%@ D = 1,
-%@ T = 0,
-%@ TL = [0/4, 1/3] ;
-%@ D = 2,
-%@ T = 0,
-%@ TL = [0/3, 1/4] ;
-%@ D = T, T = 1,
-%@ TL = [1/4, 1/3] ;
-%@ D = 2,
-%@ T = 1,
-%@ TL = [0/3, 2/4] ;
-%@ false.
-
-%?- tallylist_mtd([0/3,2/5], MTD).
-%@ MTD = 1 ;
-%@ false.
-
-%?- safe_nextdose([0/3, 1/3], D).
-%@ D in 1..2.
-
-%?- phrase(safe_esc([0/3,1/3]), Hmm).
-%@ Hmm = [2-1/1, declare_mtd(1)] ;
-%@ Hmm = [2-0/1, 2-1/1, declare_mtd(1)] ;
-%@ Hmm = [2-0/1, 2-0/1, 2-1/1, declare_mtd(1)] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ ERROR: Type error: `integer' expected, found `_8420674-_8420728/1' (a compound)
-%@ ERROR: In:
-%@ ERROR:   [18] throw(error(type_error(integer,...),_8420822))
-%@ ERROR:   [13] clpfd:'__aux_maplist/2_must_be_finite_fdvar+0'([_8420868- ...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:1745
-%@ ERROR:   [12] clpfd:labeling([],[_8420912- ...]) at /usr/local/Cellar/swi-prolog/8.2.1/libexec/lib/swipl/library/clp/clpfd.pl:1748
-%@ ERROR:    [9] <user>
-%@ ERROR: 
-%@ ERROR: Note: some frames are missing due to last-call optimization.
-%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
-%@ Hmm = [_8412264-_8412270/1],
-%@ _8412264 in 1..2,
-%@ _8412270 in 0..1.
-%@ Hmm = [_8409696-_8409702/1|Aha],
-%@ _8409696 in 1..2,
-%@ _8409702 in 0..1.
-%@ Hmm = [freeze|Aha] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze|Aha] 
-%@ Hmm = [freeze|Aha] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze|Aha] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze|Aha] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze|Aha] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze] ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-%@ Hmm = [freeze] ;
-%@ Hmm = [declare_mtd(1)].
-%@ Hmm = [freeze] ;
-%@ Hmm = [declare_mtd(1)].
-
-%?- safe_nextdose([0/3, 1/6, 1/3], Dose).
-%@ Dose = 1 ;
-%@ Dose = 2 ;
-%@ Dose = 3 ;
-%@ Dose = 4.
-
 %?- tallylist_escalation_mtd(TL, [], 1).
+%@ TL = [0/_10710, _10720/_10722],
+%@ _10710 in 3..99,
+%@ _10720 in 2..99,
+%@ _10720#>=_10788,
+%@ _10722#>=_10720,
+%@ _10788 in 2..95,
+%@ 2+_10854#=_10788,
+%@ _10854 in 0..93,
+%@ _10854#>=_10896,
+%@ _10854#=max(0, _10896),
+%@ _10896 in -4..93,
+%@ _10896+6#=_10722,
+%@ _10722 in 2..99 ;
+%@ TL = [1/_27836, _27846/_27848],
+%@ _27836 in 6..99,
+%@ _27894+_27836#=6,
+%@ _27894 in -93..0,
+%@ _27846 in 2..99,
+%@ _27846#>=_27962,
+%@ _27848#>=_27846,
+%@ _27962 in 2..95,
+%@ 2+_28028#=_27962,
+%@ _28028 in 0..93,
+%@ _28028#>=_28070,
+%@ _28028#=max(0, _28070),
+%@ _28070 in -4..93,
+%@ _28070+6#=_27848,
+%@ _27848 in 2..99 ;
+%@ TL = [0/_9132, _9142/_9144, _9148],
+%@ _9132 in 3..99,
+%@ _9142 in 2..99,
+%@ _9142#>=_9216,
+%@ _9144#>=_9142,
+%@ _9216 in 2..95,
+%@ 2+_9282#=_9216,
+%@ _9282 in 0..93,
+%@ _9282#>=_9324,
+%@ _9282#=max(0, _9324),
+%@ _9324 in -4..93,
+%@ _9324+6#=_9144,
+%@ _9144 in 2..99 ;
+%@ TL = [1/_26270, _26280/_26282, _26286],
+%@ _26270 in 6..99,
+%@ _26334+_26270#=6,
+%@ _26334 in -93..0,
+%@ _26280 in 2..99,
+%@ _26280#>=_26402,
+%@ _26282#>=_26280,
+%@ _26402 in 2..95,
+%@ 2+_26468#=_26402,
+%@ _26468 in 0..93,
+%@ _26468#>=_26510,
+%@ _26468#=max(0, _26510),
+%@ _26510 in -4..93,
+%@ _26510+6#=_26282,
+%@ _26282 in 2..99 ;
+%@ TL = [0/_7842, _7852/_7854, _7858, _7864],
+%@ _7842 in 3..99,
+%@ _7852 in 2..99,
+%@ _7852#>=_7932,
+%@ _7854#>=_7852,
+%@ _7932 in 2..95,
+%@ 2+_7998#=_7932,
+%@ _7998 in 0..93,
+%@ _7998#>=_8040,
+%@ _7998#=max(0, _8040),
+%@ _8040 in -4..93,
+%@ _8040+6#=_7854,
+%@ _7854 in 2..99 ;
+%@ TL = [1/_24992, _25002/_25004, _25008, _25014],
+%@ _24992 in 6..99,
+%@ _25062+_24992#=6,
+%@ _25062 in -93..0,
+%@ _25002 in 2..99,
+%@ _25002#>=_25130,
+%@ _25004#>=_25002,
+%@ _25130 in 2..95,
+%@ 2+_25196#=_25130,
+%@ _25196 in 0..93,
+%@ _25196#>=_25238,
+%@ _25196#=max(0, _25238),
+%@ _25238 in -4..93,
+%@ _25238+6#=_25004,
+%@ _25004 in 2..99 ;
+%@ TL = [0/_6900, _6910/_6912, _6916, _6922, _6928],
+%@ _6900 in 3..99,
+%@ _6910 in 2..99,
+%@ _6910#>=_6996,
+%@ _6912#>=_6910,
+%@ _6996 in 2..95,
+%@ 2+_7062#=_6996,
+%@ _7062 in 0..93,
+%@ _7062#>=_7104,
+%@ _7062#=max(0, _7104),
+%@ _7104 in -4..93,
+%@ _7104+6#=_6912,
+%@ _6912 in 2..99 ;
+%@ TL = [1/_24062, _24072/_24074, _24078, _24084, _24090],
+%@ _24062 in 6..99,
+%@ _24138+_24062#=6,
+%@ _24138 in -93..0,
+%@ _24072 in 2..99,
+%@ _24072#>=_24206,
+%@ _24074#>=_24072,
+%@ _24206 in 2..95,
+%@ 2+_24272#=_24206,
+%@ _24272 in 0..93,
+%@ _24272#>=_24314,
+%@ _24272#=max(0, _24314),
+%@ _24314 in -4..93,
+%@ _24314+6#=_24074,
+%@ _24074 in 2..99 ;
+%@ TL = [0/_6128, _6138/_6140, _6144, _6150, _6156, _6162],
+%@ _6128 in 3..99,
+%@ _6138 in 2..99,
+%@ _6138#>=_6230,
+%@ _6140#>=_6138,
+%@ _6230 in 2..95,
+%@ 2+_6296#=_6230,
+%@ _6296 in 0..93,
+%@ _6296#>=_6338,
+%@ _6296#=max(0, _6338),
+%@ _6338 in -4..93,
+%@ _6338+6#=_6140,
+%@ _6140 in 2..99 ;
+%@ TL = [1/_23302, _23312/_23314, _23318, _23324, _23330, _23336],
+%@ _23302 in 6..99,
+%@ _23384+_23302#=6,
+%@ _23384 in -93..0,
+%@ _23312 in 2..99,
+%@ _23312#>=_23452,
+%@ _23314#>=_23312,
+%@ _23452 in 2..95,
+%@ 2+_23518#=_23452,
+%@ _23518 in 0..93,
+%@ _23518#>=_23560,
+%@ _23518#=max(0, _23560),
+%@ _23560 in -4..93,
+%@ _23560+6#=_23314,
+%@ _23314 in 2..99 ;
+%@ TL = [0/_5466, _5476/_5478, _5482, _5488, _5494, _5500, _5506],
+%@ _5466 in 3..99,
+%@ _5476 in 2..99,
+%@ _5476#>=_5574,
+%@ _5478#>=_5476,
+%@ _5574 in 2..95,
+%@ 2+_5640#=_5574,
+%@ _5640 in 0..93,
+%@ _5640#>=_5682,
+%@ _5640#=max(0, _5682),
+%@ _5682 in -4..93,
+%@ _5682+6#=_5478,
+%@ _5478 in 2..99 ;
+%@ TL = [1/_22652, _22662/_22664, _22668, _22674, _22680, _22686, _22692],
+%@ _22652 in 6..99,
+%@ _22740+_22652#=6,
+%@ _22740 in -93..0,
+%@ _22662 in 2..99,
+%@ _22662#>=_22808,
+%@ _22664#>=_22662,
+%@ _22808 in 2..95,
+%@ 2+_22874#=_22808,
+%@ _22874 in 0..93,
+%@ _22874#>=_22916,
+%@ _22874#=max(0, _22916),
+%@ _22916 in -4..93,
+%@ _22916+6#=_22664,
+%@ _22664 in 2..99 ;
+%@ TL = [0/_4932, _4942/_4944, _4948, _4954, _4960, _4966, _4972, _4978],
+%@ _4932 in 3..99,
+%@ _4942 in 2..99,
+%@ _4942#>=_5046,
+%@ _4944#>=_4942,
+%@ _5046 in 2..95,
+%@ 2+_5112#=_5046,
+%@ _5112 in 0..93,
+%@ _5112#>=_5154,
+%@ _5112#=max(0, _5154),
+%@ _5154 in -4..93,
+%@ _5154+6#=_4944,
+%@ _4944 in 2..99 ;
+%@ TL = [1/_22130, _22140/_22142, _22146, _22152, _22158, _22164, _22170, _22176],
+%@ _22130 in 6..99,
+%@ _22224+_22130#=6,
+%@ _22224 in -93..0,
+%@ _22140 in 2..99,
+%@ _22140#>=_22292,
+%@ _22142#>=_22140,
+%@ _22292 in 2..95,
+%@ 2+_22358#=_22292,
+%@ _22358 in 0..93,
+%@ _22358#>=_22400,
+%@ _22358#=max(0, _22400),
+%@ _22400 in -4..93,
+%@ _22400+6#=_22142,
+%@ _22142 in 2..99 ;
+%@ TL = [0/_4502, _4512/_4514, _4518, _4524, _4530, _4536, _4542, _4548, _4554],
+%@ _4502 in 3..99,
+%@ _4512 in 2..99,
+%@ _4512#>=_4622,
+%@ _4514#>=_4512,
+%@ _4622 in 2..95,
+%@ 2+_4688#=_4622,
+%@ _4688 in 0..93,
+%@ _4688#>=_4730,
+%@ _4688#=max(0, _4730),
+%@ _4730 in -4..93,
+%@ _4730+6#=_4514,
+%@ _4514 in 2..99 ;
+%@ TL = [1/_21712, _21722/_21724, _21728, _21734, _21740, _21746, _21752, _21758, _21764],
+%@ _21712 in 6..99,
+%@ _21812+_21712#=6,
+%@ _21812 in -93..0,
+%@ _21722 in 2..99,
+%@ _21722#>=_21880,
+%@ _21724#>=_21722,
+%@ _21880 in 2..95,
+%@ 2+_21946#=_21880,
+%@ _21946 in 0..93,
+%@ _21946#>=_21988,
+%@ _21946#=max(0, _21988),
+%@ _21988 in -4..93,
+%@ _21988+6#=_21724,
+%@ _21724 in 2..99 ;
+%@ TL = [0/_4140, _4150/_4152, _4156, _4162, _4168, _4174, _4180, _4186, _4192|...],
+%@ _4140 in 3..99,
+%@ _4150 in 2..99,
+%@ _4150#>=_4266,
+%@ _4152#>=_4150,
+%@ _4266 in 2..95,
+%@ 2+_4332#=_4266,
+%@ _4332 in 0..93,
+%@ _4332#>=_4374,
+%@ _4332#=max(0, _4374),
+%@ _4374 in -4..93,
+%@ _4374+6#=_4152,
+%@ _4152 in 2..99 ;
+%@ TL = [1/_21362, _21372/_21374, _21378, _21384, _21390, _21396, _21402, _21408, _21414|...],
+%@ _21362 in 6..99,
+%@ _21468+_21362#=6,
+%@ _21468 in -93..0,
+%@ _21372 in 2..99,
+%@ _21372#>=_21536,
+%@ _21374#>=_21372,
+%@ _21536 in 2..95,
+%@ 2+_21602#=_21536,
+%@ _21602 in 0..93,
+%@ _21602#>=_21644,
+%@ _21602#=max(0, _21644),
+%@ _21644 in -4..93,
+%@ _21644+6#=_21374,
+%@ _21374 in 2..99 ;
+%@ TL = [0/_3888, _3898/_3900, _3904, _3910, _3916, _3922, _3928, _3934, _3940|...],
+%@ _3888 in 3..99,
+%@ _3898 in 2..99,
+%@ _3898#>=_4020,
+%@ _3900#>=_3898,
+%@ _4020 in 2..95,
+%@ 2+_4086#=_4020,
+%@ _4086 in 0..93,
+%@ _4086#>=_4128,
+%@ _4086#=max(0, _4128),
+%@ _4128 in -4..93,
+%@ _4128+6#=_3900,
+%@ _3900 in 2..99 ;
+%@ TL = [1/_21122, _21132/_21134, _21138, _21144, _21150, _21156, _21162, _21168, _21174|...],
+%@ _21122 in 6..99,
+%@ _21234+_21122#=6,
+%@ _21234 in -93..0,
+%@ _21132 in 2..99,
+%@ _21132#>=_21302,
+%@ _21134#>=_21132,
+%@ _21302 in 2..95,
+%@ 2+_21368#=_21302,
+%@ _21368 in 0..93,
+%@ _21368#>=_21410,
+%@ _21368#=max(0, _21410),
+%@ _21410 in -4..93,
+%@ _21410+6#=_21134,
+%@ _21134 in 2..99 ;
+%@ TL = [0/_3672, _3682/_3684, _3688, _3694, _3700, _3706, _3712, _3718, _3724|...],
+%@ _3672 in 3..99,
+%@ _3682 in 2..99,
+%@ _3682#>=_3810,
+%@ _3684#>=_3682,
+%@ _3810 in 2..95,
+%@ 2+_3876#=_3810,
+%@ _3876 in 0..93,
+%@ _3876#>=_3918,
+%@ _3876#=max(0, _3918),
+%@ _3918 in -4..93,
+%@ _3918+6#=_3684,
+%@ _3684 in 2..99 ;
+%@ TL = [1/_20918, _20928/_20930, _20934, _20940, _20946, _20952, _20958, _20964, _20970|...],
+%@ _20918 in 6..99,
+%@ _21036+_20918#=6,
+%@ _21036 in -93..0,
+%@ _20928 in 2..99,
+%@ _20928#>=_21104,
+%@ _20930#>=_20928,
+%@ _21104 in 2..95,
+%@ 2+_21170#=_21104,
+%@ _21170 in 0..93,
+%@ _21170#>=_21212,
+%@ _21170#=max(0, _21212),
+%@ _21212 in -4..93,
+%@ _21212+6#=_20930,
+%@ _20930 in 2..99 ;
+%@ TL = [0/_3488, _3498/_3500, _3504, _3510, _3516, _3522, _3528, _3534, _3540|...],
+%@ _3488 in 3..99,
+%@ _3498 in 2..99,
+%@ _3498#>=_3632,
+%@ _3500#>=_3498,
+%@ _3632 in 2..95,
+%@ 2+_3698#=_3632,
+%@ _3698 in 0..93,
+%@ _3698#>=_3740,
+%@ _3698#=max(0, _3740),
+%@ _3740 in -4..93,
+%@ _3740+6#=_3500,
+%@ _3500 in 2..99 ;
+%@ TL = [1/_20746, _20756/_20758, _20762, _20768, _20774, _20780, _20786, _20792, _20798|...],
+%@ _20746 in 6..99,
+%@ _20870+_20746#=6,
+%@ _20870 in -93..0,
+%@ _20756 in 2..99,
+%@ _20756#>=_20938,
+%@ _20758#>=_20756,
+%@ _20938 in 2..95,
+%@ 2+_21004#=_20938,
+%@ _21004 in 0..93,
+%@ _21004#>=_21046,
+%@ _21004#=max(0, _21046),
+%@ _21046 in -4..93,
+%@ _21046+6#=_20758,
+%@ _20758 in 2..99 ;
+%@ TL = [0/_3366, _3376/_3378, _3382, _3388, _3394, _3400, _3406, _3412, _3418|...],
+%@ _3366 in 3..99,
+%@ _3376 in 2..99,
+%@ _3376#>=_3516,
+%@ _3378#>=_3376,
+%@ _3516 in 2..95,
+%@ 2+_3582#=_3516,
+%@ _3582 in 0..93,
+%@ _3582#>=_3624,
+%@ _3582#=max(0, _3624),
+%@ _3624 in -4..93,
+%@ _3624+6#=_3378,
+%@ _3378 in 2..99 ;
+%@ TL = [1/_20636, _20646/_20648, _20652, _20658, _20664, _20670, _20676, _20682, _20688|...],
+%@ _20636 in 6..99,
+%@ _20766+_20636#=6,
+%@ _20766 in -93..0,
+%@ _20646 in 2..99,
+%@ _20646#>=_20834,
+%@ _20648#>=_20646,
+%@ _20834 in 2..95,
+%@ 2+_20900#=_20834,
+%@ _20900 in 0..93,
+%@ _20900#>=_20942,
+%@ _20900#=max(0, _20942),
+%@ _20942 in -4..93,
+%@ _20942+6#=_20648,
+%@ _20648 in 2..99 .
 %@ TL = [0/3, 2/2|_8000] ;
 %@ TL = [0/3, 2/3|_9196] ;
 %@ TL = [0/3, 3/3|_9986] ;
