@@ -84,46 +84,6 @@ escalation:
 may OTOH be more suited for consideration alongside the indeterminacy
 of toxicity outcomes.
 
- - - - - - - IMPLEMENTATION TACTICS - - - - - -
-
-[THIS PART IS A WORK IN PROGRESS ... like the code below!]
-
-For example, a goal such as:
-
-?- mtd_fromescalation_perprotocol(3, Escalation, +Protocol).
-
-ought to return a fairly enumerated set of Escalation terms that describe
-the possible paths (sequences of events) that a trial may take if it runs
-according to Protocol and declares 3 as the MTD. (The Protocol might be
-a term expressed in the DSL. My basic feeling at this point is that a
-CONFIGURATION-FILE expressiveness is what we would desire, something akin
-to a SAS PROC, say.)
-
-[As an alternative to expressing the Protocol straightforwardly as a
-term which the program could INTERPRET, it may be far more desirable
-to COMPILE a Prolog program from a DSL Protocol term. This would allow
-for various checks to be made, with feedback informing the DSL user
-about whether the trial is well-defined (a definite decision arises
-in every possible situation) or whether it might somehow get 'stuck'
-in a state from which it can neither proceed to enroll another patient
-nor conclude with an RP2D. While some of these check just possibly
-might work at compile-time, many of them surely will be of the long-
-running sort Markus Triska describes.]
-
-This is to some extent an exploration of WHAT KINDS OF GOALS might be
-set forth by clinical investigators, such that the types of designs
-currently in vogue may be 'recovered' as consequences. Of course, we
-are also interested in obtaining HIGHLY ABSTRACT GOALS suited to the
-clinical domain and the clinician's---and patient's!---problem.
-
-[Another interesting (but perhaps far-fetched) application might be to
-take a given set of decisions (such as mTPI-style decision grids) and
-SEARCH FOR a DSL description (or approximation) to the decision grid.
-Note that extensions to the DSL that prove necessary to make this work
-would themselves be informative even as to the reasonableness of the
-decision grids (and underlying models) themselves. There is certainly
-a METAGOL spirit to this sort of undertaking.]
-
  * * * * * * * * * * * * * * * * * * * * * * */
 
 % TODO:
@@ -134,55 +94,6 @@ a METAGOL spirit to this sort of undertaking.]
 % 5/ Get tallylist_minstepsto_mtd/3 to terminate in general case.
 % 6. Investigate informational properties at the enrollment margin.
 
-/* - - -
-
-
-The idea that THE NEXT PATIENT is always treated at what is somehow
-thought to be 'A GOOD DOSE' ought to be preserved, however. But how
-that 'goodness' is to be conceived deserves some free exploration.
-Perhaps there would be some value in allowing (in general) for a whole
-range of doses to be considered 'reasonable' at some given time, with
-the DSL including language elements supplying a HEURISTIC for choosing
-from among a 'reasonable' set containing more than 1 dose.
-
-INVIOLABLE PRINCIPLES:
-0. Dose 0 is non-toxic
-1. Next patient always treated at a 'therapeutic' dose. This is a
-   CONSTRAINT on the dose-escalation PROCESS.
-2. The GOAL of the trial is to 'declare' an RP2D of some kind.
-3. We adopt at least a HEURISTIC (or search strategy) that somehow
-   aims the dose-escalation toward higher doses AS PERMITTED.
-4. Toxicities must (in the MATURE DSL) be addressed as ORDINAL 0..5,
-   in order to require the user to deal with the real possibilities
-   of fatalities (5) and severe toxicities (4) on trial. (While DEVELOPING
-   the DSL, however, I will permit myself to address toxicities as binary.)
-
-FREEDOMS TO PRESERVE:
-1. Cohort size should be a free parameter. My approach to preserving
-   this freedom will be to design the DSL initially around 1-at-a-time,
-   sequential {enrollment, dosing, assessment & decision-making}. Any
-   larger cohort sizes should either appear as explicit constraints
-   imposed through the DSL, or else (preferably!) as CONSEQUENCES
-   OF MORE GENERAL CONSIDERATIONS -- e.g., the activation of decision
-   points only at certain denominators which would give rise to
-   'cohorts' on a 'WLOG'-type principle.
-2. Ordinal toxicities (and their underlying logic) demand support
-   within this DSL. The language *cannot* be tied to binary 'DLTs',
-   since even the most basic--and common!--generalization in practice
-   (accelerated titration) depends upon ordinal toxicities. Moreover,
-   even in designs ostensibly built upon binary DLTs, there remains
-   an implicit distinction in the 'exceptional' treatment given to
-   Grade 5 (fatal) toxicities. Indeed, once past the first prototype,
-   it may well be desirable to FORCE the user to speak in terms of
-   CTCAE toxicity grades 0..5, so that any dichotomization (DLT=T/F)
-   becomes conspicuous in the DSL code.
-3. At the very least the POSSIBILITY of allowing for dose TITRATION
-   should be entertained. This might be handled most elegantly by
-   treating a 'dose-titration trial' as an ensemble of N-of-1 trials
-   that pursue the aim of 'declaring MTDi'. Some kind of COMMUNICATION
-   between these individual-level titrations would be involved.
-
- - - - - */
 
 %% =======================================================
 %% At each dose, our experience is defined by a TALLY.
@@ -473,7 +384,8 @@ safe_esc(TallyList0) -->
     (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
     ;	{ safe_nextdose(TallyList0, SafeDose),
 	  tally(T/1),
-	  labeling([down], [SafeDose,T]),
+	  labeling([down], [SafeDose]),
+	  labeling([up], [T]), % speeds up 'minsteps' search to higher MTDs
 	  tallylist0_escalation_tallylist(TallyList0,
 					  [SafeDose - T/1],
 					  TallyList)
@@ -583,7 +495,6 @@ safe_esc(TallyList0) -->
 %@ More = [1-0/1, 1-1/1, 1-1/1, declare_mtd(0)] ;
 %@ More = [3-1/1, 3-0/1, 3-0/1, 3-1/1, declare_mtd(2)] ....
 
-
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% FRIENDLY REMINDER that I should concern myself with what
 %% advancement in the trial is guaranteed CONDITIONAL ON D,
@@ -627,10 +538,11 @@ tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
 	phrase(safe_esc(TallyList), Remainder) -> true
     ).
 
-%% ==================================================
-%% Brief interlude relating to failure with if_ ...
+%% ==========================================================
+%% Brief interlude relating to my difficulties using if_ ...
 
 /* This attempted definition didn't work; see below...
+tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
     if_(tallylist_mtd(TallyList, MTD),
 	MinSteps #= 0,
 	(   length(Escalation, MinSteps),
@@ -668,178 +580,114 @@ tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
 %@ MinSteps = 0,
 %@ MTD = 1.
 
+%% In each pair of timings below, we do label([down], SafeDose), and label([up/down], Tox), resp.
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 0)).
-%@ % 21,027 inferences, 0.002 CPU in 0.002 seconds (99% CPU, 8564969 Lips)
+%@ % 30,559 inferences, 0.004 CPU in 0.004 seconds (100% CPU, 7183592 Lips) % label([up],[T])
+%@ MinSteps = 2.
+%@ % 21,027 inferences, 0.002 CPU in 0.002 seconds (99% CPU, 8564969 Lips) % label([down],[T]) ..
 %@ MinSteps = 2.
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 1)).
+%@ % 5,211 inferences, 0.001 CPU in 0.001 seconds (95% CPU, 5231928 Lips)
+%@ MinSteps = 1.
 %@ % 3,515 inferences, 0.001 CPU in 0.001 seconds (88% CPU, 4686667 Lips)
 %@ MinSteps = 1.
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 2)).
+%@ % 312,270 inferences, 0.034 CPU in 0.034 seconds (99% CPU, 9175776 Lips)
+%@ MinSteps = 5.
 %@ % 279,630 inferences, 0.030 CPU in 0.030 seconds (100% CPU, 9324108 Lips)
 %@ MinSteps = 5.
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 3)).
+%@ % 12,115,355 inferences, 1.158 CPU in 1.158 seconds (100% CPU, 10464958 Lips)
+%@ MinSteps = 8.
 %@ % 13,941,261 inferences, 1.330 CPU in 1.331 seconds (100% CPU, 10480693 Lips)
 %@ MinSteps = 8.
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 4)).
+%@ % 1,227,482,026 inferences, 116.084 CPU in 116.112 seconds (100% CPU, 10574124 Lips)
+%@ MinSteps = 11.
 %@ % 1,384,418,425 inferences, 130.278 CPU in 130.308 seconds (100% CPU, 10626683 Lips)
 %@ MinSteps = 11.
+%@ % 1,932 inferences, 0.000 CPU in 0.001 seconds (91% CPU, 3959016 Lips)
 %?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 5)).
-%% .... Didn't terminate after >1h
+%@ Action (h for help) ? abort
+%@ % 1,748,576,073 inferences, 183.197 CPU in 185.157 seconds (99% CPU, 9544789 Lips)
+%@ % Execution Aborted
 
-%% NB: These 'solutions' are actually wrong if interpreted straightforwardly.
+%% NB: These 'solutions' are actually WRONG, interpreted straightforwardly.
 %%     For example, MTD = 2 is NOT (as one might hope) the value of MTD for
 %%     which the minimum number of steps is 8!
 %?- tallylist_minstepsto_mtd([0/3,1/3], 8, MTD).
 %@ MTD = 2.
 
+%% ==================================
+%% TAKING STOCK & LOOKING FORWARD ...
 
-%% =======================================================
-%% This relation generalizes tallylist_mtd/2 PROSPECTIVELY.
-%% True if, starting from TallyList, the further Escalation
-%% (2nd arg) yields MTD.
-tallylist_escalation_mtd(TallyList, [], MTD) :-
-    tallylist_mtd(TallyList, MTD).
-tallylist_escalation_mtd(TallyList, [E|Es], MTD) :-
-    safe_nextdose(TallyList, NextDose),
-    NextDose #>= MTD, % contraction-operator logic!
-    E = NextDose - T/1, tally(T/1),
-    tallylist0_escalation_tallylist(TallyList, [E], TallyList1),
-    tallylist_escalation_mtd(TallyList1, Es, MTD).
-
-%?- length(Esc, 1), tallylist_escalation_mtd([0/3,1/3], Esc, 1).
-%@ Esc = [2-1/1] ;
-%@ false.
-
-/* NB: tallylist_escalation_mtd/3 appears NOT TO BE NEEDED! */
-
-/*
-It seems essential to the intuition of dynamic programming that it
-work somehow from the MTD backward.
-
-There is an interesting tension between the principle that decisions
-are made path-independently based on tallylists alone, and the practical
-requirement for fair enumerations. It might well be that predicates such
-as tallylist_mtd/2 cannot by themselves support fair enumeration!
-
-Perhaps I have a complex enough situation that some of these predicates
-must eschew the MGQ. It may well be that the dynamic programming itself
-aims to provide this.
-
-Alternatively, perhaps I achieve this by constraining the allowable
-dose-escalation sequences within the DCG itself. Thus, the DCG becomes
-the principle by which fair enumeration is possible.
-*/
-
-%?- tallylist_mtd(TL, 1), length(TL,2).
-%@ TL = [0/_10828, _10838/_10840],
-%@ _10828 in 3..99,
-%@ _10838 in 2..99,
-%@ _10838#>=_10906,
-%@ _10840#>=_10838,
-%@ _10906 in 2..95,
-%@ 2+_10972#=_10906,
-%@ _10972 in 0..93,
-%@ _10972#>=_11014,
-%@ _10972#=max(0, _11014),
-%@ _11014 in -4..93,
-%@ _11014+6#=_10840,
-%@ _10840 in 2..99 ;
-%@ TL = [1/_27954, _27964/_27966],
-%@ _27954 in 6..99,
-%@ _28012+_27954#=6,
-%@ _28012 in -93..0,
-%@ _27964 in 2..99,
-%@ _27964#>=_28080,
-%@ _27966#>=_27964,
-%@ _28080 in 2..95,
-%@ 2+_28146#=_28080,
-%@ _28146 in 0..93,
-%@ _28146#>=_28188,
-%@ _28146#=max(0, _28188),
-%@ _28188 in -4..93,
-%@ _28188+6#=_27966,
-%@ _27966 in 2..99 ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-
-/*
-Here, I'm representing Escalation by a list of Dose-Assessment pairs
-for INDIVIDUAL PATIENTS.
-For the long term, this enables an ordinal assessment to be employed,
-although initially this is just the type Assessment := OKAY | DLT.
-*/
-dose_escalation(Dose, Escalation) :-
-    onpath_toMTD([Dose - okay | Escalation], _), % Enrollment should be part of a
-    onpath_toMTD([Dose - dlt | Escalation], _),  % conceivable 'path to RP2D'.
-    gooddose_incontext(Dose, Escalation). % But also should look 'therapeutic'.
-
-onpath_toMTD(Escalation, MTD) :-
-    (	declare_mtd(Escalation, MTD)      % Either we're already there,
-    ;	dose_escalation(E, Escalation),   % or else a further step
-	onpath_toMTD([E|Escalation], MTD) % gets us /closer/.
-    ). %% TODO: Articulate 'closer' by a METRIC, so escalation becomes a CONTRACTION OPERATOR
-
-%% Dose looks therapeutic (NB: I'm being careful to avoid a word like 'best'
-%% which would imply a claim of optimality) after having seen Escalation.
-%% ** DETAILS HARD-CODED HERE SHOULD BE EXPRESSED VIA DSL **
-%% NB: We want the constraint N>6 to be IMPLICIT, emerging as a CONSEQUENCE.
-gooddose_incontext(Dose, Escalation) :-
-    tally_fordose_inescalation(T/N, Dose, Escalation),
-    N #=< 6, T #< 1,
-    D_1 #= Dose - 1, %% Adjacent lower dose showed...
-    tally_fordose_inescalation(T_1/N_1, D_1, Escalation),
-    (	T_1 #= 0, N_1 #>= 3 % 0/3 or else
-    ;	T_1 #= 1, N_1 #>= 6 % 1/6 toxicities.
-    ),
-    D1 #= Dose + 1, %% Next-higher dose is either...
-    tally_fordose_inescalation(T1/N1, D1, Escalation),
-    (	N1 #= 0           % thus far untried,
-    ;	N1 #> 0, T1 #>= 2 % or else looks too toxic.
-    ).
-
-tally_fordose_inescalation(0/sup, 0, _). %% A zero dose is 'supremely nontoxic'
-tally_fordose_inescalation(T/N, Dose, Escalation) :-
-    tally_fordose_inescalation_acc(T/N, Dose, Escalation, 0/0).
-
-tally_fordose_inescalation_acc(T/N, _, [], T/N).
-tally_fordose_inescalation_acc(T/N, Dose, [Dose^T1/N1 | Escalation], T0/N0) :-
-    Tacc #= T0 + T1,
-    Nacc #= N0 + N1,
-    tally_fordose_inescalation_acc(T/N, Dose, Escalation, Tacc/Nacc).
-tally_fordose_inescalation_acc(T/N, Dose, [Dose1^_ | Escalation], T0/N0) :-
-    Dose1 #\= Dose,
-    tally_fordose_inescalation_acc(T/N, Dose, Escalation, T0/N0).
-
-%% I'll treat tallies as lists of terms of the form Tox/Enrolled,
-%% in which position tells the dose level.
-
-mtd_escalation(MTD, Escalation) :-
-    escalation_tallies(Escalation, Tallies),
-    (	nth1(MTD, Tallies, 0/6) % The MTD is a dose we've tried in
-    ;	nth1(MTD, Tallies, 1/6) % at least 6 patients, with at most 1 DLT..
-    ),
-    nth1(MTD+1, Tallies, T/_),  % ..AND for which the next-higher dose
-    T #> 2,                     % has shown at least 2 toxicities
-    N #=< 6.                    % out of no more than 6 patients.
 
 /* - - - -
 
-Moving past pseudocode, let's try to implement these ideas in a 2-dose setting.
+OBSERVATIONS:
 
-1. First thing I could use is a DCG to generate all possible enrollment strings.
+-) We see here at last a NONTRIVIAL calculation being performed.
+   It is nontrivial both for its COMPLEXITY and for its CONTENT.
+   It would require actual paper-and-pencil combinatorics work
+   to figure out some of the answers obtained.
 
-This ought to represent only the most elemental aspects of dose-escalation.
-For example, the fact that the next dose is always at most 1 higher than
-the present dose -- or, to begin this exploration, that we always move up
-OR down by 1 dose.
+-) I've availed myself of some impure constructs at what SO FAR
+   is the outermost level of the code, but won't be for long.
+   So it would be nice to use reif:if_/3 where possible.
 
-2. Superimposed on this may be some sense that our LEARNING (i.e., the trial's
-PROGRESS toward its DRUG-DEVELOPMENT AIMS) manifests solely in the up-and-down
-of dose-escalation itself.
+-) Something that ought to be kept in mind is that the rather strict &__
+   inequalities tend to undervalue the information from larger cohorts.
+   This tendency 'tips the scales' in favor of changing the dose earlier
+   rather than later. I need to be on guard against having hereby imposed
+   a tendency that deserved to make a more spontaneous/organic entrance.
 
-Seen from a PC perspective, of course, this is utterly false! But I do believe
-that the logic underlying dose-escalation IN PRACTICE adheres to this idea,
-however bad that may be. So REPRESENTING THIS IDEA OBJECTIVELY is useful.
+   %?- 4/9 &>= 2/6.
+   %@ false.
+
+-) This implementation remains FORWARD-LOOKING, and does not exploit
+   any OPTIMAL SUBSTRUCTURE of my problem. The timings collected above
+   suggest that looking ahead more than 3 doses may be infeasible.
+   This points to the need for a forthrightly RETROSPECTIVE programming
+   of the solution.
+
+-) OTOH, the (perhaps modest) success of this forward-looking approach
+   suggests that some of the basic infrastructure (e.g., tally comparisons)
+   will be suitable for a proper application of the BELLMAN PRINCIPLE.
+
+-) The safe_esc//1 DCG seems apt for RETROSPECTIVE work, except that it
+   doesn't (yet) work in that direction:
+
+   %?- phrase(safe_esc([0/3,1/3]), [C, declare_mtd(1)]).
+   %@ C = 2-1/1 ;
+   %@ false.
+
+   %?- length(TL,2), phrase(safe_esc(TL), [C, declare_mtd(1)]).
+   %@ false.
+
+   %?- tally(Q1), tally(Q2), phrase(safe_esc([Q1,Q2]), [C, declare_mtd(1)]).
+   %@ false.
+
+   %% Yet this works fine, provided Q1 and Q2 are instantiated:
+   %?- Q1 = 0/3, Q2 = 1/3, tally(Q1), tally(Q2), phrase(safe_esc([Q1,Q2]), [C, declare_mtd(1)]).
+   %@ Q1 = 0/3,
+   %@ Q2 = 1/3,
+   %@ C = 2-1/1 ;
+   %@ false.
+
+-) There is another perspective implicit in dose-escalation trials, which
+   I have so far neither articulated nor exploited. This is the supposition
+   that our LEARNING about dosing MANIFESTS IN THE DOSE ESCALATION ITSELF.
+   We could call this DOSE-ESCALATION-AS-LEARNING or 'DEAL'.
+
+-) Seen from the Precautionary Coherence (PC) perspective, of course, this
+   is utterly false! But I think that the logic underlying dose-escalation
+   IN PRACTICE adheres ~somehow~ to this notion, however bad it may be.
+   So REPRESENTING THIS IDEA OBJECTIVELY is useful. I should figure out how
+   to achieve this representation, and the present work provides a medium
+   for exploring that.
+
+-) The DEAL principle might well provide constraints that render even the
+   forward-looking approach adopted here feasible.
 
 ===
 Here's the SCIENTIFIC QUESTION I see motivating the next step of this effort:
@@ -934,92 +782,6 @@ that let the next dose chosen be the highest one that was sure to
 reduce the number of steps to MTD.
 
  - - - - - - */
-
-% This is true if, starting from Tallies a *further* Escalation sequence
-% starting from Dose results in declaration of MTD.
-
-% The base case for this recursion defines what tallies yield an MTD right away.
-% Note that Dose is anonymous in this clause because MTD declaration depends
-% only on the net Tallies seen so far.
-/*
-tallies_dose_escalation_mtd(Tallies, _, [], MTD) :-
-    true.
-tallies_dose_escalation_mtd(Tallies, Dose, Escalation, MTD) :-
-    true.
-*/
-
-/*
-Something that ought to be kept in mind is that these rather strict
-inequalities tend to undervalue the information from larger cohorts.
-This tendency 'tips the scales' in favor of changing the dose earlier
-rather than later. I need to be on guard against having hereby imposed
-a tendency that deserved to make a more spontaneous/organic entrance.
-*/
-%?- 4/9 &>= 2/6.
-%@ false.
-
-%?- maplist(lowtally, []).
-%@ true.
-
-%?- lowtally(0/3).
-%@ false.
-
-%?- tally(0/3).
-%@ true.
-
-%?- 0/3 &=< 0/3.
-%@ true ;
-%@ false.
-
-%?- 0/3 &=< 0/3.
-%@ true ;
-%@ false.
-
-
-
-%?- lowtally_(1, 0/3).
-%@ true.
-%@ false.
-%@ true.
-
-%?- maplist(lowtally, [0/3, 0/6]).
-%@ false.
-%@ false.
-%@ true ;
-%@ false.
-%@ true ;
-%@ true.
-
-%?- T/N &>= 1/3.
-%@ T in 1..sup,
-%@ N#>=T,
-%@ N in 1..sup.
-
-%?- 1/10 &>= 1/3.
-%@ false.
-
-%?- tallylist_mtd(Tallies, 0).
-%@ Tallies = [_928590/_928592|_928586],
-%@ _928590 in 1..3,
-%@ _928592#>=_928590,
-%@ _928592 in 1..3 ;
-%@ Tallies = [_931550/_931552|_931546],
-%@ _931550 in 2..sup,
-%@ _931552#=<_931550+2,
-%@ _931552#>=_931550,
-%@ _931552 in 4..sup ;
-%@ Tallies = [_936246/_936248|_936242],
-%@ _936246 in 2..6,
-%@ _936248#>=_936246,
-%@ _936248 in 2..6 ;
-%@ Tallies = [_939206/_939208|_939202],
-%@ _939206 in 3..sup,
-%@ _939208#=<_939206+4,
-%@ _939208#>=_939206,
-%@ _939208 in 7..sup ;
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-
 
 /*
 But clearly, I need some way to generate dose-escalation sequences
