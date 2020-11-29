@@ -654,8 +654,8 @@ OBSERVATIONS:
    suggests that some of the basic infrastructure (e.g., tally comparisons)
    will be suitable for a proper application of the BELLMAN PRINCIPLE.
 
--) The safe_esc//1 DCG seems apt for RETROSPECTIVE work, except that it
-   doesn't (yet) work in that direction:
+-) The safe_esc//1 DCG seems promising for RETROSPECTIVE work, although
+   it doesn't (yet) work in that direction:
 
    %?- phrase(safe_esc([0/3,1/3]), [C, declare_mtd(1)]).
    %@ C = 2-1/1 ;
@@ -689,187 +689,36 @@ OBSERVATIONS:
 -) The DEAL principle might well provide constraints that render even the
    forward-looking approach adopted here feasible.
 
-===
-Here's the SCIENTIFIC QUESTION I see motivating the next step of this effort:
-How far toward a full design can we proceed, simply by taking a few notional
-examples of dose-escalation decisions, and 'processing' them through the logic
-of DOSE-ESCALATION-AS-LEARNING?
+-) An early 'win' from lookahead will be showing we can declare MTD upon
+   seeing 2/2 toxicities, without filling the full 'cohort of 3' DESPITE
+   the fact that the MTD criterion may be EXPRESSED AS 2/3. That is, show
+   that the logic of dose-escalation enables tallylist_mtd/2 to 'think
+   several moves ahead'.
+   This might be as simple as the brute-force step of calculating, from any
+   stage of a partially realized escalation, what possible outcomes there
+   might be. When the set of possible MTD declarations becomes singular,
+   then just declare now.
+   That logic may also be extended (probably more feasibly, too) to the
+   next enrollment dosing decision. If that decision would be unaffected
+   by some given present enrollment decision, then the present decision is
+   'wrong' in a sense.
 
-I'm actually going to call that 'DEAL' ;^), and perhaps it turns out to be a
-valuable contribution of this effort that it explores the consequences and
-limitations of the DEAL principle.
+-) One way to conceive of the utility maximized by Bellman Principle is
+   as a metric of PROGRESS for a dose-escalation trial, such that the
+   next enrollment dose could be chosen on a maximin/minimax criterion
+   that let the next dose chosen be the highest one that was sure to
+   advance the trial's progress to its SCIENTIFIC GOAL.
 
- - - - - -*/
+-) Example heuristics include:
 
-/*
-TODO: Show that it's possible to declare MTD upon seeing 2/2 toxicities,
-      without filling the full 'cohort of 3' DESPITE the fact that the
-      MTD criterion may be EXPRESSED AS 2/3. That is, show that the logic
-      of dose-escalation enables the DSL to 'think several moves ahead'.
+   * Always trying the highest dose that would DEFINITELY move the trial
+     forward to its conclusion
+   * Always trying rather the LOWEST such dose
+   * Always enrolling the dose that lies on the shortest path-to-MTD
+   * Always enroll the dose lying on the LONGEST path-to-MTD. (In theory,
+     this might be justified on grounds that we want to gain sufficient
+     experience with the drug at a variety of levels. But it seems to me
+     that making this workable would require introducing some additional
+     principle that tended to bring the trial to a close.)
 
-This might be as simple as the brute-force step of calculating, from any
-stage of a partially realized escalation, what possible outcomes there
-might be. When the set of possible MTD declarations becomes singular,
-then just declare now.
-
-That logic may also be extended (probably more feasibly, too) to the next
-enrollment dosing decision. If that decision would be unaffected by some
-given present enrollment decision, then the present decision is 'wrong'
-in a sense.
-
-*/
-
-/* - - - - -
-
-AHA! Here is the RECURSIVE concept I have been waiting for! I ought to
-calculate the number of possible escalations FORWARD FROM A GIVEN TALLY
-that results in a given outcome, such as declare_mtd(3).
-
-This quantity can be calculated RECURSIVELY and (probably) allows injection
-of DYNAMIC-PROGRAMMING ideas. With any luck (or maybe a lot of it!), the
-dynamic-programming approach (plus tabling?) may allow me to circumvent an
-otherwise impure, forall-based approach to this problem.
-
-What does this circumvention depend on? Ultimately, it depends on a base
-case that can be aggregated through the search tree.
-
-PLAN:
-/1 Implement stricter tally comparisons &<, &>, &=, etc.
-   where the comparison is conceptually grounded in the
-   sequences of (0/1 | 1/1) that sum up to them.
-2) Implement relation {TallyList - MTD}
-3) Relate TallyLists to Escalations that generate them.
-   Initially, this can be *ANY* Escalation sequence consistent
-   with some DCG. I can leave 'for later' the culling of these
-   many candidate Escalations, according to DEAL and other
-   principles.
-4) Implement relation {TallyList - Escalation - MTD}
-5) Render an 'abstract interpretation' of the above relation,
-   concerned strictly with the LENGTH of the Escalation needed
-   to reach the given MTD, or at least SOME QUANTITY THAT CAN
-   BE CALCULATED RECURSIVELY on a tree. This could be, e.g.,
-   the minimum number of patients needed to enroll to reach
-   an MTD declaration.
-
-I have to remember the IMPORTANCE of such a recursive calculation
-derives from its potential to accomplish a forall/3 or \+ BY PURE
-MEANS!
-
-What happens at the point of IMPLEMENTATION is the {TallyList - MTD}
-relation serves as the base case for {TallyList - Escalation - MTD},
-where Escalation = []. Another case deals with the VERY FINITE case
-where Escalation = [Dose - Tox] for a single patient. I can probably
-deal with this 'in closed form' (in some sense I don't yet understand
-fully) so that I can obtain a number. At each node running backwards
-toward the root of the tree, I will obtain a new summary. The forall
-or \+ happens when I find I've counted ZERO THINGS HAPPENING, say.
-
-It might even be the case that I will require MULTIPLE BINARY OPS
-in order to fully characterize the 'answer to the question' at any
-given point during the trial. Maybe {max, min, and} are all needed!
-Ideally, I would parametrize such ops, for accumulation within the
-tree, by a generic maplist-like predicate.
-
-** THE MOST IMPORTANT THINKING to do at this point is to understand
-** what sort of \+iness I need to implement in 'deducing' the trial.
-
-CAPTURING *PROGRESS* VIA DYNAMIC PROGRAMMING
-
-I think that DP promises to make a contribution mainly in defining
-a notion of 'progress' for dose-escalation trials, such that next
-enrollment dose could be chosen on a maximin or minimax criterion
-that let the next dose chosen be the highest one that was sure to
-reduce the number of steps to MTD.
-
- - - - - - - */
-
-/*
-But clearly, I need some way to generate dose-escalation sequences
-while carrying along sufficient context/state to maintain a semblance
-of reasonableness.
-
-Getting the balance right, between excessive (random-walk) freedom
-in generating these sequences, and premature confinement, will take
-some experimentation.
-
-I need to remember that my CORE QUESTION at this stage is how much
-can be derived from the DEAL principle. What things *might* I hope
-to derive from DEAL? For example, if a dose level already had been
-demonstrated to be too toxic, then enrolling additional patients at
-that level does not shorten the time to declaring MTD!
-
-I think I want to use a dose_esc DCG only to create a large enough
-(but also TOO large!) set of possible future paths for the trial.
-It will then be the job of OTHER predicates to refine that large
-space of options to a smaller set of 'rational' escalations.
-
-Example heuristics include:
-
-* Always trying the highest dose that would DEFINITELY move the trial
-  forward to its conclusion
-* Always trying rather the LOWEST such dose
-* Always enrolling the dose that lies on the shortest path-to-MTD
-* Always enroll the dose lying on the LONGEST path-to-MTD. (In theory,
-  this might be justified on grounds that we want to gain sufficient
-  experience with the drug at a variety of levels. But it seems to me
-  that making this workable would require introducing some additional
-  principle that tended to bring the trial to a close.)
-
-If I assume I'm working with SHORTEST-PATH heuristics to begin with,
-then I anticipate possibly needing JUST ONE CUT in some predicate.
-This is reasonable, since I actually intend to search the solution
-space methodically (with fair enumeration, etc.) and indeed define
-a correct solution to be the first one! The 'solutions' excluded by
-the cut ARE NOT ACTUALLY CORRECT SOLUTIONS!
-
-Once again, note how the SEPARATION OF CONCERNS creates space for
-the DSL to define separately ASPECTS OF DOSE-JUDGING and ASPECTS
-OF DOSE-ESCALATION-AS-LEARNING.
-
-*/
-
-%% I begin by modeling a dose-escalation ...
-%% AHA! It looks to me as if I must carry along the TALLIES as CONTEXT
-%% for this DCG. Is this correct? Is there some other way?
-%% It seems I am constantly re-learning how to use DCG state vs semicontext!
-%% Intuitively -- based on little more than SYNTAX -- I feel that 'lookahead'
-%% (maybe with 'replacement') is appropriate for knowing what the last
-%% enrolled dose was. OTOH, it does seem as if the current TALLIES have
-%% to be managed as STATE.
-
-/*
-The FREEDOM preserved here is that this DCG doesn't need to worry about
-running away past the point where MTD should have been declared. Halting
-is not the responsibility of this DCG. That gets done in another predicate
-which I expect will need to employ cut/0.
-
-The RULES expressed in this DCG are much less stringent. For now, I will
-say that we don't enroll doses with a toxictally/1, nor with a lowtally/1.
-
-WHAT'S THE CORE INTUITION?
-
-I want this DCG to show all kinds of crazy dose-escalation paths leading
-to a given MTD, enumerating them fairly. I should be able to start this
-DCG from a 'blank slate' -- i.e., an empty TallyList = []. I should also
-be able to start it from 1 enrollment shy of declaring MTD.
-
-What this DCG should do correctly is accumulate the TallyList and keep
-the escalation 'connected' (avoid dose-skipping). Fair enumeration is
-also important. EVERYTHING ELSE is the responsibility of a supervisory
-predicate.
-
-HEY, WHERE'S MY DYNAMIC PROGRAMMING?
-
-I believe it comes in now that tallylist0_escalation_tallylist/3 has been
-implemented. By doing a fair enumeration on length of the escalation,
-I can stop search at the shortest path to MTD from any given tallylist.
-
-HMMM...
-
-Could I view some of my efforts here as aiming toward FAIR ENUMERATION?
-Dose-escalation rules that press 'onward and upward' could be seen as
-avoiding unfair enumeration of escalations! Thus, we obtain a purely
-logical interpretation of dose-escalation procedures that would normally
-be understood from pharmacological or ethical perspectives.
-
-*/
+ - - - - - */
