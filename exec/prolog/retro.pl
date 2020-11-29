@@ -199,7 +199,8 @@ tallylist_dose_tally(Tallies, D, T/N) :-
 %% This predicate holds when the given TallyList supports
 %% the declaration of MTD.
 
-tallylist_mtd(TallyList, MTD) :-
+%% Can the success of this predicate be reified into TruthValue?
+tallylist_mtd(TallyList, MTD, TruthValue) :-
     length(TallyList, _), % Enumerate fairly when TallyList is nonground.
     append(LowTallies, [Q | _], TallyList),
     length(LowTallies, MTD), % NB: enforces MTD >= 0 for nonground MTD
@@ -381,6 +382,8 @@ tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
 
 %%safe_esc(_) --> [freeze]. % halt runaway DCG for debugging
 safe_esc(TallyList0) -->
+    %% Consider inverting the commitment here.
+    %% Look for if_//3 on stackoverflow, e.g.
     (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
     ;	{ safe_nextdose(TallyList0, SafeDose),
 	  tally(T/1),
@@ -526,6 +529,8 @@ safe_esc(TallyList0) -->
 %%       essentially work at the margins of current Prolog capabilities,
 %%       or at least at the OUTERMOST LEVEL of the code, and so render
 %%       worries about 'soundness' less compelling?
+%% THIS IS VERY BRUTE FORCE! MUST DELEGATE AS MUCH AS POSSIBLE TO
+%% PROLOG'S DEPTH-FIRST SEARCH. SEE LATEST CONN4 CODE.
 tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
     (	tallylist_mtd(TallyList, MTD) -> MinSteps #= 0
     ;	tallylist_mtd(TallyList, _) -> false % If any other MTD applies, fail.
