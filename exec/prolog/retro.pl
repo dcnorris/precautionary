@@ -131,7 +131,7 @@ a METAGOL spirit to this sort of undertaking.]
 % 2. Condense commentary for current relevance
 % 3/ Help tallylist_mtd/2 to terminate
 % 4/ Deliver good trial sequences from safe_esc//1
-% 5. Get tallylist_minstepsto_mtd/3 to terminate in general case.
+% 5/ Get tallylist_minstepsto_mtd/3 to terminate in general case.
 % 6. Investigate informational properties at the enrollment margin.
 
 /* - - -
@@ -483,6 +483,7 @@ safe_esc(TallyList0) -->
     ).
 
 %?- phrase(safe_esc([0/3,2/3]), Hmm).
+%@ caught: error(existence_error(procedure,phrase/2),phrase/2)
 %@ Hmm = [declare_mtd(1)]. %% CORRECT -- this tallylist already supports an MTD.
 
 %?- phrase(safe_esc([0/3,1/3]), Hmm).
@@ -610,45 +611,87 @@ safe_esc(TallyList0) -->
 %% enrolled starting from TallyList, to yield declaration of MTD.
 %% TODO: Would tabling this enforce a unique minimum, thereby
 %%       allowing me to avoid unsound ->? How about reif:if_/3?
-%% OTOH: Does this kind of dynamic programming work at the
-%%       margins of current Prolog capabilities, and so render
+%% OTOH: Does this kind of highly selective (extremal) solution-finding
+%%       essentially work at the margins of current Prolog capabilities,
+%%       or at least at the OUTERMOST LEVEL of the code, and so render
 %%       worries about 'soundness' less compelling?
 tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
     (	tallylist_mtd(TallyList, MTD) -> MinSteps #= 0
     ;	tallylist_mtd(TallyList, _) -> false % If any other MTD applies, fail.
-    ;	length(Escalation, N), % Starting from N = 0 and working upward
-	% NB: At this point, we actually know that N=0 won't work.
+    ;	length(Escalation, MinSteps), % Starting from MinSteps = 0 and working upward
+	% NB: At this point, we actually know that MinSteps=0 won't work.
 	%     I should consider working the above 'special cases'
-	%     somehow into this general case.
-	phrase(safe_esc(TallyList), Escalation),
-	MinSteps #= N - 1, % -1 since last element of Escalation is declare_mtd(MTD)
-	% TODO: Obtain MTD directly from the final element of Escalation,
-	%       which will be a term of the form declare_mtd(MTD).
-	tallylist0_escalation_tallylist(TallyList, Escalation, Trial),
-	tallylist_mtd(Trial, MTD)
+	%     somehow into this general case ..
+	MinSteps #>= 1, % ... but pending that I can post this constraint.
+	append(Escalation, [declare_mtd(MTD)], Remainder),
+	phrase(safe_esc(TallyList), Remainder) -> true
     ).
+
+%% ==================================================
+%% Brief interlude relating to failure with if_ ...
+
+/* This attempted definition didn't work; see below...
+    if_(tallylist_mtd(TallyList, MTD),
+	MinSteps #= 0,
+	(   length(Escalation, MinSteps),
+	    append(Escalation, [declare_mtd(MTD)], Fin),
+	    phrase(safe_esc(TallyList), Fin)
+	)
+       ).
+*/
+
+%% This section done with Scryer:
+%:- use_module(library(reif)).
+%@    true.
+%?- if_(append([],[],[]), Ans = yes, Ans = no).
+%@ caught: error(existence_error(procedure,append/4),append/4)
+%@ caught: error(existence_error(procedure,append/3),append/3)
+%?- if_(append([],[]), Ans = yes, Ans = no).
+%@ caught: error(existence_error(procedure,append/3),append/3)
+%% Why does if_/3 believe its first argument is has arity 1 more than its actual?
+%?- if_(1 #= 1, Ans = yep, Ans = nope).
+%@ ERROR: Unknown procedure: (#=)/3
+%@ ERROR:   However, there are definitions for:
+%@ ERROR:         (#=)/2
+%@ ERROR: 
+%@ ERROR: In:
+%@ ERROR:   [11] #=(1,1,_61112)
+%@ ERROR:   [10] if_(1#=1,_61150=yep,_61156=nope) at /var/folders/pb/d6v8rn4j6x10bzx8qfrs6w6w0000gn/T/ediprolog5788s9J:9
+%@ ERROR:    [9] <user>
+%@    Exception: (11) #=(1, 1, _61376) ? abort
+%@ % Execution Aborted
+
+%% ==================================================
+%% Back to tallylist_minstepsto_mtd/3, which works nicely!
 
 %?- tallylist_minstepsto_mtd([0/3,2/3], MinSteps, MTD).
 %@ MinSteps = 0,
 %@ MTD = 1.
 
-%?- tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 1).
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 0)).
+%@ % 21,027 inferences, 0.002 CPU in 0.002 seconds (99% CPU, 8564969 Lips)
+%@ MinSteps = 2.
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 1)).
+%@ % 3,515 inferences, 0.001 CPU in 0.001 seconds (88% CPU, 4686667 Lips)
+%@ MinSteps = 1.
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 2)).
+%@ % 279,630 inferences, 0.030 CPU in 0.030 seconds (100% CPU, 9324108 Lips)
+%@ MinSteps = 5.
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 3)).
+%@ % 13,941,261 inferences, 1.330 CPU in 1.331 seconds (100% CPU, 10480693 Lips)
+%@ MinSteps = 8.
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 4)).
+%@ % 1,384,418,425 inferences, 130.278 CPU in 130.308 seconds (100% CPU, 10626683 Lips)
+%@ MinSteps = 11.
+%?- time(tallylist_minstepsto_mtd([0/3,1/3], MinSteps, 5)).
+%% .... Didn't terminate after >1h
 
-%?- tallylist_minstepsto_mtd([0/3,1/3], MinSteps, MTD).
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
+%% NB: These 'solutions' are actually wrong if interpreted straightforwardly.
+%%     For example, MTD = 2 is NOT (as one might hope) the value of MTD for
+%%     which the minimum number of steps is 8!
+%?- tallylist_minstepsto_mtd([0/3,1/3], 8, MTD).
+%@ MTD = 2.
 
-%?- length(Escalation, N), phrase(safe_esc([0/3,1/3]), Escalation).
-%@ Escalation = [2-1/1, declare_mtd(1)],
-%@ N = 2 ;
-%@ Escalation = [2-0/1, 2-1/1, declare_mtd(1)],
-%@ N = 3 ;
-%@ Escalation = [1-1/1, 1-1/1, declare_mtd(0)],
-%@ N = 3 ;
-%@ Escalation = [1-0/1, 2-1/1, declare_mtd(1)],
-%@ N = 3 .
 
 %% =======================================================
 %% This relation generalizes tallylist_mtd/2 PROSPECTIVELY.
