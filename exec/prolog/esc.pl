@@ -7,36 +7,35 @@
 
 % DCG esc(D, Lo..Hi) describes a list of 3+3 cohorts FOLLOWING a dose D in Lo..Hi.
 % One can read esc(D, Lo..Hi) as the DECISION to escalate from D to min(D+1,Hi).
-% For example, esc(0, 1..5) *initiates* a trial that has 5 prespecified doses,
+% For example, esc(0, 0..5) *initiates* a trial that has 5 prespecified doses,
 % and enrolls the first cohort at D=1.
 
 tox(T) :- T in 0..3,
 	  indomain(T).
 
 % Mnemonic: * is ^ that 'splatted' on dose ceiling.
-esc(Hi, Lo..Hi) --> [Hi * T], { Lo #< Hi,
-				tox(T) },
+esc(Hi, Lo..Hi) --> { Lo #< Hi },
+		    [Hi * T], { tox(T) },
 		    (  {T #=< 1}, [mtd_notfound(Hi)]
 		    ;  {T #>= 2}, des(Hi, Lo)
 		    ).
-esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1,
-			       D1 in Lo..Hi,
-			       tox(T) },
+esc(D, Lo..Hi) --> { D1 #= D + 1, D1 in Lo..Hi },
+		   [D1 ^ T], { tox(T) },
 		   (  {T #= 0}, esc(D1, Lo..Hi)
 		   ;  {T #= 1}, sta(D1, Lo..Hi)
 		   ;  {T #> 1}, des(D1, Lo)
 		   ).
 
 sta(D, _..D) --> [D - 0], [mtd_notfound(D)].
-sta(D, Lo..Hi) --> [D - 0], { D #< Hi,
-			      D in Lo..Hi },
+sta(D, Lo..Hi) --> { D #< Hi, D in Lo..Hi },
+		   [D - 0],
 		   esc(D, D..Hi).
 sta(D, Lo.._) --> [D - T], { tox(T), T #> 0 },
 		  des(D, Lo).
 
 % As a mirror image of esc//2, des(D, Lo) moves
 % downward FROM D, to max(D-1,Lo).
-% NB: De-escalation to D-1 implies Hi #= D - 1.
+% NB: De-escalation to D-1 clamps Hi #= D - 1.
 %% TODO: Does this mean des//2 could be written as des(Lo..D),
 %%       somehow exploiting the impossibility of Y..X with Y > X?
 des(D, Lo) --> { D_1 #= D - 1 },
@@ -67,6 +66,53 @@ n_trials(Drange, DN) :-
 %@ D_N =  (10, 82954).
 
 ?- phrase(esc(0, 0..2), Tr).
+%@ Tr = [1^0, 2^0, 2*0, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^0, 2*1, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^0, 2*2, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^0, 2*2, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^0, 2*2, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^0, 2*2, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^0, 2*3, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^0, 2*3, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^0, 2*3, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^0, 2*3, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-0, mtd_notfound(2)] ;
+%@ Tr = [1^0, 2^1, 2-1, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-1, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-1, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-1, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-2, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-2, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-2, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-2, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-3, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-3, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^1, 2-3, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^1, 2-3, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^2, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^2, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^2, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^2, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^3, 1:0, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^3, 1:1, declare_mtd(1)] ;
+%@ Tr = [1^0, 2^3, 1:2, declare_mtd(0)] ;
+%@ Tr = [1^0, 2^3, 1:3, declare_mtd(0)] ;
+%@ Tr = [1^1, 1-0, 2^0, 2*0, mtd_notfound(2)] ;
+%@ Tr = [1^1, 1-0, 2^0, 2*1, mtd_notfound(2)] ;
+%@ Tr = [1^1, 1-0, 2^0, 2*2, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^0, 2*3, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-0, mtd_notfound(2)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-1, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-2, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^1, 2-3, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^2, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-0, 2^3, declare_mtd(1)] ;
+%@ Tr = [1^1, 1-1, declare_mtd(0)] ;
+%@ Tr = [1^1, 1-2, declare_mtd(0)] ;
+%@ Tr = [1^1, 1-3, declare_mtd(0)] ;
+%@ Tr = [1^2, declare_mtd(0)] ;
+%@ Tr = [1^3, declare_mtd(0)] ;
+%@ false.
 %@ Tr = [1^0, 2^0, 2*0, mtd_notfound(2)] ;
 %@ Tr = [1^0, 2^0, 2*1, mtd_notfound(2)] ;
 %@ Tr = [1^0, 2^0, 2*2, 1:0, declare_mtd(1)] ;
@@ -275,13 +321,21 @@ see_esc_mtx_(Format) -->
 see_esc_mtx_(_) --> [].
 
 %?- maplist(write_T, [2,3,4,5,6,7,8]).
-%@ 2  44
-%@ 3  150
-%@ 4  434
-%@ 5  1146
-%@ 6  2858
-%@ 7  6858
-%@ 8  16010
+%@ 2  46
+%@ 3  154
+%@ 4  442
+%@ 5  1162
+%@ 6  2890
+%@ 7  6922
+%@ 8  16138
+%@ true.
+%@ 2  46
+%@ 3  154
+%@ 4  442
+%@ 5  1162
+%@ 6  2890
+%@ 7  6922
+%@ 8  16138
 %@ true.
 %@ 2  46
 %@ 3  154
