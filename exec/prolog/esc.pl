@@ -5,65 +5,10 @@
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
 
-/*
-
-Aim initially to describe the 'Design 1' of Simon &al (1997).
-The main difficulty in describing this design seems to be the
-arbitrarily distant lookback to earlier cohorts, as required
-to ensure that at most 1/6 toxicities occur at the declared
-MTD.
-
-What may suffice, however, is to define simple (Markov?) rules,
-then PROVE that desired properties (such as '< 1/6') result.
-
-ALTERNATIVELY (and surely *better*!), I might try to state the
-desiderata, and allow the dose-escalation process to EMERGE as a
-*result* of those specifications. For example, Skolnik &al (2008)
-offer this definition:
-
-> The MTD is defined as the dose level at which none or one
-> of six participants (0% to 17%) experience a DLT, when at least
-> two of three to six participants (33% to 67%) experience a DLT
-> at the next highest dose.
-
-To support such a declarative specification, I would have to
-implement a scan of the full list generated thus far, perhaps
-using semicontext notation as in the tree leaf-counting example
-by Triska. The goals at any point would then be:
-1. Can I declare an MTD?
-2. If not, what should the next cohort be?
-3. If I can't create another cohort, then declare "no MTD found".
-
-NOTE HOW WONDERFULLY GOAL-DIRECTED THIS WOULD BE!!
-
-Hmmm!! I think I begin to see implicit concepts REVEALED as I try
-to think about the 3+3 in this manner:
-a) A dose considered 'too toxic', initially this is (Hi+1)
-b) A dose known to be 'safe', initially this is 0
-
-Might I even get away with calling the 'safe' dose MTD?
-
-REFERENCES
-
-Skolnik, Jeffrey M., Jeffrey S. Barrett, Bhuvana Jayaraman, Dimple Patel,
-and Peter C. Adamson. “Shortening the Timeline of Pediatric Phase I Trials:
-The Rolling Six Design.” JCO 26, no. 2 (Jan 10, 2008): 190–95.
-https://doi.org/10.1200/JCO.2007.12.7712.
-
-=====
-
-In all honesty, though, perhaps I should acknowledge that a
-'running range' is carried forward implicitly as a state variable,
-providing context for (de-)escalation decisions.
-
-esc(D, Lo..Hi) --> ...
-
-*/
-
-% Let esc(D, Lo..Hi) *describe* a list of 3+3 cohorts starting from dose D in Lo..Hi.
-% Read esc(D, Lo..Hi) as escalating FROM D to min(D+1,Hi).
-
-%% TODO: WLOG set Lo == 1 by convention.
+% DCG esc(D, Lo..Hi) describes a list of 3+3 cohorts FOLLOWING a dose D in Lo..Hi.
+% One can read esc(D, Lo..Hi) as the DECISION to escalate from D to min(D+1,Hi).
+% For example, esc(0, 1..5) *initiates* a trial that has 5 prespecified doses,
+% and enrolls the first cohort at D=1.
 
 tox(T) :- T in 0..3,
 	  indomain(T).
@@ -82,7 +27,6 @@ esc(D, Lo..Hi) --> [D1 ^ T], { D1 #= D + 1,
 		   ;  {T #> 1}, des(D1, Lo)
 		   ).
 
-% TODO: Is special case sta(D, _..D) needed?
 sta(D, _..D) --> [D - 0], [mtd_notfound(D)].
 sta(D, Lo..Hi) --> [D - 0], { D #< Hi,
 			      D in Lo..Hi },
@@ -225,7 +169,7 @@ row(Ls) -->
       columns_format(D,Format) },
     format_(Format, Ls).
 
-columns_format(1, '~w').
+columns_format(1, '~w~n').
 columns_format(N, F) :-
     N #> 1,
     N_1 #= N - 1,
@@ -233,7 +177,7 @@ columns_format(N, F) :-
     atom_concat('~w\t', F_1, F).
 
 %?- columns_format(6, Format).
-%@ Format = '~w~t~3+~w~t~3+~w~t~3+~w~t~3+~w~t~3+~w~t~3+' ;
+%@ Format = '~w\t~w\t~w\t~w\t~w\t~w' ;
 %@ false.
 
 % Approximate format_//2 as provided by Scryer's library(format):
@@ -308,8 +252,8 @@ rep([E|Es], N, E) :-
 %@ As = [a, a, a, a, a] ;
 %@ false.
 
-%% Write out separate R input files for D in 2..7
-write_escalation_array(D) :-
+%% Write out tab-delimited input files T<D>.tab
+write_T(D) :-
     format(atom(Filename), 'T~d.tab', D),
     open(Filename, write, OS),
     findall(P, phrase(esc(0, 0..D), P), Paths),
@@ -317,8 +261,7 @@ write_escalation_array(D) :-
     format('~d ~4t ~d~n', [D, Len]), % feedback to console
     rep(Ds, Len, D),
     maplist(path_matrix, Paths, Ds, Ms),
-    with_output_to(OS, see_esc_mtx(D, Ms)),
-    close(OS).
+    with_output_to(OS, see_esc_mtx(D, Ms)) -> close(OS).
 
 see_esc_mtx(D, Ms) :-
     columns_format(D, Format),
@@ -326,12 +269,20 @@ see_esc_mtx(D, Ms) :-
 
 see_esc_mtx_(Format) -->
     [C1-C2],
-    { format(Format, C1), nl,
-      format(Format, C2), nl },
+    { format(Format, C1),
+      format(Format, C2) },
     see_esc_mtx_(Format).
 see_esc_mtx_(_) --> [].
 
-%?- maplist(write_escalation_array, [2,3,4,5,6,7,8]).
+%?- maplist(write_T, [2,3,4,5,6,7,8]).
+%@ 2  44
+%@ 3  150
+%@ 4  434
+%@ 5  1146
+%@ 6  2858
+%@ 7  6858
+%@ 8  16010
+%@ true.
 %@ 2  46
 %@ 3  154
 %@ 4  442
@@ -339,5 +290,4 @@ see_esc_mtx_(_) --> [].
 %@ 6  2890
 %@ 7  6922
 %@ 8  16138
-%@ true ;
-%@ false.
+%@ true.
