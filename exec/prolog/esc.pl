@@ -155,30 +155,12 @@ ground_or_nil('NA') :- true.
 %@ C2 = [_926, 0|_934] ;
 %@ false.
 
-pathmatrix(First-Second) -->
-    row(First),
-    row(Second).
-
-row(Ls) -->
-    { length(Ls,D),
-      columns_format(D,Format) },
-    format_(Format, Ls).
-
 columns_format(1, '~w~n').
 columns_format(N, F) :-
     N #> 1,
     N_1 #= N - 1,
     columns_format(N_1, F_1),
     atom_concat('~w\t', F_1, F).
-
-%?- columns_format(6, Format).
-%@ Format = '~w\t~w\t~w\t~w\t~w\t~w' ;
-%@ false.
-
-% Approximate format_//2 as provided by Scryer's library(format):
-format_(Format, Ls) --> [ FLs ], { format(atom(FLs), Format, Ls) }.
-
-format_matrix(Matrix) :- format('~s~n~s~n', Matrix).
 
 %% rep(?List, ?N, ?Elt) true if List is N repetitions of Elt.
 rep([], 0, _).
