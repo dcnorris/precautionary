@@ -1,6 +1,11 @@
 % Enumerate 3+3 trial outcomes for exact matrix calculations
 :- use_module(library(clpfd)).
-:- use_module(library(pio)).
+/*
+:- use_module(library(format)).
+:- use_module(library(lists)).
+:- use_module(library(dcgs)).
+:- use_module(library(clpz)).
+*/
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *). *_.  % *Goal always succeeds
@@ -183,25 +188,26 @@ rep([E|Es], N, E) :-
 
 %% Write out tab-delimited input files T<D>.tab
 write_T(D) :-
-    format(atom(Filename), 'T~d.tab', D),
-    open(Filename, write, OS),
     findall(P, phrase(esc(0, 0..D), P), Paths),
     length(Paths, Len),
     format('~d ~4t ~d~n', [D, Len]), % feedback to console
     rep(Ds, Len, D),
-    maplist(path_matrix, Paths, Ds, Ms),
-    with_output_to(OS, write_esc_array(D, Ms)) -> close(OS).
+    maplist(path_matrix, Paths, Ds, Ms) ->
+	write_esc_array(D, Ms).
 
 write_esc_array(D, Ms) :-
+    format(atom(Filename), "T~d.tab", [D]),
+    %%phrase(format_("T~d.tab", [D]), Filename) % the 'Scryer way'?
+    open(Filename, write, OS),
     columns_format(D, Format),
-    phrase(write_esc_array_(Format), Ms).
+    phrase(write_esc_array_(OS, Format), Ms) -> close(OS).
 
-write_esc_array_(Format) -->
+write_esc_array_(OS, Format) -->
     [C1-C2],
-    { format(Format, C1),
-      format(Format, C2) },
-    write_esc_array_(Format).
-write_esc_array_(_) --> [].
+    { format(OS, Format, C1),
+      format(OS, Format, C2) },
+    write_esc_array_(OS, Format).
+write_esc_array_(_, _) --> [].
 
 %?- maplist(write_T, [2,3,4,5,6,7,8]).
 %@ 2  46
