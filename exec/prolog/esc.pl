@@ -212,3 +212,5 @@ write_esc_array_(_) --> [].
 %@ 7  6922
 %@ 8  16138
 %@ true.
+
+:- initialization maplist(write_T, [2,3,4,5,6,7,8]) -> halt.

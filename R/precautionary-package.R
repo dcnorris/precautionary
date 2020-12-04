@@ -69,6 +69,9 @@ NULL
 
 #' Plan
 #' 
+#' @section Configure:
+#' * Use either Scryer or SWI
+#' 
 #' @section Document:
 #' * Under \link{exact}, a 'Details' section detailing the matrix math
 #' 

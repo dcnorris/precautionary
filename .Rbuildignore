@@ -4,6 +4,5 @@
 ^cran-comments.md
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
-^data-raw$
 ^vignettes/Implicit-priors.Rmd
-^exec/prolog/three3.pl
+^exec/prolog/(?!esc).*.pl
