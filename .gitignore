@@ -3,4 +3,3 @@ vignettes/*.html
 doc
 Meta
 R/sysdata.rda
-data-raw/
