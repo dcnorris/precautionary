@@ -1,12 +1,4 @@
 % Enumerate 3+3 trial outcomes for exact matrix calculations
-%%:- use_module(library(clpfd)). % SWI
-/* Scryer */
-:- use_module(library(format)).
-:- use_module(library(lists)).
-:- use_module(library(dcgs)).
-:- use_module(library(clpz)).
-:- use_module(library(time)).
-/**/
 :- set_prolog_flag(double_quotes, chars).
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
@@ -168,7 +160,7 @@ path_matrix(P, D, M) :-
 
 pm_(C1-C2) -->
     [D^T], % ascribe to D's 1st cohort
-    { D0 #= D-1, nth0(D0, C1, T) },
+    { nth1(D, C1, T) },
     pm_(C1-C2).
 
 pm_(C1-C2) -->
@@ -176,7 +168,7 @@ pm_(C1-C2) -->
     ;	[D*T]
     ;	[D:T]
     ), % ascribe to D's 2nd cohort
-    { D0 #= D-1, nth0(D0, C2, T) },
+    { nth1(D, C2, T) },
     pm_(C1-C2).
 
 pm_(_-_) -->
@@ -237,8 +229,7 @@ write_T(D) :-
 	write_esc_array(D, Ms).
 
 write_esc_array(D, Ms) :-
-    %%format(atom(File), "T~d.tab", [D]), % SWI
-    phrase(format_("T~d.tab", [D]), Filename), atom_chars(File, Filename), % Scryer
+    phrase(format_("T~d.tab", [D]), Filename), atom_chars(File, Filename),
     open(File, write, OS),
     columns_format(D, Format),
     phrase(write_esc_array_(OS, Format), Ms) -> close(OS).
@@ -275,4 +266,15 @@ write_esc_array_(_, _) --> [].
 %@ % 6,064,313 inferences, 1.132 CPU in 1.237 seconds (92% CPU, 5355090 Lips)
 %@ true.
 
-%%:- initialization maplist(write_T, [2,3,4,5,6,7,8]) -> halt.
+:- initialization(maplist(write_T, [2,3,4,5,6,7,8]) -> halt).
+
+%?- time(maplist(write_T, [2,3,4])).
+%@ D = 2   J = 46
+%@ D = 3   J = 154
+%@ D = 4   J = 442
+%@    % CPU time: 8.635 seconds
+%@    true
+%@ ;  % CPU time: 8.719 seconds
+%@    false.
+%@    % CPU time: 0.000 seconds
+%@ caught: error(existence_error(procedure,phrase/2),phrase/2)
