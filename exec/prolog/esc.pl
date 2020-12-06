@@ -55,48 +55,24 @@ n_trials(Drange, DN) :-
 
 %% SWI vs Scryer timings ...
 
-%?- time(n_trials(1..10, D_N)).
-%@ % 1,247 inferences, 0.000 CPU in 0.000 seconds (93% CPU, 5517699 Lips)
-%@ D_N =  (1, 10) ;
-%@ % 5,453 inferences, 0.001 CPU in 0.001 seconds (98% CPU, 6012128 Lips)
-%@ D_N =  (2, 46) ;
-%@ % 18,291 inferences, 0.002 CPU in 0.003 seconds (99% CPU, 7334002 Lips)
-%@ D_N =  (3, 154) ;
-%@ % 52,471 inferences, 0.008 CPU in 0.008 seconds (96% CPU, 6736552 Lips)
-%@ D_N =  (4, 442) ;
-%@ % 137,823 inferences, 0.017 CPU in 0.018 seconds (96% CPU, 7876500 Lips)
-%@ D_N =  (5, 1162) ;
-%@ % 342,511 inferences, 0.043 CPU in 0.044 seconds (98% CPU, 7929413 Lips)
-%@ D_N =  (6, 2890) ;
-%@ % 819,855 inferences, 0.102 CPU in 0.105 seconds (97% CPU, 8012421 Lips)
-%@ D_N =  (7, 6922) ;
-%@ % 1,910,479 inferences, 0.222 CPU in 0.230 seconds (97% CPU, 8601267 Lips)
-%@ D_N =  (8, 16138) ;
-%@ % 4,363,599 inferences, 0.496 CPU in 0.519 seconds (95% CPU, 8797313 Lips)
-%@ D_N =  (9, 36874) ;
-%@ % 9,813,571 inferences, 1.130 CPU in 1.162 seconds (97% CPU, 8686744 Lips)
-%@ D_N =  (10, 82954).
+%?- time(n_trials(1..8, D_N)).
 %@    % CPU time: 0.025 seconds
 %@    D_N = (1,10)
-%@ ;  % CPU time: 0.128 seconds
+%@ ;  % CPU time: 0.134 seconds
 %@    D_N = (2,46)
-%@ ;  % CPU time: 0.454 seconds
+%@ ;  % CPU time: 0.464 seconds
 %@    D_N = (3,154)
-%@ ;  % CPU time: 1.358 seconds
+%@ ;  % CPU time: 1.377 seconds
 %@    D_N = (4,442)
-%@ ;  % CPU time: 3.697 seconds
+%@ ;  % CPU time: 3.773 seconds
 %@    D_N = (5,1162)
-%@ ;  % CPU time: 9.491 seconds
+%@ ;  % CPU time: 9.644 seconds
 %@    D_N = (6,2890)
-%@ ;  % CPU time: 23.205 seconds
+%@ ;  % CPU time: 23.749 seconds
 %@    D_N = (7,6922)
-%@ ;  % CPU time: 54.931 seconds
+%@ ;  % CPU time: 56.420 seconds
 %@    D_N = (8,16138)
-%@ ;  % CPU time: 127.262 seconds
-%@    D_N = (9,36874)
-%@ ;  % CPU time: 300.266 seconds
-%@    D_N = (10,82954)
-%@ ;  % CPU time: 300.346 seconds
+%@ ;  % CPU time: 56.434 seconds
 %@    false.
 
 %?- phrase(esc(0, 0..2), Tr).
@@ -193,45 +169,25 @@ ground_or_nil('NA') :- true.
 %@ C2 = [_926, 0|_934] ;
 %@ false.
 
-columns_format(1, "~w~n").
-columns_format(N, F) :-
-    N #> 1,
-    N_1 #= N - 1,
-    columns_format(N_1, F_1),
-    append("~w\t", F_1, F).
-
-%% rep(?List, ?N, ?Elt) true if List is N repetitions of Elt.
-rep([], 0, _).
-rep([E|Es], N, E) :-
-    N #> 0,
-    N_1 #= N - 1,
-    rep(Es, N_1, E).
-
-%?- rep(Es, N, E).
-%@ Es = [],
-%@ N = 0 ;
-%@ Es = [E],
-%@ N = 1 ;
-%@ Es = [E, E],
-%@ N = 2 ;
-%@ Es = [E, E, E],
-%@ N = 3 ;
-%@ Es = [E, E, E, E],
-%@ N = 4 ...
+columns_format(1) --> "~w~n".
+columns_format(N) --> "~w\t",
+		      { N #> 1,
+			N1 #= N - 1 },
+		      columns_format(N1).
 
 %% Write out tab-delimited input files T<D>.tab
 write_T(D) :-
     findall(P, phrase(esc(0, 0..D), P), Paths),
     length(Paths, Len),
     format("D = ~d ~t~8+J = ~d~n", [D, Len]), % feedback to console
-    rep(Ds, Len, D),
+    length(Ds, Len), maplist(=(D), Ds),
     maplist(path_matrix, Paths, Ds, Ms) ->
 	write_esc_array(D, Ms).
 
 write_esc_array(D, Ms) :-
     phrase(format_("T~d.tab", [D]), Filename), atom_chars(File, Filename),
     open(File, write, OS),
-    columns_format(D, Format),
+    phrase(columns_format(D), Format),
     phrase(write_esc_array_(OS, Format), Ms) -> close(OS).
 
 write_esc_array_(OS, Format) -->
@@ -242,6 +198,8 @@ write_esc_array_(OS, Format) -->
 write_esc_array_(_, _) --> [].
 
 %?- write_T(3).
+%@ D = 3   J = 154
+%@    true.
 
 %?- time(maplist(write_T, [2,3,4,5,6,7,8])).
 %@ D = 2   J = 46
@@ -251,11 +209,11 @@ write_esc_array_(_, _) --> [].
 %@ D = 6   J = 2890
 %@ D = 7   J = 6922
 %@ D = 8   J = 16138
-%@    % CPU time: 665.655 seconds
+%@    % CPU time: 202.791 seconds
 %@    true
-%@ ;  ...
-%@ % CPU time: 666.070 seconds
-%@    
+%@ ;  % CPU time: 206.630 seconds
+%@    false.
+%% SWI:
 %@ D = 2   J = 46
 %@ D = 3   J = 154
 %@ D = 4   J = 442
@@ -266,15 +224,4 @@ write_esc_array_(_, _) --> [].
 %@ % 6,064,313 inferences, 1.132 CPU in 1.237 seconds (92% CPU, 5355090 Lips)
 %@ true.
 
-:- initialization(maplist(write_T, [2,3,4,5,6,7,8]) -> halt).
-
-%?- time(maplist(write_T, [2,3,4])).
-%@ D = 2   J = 46
-%@ D = 3   J = 154
-%@ D = 4   J = 442
-%@    % CPU time: 8.635 seconds
-%@    true
-%@ ;  % CPU time: 8.719 seconds
-%@    false.
-%@    % CPU time: 0.000 seconds
-%@ caught: error(existence_error(procedure,phrase/2),phrase/2)
+:- initialization((maplist(write_T, [2,3,4,5,6,7,8]) -> halt)).
