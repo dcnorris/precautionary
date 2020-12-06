@@ -2,12 +2,17 @@ Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
 Version: 0.2-0
-Date: 2020-12-04
-Authors@R: person("David C.", "Norris"
-                 , role = c("aut", "cre", "cph")
-                 , email = "david@precisionmethods.guru"
-                 , comment = c(ORCID = "0000-0001-9593-6343")
-                 )
+Date: 2020-12-06
+Authors@R: c(person("David C.", "Norris"
+                   , role = c("aut", "cre", "cph")
+                   , email = "david@precisionmethods.guru"
+                   , comment = c(ORCID = "0000-0001-9593-6343")
+                   ),
+             person("Markus", "Triska"
+                   , role = "ctb"
+                   , email = "triska@metalevel.at"
+                   )
+            )
 Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: 
     magrittr,
