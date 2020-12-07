@@ -1,8 +1,8 @@
-% prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
-:- op(920, fy, *). *_.  % *Goal always succeeds
+:- use_module(library(reif)).
 
-/* * * * * * MOTIVATING PRINCIPLE * * * * * *
+%% = = = = = MOTIVATING PRINCIPLE = = = = =
 
+/*
 INTUITION: What if, at each enrollment decision, we actively engaged the
 conflict between the THERAPEUTIC vs SCIENTIFIC AIMS of the trial? Perhaps
 that is the ULTIMATE CONTENT of a proper DSL in this realm. We have to
@@ -84,7 +84,8 @@ escalation:
 may OTOH be more suited for consideration alongside the indeterminacy
 of toxicity outcomes.
 
- * * * * * * * * * * * * * * * * * * * * * * */
+ = = = = = = = = = = = = = = = = = = = = = = 
+*/
 
 % TODO:
 % 1/ DCR
@@ -100,21 +101,22 @@ of toxicity outcomes.
 %% Initially, this is a DLT TALLY giving a simple fraction.
 
 tally(DLTs/Enrolled) :-
-    Enrolled in 1..99, %Enrolled in 1..sup,
-    0 #=< DLTs, DLTs #=< Enrolled.
+    Enrolled in 1..99,
+    0 #=< DLTs,
+    DLTs #=< Enrolled.
 
 %% Tallies at a given dose MAY BE comparable. (We will generally
 %% compare an OBSERVED tally with some HYPOTHETICAL tally that serves
 %% as a DECISION THRESHOLD. But such distinctions are nowhere manifest
 %% in the code.)
 
-:- op(900, xfx, user:(&>=)). % '_ can't be(come) any better than _'
+:- op(900, xfx, (&>=)). % '_ can't be(come) any better than _'
 &>=(T1/N1, T2/N2) :-
     tally(T1/N1),
     tally(T2/N2),
     T1 #>= T2 + max(0, N1 - N2).
 
-:- op(900, xfx, user:(&=<)). % '_ can't be(come) any worse than _'
+:- op(900, xfx, (&=<)). % '_ can't be(come) any worse than _'
 &=<(Q1, Q2) :- Q2 &>= Q1.
 
 %% NB: The INDETERMINACY of toxicity renders some tally pairs INCOMPARABLE:
@@ -129,7 +131,7 @@ tally(DLTs/Enrolled) :-
 %%     of &>= with &=< coincides with a STRICT EQUALITY of BOTH
 %%     numerator and denominator, and so is well defined:
 
-:- op(900, xfx, user:(&=)).
+:- op(900, xfx, (&=)).
 &=(Q1, Q2) :- Q1 &>= Q2, Q2 &>= Q1.
 
 %% &= as above ==> STRICT EQUALITY of BOTH numerator & denominator:
@@ -201,42 +203,25 @@ tallylist_dose_tally(Tallies, D, T/N) :-
 
 %% Can the success of this predicate be reified into TruthValue?
 tallylist_mtd(TallyList, MTD, TruthValue) :-
-    length(TallyList, _), % Enumerate fairly when TallyList is nonground.
-    append(LowTallies, [Q | _], TallyList),
-    length(LowTallies, MTD), % NB: enforces MTD >= 0 for nonground MTD
-    % TODO: Introduce a safetally/1 predicate to impose
-    %       L &=< 1/6 on the final element of LowTallies.
-    maplist(lowtally, LowTallies),
-    toxictally(Q).
+    (	length(TallyList, _), % Enumerate fairly when TallyList is nonground.
+	append(LowTallies, [Q | _], TallyList),
+	length(LowTallies, MTD), % NB: enforces MTD >= 0 for nonground MTD
+	% TODO: Introduce a safetally/1 predicate to impose
+	%       L &=< 1/6 on the final element of LowTallies.
+	maplist(lowtally, LowTallies),
+	toxictally(Q),
+	TruthValue = true
+    ;	TruthValue = false
+    ).
 
-%?- tallylist_mtd([T/N | _], 0), N #=< 6, labeling([up], [N,T]).
-%@ T = N, N = 2 ;
-%@ T = 2,
-%@ N = 3 ;
-%@ T = N, N = 3 ;
-%@ T = 2,
-%@ N = 4 ;
-%@ T = 3,
-%@ N = 4 ;
-%@ T = N, N = 4 ;
-%@ T = 2,
-%@ N = 5 ;
-%@ T = 3,
-%@ N = 5 ;
-%@ T = 4,
-%@ N = 5 ;
-%@ T = N, N = 5 ;
-%@ T = 2,
-%@ N = 6 ;
-%@ T = 3,
-%@ N = 6 ;
-%@ T = 4,
-%@ N = 6 ;
-%@ T = 5,
-%@ N = 6 ;
-%@ T = N, N = 6 ;
-%% ...
-%% RE-CYCLES AS EXPECTED
+%?- tallylist_mtd([T/N | []], 0, false), N #= 6, T #= 4.
+%@    N = 6, T = 4
+%@ ;  false.
+
+%?- tallylist_mtd([T/N | []], 0, false), N #=< 6, labeling([up], [N,T]).
+%@ caught: error(instantiation_error,instantiation_error(unknown(from_to(inf,n(6))),1))
+
+%?- tallylist_mtd([T/N | _], 0, true), N #=< 6, labeling([up], [N,T]).
 
 %?- tallylist_mtd([T/N | _], 0), N #=< 6, labeling([down], [N,T]).
 %@ T = N, N = 6 ;
@@ -348,6 +333,15 @@ maxsafe_nextdose_([R|Rs], Dose) :-
 %% This is the PURELY ARITHMETICAL RELATION between
 %% TALLYLISTs and ESCALATION STEPS.
 
+%% nth1//4
+nth1(N, List, Elt, Rest) :-
+    nth1(N, List, Elt),
+    select(Elt, List, Rest).
+
+%?- nth1(2, [1,2,3,4,5,6], Elt, Rest).
+%@ caught: error(existence_error(procedure,nth1/4),nth1/4)
+%@ caught: error(existence_error(procedure,nth1/4),nth1/4)
+
 tallylist0_escalation_tallylist(TallyList, [], TallyList).
 tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
     length(TallyList0, Dmaxyet), %% Dmaxyet is highest dose tried thus far
@@ -359,10 +353,10 @@ tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
     tally(T/N),
     % TODO: Employ constraint reification to avoid delicate logic here,
     %       or maybe even try reif:if_/3 at long last!
-    (	nth1(Dose, TallyList0, T0/N0, Remainder),
+    (	nth0(Dose, [z|TallyList0], T0/N0), %%, Remainder),
 	N1 #= N0 + N,
 	T1 #= T0 + T,
-	nth1(Dose, TallyList_, T1/N1, Remainder)
+	nth0(Dose, [z|TallyList_], T1/N1), %%, Remainder)
     ;	append(TallyList0, [T/N], TallyList_),
 	% NB: The following goal renders these clauses OPERATIONALLY disjoint
 	length(TallyList_, Dose) % w/o dose-skipping, length(TallyList0, Dose-1) holds.
@@ -370,8 +364,14 @@ tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
     tallylist0_escalation_tallylist(TallyList_, Cs, TallyList).
 
 %?- tallylist0_escalation_tallylist([0/3, 1/6], [3 - 0/3], TallyList).
+%@ caught: error(existence_error(procedure,tallylist0_escalation_tallylist/3),tallylist0_escalation_tallylist/3)
+%@ caught: error(existence_error(procedure,tallylist0_escalation_tallylist/3),tallylist0_escalation_tallylist/3)
 %@ TallyList = [0/3, 1/6, 0/3] ;
 %@ false.
+
+%?- nth0(2, [1,2,3,4,5,6], Elt).
+%@    Elt = 3.
+%@ caught: error(existence_error(procedure,nth0/4),nth0/4)
 
 %% =======================================================
 %% We use this DCG to represent all MERELY SAFE escalations
@@ -380,11 +380,19 @@ tallylist0_escalation_tallylist(TallyList0, [Dose - T/N | Cs], TallyList) :-
 %% escalations that do nothing to 'advance (the scientfic aims
 %% of) the trial'.
 
+%% See https://stackoverflow.com/a/29367581/3338147 for the following if_//3
+if_(C_1, Then_0, Else_0) -->                    % if_//3
+   { call(C_1, Truth) },
+   { functor(Truth, _, 0) },                    % safety check
+   (  { Truth == true  } -> phrase(Then_0)
+   ;  { Truth == false },   phrase(Else_0)
+   ).
+
 %%safe_esc(_) --> [freeze]. % halt runaway DCG for debugging
 safe_esc(TallyList0) -->
     %% Consider inverting the commitment here.
     %% Look for if_//3 on stackoverflow, e.g.
-    (	{ tallylist_mtd(TallyList0, MTD) } -> [declare_mtd(MTD)]
+    (	{ tallylist_mtd(TallyList0, MTD, true) } -> [declare_mtd(MTD)]
     ;	{ safe_nextdose(TallyList0, SafeDose),
 	  tally(T/1),
 	  labeling([down], [SafeDose]),
@@ -532,8 +540,8 @@ safe_esc(TallyList0) -->
 %% THIS IS VERY BRUTE FORCE! MUST DELEGATE AS MUCH AS POSSIBLE TO
 %% PROLOG'S DEPTH-FIRST SEARCH. SEE LATEST CONN4 CODE.
 tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
-    (	tallylist_mtd(TallyList, MTD) -> MinSteps #= 0
-    ;	tallylist_mtd(TallyList, _) -> false % If any other MTD applies, fail.
+    (	tallylist_mtd(TallyList, MTD, true) -> MinSteps #= 0
+    ;	tallylist_mtd(TallyList, _, true) -> false % If any other MTD applies, fail.
     ;	length(Escalation, MinSteps), % Starting from MinSteps = 0 and working upward
 	% NB: At this point, we actually know that MinSteps=0 won't work.
 	%     I should consider working the above 'special cases'
@@ -557,8 +565,17 @@ tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
        ).
 */
 
+%@ ERROR: source_sink `library(reif)' does not exist
+%@ ERROR: In:
+%@ ERROR:   [19] throw(error(existence_error(source_sink,...),_44854))
+%@ ERROR:   [15] '$resolve_source_path'(library(reif),_44886,[if(not_loaded),...]) at /Applications/SWI-Prolog.app/Contents/swipl/boot/init.pl:2315
+%@ ERROR:   [14] '$load_file'(library(reif),user,[if(not_loaded),...]) at /Applications/SWI-Prolog.app/Contents/swipl/boot/init.pl:2289
+%@ ERROR:    [9] <user>
+%@ ERROR: 
+%@ ERROR: Note: some frames are missing due to last-call optimization.
+%@ ERROR: Re-run your program in debug mode (:- debug.) to get more detail.
+
 %% This section done with Scryer:
-%:- use_module(library(reif)).
 %@    true.
 %?- if_(append([],[],[]), Ans = yes, Ans = no).
 %@ caught: error(existence_error(procedure,append/4),append/4)
@@ -582,6 +599,7 @@ tallylist_minstepsto_mtd(TallyList, MinSteps, MTD) :-
 %% Back to tallylist_minstepsto_mtd/3, which works nicely!
 
 %?- tallylist_minstepsto_mtd([0/3,2/3], MinSteps, MTD).
+%@ caught: error(existence_error(procedure,tallylist_minstepsto_mtd/3),tallylist_minstepsto_mtd/3)
 %@ MinSteps = 0,
 %@ MTD = 1.
 
