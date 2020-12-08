@@ -1,4 +1,15 @@
-% Enumerate 3+3 trial outcomes for exact matrix calculations
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   Enumerate 3+3 trial outcomes for exact matrix calculations
+
+   This file contains the main logic. It runs with every ISO Prolog system
+   that provides a few conforming extensions such as definite clause
+   grammars (DCGs) and finite domain constraints.
+
+   Tested with Scryer Prolog and SICStus Prolog.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+% Set the system up so that strings in double quotes are lists of characters.
+% In Scryer Prolog and other recent systems, this is already the default.
 :- set_prolog_flag(double_quotes, chars).
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
@@ -131,8 +142,8 @@ path_matrix(P, D, M) :-
     M = C1-C2,
     length(C1,D),
     length(C2,D),
-    maplist(ground_or_nil, C1),
-    maplist(ground_or_nil, C2).
+    maplist(ground_or_na, C1),
+    maplist(ground_or_na, C2).
 
 pm_(C1-C2) -->
     [D^T], % ascribe to D's 1st cohort
@@ -152,8 +163,8 @@ pm_(_-_) -->
     ;	[mtd_notfound(_)]
     ).
 
-ground_or_nil(Term) :- ground(Term).
-ground_or_nil('NA') :- true.
+ground_or_na(Term) :- ground(Term).
+ground_or_na('NA').
 
 %?- phrase(pm_([A,B]-[C,D]), [1^0, 2^1, 2-0, mtd_notfound(2)]).
 %@ caught: error(existence_error(procedure,phrase/2),phrase/2)

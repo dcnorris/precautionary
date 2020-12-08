@@ -1,3 +1,10 @@
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   Setup file to run esc.pl with SICStus Prolog.
+
+   SICStus Prolog is a state-of-the-art, ISO standard compliant
+   Prolog development system, available from: https://sicstus.sics.se/
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
 
@@ -7,6 +14,7 @@
 format_(Fs, Args) --> call(format__(Fs, Args)).
 
 format__(Fs, Args, Ls0, Ls) :-
-    with_output_to_codes(format(Fs, Args), Codes0, Ls),
-    name(Atom0, Codes0),
-    atom_chars(Atom0, Ls0).
+    with_output_to_codes(format(Fs, Args), Codes, []),
+    atom_codes(Atom, Codes),
+    atom_chars(Atom, Chars),
+    append(Chars, Ls, Ls0).

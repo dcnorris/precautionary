@@ -1,3 +1,9 @@
+# precautionary 0.2
+
+## Changes
+
+* Added a Prolog program to exhaustively enumerate 3+3 trial outcomes
+
 # precautionary 0.1-5
 
 ## Changes
