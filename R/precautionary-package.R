@@ -70,7 +70,6 @@ NULL
 #' Plan
 #' 
 #' @section Configure:
-#' * Use either Scryer or SWI
 #' 
 #' @section Document:
 #' * Under \link{exact}, a 'Details' section detailing the matrix math
@@ -80,8 +79,9 @@ NULL
 #'   - Perhaps this ought to be calculated 'on the fly' by the summary method.
 #'   - On-the-fly calculation would postpone use of ordinalizer, in keeping with
 #'     the pattern established already for (non-exact) simulations.
-#' * 
-#' * 
+#' * Should summary(EXACT)$safety bear class 'safetytab'?
+#' * Example for 'as.data.table.exact'
+#' * What is role of G function in exact.R?
 #' 
 #' @section Extend:
 #' * Implement exact 3+3 variant with \code{allow_deescalation=FALSE}
@@ -94,7 +94,7 @@ NULL
 #'   - See the `haystack` function in `exact.R`
 #' 
 #' @section Robustify:
-#' * Tests using multiple CRAN packages
+#' * Tests comparing results from multiple CRAN packages
 #' 
 #' @name plan
 #' @aliases todo

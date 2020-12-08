@@ -8,6 +8,36 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #'  \code{\link[escalation:get_three_plus_three]{three_plus_three_selector_factory}},
 #'  with \code{allow_deescalation = TRUE}.
 #'
+#' @examples 
+#' # Run an exact version of the simulation from FDA-proactive vignette
+#' design <- get_three_plus_three(
+#'   num_doses = 6
+#' , allow_deescalate = TRUE)
+#' old <- options(
+#'   dose_levels = c(2, 6, 20, 60, 180, 400)
+#' , ordinalizer = function(MTDi, r0 = 1.5)
+#'     MTDi * r0 ^ c(Gr1=-2, Gr2=-1, Gr3=0, Gr4=1, Gr5=2)
+#' )
+#' mtdi_gen <- hyper_mtdi_lognormal(CV = 0.5
+#'                                 ,median_mtd = 180
+#'                                 ,median_sdlog = 0.6
+#'                                 ,units="ng/kg/week")
+#' exact(design) %>% simulate_trials(
+#'   num_sims = 1000
+#' , true_prob_tox = mtdi_gen) -> EXACT
+#' summary(EXACT)$safety
+#' if (interactive()) { # runs too long for CRAN servers
+#'   # Compare with discrete-event-simulation trials
+#'   design %>% simulate_trials(
+#'     num_sims = 1000
+#'   , true_prob_tox = mtdi_gen) -> DISCRETE
+#'   summary(DISCRETE)$safety[,]
+#'   # Note the larger MCSEs in this latter simulation, reflecting combined noise
+#'   # from hyperprior sampling and the nested discrete-event trial simulations.
+#'   # The MCSE of the former simulation is purely from the hyperprior sampling,
+#'   # since the nested trial simulation is carried out by an exact computation.
+#' }
+#' options(old)
 #' @export
 exact <- function(selector_factory) {
   stopifnot("Class 'exact' applies only to a three_plus_three_selector_factory"
