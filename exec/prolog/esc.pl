@@ -64,76 +64,71 @@ n_trials(Drange, DN) :-
     length(Trials, N),
     DN = (Dmax, N).
 
-%% SWI vs Scryer timings ...
+%% Here are D & J columns of Table 1 in the 'WWTT' paper:
 
-%?- time(n_trials(1..8, D_N)).
-%@    % CPU time: 0.025 seconds
-%@    D_N = (1,10)
-%@ ;  % CPU time: 0.134 seconds
-%@    D_N = (2,46)
-%@ ;  % CPU time: 0.464 seconds
-%@    D_N = (3,154)
-%@ ;  % CPU time: 1.377 seconds
-%@    D_N = (4,442)
-%@ ;  % CPU time: 3.773 seconds
-%@    D_N = (5,1162)
-%@ ;  % CPU time: 9.644 seconds
-%@    D_N = (6,2890)
-%@ ;  % CPU time: 23.749 seconds
-%@    D_N = (7,6922)
-%@ ;  % CPU time: 56.420 seconds
-%@    D_N = (8,16138)
-%@ ;  % CPU time: 56.434 seconds
-%@    false.
+%?- n_trials(1..10, DN).
+%@    DN = (1,10)
+%@ ;  DN = (2,46)
+%@ ;  DN = (3,154)
+%@ ;  DN = (4,442)
+%@ ;  DN = (5,1162)
+%@ ;  DN = (6,2890)
+%@ ;  DN = (7,6922)
+%@ ;  DN = (8,16138)
+%@ ;  DN = (9,36874)
+%@ ;  DN = (10,82954)
+%@ ;  false.
+
+%% See all 46 paths in a 2-dose 3+3 trial:
 
 %?- phrase(esc(0, 0..2), Tr).
-%@ Tr = [1^0, 2^0, 2*0, mtd_notfound(2)] ;
-%@ Tr = [1^0, 2^0, 2*1, mtd_notfound(2)] ;
-%@ Tr = [1^0, 2^0, 2*2, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^0, 2*2, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^0, 2*2, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^0, 2*2, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^0, 2*3, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^0, 2*3, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^0, 2*3, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^0, 2*3, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-0, mtd_notfound(2)] ;
-%@ Tr = [1^0, 2^1, 2-1, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-1, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-1, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-1, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-2, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-2, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-2, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-2, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-3, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-3, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^1, 2-3, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^1, 2-3, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^2, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^2, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^2, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^2, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^3, 1:0, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^3, 1:1, declare_mtd(1)] ;
-%@ Tr = [1^0, 2^3, 1:2, declare_mtd(0)] ;
-%@ Tr = [1^0, 2^3, 1:3, declare_mtd(0)] ;
-%@ Tr = [1^1, 1-0, 2^0, 2*0, mtd_notfound(2)] ;
-%@ Tr = [1^1, 1-0, 2^0, 2*1, mtd_notfound(2)] ;
-%@ Tr = [1^1, 1-0, 2^0, 2*2, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^0, 2*3, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^1, 2-0, mtd_notfound(2)] ;
-%@ Tr = [1^1, 1-0, 2^1, 2-1, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^1, 2-2, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^1, 2-3, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^2, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-0, 2^3, declare_mtd(1)] ;
-%@ Tr = [1^1, 1-1, declare_mtd(0)] ;
-%@ Tr = [1^1, 1-2, declare_mtd(0)] ;
-%@ Tr = [1^1, 1-3, declare_mtd(0)] ;
-%@ Tr = [1^2, declare_mtd(0)] ;
-%@ Tr = [1^3, declare_mtd(0)] ;
-%@ false.
+%@    Tr = [1^0,2^0,2*0,mtd_notfound(2)]
+%@ ;  Tr = [1^0,2^0,2*1,mtd_notfound(2)]
+%@ ;  Tr = [1^0,2^0,2*2,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^0,2*2,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^0,2*2,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^0,2*2,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^0,2*3,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^0,2*3,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^0,2*3,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^0,2*3,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-0,mtd_notfound(2)]
+%@ ;  Tr = [1^0,2^1,2-1,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-1,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-1,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-1,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-2,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-2,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-2,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-2,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-3,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-3,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^1,2-3,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^1,2-3,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^2,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^2,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^2,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^2,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^3,1:0,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^3,1:1,declare_mtd(1)]
+%@ ;  Tr = [1^0,2^3,1:2,declare_mtd(0)]
+%@ ;  Tr = [1^0,2^3,1:3,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-0,2^0,2*0,mtd_notfound(2)]
+%@ ;  Tr = [1^1,1-0,2^0,2*1,mtd_notfound(2)]
+%@ ;  Tr = [1^1,1-0,2^0,2*2,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^0,2*3,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^1,2-0,mtd_notfound(2)]
+%@ ;  Tr = [1^1,1-0,2^1,2-1,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^1,2-2,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^1,2-3,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^2,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-0,2^3,declare_mtd(1)]
+%@ ;  Tr = [1^1,1-1,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-2,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-3,declare_mtd(0)]
+%@ ;  Tr = [1^2,declare_mtd(0)]
+%@ ;  Tr = [1^3,declare_mtd(0)]
+%@ ;  false.
 
 %% Transform dose-escalation path lists to the arrays T(c,d,j).
 
@@ -166,20 +161,6 @@ pm_(_-_) -->
 ground_or_na(Term) :- ground(Term).
 ground_or_na('NA').
 
-%?- phrase(pm_([A,B]-[C,D]), [1^0, 2^1, 2-0, mtd_notfound(2)]).
-%@ caught: error(existence_error(procedure,phrase/2),phrase/2)
-%@ A = D, D = 0,
-%@ B = 1 ;
-%@ false.
-
-%?- path_matrix_([1^0, 2^1, 2-0, mtd_notfound(2)], M).
-%@ M = [0, 1|_3816]-[_3826, 0|_3834].
-
-%?- phrase(pm_(C1-C2), [1^0, 2^1, 2-0, mtd_notfound(2)]).
-%@ C1 = [0, 1|_916],
-%@ C2 = [_926, 0|_934] ;
-%@ false.
-
 columns_format(1) --> "~w~n".
 columns_format(N) --> "~w\t",
 		      { N #> 1,
@@ -207,32 +188,5 @@ write_esc_array_(OS, Format) -->
       format(OS, Format, C2) },
     write_esc_array_(OS, Format).
 write_esc_array_(_, _) --> [].
-
-%?- write_T(3).
-%@ D = 3   J = 154
-%@    true.
-
-%?- time(maplist(write_T, [2,3,4,5,6,7,8])).
-%@ D = 2   J = 46
-%@ D = 3   J = 154
-%@ D = 4   J = 442
-%@ D = 5   J = 1162
-%@ D = 6   J = 2890
-%@ D = 7   J = 6922
-%@ D = 8   J = 16138
-%@    % CPU time: 202.791 seconds
-%@    true
-%@ ;  % CPU time: 206.630 seconds
-%@    false.
-%% SWI:
-%@ D = 2   J = 46
-%@ D = 3   J = 154
-%@ D = 4   J = 442
-%@ D = 5   J = 1162
-%@ D = 6   J = 2890
-%@ D = 7   J = 6922
-%@ D = 8   J = 16138
-%@ % 6,064,313 inferences, 1.132 CPU in 1.237 seconds (92% CPU, 5355090 Lips)
-%@ true.
 
 :- initialization((maplist(write_T, [2,3,4,5,6,7,8]) -> halt)).
