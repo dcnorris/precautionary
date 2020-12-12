@@ -44,6 +44,10 @@
 #'    arXiv:2004.12755 \[stat.ME\]. April 2020.
 #'    \url{https://arxiv.org/abs/2004.12755}
 #' 
+#' 9. Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
+#'    of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
+#'    \url{http://arxiv.org/abs/2012.05301}
+#' 
 #' @import methods
 #' @import magrittr
 #' @import data.table
