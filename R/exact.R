@@ -49,7 +49,7 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' Norris (2020c).
 #' 
 #' For details on the enumeration itself, please see the Prolog code in directory
-#' \code{exec/prolog/} of the package source.
+#' \code{exec/} of the installed package.
 #' @references 
 #' Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
 #' of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
