@@ -5,5 +5,4 @@
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
 ^vignettes/Implicit-priors.Rmd
-^exec/prolog/(?!(esc|scryer|sicstus)).*\.pl
-^exec/prolog/T\d*.tab
+^exec/prolog/.*

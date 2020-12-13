@@ -305,7 +305,7 @@ summary.exact <- function(object, ordinalizer = getOption('ordinalizer'), ...) {
   summary
 }
 
-# TODO: Incorporate this logic to map 3+3 sim outcomes indices j in A[[D]][,,j]
+# TODO: Incorporate this logic to map 3+3 sim outcomes indices j in T[[D]][,,j]
 #' @importFrom stats aggregate
 haystack <- function(sims) {
   fit <- sims$fits[[1]][[1]]$fit
@@ -328,9 +328,9 @@ haystack <- function(sims) {
   }
   j <- function(m) {
     D <- ncol(m)
-    J <- dim(A[[D]])[3]
+    J <- dim(T[[D]])[3]
     which(sapply(1:J, function(j)
-      identical(m, A[[D]][,,j])))
+      identical(m, T[[D]][,,j])))
   }
   j(m(fit))
 }

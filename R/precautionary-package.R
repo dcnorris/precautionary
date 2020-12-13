@@ -73,10 +73,8 @@ NULL
 
 #' Plan
 #' 
-#' @section Configure:
-#' 
 #' @section Document:
-#' * Under \link{exact}, a 'Details' section detailing the matrix math
+#' * Add a proper vignette detailing and exploring exact 3+3 calculations
 #' 
 #' @section Refactor:
 #' * Remove the `$safety` component of exact trials?
