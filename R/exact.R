@@ -37,7 +37,7 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' 
 #' As detailed in Norris 2020c (below), these matrices may be used to construct simple
 #' matrix computations that altogether eliminate the need for discrete-event simulation
-#' of the 3+3 design. For each \eqn{D = 3,...,8}, the \code{precautionary} package has
+#' of the 3+3 design. For each \eqn{D = 2,...,8}, the \code{precautionary} package has
 #' pretabulated a \eqn{J \times 2D}{J x 2D} matrix \code{precautionary:::U[[D]]} and
 #' \eqn{J}-vector \code{precautionary:::b[[D]]} such that the eqn{J}-vector \eqn{\pi}
 #' of path probabilities is given by:
