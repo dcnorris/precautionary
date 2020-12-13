@@ -2,12 +2,58 @@
 
 setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory","selector_factory"))
 
-#' A wrapper function supporting exact simulation of 3+3 design
+#' A wrapper function supporting exact simulation of dose-escalation trials.
+#' 
+#' Implemented currently only for the (most?) common variant of the 3+3 design,
+#' which requires that at least 6 patients be treated at a dose before it may be
+#' declared as \sQuote{the} MTD.
 #' 
 #' @param selector_factory An object of type
 #'  \code{\link[escalation:get_three_plus_three]{three_plus_three_selector_factory}},
 #'  with \code{allow_deescalation = TRUE}.
 #'
+#' @details 
+#' In any given realization of a 3+3 design, each of the \eqn{D} prespecified doses
+#' will enroll 0, 1 or 2 cohorts, each with 3 patients. Each cohort will result in
+#' a tally of 0--3 dose-limiting toxicities (DLTs), and these may be recorded in a
+#' \eqn{2 \times D}{2 x D} matrix. Moreover, the 3+3 dose-escalation rules allow for
+#' only one path through any such matrix. For example, the matrix
+#' \preformatted{
+#'    d
+#' c   D1 D2 D3 D4
+#'   1  0  1  2 NA
+#'   2 NA  0 NA NA
+#' }
+#' represents the path in a 4-dose 3+3 trial, where the following events occur:
+#' \enumerate{
+#' \item Initial cohort at \eqn{d=1} results 0/3
+#' \item Escalation to \eqn{d=2} results 1/3
+#' \item Additional cohort at \eqn{d=2} results 0/3 for net 1/6 at this dose
+#' \item Escalation to \eqn{d=3} results 2/3; MTD declared as \eqn{d=1}.
+#' }
+#' (Indeed, as you may verify at the R prompt, the above matrix is the 262nd of 442
+#' such paths enumerated comprehensively in the \eqn{2 \times 4 \times 442}{2 x 4 x 442}
+#' array \code{precautionary:::T[[4]]}.)
+#' 
+#' As detailed in Norris 2020c (below), these matrices may be used to construct simple
+#' matrix computations that altogether eliminate the need for discrete-event simulation
+#' of the 3+3 design. For each \eqn{D = 3,...,8}, the \code{precautionary} package has
+#' pretabulated a \eqn{J \times 2D}{J x 2D} matrix \code{precautionary:::U[[D]]} and
+#' \eqn{J}-vector \code{precautionary:::b[[D]]} such that the eqn{J}-vector \eqn{\pi}
+#' of path probabilities is given by:
+#' \deqn{
+#' log(\pi) = b + U [log(p), log(q)]',
+#' }
+#' where \eqn{p} is the \eqn{D}-vector of DLT probabilities at the prespecified
+#' doses, and \eqn{q \equiv 1-p}{q := 1-p} is its complement. See Eq. (4) of
+#' Norris (2020c).
+#' 
+#' For details on the enumeration itself, please see the Prolog code in directory
+#' \code{exec/prolog/} of the package source.
+#' @references 
+#' Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
+#' of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
+#' \url{http://arxiv.org/abs/2012.05301}
 #' @examples 
 #' # Run an exact version of the simulation from FDA-proactive vignette
 #' design <- get_three_plus_three(
