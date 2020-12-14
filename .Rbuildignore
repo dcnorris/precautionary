@@ -6,3 +6,4 @@
 ^inst/shiny-apps/.*/rsconnect
 ^vignettes/Implicit-priors.Rmd
 ^exec/prolog/.*
+^exec/T[5-9].tab

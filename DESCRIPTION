@@ -2,7 +2,7 @@ Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
 Version: 0.2-0
-Date: 2020-12-13
+Date: 2020-12-14
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -31,8 +31,8 @@ Description: Enhances various R packages that support the design and simulation
              of phase 1 dose-escalation trials, adding diagnostics to examine
              the safety characteristics of these designs in light of expected
              inter-individual variation in pharmacokinetics and pharmacodynamics.
-             See Norris (2020a), "Retrospective analysis of a fatal dose-finding
-             trial" <arXiv:2004.12755> and (2020b) "What Were They Thinking?
+             See Norris (2020b), "Retrospective analysis of a fatal dose-finding
+             trial" <arXiv:2004.12755> and (2020c) "What Were They Thinking?
              Pharmacologic priors implicit in a choice of 3+3 dose-escalation design"
              <arXiv:2012:05301>.
 URL: https://precisionmethods.guru/
