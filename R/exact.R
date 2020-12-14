@@ -53,7 +53,7 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' @references 
 #' Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
 #' of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
-#' \url{http://arxiv.org/abs/2012.05301}
+#' \url{https://arxiv.org/abs/2012.05301}
 #' @examples 
 #' # Run an exact version of the simulation from FDA-proactive vignette
 #' design <- get_three_plus_three(
