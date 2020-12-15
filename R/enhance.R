@@ -65,7 +65,7 @@ cohorts_of_n <- function(n = 3, mean_time_delta = 1) {
 
 #' Override \code{escalation:::phase1_sim} to incorporate latent toxicity tolerances
 #'
-#' @param selector_factory An \code{\link[escalation]{selector_factory}} object
+#' @param selector_factory A \code{\link[escalation]{selector_factory}} object
 #' @param true_prob_tox A vector of toxicity probabilities for the doses
 #'  defined in \code{selector_factory} 
 #' @param sample_patient_arrivals A function implementing an arrivals process
