@@ -44,8 +44,6 @@ sta(D, Lo..Hi) --> { D #< Hi, D in Lo..Hi },
 sta(D, Lo.._ ) --> [D - T], { tox(T), T #> 0 },
 		   des(D, Lo).
 
-% - - - - - end inset for paper - - - - -
-
 % As a mirror image of esc//2, des(D, Lo) moves
 % downward FROM D, to max(D-1,Lo).
 % NB: De-escalation to D-1 clamps Hi #= D - 1.
@@ -56,6 +54,8 @@ des(D, Lo) --> { D_1 #= D - 1 },
 		  ;  {T #>= 2}, des(D_1, Lo)
 		  )
 	       ).
+
+% - - - - - end inset for paper - - - - -
 
 % n_trials(+Drange, DN)
 n_trials(Drange, DN) :-
