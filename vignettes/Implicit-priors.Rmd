@@ -1,11 +1,13 @@
 ---
-title: "What priors are implicit in a given 3+3 design?"
+title: "Universal safety schematic for dose escalation"
 author: "David C. Norris"
-date: "10/10/2020"
-output: bookdown::tufte_html2
+date: "12/26/2020"
+output:
+  bookdown::tufte_html2:
+    highlight: pygments
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Deriving priors implicit in a 3+3 design}
+  %\VignetteIndexEntry{Universal safety schematic for dose escalation}
   \usepackage[utf8]{inputenc}
 bibliography: precautionary-package.bib
 header-includes:
@@ -37,11 +39,160 @@ local({
     hook_source(x, options)
   })
 })
+
+# # Register Scryer as a prolog engine
+# knitr::knit_engines$set(prolog = function(options) {
+#   code <- paste(options$code, collapse = '\n')
+#   out  <- system2(
+#     'scryer-prolog', c('-c', shQuote(code)), stdout = TRUE
+#   )
+#   knitr::engine_output(options, code, out)
+# })
 ```
 
-# Background
+# Aims
 
-The safety characteristics of a dose-finding study are a function jointly of how the study is designed, and of how certain pharmacologic parameters are distributed in the study population. Given an explicit set of (hyper)priors over those distributions, one can carry out simulations to exhibit the safety characteristics of any given design: 
+In @norris_what_2020, a universal schematic was proposed for evaluating the safety of the 3+3 dose-escalation design. This vignette explores in detail the approach used to generate this schematic, demonstrating a connection with the *dose transition pathways* (DTP) of @yap_dose_2017. This latter technique is employed to generate corresponding schematics for the CRM and BOIN designs.
+
+# The DCG
+
+An interesting aspect of the paper was its use of a definite clause grammar (DCG) to enumerate exhaustively all possible paths of a 3+3 trial. Let's examine that DCG a bit more closely.
+```{r, engine='prolog', code=gsub("\t", "        ", grep("^%", readLines(system.file("exec/esc.pl", package="precautionary"))[23:58], invert=TRUE, value=TRUE)), exhibit_prolog, tidy=TRUE, tidy.opts=list(comment=FALSE), echo=TRUE, eval=FALSE, size="smaller"}
+```
+
+This grammar consists of a set of *production rules* that describes all possible sequences of dose-escalation decisions and toxicity outcomes in a 3+3 trial. The first thing to note is that this is a *context-sensitive* grammar, since it carries forward ('remembers') the previous dose and the range of doses under consideration. Thus, for example, `esc(0, 0..2)` begins a trial with 2 nonzero doses, by **`esc`**alating from 0 (i.e., starting at dose level 1):
+```{r, engine='prolog'}
+?- phrase(esc(0, 0..2), Tr).
+   Tr = [1^0,2^0,2*0,mtd_notfound(2)]
+;  Tr = [1^0,2^0,2*1,mtd_notfound(2)]
+;  Tr = [1^0,2^0,2*2,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^0,2*2,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^0,2*2,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^0,2*2,1:3,declare_mtd(0)] % path 6, discussed below
+;  Tr = [1^0,2^0,2*3,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^0,2*3,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^0,2*3,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^0,2*3,1:3,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-0,mtd_notfound(2)]
+;  Tr = [1^0,2^1,2-1,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^1,2-1,1:1,declare_mtd(1)] % path 13, discussed below
+;  Tr = [1^0,2^1,2-1,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-1,1:3,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-2,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^1,2-2,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^1,2-2,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-2,1:3,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-3,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^1,2-3,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^1,2-3,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^1,2-3,1:3,declare_mtd(0)]
+;  Tr = [1^0,2^2,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^2,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^2,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^2,1:3,declare_mtd(0)]
+;  Tr = [1^0,2^3,1:0,declare_mtd(1)]
+;  Tr = [1^0,2^3,1:1,declare_mtd(1)]
+;  Tr = [1^0,2^3,1:2,declare_mtd(0)]
+;  Tr = [1^0,2^3,1:3,declare_mtd(0)]
+;  Tr = [1^1,1-0,2^0,2*0,mtd_notfound(2)]
+;  Tr = [1^1,1-0,2^0,2*1,mtd_notfound(2)]
+;  Tr = [1^1,1-0,2^0,2*2,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^0,2*3,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^1,2-0,mtd_notfound(2)]
+;  Tr = [1^1,1-0,2^1,2-1,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^1,2-2,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^1,2-3,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^2,declare_mtd(1)]
+;  Tr = [1^1,1-0,2^3,declare_mtd(1)]
+;  Tr = [1^1,1-1,declare_mtd(0)]
+;  Tr = [1^1,1-2,declare_mtd(0)]
+;  Tr = [1^1,1-3,declare_mtd(0)]
+;  Tr = [1^2,declare_mtd(0)]
+;  Tr = [1^3,declare_mtd(0)]
+;  false.
+```
+
+As shown, such a trial may take 46 distinct paths, consisting of sequences cohorts of the form `D <op> T`.^[The infix operators `^`, `-`, `*` and `:` serve no formal syntactical purpose, but merely make the course of the trial more human-readable. They are suppose to act as mnemonic devices, with `^` meaning escalation, `-` meaning staying at same dose for the next cohort, `*` representing a 'splat' on the dose ceiling, and `:` representing de-escalation.] On path #6, for example,
+
+Working through the logic of the DCG, you may like to verify that the following rules are invoked along path #6:
+
+1. `esc(0,0..2) --> [1^0]` Escalated from 0 to 1; no tox
+2. `esc(1,0..2) --> [2^0]` Escalated from 1 to 2; no tox
+3. `esc(2,0..2) --> [2*2]` Would have escalated, but hit max dose; 2 DLTs
+4. `des(2,0) --> [1:3, declare_mtd(0)]`. De-escalated from 2 to 1; 3 DLTs.
+
+Working likewise through the path #13:
+<!--
+[1^0,2^1,2-1,1:1,declare_mtd(1)] 
+-->
+
+1. `esc(0,0..2) --> [1^0]` Escalated from 0 to 1; no tox
+2. `esc(1,0..2) --> [2^1]` Escalated from 1 to 2; 1 DLT
+3. `sta(2,0..2) --> [2-1]` Stayed at dose 2; 1 further DLT
+4. `des(2,0) --> [1:1, declare_mtd(1)]`. De-escalated from 2 to 1; 1 DLT.
+
+# Comparison with Dose Transition Pathways (DTP)
+
+Package `escalation` implements a similar enumeration of trial paths.
+```{r dose-paths}
+paths <- list()
+for(D in 1:4){
+  paths[[D]] <- get_three_plus_three(num_doses=D, allow_deescalate=TRUE) %>%
+    get_dose_paths(cohort_sizes=rep(3, 2*D))
+}
+J <- rep(NA, length(paths))
+for(D in 1:length(paths)){
+  J[D] <- length(paths[[D]])
+}
+J
+```
+
+Compare these with the values from the `esc` DCG:
+```{r, engine='prolog'}
+?- n_trials(1..10, DN).
+   DN = (1,10)
+;  DN = (2,46)
+;  DN = (3,154)
+;  DN = (4,442)
+;  DN = (5,1162)
+;  DN = (6,2890)
+;  DN = (7,6922)
+;  DN = (8,16138)
+;  DN = (9,36874)
+;  DN = (10,82954)
+;  false.
+```
+
+Apparently, my method finds 1 additional path for each of D=1 and D=2, whereas `get_dose_paths` finds 3 additional paths for D=3, and 19 additional paths for D=4! In order to effect an automatic comparison between the paths effectively in R, I will exploit the sufficiency of the toxicity counts alone to uniquely determine the sequence of dose-escalation decisions in these types of trials. This enables me to represent the full set of $J$ paths as a $2D \times J$ matrix of toxicity counts, with `NA` entries designating cohorts that were not enrolled.
+```{r matching-matrix-1}
+# Build the 2-row matrix for paths[[1]]
+p1 <- paths[[1]]
+M1 <- matrix(nrow = 2, ncol = length(p1))
+for(i in seq_along(p1)){
+  # Obtain a plain data.frame
+  T <- (p1[[i]]$fit$outcomes %>%
+          group_by(cohort) %>%
+          summarize(T = sum(tox), .groups = 'drop'))$T
+  length(T) <- 2 # pad with NA as needed
+  M1[,i] <- T
+}
+M1
+```
+
+```{r matching-matrix-2}
+# Build the 2-row matrix for paths[[1]]
+p2 <- paths[[2]]
+M2 <- matrix(nrow = 4, ncol = length(p2))
+for(i in seq_along(p2)){
+  # Obtain a plain data.frame
+  T <- (p2[[i]]$fit$outcomes %>%
+          group_by(cohort) %>%
+          summarize(T = sum(tox), .groups = 'drop'))$T
+  length(T) <- 4 # pad with NA as needed
+  M2[,i] <- T
+}
+M2
+```
 
 $$
 (\mathrm{design}, \mathrm{hyperpriors}) \xrightarrow{simulation} \mathrm{safety}
@@ -202,10 +353,10 @@ Some degeneracy is created by multiple paths that have equivalent toxicity count
 ```{r A-degeneracy}
 degen <- data.frame(D = 2:7)
 degen$Unique_paths <- sapply(degen$D, function(D)
-  dim(precautionary:::A[[D]])[3])
+  dim(precautionary:::T[[D]])[3])
 degen$Unique_toxcounts <- sapply(degen$D, function(D) {
   # Obtain (D*J) matrix T of dose-wise toxcounts
-  T <- apply(precautionary:::A[[D]]
+  T <- apply(precautionary:::T[[D]]
              , MARGIN = 2:3 # sum on 1st dim (cohorts 1:2)
              , FUN = sum, na.rm = TRUE) # regard NA = 0
   ncol(unique(T, MARGIN = 2)) # count unique D-toxcounts
