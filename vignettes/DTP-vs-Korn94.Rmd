@@ -1,0 +1,29 @@
+---
+title: "DTP-vs-Korn94"
+author: "David C. Norris"
+date: "12/23/2020"
+output: pdf_document
+bibliography: precautionary-package.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r seeing-is-believing-1, fig.cap=paste0("Dose transition paths computed by package `escalation` v", packageVersion('escalation'), ", for the trivial 3+3 trial with a single dose, under the `allow_deescalate=TRUE` regime which implements the \"more common\" variant described in @korn_comparison_1994 [p1801], in which the \"requirement is to have 6 patients treated at the MTD (if it is higher than level 0).\" The top, right yellow leaf node of ths graph suggests that the case '1NNN' proceeds immediately to declare $MTD=1$ without enrolling a second cohort of 3.")}
+library(escalation)
+p1 <- get_three_plus_three(num_doses=1, allow_deescalate=TRUE) %>%
+    get_dose_paths(cohort_sizes=rep(3, 2)) # D=1 trial enrolls at most 2 cohorts
+g1 <- graph_paths(p1)
+g1$width <- g1$height <- 250
+g1
+```
+
+\newpage
+```{r seeing-is-believing-2, fig.cap=paste0("Dose transition paths computed by package `escalation` v", packageVersion('escalation'), ", for the 3+3 trial with 2 doses, under the `allow_deescalate=TRUE` regime which implements the \"more common\" variant described in @korn_comparison_1994 [p1801], in which the \"requirement is to have 6 patients treated at the MTD (if it is higher than level 0).\" Paths '1NNN, 2NNN, 2' and '1NNT, 1NNN, 2NNN, 2' appear to declare $MTD=2$ after enrolling only 3 patients at dose level 2.")}
+p2 <- get_three_plus_three(num_doses=2, allow_deescalate=TRUE) %>%
+    get_dose_paths(cohort_sizes=rep(3, 4)) # D=2 trial enrolls at most 4 cohorts
+graph_paths(p2)
+```
+
+# References
