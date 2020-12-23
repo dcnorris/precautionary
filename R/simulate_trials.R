@@ -246,6 +246,7 @@ setMethod(
 #' design <- get_three_plus_three(num_doses = 5, allow_deescalate = TRUE)
 #' # Note use of wrapper function 'exact'; see ?precautionary::exact.
 #' exact(design) %>% simulate_trials(true_prob_tox = mtdi_dist) -> EXACT
+#' stopifnot(all.equal(1, sum(exp(EXACT$log_pi))))
 #' summary(EXACT)$safety
 #' if (interactive()) { # don't overtax CRAN servers
 #' # Compare with result of discrete-event simulation
