@@ -79,6 +79,21 @@ n_trials(Drange, DN) :-
 %@ ;  DN = (10,82954)
 %@ ;  false.
 
+%% See all 10 paths in a 1-dose 3+3 trial:
+
+%?- phrase(esc(0, 0..1), Tr).
+%@    Tr = [1^0,1*0,mtd_notfound(1)]
+%@ ;  Tr = [1^0,1*1,mtd_notfound(1)]
+%@ ;  Tr = [1^0,1*2,declare_mtd(0)]
+%@ ;  Tr = [1^0,1*3,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-0,mtd_notfound(1)]
+%@ ;  Tr = [1^1,1-1,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-2,declare_mtd(0)]
+%@ ;  Tr = [1^1,1-3,declare_mtd(0)]
+%@ ;  Tr = [1^2,declare_mtd(0)]
+%@ ;  Tr = [1^3,declare_mtd(0)]
+%@ ;  false.
+
 %% See all 46 paths in a 2-dose 3+3 trial:
 
 %?- phrase(esc(0, 0..2), Tr).
