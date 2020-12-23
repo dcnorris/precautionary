@@ -26,4 +26,16 @@ p2 <- get_three_plus_three(num_doses=2, allow_deescalate=TRUE) %>%
 graph_paths(p2)
 ```
 
+\newpage
+# Not just DTP, but the sims themselves omit 2nd MTD cohort
+
+```{r sims-themselves}
+set.seed(2020)
+true_prob_tox <- c(0, 0, 0) # drive simulation to top dose with zero toxicity
+num_sims <- 1
+sims <- get_three_plus_three(num_doses = 3, allow_deescalate = TRUE) %>%
+  simulate_trials(num_sims = num_sims, true_prob_tox = true_prob_tox)
+sims[[1]][[1]][[1]]$fit
+```
+
 # References
