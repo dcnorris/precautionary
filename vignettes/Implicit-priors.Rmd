@@ -25,6 +25,7 @@ knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
 library(precautionary)
 library(knitr)
 library(kableExtra)
+library(dplyr)
 
 options(ordinalizer = NULL) # vignette presumes this is not already set
 
@@ -134,7 +135,7 @@ Working likewise through the path #13:
 # Comparison with Dose Transition Pathways (DTP)
 
 Package `escalation` implements a similar enumeration of trial paths.
-```{r dose-paths}
+```{r dose-paths, cache=TRUE}
 paths <- list()
 for(D in 1:4){
   paths[[D]] <- get_three_plus_three(num_doses=D, allow_deescalate=TRUE) %>%
@@ -192,6 +193,20 @@ for(i in seq_along(p2)){
   M2[,i] <- T
 }
 M2
+```
+
+It is apparent from these outputs that these data frames actually represent *nodes* of a dose-path graph, rather than whole paths. Thus, it is no surprise that the counts differ---and perhaps even a surprise that they are so close!^[It *is* surprising, however, that the node counts for $D \in \{1,2\}$, `escalation`'s node count is lower than my leaf count.] Visualizing these graphs, however, leads immediately to the necessary insight:
+```{r seeing-is-believing-1}
+p1 <- get_three_plus_three(num_doses=1, allow_deescalate=TRUE) %>%
+    get_dose_paths(cohort_sizes=rep(3, 2))
+graph_paths(p1)
+```
+
+
+```{r seeing-is-believing-2, fig.width=10, fig.height=10, fig.fullwidth=TRUE}
+p2 <- get_three_plus_three(num_doses=2, allow_deescalate=TRUE) %>%
+    get_dose_paths(cohort_sizes=rep(3, 4))
+graph_paths(p2)
 ```
 
 $$
