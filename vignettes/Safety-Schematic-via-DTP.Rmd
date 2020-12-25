@@ -48,187 +48,50 @@ local({
 
 @norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette explores that conjecture in relation to the continual reassessment method (CRM), through the `dtpcrm` package [@R-dtpcrm].
 
-# Comparison with Dose Transition Pathways (DTP)
+# Generalized exact simulation of dose escalation
 
-Package `escalation` implements a similar enumeration of trial paths.
-```{r dose-paths, cache=TRUE}
-paths <- list()
-for(D in 1:4){
-  paths[[D]] <- get_three_plus_three(num_doses=D, allow_deescalate=TRUE) %>%
-    get_dose_paths(cohort_sizes=rep(3, 2*D))
-}
-J <- rep(NA, length(paths))
-for(D in 1:length(paths)){
-  J[D] <- length(paths[[D]])
-}
-J
-```
+Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling small cohorts of $N$ participants at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., N, -\}$, with $-$ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
 
-Compare these with the values from the `esc` DCG:
-```{r, engine='prolog'}
-?- n_trials(1..10, DN).
-   DN = (1,10)
-;  DN = (2,46)
-;  DN = (3,154)
-;  DN = (4,442)
-;  DN = (5,1162)
-;  DN = (6,2890)
-;  DN = (7,6922)
-;  DN = (8,16138)
-;  DN = (9,36874)
-;  DN = (10,82954)
-;  false.
-```
+In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
 
-Apparently, my method finds 1 additional path for each of D=1 and D=2, whereas `get_dose_paths` finds 3 additional paths for D=3, and 19 additional paths for D=4! In order to effect an automatic comparison between the paths effectively in R, I will exploit the sufficiency of the toxicity counts alone to uniquely determine the sequence of dose-escalation decisions in these types of trials. This enables me to represent the full set of $J$ paths as a $2D \times J$ matrix of toxicity counts, with `NA` entries designating cohorts that were not enrolled.
-```{r matching-matrix-1}
-# Build the 2-row matrix for paths[[1]]
-p1 <- paths[[1]]
-M1 <- matrix(nrow = 2, ncol = length(p1))
-for(i in seq_along(p1)){
-  # Obtain a plain data.frame
-  T <- (p1[[i]]$fit$outcomes %>%
-          group_by(cohort) %>%
-          summarize(T = sum(tox), .groups = 'drop'))$T
-  length(T) <- 2 # pad with NA as needed
-  M1[,i] <- T
-}
-M1
-```
-
-```{r matching-matrix-2}
-# Build the 2-row matrix for paths[[1]]
-p2 <- paths[[2]]
-M2 <- matrix(nrow = 4, ncol = length(p2))
-for(i in seq_along(p2)){
-  # Obtain a plain data.frame
-  T <- (p2[[i]]$fit$outcomes %>%
-          group_by(cohort) %>%
-          summarize(T = sum(tox), .groups = 'drop'))$T
-  length(T) <- 4 # pad with NA as needed
-  M2[,i] <- T
-}
-M2
-```
-
-It is apparent from these outputs that these data frames actually represent *nodes* of a dose-path graph, rather than whole paths. Thus, it is no surprise that the counts differ---and perhaps even a surprise that they are so close!^[It *is* surprising, however, that the node counts for $D \in \{1,2\}$, `escalation`'s node count is lower than my leaf count.] Visualizing these graphs, however, leads immediately to the necessary insight:
-```{r seeing-is-believing-1}
-p1 <- get_three_plus_three(num_doses=1, allow_deescalate=TRUE) %>%
-    get_dose_paths(cohort_sizes=rep(3, 2))
-graph_paths(p1)
-```
-
-
-```{r seeing-is-believing-2, fig.width=10, fig.height=10, fig.fullwidth=TRUE}
-p2 <- get_three_plus_three(num_doses=2, allow_deescalate=TRUE) %>%
-    get_dose_paths(cohort_sizes=rep(3, 4))
-graph_paths(p2)
-```
-
-$$
-(\mathrm{design}, \mathrm{hyperpriors}) \xrightarrow{simulation} \mathrm{safety}
-$$
-
-Alternatively, we can express this by saying that *given any trial design,* our safety expectations are a function $F_{\mathrm{design}}$ of the hyperpriors:
-
-$$
-\mathrm{hyperpriors} \xrightarrow{F_{\mathrm{design}}} \mathrm{safety}.
-(\#eq:forward)
-$$
-
-In oncology dose finding, however, population heterogeneity is rarely acknowledged, let alone modeled explicitly as Bayesian priors.^[Some reasons for this state of affairs are discussed in a classic paper by Sheiner -@sheiner_intellectual_1991.] Nevertheless, restrictions on these priors are *implicit* in any bounds we can identify on acceptable safety characteristics. Thus, community standards that limit the numbers of severe or fatal toxicities acceptable in a given clinical context provide information about what pharmacologic hyperpriors one could reasonably entertain while proposing a given trial design. To some extent, this amounts to solving an [inverse problem](https://en.wikipedia.org/wiki/Inverse_problem)
-
-\begin{align}
-\mathrm{hyperpriors} &\xleftarrow{F_{\mathrm{design}}^{-1}} \mathrm{safety}
-\\
-&\mathrm{or} (\#eq:inverse)
-\\
-\mathrm{hyperpriors} &= F_{\mathrm{design}}^{-1} (\mathrm{safety})
-\end{align}
-
-corresponding to the 'forward problem' of Equation \@ref(eq:forward).
-
-# Sources of community standards
-
-Explicit discussion of standards for early-phase oncology trial safety are as rare as explicit discussions of pharmacologic priors.^[Indeed, when considering ordinal toxicities, the dose-finding literature typically excludes fatal toxicities from the realm of possibility [@bekele_dose-finding_2004;@van_meter_dose-finding_2012].] Thus Equation \@ref(eq:inverse) appears vulnerable to a symmetry argument, to the effect that it merely presents a mirror-image of the very same difficulties posed by Equation \@ref(eq:forward). Each Equation derives one set of priors from another, the difference being whether we start from objective pharmacologic priors \@ref(eq:forward) or from subjective safety priors \@ref(eq:inverse). Since neither set of priors receives any amount of explicit discussion, both starting points seem equally inaccessible.
-
-This criticism is valid inasmuch as it reveals our problem to be one of *prior elicitation*. But *as a practical matter* the supposed symmetry between Equations \@ref(eq:forward) and \@ref(eq:inverse) is broken by the primacy of *safety* in drug-development. While it remains---however remarkably---entirely possible to evade explicit prior elicitation around pharmacologic priors, it is not politically feasible to brush aside questions of safety once they have been posed.
-
-We see a clear example of this in the FDA's reflexive responsiveness to fatalities in early-phase oncology trials. FDA guidance on early-phase dose-finding studies discusses the incorporation of preclinical pharmacology results only in generic or indefinite ways.^[For example, **TODO...**] Yet once the 'question has been posed' by the actual *occurrence* of a fatal toxicity, FDA acts swiftly to place a clinical hold.
-
-# Interactions with economic priors
-
-While the willingness of phase 1 physician-investigators to enroll their patients on a trial may be expected to be entirely patient-centered, the considerations of a commercial trial sponsor will be informed partly or primarily by economic considerations. Commercial considerations may also impinge more directly on pharmacologic priors. For example, the decision to pursue a one-size-fits-all dosing in the face of the economic losses this entails [@norris_one-size-fits-all_2018] places some upper bound on reasonable prior beliefs about the coefficient of variation (CV) of optimal dosing within the population.
-
-# Other sources of bounds on pharmacologic priors
-
-The data-generating process (DGP) for the ordinal outcomes in a dose-escalation trial requires no fewer than 3 parameters to specify:
-
-* $(\mu, \CV)$: *centrality* and *dispersion* for the distribution of $\MTDi$
-* $r_0$: a *therapeutic index* of the drug.
-
-A generic Bayesian hyperprior would draw each these 3 parameters from a distribution itself characterized by centrality and dispersion parameters, multiplying the requirement to a total of 6 hyperparameters. But this total can be reduced to 4 by drawing $\CV$ from the 1-parameter [Rayleigh distribution](https://en.wikipedia.org/wiki/Rayleigh_distribution),^[This distribution has a standard deviation in the fixed ratio $\sqrt{2-\pi/2} \approx 0.655$ to its mode.] and by conditioning the analysis on $r_0$ as if it were known.^[Equivalently, we might regard $r_0$ as having a vague prior over $(r_{\mathrm{min}},\infty)$.] Together, these identifying restrictions allow us to obtain a workable hyperparameter space with the addition of just 1 further parameter:
-
-* $\sigma$: uncertainty about the centrality parameter $\mu$.
-
-What information does a dose-escalation design offer us, regarding implicit beliefs about $\{\mu, \sigma, \CV, r_0\}$?
-
-## The dose range
-
-A rationally pre-specified dose range in a dose-escalation trial design ought to span the central area of the prior over $\MTDi$. Thus, we might identify the limits of this range with $\mu \pm 2\sigma$.
-
-## The dose-escalation increments
-
-The choice of dose-escalation increment is most closely linked to the therapeutic index $r_0$. Even under a $\CV \ll 1$ regime of low inter-individual variability in toxicity thresholds, aggressive dose escalation by a multiplier greatly exceeding $r_0$ would risk converting what ought to be low-grade sentinel toxicities to dangerous high grades. The presence of substantial inter-individual variability only exacerbates such concerns. Thus, we may expect the pre-specified dose-escalation increments to provide information especially about $r_0$, but also to some extent jointly about $\CV$.
-
-## One-size-fits-all dose finding
-
-We may obtain more focused insight into the drug developers' beliefs about $\CV$, from the sheer fact of their having opted for a one-size-fit-all dose-finding design in the first place. Given the severe losses incurred by one-size-fits-all dosing when $\CV > 1$ [@norris_precautionary_2017;@norris_one-size-fits-all_2018], such high values must be accorded a low probability by a drug developer that opts for one-size-fits-all dose finding. Accordingly, we may take the implicit prior on $\CV$ to be:
-
-$$
-\CV \sim \mathscr{R}(0.33),
-$$
-
-which has only 1% probability in the upper tail $\CV > 1$.
-
-# Simulations
-
-In light of the (hyper)parametrization above, Equation \@ref(eq:inverse) can be written
+Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is applied by representing $-$ with `NA`, and using option `na.rm=TRUE` in aggregate operations.]
 
 $$
 \begin{align}
-(\mu, \CV, \sigma, r_0) &\xleftarrow{F_{\mathrm{design}}^{-1}} \mathrm{safety}
-\\
-&\mathrm{or} (\#eq:inverseB)
-\\
-\mathrm{r_0} = &F_{\mathrm{design}\,|\,\mu,\CV,\sigma}^{-1} (\mathrm{safety}),
+p_d &= P(\MTDi < X_d)\quad\mbox{(dose-wise toxicity probabilities)}\\
+q_d &= 1 - p_d\\
+\pi^j &= \prod_{c,d} {3 \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(3-T_{c,d}^j)}\quad\mbox{(path probabilities)} (\#eq:pi)
 \end{align}
 $$
 
-with the latter form emphasizing that (rational) beliefs about $r_0$ have become a function of community standards about trial safety, conditional on the design and on what it implies for $(\mu, \CV, \sigma)$. 
-
-In order to solve this inverse problem, we will employ a graphical technique which depends on an efficient solution to the forward (simulation) problem of Equation \@ref(eq:forward).
-
-## Efficient simulation of 3+3 safety
-
-The logic of rule-based dose-escalation designs allows their possible paths to be enumerated, and assigned exactly calculated probabilities. Thus, the forward simulation of Equation \@ref(eq:forward) does not require *nested* simulation loops, but may be carried out by exact computations done within a single, hyperprior-sampling loop.
-
-In the 3+3 design, each cohort has 1 of 4 possible outcomes, according to the count of dose-limiting toxicities (DLTs): {0/3, 1/3, 2/3 or 3/3}. Each dose may enroll 0, 1 or 2 cohorts. Thus, it is possible to represent the events on path $j$ by a $2 \times D$ matrix $(T_{c,d}^j)$with rows indexed by cohort $c$, columns by dose level $d$, and elements drawn from $\{0, 1, 2, 3, -\}$. For example, the matrix
+Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
 
 $$
-\left(
-\begin{array}{c c c c}0 & 1 & 2 & -\\
-- & 0 & - & -
-\end{array}
-\right)
+\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+$$
+where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the dose-escalation design.^[In @norris_what_2020, which considered the very narrow space of 3+3 designs, $\mathbf{b}$ and $U$ could be indexed with $D$ subscripts. As we are now considering a much larger space of designs, we here omit those subscripts. This is in accordance with our view that feasible comprehensive safety analysis of complex dose-finding designs must generally proceed from specifications that enable automatic, dynamic code generation.]
+
+Finally, we may as previously introduce the log-therapeutic index $\kappa$, enabling us to write the fatal (grade-5) fraction $f_d$ of DLTs as:
+
+$$
+f_d = \frac{P(e^{2\kappa} \MTDi <  X_d)}{P(\MTDi < X_d)}, (\#eq:fatalfraction)
 $$
 
-represents a path in a 4-dose 3+3 trial, where the following events occur:
+in terms of which the expected number of fatal toxicities is:
 
-1. Initial cohort at $d=1$ results 0/3
-2. Escalation to $d=2$ results 1/3
-3. Additional cohort at $d=2$ results 0/3 for net 1/6 at this dose
-4. Escalation to $d=3$ results 2/3; MTD declared at $d=1$.
+$$
+\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f},  (\#eq:fatalities)
+$$
+
+where $Y = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $U$.
+
+# Connection with DTP
+
+TODO: Characterize DTP, and note its relationship to my own enumerative undertaking. Does DTP anticipate such complete enumeration, with its possibilities for exact simulation?
+
+# An application
+
+TODO: Calculate the T array for the 'non-negative' part of the Viola trial, which had 5 iregularly spaced LEN doses: 5, 10, 15, 25 and 35 mg. Note that there is an opportunity here to meet the challenge of accommodating non-logarithmic dose scaling as might be encountered in practice.
 
 The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref(tab:JvD).
 
@@ -245,35 +108,6 @@ knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the sta
 
 Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
 
-For example, writing the $D$-vector of DLT probabilities as $(p_d)$, and the complementary probabilities as $(q_d) \equiv (1-p_d)$, then the vector $(\pi^j)$ of path probabilities may be written^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed.]
-
-$$
-\begin{align}
-p_d &= P_{\mu,\CV}(\MTDi < D_d)\\
-q_d &= 1 - p_d\\
-\pi^j &= \prod_{c,d} {3 \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(3-T_{c,d}^j)}
-\end{align}
-$$
-
-Indeed, taking logs enables $(\pi^j)$ to be expressed via matrix multiplication of the blocked $J \times 2D$ matrix $U_D = \sum_c[T_{c,d},3-T_{c,d}]$ with the $2D$-vector formed by stacking $(p_d)$ and $(q_d)$:
-
-$$
-\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b}_D + U_D\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right]. (\#eq:logpi)
-$$
-
-Of note, the $J \times 2D$ matrix $U_D$ and the $J$-vector $\mathbf{b}_D$ are characteristic *constants* of the 3+3 design for the given value of $D$.
-
-Furthermore, the left half of $U_D$ is a $(J \times D)$ matrix $Y_D = (y_d^j)$ which is itself of interest, since each row tells how many DLTs occur at each dose on one possible path of the trial. Of all DLTs (toxicities of grade $\ge$ 3) at dose $D_d$, the fatal (grade-5) fraction $f_d$ is:
-
-$$
-f_d = \frac{P_{\mu,\CV}(\MTDi <  r_0^2 D_d)}{P_{\mu,\CV}(\MTDi < D_d)}, (\#eq:fatalfraction)
-$$
-
-in terms of which we may write the expected number of fatal toxicities as:
-
-$$
-\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f}.  (\#eq:fatalities)
-$$
 
 ## Issues of degeneracy
 
