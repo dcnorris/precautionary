@@ -55,7 +55,7 @@ Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecif
 
 In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
 
-Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is applied by representing $-$ with `NA`, and using option `na.rm=TRUE` in aggregate operations.]
+Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is applied by representing '$-$' as `NA`, and using option `na.rm=TRUE` in aggregate operations.]
 
 $$
 \begin{align}
@@ -169,57 +169,41 @@ Each of (up to) 7 cohorts enrolled having 4 possible outcomes (0, 1, 2 or 3 toxi
 knitr::kable(viola_dtp[1000:1010,])
 ```
 
-The degree of degeneracy is indeed quite substantial:
+Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial:
 ```{r degeneracy}
-viola_paths <- unique(viola_dtp)
+viola_paths <- as.matrix(unique(viola_dtp))
 nrow(viola_paths)
 ```
 
-# Computing $\mathbf{b}$ and $U$ from the DTP table
+# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP table
 
-The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref(tab:JvD).
+The vector $\mathbf{b} = \sum_c {n \choose T_{c,d}}$ may be obtained directly from the DTP table, without actually constructing the path matrices $T^j$:
 
-```{r JvD, echo=FALSE}
-JvD <- data.frame(
-  D = 1:10
-, J = c(10, 46, 154, 442, 1162, 2890, 6922, 16138, 36874, 82954) # TODO: Obtain from package data
-)
-JvD$`log(J)` <- log(JvD$J)
-JvD$`∆ log(J)` <- c(NA, diff(JvD$`log(J)`))
-knitr::kable(JvD, caption = "Number of possible dose-escalation paths in the standard 3+3 design, as a function of the number $D$ of prespecified doses.", digits = 2) %>%
-  kable_styling(full_width = FALSE)
+```{r b-directly}
+b <- apply(log(choose(3, viola_paths[, paste0("T",1:7)])),
+           MARGIN = 1, FUN = sum)
+length(b)
 ```
 
-Thus, for values of $D \le 7$ typical in 3+3 designs, the $2 \times D \times J$ arrays $(T_{c,d}^j)$ needed to fully represent trial events are quite manageable in size and permit a simple expression of path probabilities.
+The matrix $\mathrm{Y}_d^j = \sum_c T_{c,d}^j$, however, does seem most straightforward to calculate from the full 3-dimensional array $T_{c,d}^j$:
 
-
-## Issues of degeneracy
-
-Some degeneracy is created by multiple paths that have equivalent toxicity counts per dose level. All that matters for this calculation is the net probability of all paths leading to given counts per toxicity level. Note that the individual-path probabilities must be calculated before aggregation, but that this aggregation may occur before the mapping to counts of graded toxicities.
-
-**TODO:** Assess the amount and importance of the degeneracy that can be exploited. Does this allow me to cut the size of stored matrices in half, or better?
-
-```{r A-degeneracy}
-degen <- data.frame(D = 2:7)
-degen$Unique_paths <- sapply(degen$D, function(D)
-  dim(precautionary:::T[[D]])[3])
-degen$Unique_toxcounts <- sapply(degen$D, function(D) {
-  # Obtain (D*J) matrix T of dose-wise toxcounts
-  T <- apply(precautionary:::T[[D]]
-             , MARGIN = 2:3 # sum on 1st dim (cohorts 1:2)
-             , FUN = sum, na.rm = TRUE) # regard NA = 0
-  ncol(unique(T, MARGIN = 2)) # count unique D-toxcounts
-})
-degen$Inflation <- with(degen, Unique_paths / Unique_toxcounts)
-knitr::kable(degen, caption = "Degeneracy of dose-escalation paths, relative to dose-wise toxicity counts, for the standard 3+3 design with 2--7 prespecified doses.", digits = 2) %>%
-  kable_styling(full_width = FALSE)
+```{r T-constructed}
+I <- outer(viola_paths[,paste0("D",0:6)], 1:7, FUN = "==")
+# Now I[j,c,d] is an indicator array that we may use
+# to select the toxicities into the correct positions
+# within T[j,c,d]:
+T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
+dimnames(T)[[2]] <- paste0("C",1:7) # better to label these as Cohorts!
+dimnames(T)[[3]] <- paste0("X",1:7) # label these as doses X1..X7, using above notation
+dim(T)
 ```
 
-In what follows, we override the default 3+3 design of package `escalation`, to use what @korn_comparison_1994 called the "more common" of two "variants of the standard method." This also aligns with the 3+3 method as defined in @skolnik_shortening_2008 [p191; emphasis is mine]:
+With this accomplished, $\mathrm{Y}_d^j$ is easily obtained:
 
-> "The MTD is defined as the dose level at which none or one of six participants (0% to 17%)
-> experience a DLT, *when at least two of three to six participants (33% to 67%) experience
-> a DLT at the next highest dose.*"
+```{r Y-soeasy}
+Y <- apply(T, MARGIN = c(1,3), FUN = sum)
+dim(Y)
+```
 
 
 # Toxicity contours in the $(\mathrm{CV}, r_0)$-plane
