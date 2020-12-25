@@ -28,6 +28,7 @@ library(precautionary)
 library(knitr)
 library(kableExtra)
 library(dplyr)
+library(dtpcrm)
 
 options(ordinalizer = NULL) # vignette presumes this is not already set
 
@@ -50,7 +51,7 @@ local({
 
 # Generalized exact simulation of dose escalation
 
-Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling small cohorts of $N$ participants at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., N, -\}$, with $-$ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
+Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling small cohorts of $n$ participants at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., n, -\}$, with $-$ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
 
 In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
 
@@ -60,14 +61,14 @@ $$
 \begin{align}
 p_d &= P(\MTDi < X_d)\quad\mbox{(dose-wise toxicity probabilities)}\\
 q_d &= 1 - p_d\\
-\pi^j &= \prod_{c,d} {3 \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(3-T_{c,d}^j)}\quad\mbox{(path probabilities)} (\#eq:pi)
+\pi^j &= \prod_{c,d} {n \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(n-T_{c,d}^j)}\quad\mbox{(path probabilities)} (\#eq:pi)
 \end{align}
 $$
 
 Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
 
 $$
-\log \boldsymbol{\pi} = \sum_{c,d} \log {3 \choose T_{c,d}} + \sum_c [T_{c,d},3-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
 $$
 where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the dose-escalation design.^[In @norris_what_2020, which considered the very narrow space of 3+3 designs, $\mathbf{b}$ and $U$ could be indexed with $D$ subscripts. As we are now considering a much larger space of designs, we here omit those subscripts. This is in accordance with our view that feasible comprehensive safety analysis of complex dose-finding designs must generally proceed from specifications that enable automatic, dynamic code generation.]
 
@@ -91,7 +92,90 @@ TODO: Characterize DTP, and note its relationship to my own enumerative undertak
 
 # An application
 
-TODO: Calculate the T array for the 'non-negative' part of the Viola trial, which had 5 iregularly spaced LEN doses: 5, 10, 15, 25 and 35 mg. Note that there is an opportunity here to meet the challenge of accommodating non-logarithmic dose scaling as might be encountered in practice.
+We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/web/packages/dtpcrm/vignettes/dtpcrm_vignettev02.html):
+
+## VIOLA set-up
+
+### Clinical parameters
+
+```{r clinical-params}
+number.doses <- 7
+start.dose.level <- 3
+max.sample.size <- 21
+target.DLT <- 0.2
+cohort.size <- 3
+```
+
+Note that the sample size limit allows us to set $C=7$.
+
+### Model specification parameters
+
+```{r model-spec-params}
+prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+prior.var <- 0.75
+```
+
+### Practical considerations
+
+```{r practicalities}
+no_skip_esc <- TRUE
+no_skip_deesc <- FALSE
+global_coherent_esc <- TRUE
+```
+
+### Early stopping
+
+```{r early-stopping}
+stop_func <- function(x) {
+  y <- stop_for_excess_toxicity_empiric(x,
+                                        tox_lim = target.DLT + 0.1,
+                                        prob_cert = 0.72,
+                                        dose = 1,
+                                        nsamps = 100000)
+  if(y$stop){
+    x <- y
+  } else {
+    x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+  }
+}
+```
+
+## Computing DTPs
+
+```{r compute-dtp, eval=FALSE}
+t0 <- proc.time()
+viola_dtp <- calculate_dtps(next_dose = start.dose.level,
+                            cohort_sizes = rep(cohort.size, 7),
+                            dose_func = applied_crm,
+                            prior = prior.DLT,
+                            target = target.DLT,
+                            stop_func = stop_func,
+                            scale = sqrt(prior.var),
+                            no_skip_esc = no_skip_esc,
+                            no_skip_deesc = no_skip_deesc,
+                            global_coherent_esc = global_coherent_esc
+                            )
+saveRDS(viola_dtp, file="viola_dtp.rds")
+proc.time() - t0 # NB: For C=7, this took just under 17 minutes to compute
+```
+
+```{r load-cached-dtp, echo=FALSE}
+# Read cached viola_dtp from disk
+viola_dtp <- readRDS("../viola_dtp.rds")
+```
+
+Each of (up to) 7 cohorts enrolled having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP calculation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort resulting in a $4\times$ degeneracy:
+```{r degenerates}
+knitr::kable(viola_dtp[1000:1010,])
+```
+
+The degree of degeneracy is indeed quite substantial:
+```{r degeneracy}
+viola_paths <- unique(viola_dtp)
+nrow(viola_paths)
+```
+
+# Computing $\mathbf{b}$ and $U$ from the DTP table
 
 The number of possible paths $J_D$ for a standard 3+3 design grows almost exponentially with the number of dose levels $D$, as shown in Table \@ref(tab:JvD).
 
