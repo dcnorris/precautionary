@@ -164,45 +164,59 @@ proc.time() - t0 # NB: For C=7, this took just under 17 minutes to compute
 viola_dtp <- readRDS("../viola_dtp.rds")
 ```
 
-Each of (up to) 7 cohorts enrolled having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP calculation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort resulting in a $4\times$ degeneracy:
+With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort resulting in a $4\times$ degeneracy:
 ```{r degenerates}
 knitr::kable(viola_dtp[1000:1010,])
 ```
 
-Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial:
+Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of ```r round(nrow(viola_dtp)/nrow(unique(viola_dtp)), 1)```:
 ```{r degeneracy}
 viola_paths <- as.matrix(unique(viola_dtp))
 nrow(viola_paths)
 ```
 
-# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP table
+To distinguish it from the degenerate DTP table returned by `dtpcrm::calculate_dtps`, we will refer to `viola_paths` as the DTP *matrix*.
 
-The vector $\mathbf{b} = \sum_c {n \choose T_{c,d}}$ may be obtained directly from the DTP table, without actually constructing the path matrices $T^j$:
+# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP matrix
 
-```{r b-directly}
-b <- apply(log(choose(3, viola_paths[, paste0("T",1:7)])),
-           MARGIN = 1, FUN = sum)
-length(b)
-```
-
-The matrix $\mathrm{Y}_d^j = \sum_c T_{c,d}^j$, however, does seem most straightforward to calculate from the full 3-dimensional array $T_{c,d}^j$:
+## Transform DTP table into $T_{c,d}^j$
 
 ```{r T-constructed}
 I <- outer(viola_paths[,paste0("D",0:6)], 1:7, FUN = "==")
+I[I] <- 1
+I[!I] <- NA
 # Now I[j,c,d] is an indicator array that we may use
-# to select the toxicities into the correct positions
-# within T[j,c,d]:
+# in the manner of a bitmask, to select the toxicities
+# into their proper positions within T[j,c,d]:
 T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
 dimnames(T)[[2]] <- paste0("C",1:7) # better to label these as Cohorts!
 dimnames(T)[[3]] <- paste0("X",1:7) # label these as doses X1..X7, using above notation
 dim(T)
 ```
 
-With this accomplished, $\mathrm{Y}_d^j$ is easily obtained:
+## Compute $\mathbf{b} = \sum_c {n \choose T_{c,d}}$
+
+```{r b-via-T}
+b <- apply(log(choose(3, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+length(b)
+```
+
+## Compute $\mathrm{U}$ and $\mathrm{Y}$
 
 ```{r Y-soeasy}
-Y <- apply(T, MARGIN = c(1,3), FUN = sum)
-dim(Y)
+Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+Z <- apply(3-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+U <- cbind(Y, Z)
+dim(U)
+```
+
+## Derive $\mathbf{\pi}$ from the CRM skeleton, to check that $\sum_j \pi^j \equiv 1$ 
+
+```{r pi-per-skeleton}
+log_p <- log(prior.DLT)
+log_q <- log(1 - prior.DLT)
+log_pi <- b + U %*% c(log_p, log_q)
+sum(exp(log_pi)) # check probabilities sum to 1
 ```
 
 
@@ -230,10 +244,10 @@ The most flexible approach to this initial exploration may be to build a high-di
 
 Fixing $D$ initially, and *anticipating* that safety will prove to be a function of $r_0/\rho$, I can operate initially with 3 dimensions in the array.
 
-```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial."}
-b <- precautionary:::b
-U <- precautionary:::U
-D <- 4
+```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial.", eval=FALSE}
+#b <- precautionary:::b
+#U <- precautionary:::U
+#D <- 4
 # Build a 3-dimensional array log(r0)/log(rho) x (MDT50) x (SDLOG/log(rho)),
 # where the median MTDi doses 'MTD50' are indexed to the (integer) dose levels.
 # The design decisions (i.e., post-hoc prior elicitation) then refer questions
