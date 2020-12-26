@@ -23,6 +23,7 @@ header-includes:
 old <- options(rmarkdown.html_vignette.check_title = FALSE) # suppress un-needed warning
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
+knitr::opts_knit$set(eval.after = "fig.cap")
 
 library(precautionary)
 library(knitr)
@@ -220,29 +221,64 @@ sum(exp(log_pi)) # check probabilities sum to 1
 ```
 
 
-# Toxicity contours in the $(\mathrm{CV}, r_0)$-plane
+# Accommodating VIOLA's non-logarithmic dose scale
 
-I hope that, for a given $D$, and a geometric sequence of doses with a given ratio $\rho$, there will be one characteristic surface of expected number of fatalities over the $(\mathrm{CV}, r_0)$-plane. Thus, my aim will be to produce a small array of contour plots that fully account for the implicit priors. A basic hope is that $\rho$ will 'factor out' of these plots, perhaps because $r_0/\rho$ appears on one axis.
+Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the VIOLA trial employed an irregular scale that might be described as approximately square-root:
 
-The essential approach, then, is to calculate a relatively dense array of points in this plane, to support the drawing of contours. I am prepared for the possibility that this has to be done outside of R, perhaps even by a Mercury program. But at least some initial indications of the structure of these contour plots should be obtainable as a `levelplot` on a coarse grid.
+```{r VIOLA-dose-scaling}
+viola_dosing <- data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
+                          ,Level =  1:7  # We use integer dose indexes here
+                          ,Dose_mg = c(0, 2.5, 5, 10, 15, 25, 35)
+                          ,skeleton = prior.DLT
+                          )
+viola_dosing <- viola_dosing %>%
+  mutate(log_dose = log(Dose_mg)
+        ,sqrt_dose = sqrt(Dose_mg)
+        )
 
-Whereas $r_0/\rho$ does indeed seem to be an invariant, the same cannot be said for transformations of CV. One barrier to finding invariant axes for this plot may well be the overlaid integration against a prior. Accordingly, let me aim instead to *postpone* any such integration until the plot has been drawn.
+plot(sqrt_dose ~ Level, data = viola_dosing, type = 'b'
+     , xlab = "Dose Level"
+     , ylab = expression(sqrt(Dose[mg]))
+     , las = 1
+     )
+```
 
-This postponement allows the problem of dimensionality to resurface, however. A great benefit of the early integration was the dimension reduction it accomplished by integrating out the `median_mtd` parameter. If I want a diagram on which the points correspond to a strictly simulated 'known truth', then I seem to be stuck with both parameters of the lognormal MTDi distribution. This, in turn, means that quantities like $r_0$ (and perhaps other parameters of the hyperprior?) no longer appear on the axes of a single, simple plot. Perhaps I end up with an array of plots (indexed by $D$ and $r_0/\rho$, say) that you could use for any given design.
+This is not the only hint we might draw from VIOLA, however, as to its designers' suppositions about the underlying pharmacology. Taken at face value, the CRM skeleton expresses their prior expectation of the distribution$P$ of $\MTDi$.
 
-But note that there is a great deal of value in the *concreteness* of points in the plane corresponding to unknown pharmacological states-of-the-world. At the *concluding* level of this paper, I do expect to require a plot where the points represent priors. But in the **development** toward that conclusion, I will need explanatory (and *exploratory*!) figures where the points represent more concrete, objective realities.
+```{r skeleton-as-expectation, fig.cap="CRM skeleton probabilities vs $\\sqrt{\\mathrm{Dose}}$, with superimposed normal distribution having median $\\sqrt{33}$ and standard deviation 3."}
+plot(skeleton ~ sqrt_dose, data = viola_dosing
+     , type = 'b'
+     , xlab = expression(sqrt(Dose[mg]))
+     , ylim = c(0, 0.55)
+     , las = 1)
+x <- seq(0, 6, 0.1)
+y <- pnorm(x, mean = sqrt(33), sd = 3)
+lines(y ~ x, lty = 2)
+```
 
-The most flexible approach to this initial exploration may be to build a high-dimensional *array* that I can freely slice, aggregate, etc. What are its dimensions?
+This looks reasonable, but might I have done equally well using a logarithmic scale?
 
-* $D$ ranging over 3--8 doses, say
-* $\rho$ ranging 1.4--3
-* $r_0$ some range of values (hope to collapse with above!)
-* `meanlog` $\MTDi$ ranging from lowest to highest dose?
-* `sdlog` of $\MTDi$
+```{r skeleton-log-match, fig.cap=paste0("CRM skeleton probabilities vs $\\log \\mathrm{Dose}$, with superimposed lognormal distribution having median $\\mu = ", exp(mu_opt), "$mg and $\\sigma = ", sigma_opt, "$.")}
+plot(skeleton ~ log_dose, data = subset(viola_dosing, is.finite(log_dose))
+     , type = 'b'
+     , xlab = expression(log(Dose[mg]))
+     , xlim = c(0.5, 3.6)
+     , ylim = c(0, 0.55)
+     , las = 1)
 
-**Crucially, for every invariance (dimensionless constant of the field) I manage to demonstrate, I can freely eliminate one of these dimensions.**
-
-Fixing $D$ initially, and *anticipating* that safety will prove to be a function of $r_0/\rho$, I can operate initially with 3 dimensions in the array.
+sse <- function(mu_sigma, dose = viola_dosing$Dose_mg){
+  mu <- mu_sigma[1]
+  sigma <- mu_sigma[2]
+  lnorm.DLT <- plnorm(dose, meanlog = mu, sdlog = sigma)
+  sse <- sum((lnorm.DLT - prior.DLT)[dose > 0]^2)
+}
+fit <- optim(par = c(mu=log(38), sigma=1.8), fn = sse)
+mu_opt <- log(round(exp(fit$par['mu']), 1))
+sigma_opt <- round(fit$par['sigma'], 1)
+x <- seq(0.5, 3.55, 0.05)
+y <- plnorm(exp(x), meanlog = mu_opt, sdlog = sigma_opt)
+lines(y ~ x, lty = 2)
+```
 
 ```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial.", eval=FALSE}
 #b <- precautionary:::b
