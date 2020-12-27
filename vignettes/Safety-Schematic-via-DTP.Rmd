@@ -313,6 +313,10 @@ plot(Ef ~ kappa, type = 'l'
      , las=1)
 ```
 
+## Beyond the skeleton
+
+TODO: Generalize the above calculation to a $\kappa$-trellised grid of $(\sigma, \kappa)$ centered on the skeleton. This will help to place the skeleton (and scenarios thereof) within a larger context of hyperpriors. Our skeleton fit might indeed be marked with an 'x' in these grids, to accentuate this concept.
+
 ```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial.", eval=FALSE}
 #b <- precautionary:::b
 #U <- precautionary:::U
@@ -399,9 +403,15 @@ contourplot(value ~ MTD_median + rel_SDlog | rel_r0
             )
 ```
 
+# Potential for irrational dose assignment
+
+TODO: Analyze the `viola_paths` matrix for occurrences of 'irrational dose assignment'. Obviously, ths is a point where a Prolog implementation would shine!
+
 # Conclusion
 
-What we learn from this exercise is that part of the pharmacologic priors that are revealed by design choices under the existing regime of safety scrutiny.
+Although initially put forward with different intent, the *dose transition pathways* of @yap_dose_2017 directly correspond to the enumerative approach employed in @norris_what_2020 to investigate safety properties of the 3+3 design, enabling a cognate analysis for the CRM. Importantly, the analysis is seen to be eminently feasible in the setting of an actual trial. Moreover, the only nontrivial computation time involved in this approach manifests an 'embarrassing' degree of parallelism that might enable a 10$\times$ speedup even on a single modern CPU or even effectively zero out the computation time in a massively parallel GPU implementation.
+
+More broadly, the approach taken here illustrates a general scheme for safety analysis in dose-escalation trials generally, starting from the exhaustive enumeration of all possible trial outcomes.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
