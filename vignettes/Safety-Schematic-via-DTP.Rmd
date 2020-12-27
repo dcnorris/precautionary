@@ -221,9 +221,9 @@ sum(exp(log_pi)) # check probabilities sum to 1
 ```
 
 
-# Accommodating VIOLA's non-logarithmic dose scale
+# Fitting a lognormal $\MTDi$ to VIOLA's CRM skeleton
 
-Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the VIOLA trial employed an irregular scale that might be described as approximately square-root:
+Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling---at least for the nonzero doses:
 
 ```{r VIOLA-dose-scaling}
 viola_dosing <- data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
@@ -236,14 +236,14 @@ viola_dosing <- viola_dosing %>%
         ,sqrt_dose = sqrt(Dose_mg)
         )
 
-plot(sqrt_dose ~ Level, data = viola_dosing, type = 'b'
-     , xlab = "Dose Level"
-     , ylab = expression(sqrt(Dose[mg]))
+plot(Level ~ sqrt_dose, data = viola_dosing, type = 'b'
+     , ylab = "Dose Level"
+     , xlab = expression(sqrt(Dose[mg]))
      , las = 1
      )
 ```
 
-This is not the only hint we might draw from VIOLA, however, as to its designers' suppositions about the underlying pharmacology. Taken at face value, the CRM skeleton expresses their prior expectation of the distribution$P$ of $\MTDi$.
+Indeed, the CRM skeleton looks quite close to a normal distribution under this scaling:
 
 ```{r skeleton-as-expectation, fig.cap="CRM skeleton probabilities vs $\\sqrt{\\mathrm{Dose}}$, with superimposed normal distribution having median $\\sqrt{33}$ and standard deviation 3."}
 plot(skeleton ~ sqrt_dose, data = viola_dosing
@@ -256,7 +256,7 @@ y <- pnorm(x, mean = sqrt(33), sd = 3)
 lines(y ~ x, lty = 2)
 ```
 
-This looks reasonable, but might I have done equally well using a logarithmic scale?
+Nevertheless, the treatment of zero dose under this scaling is pharmacologically problematic, if not outright homeopathic, so we will proceed instead using a lognormal $\MTDi$ distribution fitted to the CRM skeleton.
 
 ```{r skeleton-log-match, fig.cap=paste0("CRM skeleton probabilities vs $\\log \\mathrm{Dose}$, with superimposed lognormal distribution having median $\\mu = ", exp(mu_opt), "$mg and $\\sigma = ", sigma_opt, "$.")}
 plot(skeleton ~ log_dose, data = subset(viola_dosing, is.finite(log_dose))
