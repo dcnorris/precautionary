@@ -280,6 +280,39 @@ y <- plnorm(exp(x), meanlog = mu_opt, sdlog = sigma_opt)
 lines(y ~ x, lty = 2)
 ```
 
+# VIOLA safety
+
+Taking the CRM skeleton as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
+
+```{r fatalities-vs-kappa}
+f <- function(kappa, mu=mu_opt, sigma=sigma_opt, X=viola_dosing$Dose_mg) {
+  # For ease of use, this function is VECTORIZED over kappa,
+  # generally returning a length(X) x length(kappa) MATRIX
+  # which can validly right-multiply Y in t(pi) %*% Y %*% f.
+  # (In the special case length(kappa)==1, a vector is returned.)
+  gr5 <- plnorm(outer(X, exp(-2*kappa)), meanlog = mu, sdlog = sigma)
+  dlt <- plnorm(outer(X, exp( 0*kappa)), meanlog = mu, sdlog = sigma)
+  ff <- gr5/dlt
+  ff[is.nan(ff)] <- 0 # replace NaN caused by X[1]==0
+  dimnames(ff) <- list(
+    dose = paste0("X", seq_along(X)),
+    kappa = round(kappa, 3)
+  )
+  if (length(kappa)==1)
+    return(as.vector(ff))
+  ff
+}
+
+kappa <- seq(0.2, 1.2, 0.02)
+F <- f(kappa = kappa)
+Ef <- t(exp(log_pi)) %*% Y %*% F
+Ef <- t(Ef) # transpose to a column-vector
+plot(Ef ~ kappa, type = 'l'
+     , xlab = expression(kappa)
+     , ylab = "Expected Number of Fatal DLTs"
+     , las=1)
+```
+
 ```{r contourplot, echo=FALSE, fig.asp=1, fig.fullwidth=TRUE, fig.cap="Contours of expected fatalities per trial.", eval=FALSE}
 #b <- precautionary:::b
 #U <- precautionary:::U
