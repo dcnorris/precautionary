@@ -89,11 +89,17 @@ where $Y = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $U$.
 
 # Connection with DTP
 
-TODO: Characterize DTP, and note its relationship to my own enumerative undertaking. Does DTP anticipate such complete enumeration, with its possibilities for exact simulation?
+The DTP apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
+
+1. The "flexibility" of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.
+2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
+3. From the trialist's perspective, the 'black-box' recommendations of model-based designs "contrast unfavorably with the transparent, simple rules of a rule-based design."
+
+To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (e.g., $4^4 = 64$) distinct paths. The exhaustive enumeration employed in @norris_what_2020 (and here), differs only in its *global* reach and its intent to support computation over the paths as opposed to 'eyeballing'.
 
 # An application
 
-We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/web/packages/dtpcrm/vignettes/dtpcrm_vignettev02.html):
+We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/web/packages/dtpcrm/vignettes/dtpcrm_vignettev02.html):^[See Table 1 in @craddock_combination_2019.]
 
 ## VIOLA set-up
 
