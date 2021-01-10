@@ -1,7 +1,7 @@
 ---
 title: "Universal dose-escalation safety schematics via Dose Transition Pathways (DTP)"
 author: "David C. Norris"
-date: "12/26/2020"
+date: "1/10/2021"
 output:
   bookdown::tufte_html2:
     highlight: pygments
@@ -49,7 +49,7 @@ local({
 
 # Aims
 
-@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette explores that conjecture in relation to the continual reassessment method (CRM), through the `dtpcrm` package [@R-dtpcrm].
+@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette explores that conjecture in relation to the continual reassessment method (CRM), using the `dtpcrm` package [@R-dtpcrm].
 
 # Generalized exact simulation of dose escalation
 
@@ -90,7 +90,7 @@ where $Y = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $U$.
 
 # Connection with DTP
 
-The DTP apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
+The DTP idea apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
 
 1. The "flexibility" of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.
 2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
@@ -164,7 +164,7 @@ viola_dtp <- calculate_dtps(next_dose = start.dose.level,
                             global_coherent_esc = global_coherent_esc
                             )
 saveRDS(viola_dtp, file="viola_dtp.rds")
-proc.time() - t0 # NB: For C=7, this took just under 17 minutes to compute
+proc.time() - t0 # NB: For C=7, this took 17 minutes to compute
 ```
 
 ```{r load-cached-dtp, echo=FALSE}
@@ -172,7 +172,7 @@ proc.time() - t0 # NB: For C=7, this took just under 17 minutes to compute
 viola_dtp <- readRDS("../viola_dtp.rds")
 ```
 
-With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort resulting in a $4\times$ degeneracy:
+With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
 ```{r degenerates}
 knitr::kable(viola_dtp[1000:1010,])
 ```
@@ -197,8 +197,8 @@ I[!I] <- NA
 # in the manner of a bitmask, to select the toxicities
 # into their proper positions within T[j,c,d]:
 T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
-dimnames(T)[[2]] <- paste0("C",1:7) # better to label these as Cohorts!
-dimnames(T)[[3]] <- paste0("X",1:7) # label these as doses X1..X7, using above notation
+dimnames(T)[[2]] <- paste0("C",1:7) # best labeled as Cohorts
+dimnames(T)[[3]] <- paste0("X",1:7) # label as doses X1..X7
 dim(T)
 ```
 
@@ -233,11 +233,12 @@ sum(exp(log_pi)) # check probabilities sum to 1
 Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling---at least for the nonzero doses:
 
 ```{r VIOLA-dose-scaling}
-viola_dosing <- data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
-                          ,Level =  1:7  # We use integer dose indexes here
-                          ,Dose_mg = c(0, 2.5, 5, 10, 15, 25, 35)
-                          ,skeleton = prior.DLT
-                          )
+viola_dosing <-
+  data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
+            ,Level =  1:7  # We use integer dose indexes here
+            ,Dose_mg = c(0, 2.5, 5, 10, 15, 25, 35)
+            ,skeleton = prior.DLT
+             )
 viola_dosing <- viola_dosing %>%
   mutate(log_dose = log(Dose_mg)
         ,sqrt_dose = sqrt(Dose_mg)
@@ -377,7 +378,7 @@ contourplot(value ~ K + (delta/sigma)
 
 # Potential for irrational dose assignment
 
-TODO: Analyze the `viola_paths` matrix for occurrences of 'irrational dose assignment'. Obviously, ths is a point where a Prolog implementation would shine!
+TODO: Analyze the `viola_paths` matrix for occurrences of 'irrational dose assignment'. Obviously, this is a point where a Prolog implementation would shine!
 
 # Conclusion
 
