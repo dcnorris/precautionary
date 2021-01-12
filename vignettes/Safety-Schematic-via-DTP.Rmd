@@ -123,14 +123,6 @@ prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
 prior.var <- 0.75
 ```
 
-### Practical considerations
-
-```{r practicalities}
-no_skip_esc <- TRUE
-no_skip_deesc <- FALSE
-global_coherent_esc <- TRUE
-```
-
 ### Early stopping
 
 ```{r early-stopping}
@@ -159,17 +151,16 @@ viola_dtp <- calculate_dtps(next_dose = start.dose.level,
                             target = target.DLT,
                             stop_func = stop_func,
                             scale = sqrt(prior.var),
-                            no_skip_esc = no_skip_esc,
-                            no_skip_deesc = no_skip_deesc,
-                            global_coherent_esc = global_coherent_esc
+                            no_skip_esc = TRUE,
+                            no_skip_deesc = FALSE,
+                            global_coherent_esc = TRUE
                             )
-saveRDS(viola_dtp, file="viola_dtp.rds")
-proc.time() - t0 # NB: For C=7, this took 17 minutes to compute
+save(viola_dtp, file="../data/viola_dtp.rda")
+proc.time() - t0 # ~17 minutes on a 2.6GHz i7
 ```
 
 ```{r load-cached-dtp, echo=FALSE}
-# Read cached viola_dtp from disk
-viola_dtp <- readRDS("../viola_dtp.rds")
+data(viola_dtp) # Read cached viola_dtp from disk
 ```
 
 With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ paths. These are not all distinct paths, however, since early stopping results in path degeneracy. For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:

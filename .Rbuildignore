@@ -5,6 +5,5 @@
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
 ^vignettes/DTP-vs-Korn94.Rmd
-^vignettes/Safety-Schematic-via-DTP.Rmd
 ^exec/prolog/.*
 ^exec/T[5-9].tab

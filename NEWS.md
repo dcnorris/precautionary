@@ -1,3 +1,10 @@
+# precautionary 0.2-1
+
+## Changes
+
+* Added vignette 'Generalized dose-escalation safety schematics via DTP'
+* Corrected a few typos
+
 # precautionary 0.2
 
 ## Changes
