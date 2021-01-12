@@ -1,7 +1,7 @@
 ---
-title: "Universal dose-escalation safety schematics via Dose Transition Pathways (DTP)"
+title: "Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)"
 author: "David C. Norris"
-date: "1/10/2021"
+date: "1/12/2021"
 output:
   bookdown::tufte_html2:
     highlight: pygments
@@ -53,11 +53,11 @@ local({
 
 # Generalized exact simulation of dose escalation
 
-Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling small cohorts of $n$ participants at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., n, -\}$, with $-$ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
+Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling participants in small cohorts of size $C$, at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., C, -\}$, with '$-$' being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
 
 In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
 
-Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is applied by representing '$-$' as `NA`, and using option `na.rm=TRUE` in aggregate operations.]
+Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is easily applied by using `NA` to represent '$-$', and performing aggregate operations with option `na.rm=TRUE`.]
 
 $$
 \begin{align}
@@ -72,7 +72,7 @@ Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
 $$
 \log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
 $$
-where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the dose-escalation design.^[In @norris_what_2020, which considered the very narrow space of 3+3 designs, $\mathbf{b}$ and $U$ could be indexed with $D$ subscripts. As we are now considering a much larger space of designs, we here omit those subscripts. This is in accordance with our view that feasible comprehensive safety analysis of complex dose-finding designs must generally proceed from specifications that enable automatic, dynamic code generation.]
+where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the given dose-escalation design.
 
 Finally, we may as previously introduce the log-therapeutic index $\kappa$, enabling us to write the fatal (grade-5) fraction $f_d$ of DLTs as:
 
@@ -96,7 +96,7 @@ The DTP idea apparently was introduced primarily as a means to reconcile model-b
 2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
 3. From the trialist's perspective, the 'black-box' recommendations of model-based designs "contrast unfavorably with the transparent, simple rules of a rule-based design."
 
-To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (e.g., $4^4 = 64$) distinct paths. The exhaustive enumeration employed in @norris_what_2020 (and here), differs only in its *global* reach and its intent to support computation over the paths as opposed to 'eyeballing'.
+To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (e.g., $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs only in its *global* reach, and its intent to support *computation* over the paths as opposed to cursory inspection.
 
 # An application
 
@@ -172,7 +172,7 @@ proc.time() - t0 # NB: For C=7, this took 17 minutes to compute
 viola_dtp <- readRDS("../viola_dtp.rds")
 ```
 
-With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ distinct paths. Due to early stopping, however, some of these paths will be degenerate. For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
+With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ paths. These are not all distinct paths, however, since early stopping results in path degeneracy. For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
 ```{r degenerates}
 knitr::kable(viola_dtp[1000:1010,])
 ```
@@ -290,7 +290,7 @@ lines(y ~ x, lty = 2)
 
 # VIOLA safety
 
-Taking the CRM skeleton as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
+Taking this CRM skeleton fit as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
 
 ```{r fatalities-vs-kappa}
 f <- function(kappa, mu=mu_opt, sigma=sigma_opt, X=viola_dosing$Dose_mg) {
@@ -323,11 +323,11 @@ plot(Ef ~ kappa, type = 'l'
 
 ## Beyond the skeleton
 
-The development of CRM methods has left the status of the *skeleton* somewhat ambiguous, largely evading its realistic interpretation as an $\\MTDi$ distribution.^[For a related perspective on interpretational issues, see @norris_comment_2020.] Nevertheless, CRM skeletons have served as natural starting points for simulation studies. @braun_simulation-free_2020, for example, develops an approach which "hinges on the assumpion that the true DLT probabilities examined are consistent with the selected skeleton."
+The development of CRM methods has left the status of the *skeleton* somewhat ambiguous. While evading its realistic interpretation as an $\MTDi$ distribution,^[For a related perspective on interpretational issues, see @norris_comment_2020.] CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. @braun_simulationfree_2020, for example, develops an approach which "hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton."
 
 Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in @norris_what_2020 provides one approach.
 
-To enable parameter departures from our lognormal skeleton fit, we require $\log(\pi)$ as a *function* of $(\mu, \sigma)$:
+To enable parameter departures from our lognormal skeleton fit, we require $\log \boldsymbol{\pi}$ as a *function* of $(\mu, \sigma)$:
 
 ```{r log_pi}
 log_pi <- function(mu, sigma){
@@ -337,27 +337,28 @@ log_pi <- function(mu, sigma){
 }
 ```
 
-This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters $(\mu, \sigma, \kappa)$. But as in @norris_what_2020 we employ a minimax framing of our safety question, to achieve a dimension reduction:
+This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters $(\mu, \sigma, \kappa)$. But again as in @norris_what_2020 we employ a minimax framing of our safety question, to achieve a dimension reduction:
 
 ```{r minimax}
 mu_minimax <- log(viola_dosing$Dose_mg)[3] # dose 3 is 2nd-highest *nonzero* dose
 ```
 
-The irregularly spaced doses of VIOLA don't yield a unique delta, but the 2x mulipliers either side of dose level 3 (our mu_minimax) allow us to select delta = log(2) as a local approximation:
+The irregularly spaced doses of VIOLA don't yield a unique delta, but the $2\times$ mulipliers either side of dose level 3 (our `mu_minimax`) allow us to select $\delta = \log 2$ as a local approximation:
 
 ```{r delta}
 delta <- mean(diff(log(viola_dosing$Dose_mg)[2:4]))
 ```
 
-If I am to obtain expected fatalities as a scalar field over the (kappa/sigma)--(delta/sigma) plane, then given that delta is fixed, we obtain our range of sigmas thus:
+We may now generate a grid of values, and plot contours:
 
 ```{r kappa-delta-plane}
 focustab <- CJ(mu = mu_minimax
               , K = seq(0.5, 1.65 , 0.01) # K = kappa / sigma
-              , sigma = delta/seq(0.4, 2.2, 0.01) # so 0.5 < delta/sigma < 2.0
+              , sigma = delta/seq(0.4, 2.2, 0.01)
               )
 focustab[, kappa := K * sigma]
-focustab[, value := t(exp(log_pi(mu,sigma))) %*% Y %*% f(kappa=kappa, mu=mu, sigma=sigma)
+focustab[, value := t(exp(log_pi(mu,sigma))) %*%
+             Y %*% f(kappa=kappa, mu=mu, sigma=sigma)
        , by = .(mu,sigma)]
 ```
 
@@ -376,15 +377,11 @@ contourplot(value ~ K + (delta/sigma)
             )
 ```
 
-# Potential for irrational dose assignment
-
-TODO: Analyze the `viola_paths` matrix for occurrences of 'irrational dose assignment'. Obviously, this is a point where a Prolog implementation would shine!
-
 # Conclusion
 
-Although initially put forward with different intent, the *dose transition pathways* of @yap_dose_2017 directly correspond to the enumerative approach employed in @norris_what_2020 to investigate safety properties of the 3+3 design, enabling a cognate analysis for the CRM. Importantly, the analysis is seen to be eminently feasible in the setting of an actual trial. Moreover, the only nontrivial computation time involved in this approach manifests an 'embarrassing' degree of parallelism that might enable a 10$\times$ speedup even on a single modern CPU or even effectively zero out the computation time in a massively parallel GPU implementation.
+Although initially put forward with different intent, the *dose transition pathways* of @yap_dose_2017 render the enumerative approach of @norris_what_2020 immediately applicable to the CRM. Importantly, the analysis is found to be computationally feasible in the setting of an actual trial. Moreover, the only nontrivial computation time involved in this approach manifests an 'embarrassing' degree of parallelism that might enable a 10$\times$ speedup even on a single modern CPU or even effectively zero out the computation time in a massively parallel GPU implementation.
 
-More broadly, the approach taken here illustrates a general scheme for safety analysis in dose-escalation trials generally, starting from the exhaustive enumeration of all possible trial outcomes.
+The approach taken here exemplifies a widely applicable scheme for the safety analysis of dose-escalation trials generally, rooted in the exhaustive enumeration of all possible trial paths.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
