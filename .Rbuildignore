@@ -4,6 +4,6 @@
 ^cran-comments.md
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
-^vignettes/DTP-vs-Korn94.Rmd
+^vignettes/DTP-vs-Korn94.*
 ^exec/prolog/.*
 ^exec/T[5-9].tab

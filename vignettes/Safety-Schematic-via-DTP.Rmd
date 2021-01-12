@@ -100,7 +100,7 @@ To meet these challenges, DTP effectively transforms a model-based design into a
 
 # An application
 
-We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/web/packages/dtpcrm/vignettes/dtpcrm_vignettev02.html):^[See Table 1 in @craddock_combination_2019.]
+We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html):^[See Table 1 in @craddock_combination_2019.]
 
 ## VIOLA set-up
 
