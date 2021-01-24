@@ -40,7 +40,7 @@ cohort --> [T], { T in 0..1 }, cohort.
 %% We will judge a cohort according to its *tally*, a proper fraction:
 cohort_tally(C, T/N) :-
     length(C, N),
-    phrase(cohort, C),
+    phrase(cohort, C), %% TODO: Just say C ins 0..1
     sum(C, #=, T). % clpz:sum/3 avoids awful "maplist(indomain, C), sum_list(C, T)"!
 
 %?- phrase(cohort, C).
@@ -61,6 +61,49 @@ cohort_tally(C, T/N) :-
 %@ ;  C = [_A,_B,_C,_D,_E,_F], N = 6, clpz:(_A+_B+_C+_D+_E+_F#=T), clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(_C in 0..1), clpz:(_D in 0..1), clpz:(_E in 0..1), clpz:(_F in 0..1), clpz:(T in 0..6)
 %@ ;  ...
 
+%% Let's also be able to obtain best- and worst-case tallies
+%% from a partially complete cohort of DLT assessments.
+cohort_bestcase([], []).
+cohort_bestcase([T|Ts], [B|Bs]) :-
+    (	var(T),
+	B #= 0
+    ;	ground(T),
+	B = T
+    ),
+    cohort_bestcase(Ts, Bs).
+
+cohort_worstcase([], []).
+cohort_worstcase([T|Ts], [W|Ws]) :-
+    (	var(T),
+	W #= 1
+    ;	ground(T),
+	W = T
+    ),
+    cohort_worstcase(Ts, Ws).
+
+%?- cohort_bestcase([0,1,T], B).
+%@    B = [0,1,0]
+%@ ;  false.
+
+%?- cohort_worstcase([0,1,T], W).
+%@    W = [0,1,1]
+%@ ;  false.
+
+cohort_mintally(C, T/N) :-
+    cohort_bestcase(C, B),
+    cohort_tally(B, T/N).
+
+cohort_maxtally(C, T/N) :-
+    cohort_worstcase(C, W),
+    cohort_tally(W, T/N).
+
+%?- cohort_mintally([0,1,T], Q).
+%@    Q = 1/3
+%@ ;  false.
+
+%?- cohort_maxtally([0,1,T], Q).
+%@    Q = 2/3
+%@ ;  false.
 
 %% A fair enumeration of tallies will be helpful for developing
 %% and testing comparison relations between tallies.
@@ -72,46 +115,19 @@ tally(DLTs/Enrolled) :-
     %%0 #=< DLTs, DLTs #=< Enrolled, 
     indomain(DLTs).
 
+%% Proof that tally/1 terminates!
+%?- tally(_), false.
+%@ false.
+
 %?- tally(T/N).
 %@    T = 0, N = 0
 %@ ;  T = 0, N = 1
-%@ ;  T = 1, N = 1
-%@ ;  T = 0, N = 2
-%@ ;  T = 1, N = 2
-%@ ;  T = 2, N = 2
-%@ ;  T = 0, N = 3
-%@ ;  T = 1, N = 3
-%@ ;  T = 2, N = 3
-%@ ;  T = 3, N = 3
-%@ ;  T = 0, N = 4
-%@ ;  T = 1, N = 4
-%@ ;  T = 2, N = 4
-%@ ;  T = 3, N = 4
-%@ ;  T = 4, N = 4
-%@ ;  T = 0, N = 5
-%@ ;  T = 1, N = 5
-%@ ;  T = 2, N = 5
-%@ ;  T = 3, N = 5
-%@ ;  T = 4, N = 5
-%@ ;  T = 5, N = 5
-%@ ;  T = 0, N = 6
-%@ ;  T = 1, N = 6
-%@ ;  T = 2, N = 6
-%@ ;  T = 3, N = 6
+%% ... as expected ...
 %@ ;  T = 4, N = 6
 %@ ;  T = 5, N = 6
 %@ ;  T = 6, N = 6.
 
-%?- cohort_tally([0,0,T], Q), safer_than(Q, 2/3).
-%@    Q = 0/3, T = 0
-%@ ;  Q = 1/3, T = 1
-%@ ;  false.
-
-%% N.B.: Here the term 'tally' applies to an individual cohort's tox/n quotient.
-%% TODO: Consider changing usage to 'quotient', to preserve 'tally' as spanning all doses.
-%%       (Alternatively, use 'tally list' for the global concept!)
-
-% How do tallies COMPARE?
+%% How do tallies COMPARE?
 safer_than(T0/N0, T1/N1) :-
     tally(T0/N0), N0 #> 0, % NB: These N>0 conditions are implicit in the #< below,
     tally(T1/N1), N1 #> 0, %     but are stated explicitly here to expose the logic.
@@ -121,9 +137,7 @@ safer_than(T0/N0, T1/N1) :-
 :- op(900, xfx, &<).
 &<(Q1, Q2) :- safer_than(Q1, Q2).
 %?- Q &< 1/3.
-%@    Q = 0/1
-%@ ;  Q = 0/2
-%@ ;  Q = 0/3
+%@    Q = 0/3
 %@ ;  Q = 0/4
 %@ ;  Q = 1/4
 %@ ;  Q = 0/5
@@ -134,21 +148,31 @@ safer_than(T0/N0, T1/N1) :-
 
 noworse_than(T0/N0, T1/N1) :-
     tally(T0/N0), N0 #> 0, % NB: By contrast with the N>0 conditions in safer_than/2,
-    tally(T1/N1), N1 #> 0, %     these are strictly necessary for correctness here
-    T0*N1 #=< N0*T1.       % <-- because the weaker comparison '#=<' is used.
+    tally(T1/N1), N1 #> 0, %     these are strictly necessary for correctness here.
+    (	N0 #>= N1,
+	T0*N1 #=< N0*T1 % 'cross-multiply'
+    ;	N0 #< N1,
+	T0 + (N1 - N0) #=< T1 % extend T0/N0 under worst-case scenario
+    ).
 
 :- op(900, xfx, &=<).
 &=<(Q1, Q2) :- noworse_than(Q1, Q2).
 %?- 1/3 &=< Q.
-%@    Q = 1/3
+%@    Q = 1/1
+%@ ;  Q = 1/2
+%@ ;  Q = 2/2
+%@ ;  Q = 1/3
 %@ ;  Q = 2/3
 %@ ;  Q = 3/3
-%@ ;  Q = 2/6
-%@ ;  Q = 3/6
+%@ ;  Q = 2/4
+%@ ;  Q = 3/4
+%@ ;  Q = 4/4
+%@ ;  Q = 3/5
+%@ ;  Q = 4/5
+%@ ;  Q = 5/5
 %@ ;  Q = 4/6
 %@ ;  Q = 5/6
-%@ ;  Q = 6/6
-%@ ;  false.
+%@ ;  Q = 6/6.
 
 on_par(T0/N0, T1/N1) :-
     tally(T0/N0), N0 #> 0,
@@ -157,14 +181,6 @@ on_par(T0/N0, T1/N1) :-
 
 :- op(900, xfx, &=).
 &=(Q1, Q2) :- on_par(Q1, Q2).
-
-%?- Q1 &= Q2. %% DISCUSS: Duplicated equivalent solutions:
-%@ Q1 = Q2, Q2 = _10596/3,
-%@ _10596 in 0..3 ;
-% ...
-%@ Q1 = Q2, Q2 = _25876/3,
-%@ _25876 in 0..3 ;
-% ...
 
 % Strict tally-safer (&<) excludes tally-equals (&=)
 %?- Q &< R, Q &= R.
@@ -176,18 +192,48 @@ on_par(T0/N0, T1/N1) :-
 
 %% Here was my motivation for writing down on_par/2 in the first place:
 %?- Q &= 1/3. %% 1/3 is (roughly) the 3+3 design's 'target toxicity rate'
-%@ Q = 1/3 ;
-%@ Q = 2/6 ;
-%@ false.
+%@    Q = 1/3
+%@ ;  Q = 2/6
+%@ ;  false.
 
 %% TODO: Consider deriving all tally comparisons from cross-product zcompare,
 %%       taking care to exclude 'incomparables' somehow.
 
+%?- cohort_tally([0,0,T], Q), safer_than(Q, 2/3).
+%@    Q = 0/3, T = 0
+%@ ;  Q = 1/3, T = 1
+%@ ;  false.
 
-%%%:- discontiguous((state0_action_state/3)).
-%@ caught: error(existence_error(procedure,discontiguous/1),discontiguous/1)
-%@ caught: error(existence_error(procedure,discontiguous/1),discontiguous/1)
-%@ caught: error(existence_error(procedure,discontiguous/1),discontiguous/1)
+%% Uh-oh!
+%?- Vs = [A,B,C], Vs ins 0..1, sum(Vs, #=, Sum), labeling([min(Sum)], Vs).
+%@    Vs = [0,A,A], A = 0, B = 0, Sum = 0, C = 0
+%@ ;  Vs = [0,A,1], A = 0, B = 0, Sum = 1, C = 1
+%@ ;  Vs = [0,1,A], A = 0, B = 1, Sum = 1, C = 0
+%@ ;  Vs = [1,0,B], A = 1, B = 0, Sum = 1, C = 0
+%@ ;  Vs = [0,1,B], A = 0, B = 1, Sum = 2, C = 1
+%@ ;  Vs = [1,0,A], A = 1, B = 0, Sum = 2, C = 1
+%@ ;  Vs = [1,A,0], A = 1, B = 1, Sum = 2, C = 0
+%@ ;  ...
+
+%?- X = a, nonvar(X).
+%@    X = a. 
+
+%?- nonvar(X).
+%@ false.
+
+%% Therefore var/nonvar makes no sense declaratively!
+%% var/1 and nonvar/1 are metalogical
+
+%% So instead we can do this:
+% Vs = [A,B,C], Vs ins 0..1, sum(Vs, #=, Sum), labeling([min(Sum)], Vs).
+%% NB: If I want the first minimum, wrap this in once/1.
+
+
+%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%% Pick up from here...
+
+%% Opportunity to replace the hard-coding here with meta-interpretation.
+%% You might interpret 'more fairly', e.g.
 
 %% ENROLL new patient 'T' into the lowest right-hand dose
 state0_action_state(Ls ^ [R | Rs], enroll, Ls ^ [[T|R] | Rs]) :-
@@ -361,6 +407,9 @@ tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
  * the list elements to maintain tallies of toxicities observed at the
  * several doses of the trial.
 */
+
+%% NB: You can do this instead, since tally/1 terminates:
+%% tallies(Qs) :- maplist(tally, Qs).
 
 % Describe a LIST of TALLIES for consecutive prespecified doses:
 tallies([]).
