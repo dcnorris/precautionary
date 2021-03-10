@@ -1,3 +1,9 @@
+# precautionary 0.2-2
+
+## Changes
+
+* Corrected overloaded use of 'C' variable in DTP vignette
+
 # precautionary 0.2-1
 
 ## Changes
