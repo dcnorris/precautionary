@@ -73,6 +73,63 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   return(dtps)
 }
 
+##' An infinitely faster version of a function from 'dtpcrm' v0.1.1
+##'
+##' Originally, the sampling in stats::rnorm() (see inline comments in code)
+##' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
+##' doesn't even show up! More importantly, the consumption is now dominated
+##' by (at 75%) by the objective function 'f' in integrate().
+##' @title
+##' @param x
+##' @param tox_lim
+##' @param prob_cert
+##' @param dose
+##' @param nsamps
+##' @param suppress_dose
+##' @return
+##' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
+stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
+                                              nsamps = 10^6, suppress_dose = TRUE) {
+  post_beta_mean = x$estimate
+  post_beta_var = x$post.var
+  ## The following was massively wasteful, with the stats::rnorm()
+  ## sampling itself consuming 53% of time in dtp(6)!
+  ## > post_beta_samp = stats::rnorm(n = nsamps, mean = post_beta_mean,
+  ## >                               sd = sqrt(post_beta_var))
+  ## > post_prob_tox_samp = x$prior[dose]^exp(post_beta_samp)
+  ## > prob_too_toxic = mean(post_prob_tox_samp > tox_lim)
+  ## Yet a bit of math suffices to compute this exactly via pnorm():
+  prob_too_toxic <- pnorm(log(log(tox_lim)/log(x$prior[dose])),
+                          mean = post_beta_mean, sd = sqrt(post_beta_var))
+  stop_decision = prob_too_toxic > prob_cert
+  x$stop = stop_decision
+  if (stop_decision) {
+    x$stop_reason = paste0("Prob(Prob(Tox[", dose, "]) > ",
+                           tox_lim, ") = ", round(prob_too_toxic, 3), " > ",
+                           prob_cert)
+    if (suppress_dose)
+      x$mtd = NA
+  }
+  return(x)
+}
+
+## summaryRprof()$by.total:
+##                                          total.time total.pct self.time
+## "calculate_dtps"                              55.88    100.00      0.20
+## "dtp"                                         55.88    100.00      0.00
+## "dtpcrm:::.conduct_dose_finding_cohorts"      53.44     95.63      0.58
+## "dose_func"                                   52.52     93.99      0.48
+## "dfcrm::crm"                                  49.46     88.51      1.20
+## "integrate"                                   47.12     84.32      1.26
+## ".External"                                   44.58     79.78      1.10
+## "<Anonymous>"                                 43.64     78.10      1.44
+## "f"                                           42.18     75.48     42.08
+## "["                                            1.94      3.47      0.02
+## "[.data.frame"                                 1.92      3.44      0.48
+## "stop_func"                                    1.30      2.33      0.22
+## "order"                                        0.98      1.75      0.34
+## "[["                                           0.96      1.72      0.22
+## "stop_for_excess_toxicity_empiric"             0.80      1.43      0.34
 
 ## TESTS
 
