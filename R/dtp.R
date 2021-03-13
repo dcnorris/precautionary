@@ -2,8 +2,7 @@
 
 ##' Faster Dose Transition Pathways (DTP) calculation
 ##'
-##' .. content for \details{} ..
-##' @title
+##' TODO: Fill in more details.
 ##' @param next_dose
 ##' @param cohort_sizes
 ##' @param prev_tox
@@ -79,7 +78,6 @@ calculate_dtps <- function (next_dose, cohort_sizes,
 ##' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
 ##' doesn't even show up! More importantly, the consumption is now dominated
 ##' by (at 75%) by the objective function 'f' in integrate().
-##' @title
 ##' @param x
 ##' @param tox_lim
 ##' @param prob_cert
