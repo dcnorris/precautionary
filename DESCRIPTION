@@ -54,3 +54,4 @@ Collate:
     'simulate_trials.R'
 LazyData: true
 ByteCompile: true
+Config/testthat/edition: 3
