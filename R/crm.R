@@ -12,18 +12,18 @@
 
 
 ## speedup 1.65x
-crmh = function(a,x,y,w,s) {  ## posterior
+crmh = compiler::cmpfun(function(a,x,y,w,s) {  ## posterior
   exp_a_ <- exp(a)
   v = exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
   for (i in which(y==0)) {
     v = v * (1 - w[i] * x[i]^exp_a_)
   }
   return(v)
-}
+})
 
 ## Test that mat_crmh == crmh, and compare timing
 ## TODO: Test in case where w not identically 1.
-comp_crmh <- function(a=seq(-0.5, 0.5, 0.05),
+comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
                       x=c(1,2,3,2,3,3)*0.1,
                       y=c(0,0,1,0,0,1),
                       w=rep(1,length(y)), s=500) {
@@ -39,25 +39,25 @@ comp_crmh <- function(a=seq(-0.5, 0.5, 0.05),
   speedup <- median(t_old$time)/median(t_new$time)
   cat(paste0("speedup: ", round(speedup,2), "x\n"))
   invisible(list(old=t_old, new=t_new))
-}
+})
 
-crmht = function(a,x,y,w,s) { ## posterior times x
+crmht = compiler::cmpfun(function(a,x,y,w,s) { ## posterior times x
   exp_a_ <- exp(a)
   v = a * exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
   for (i in which(y==0)) {
     v = v * (1 - w[i] * x[i]^exp_a_)
   }
   return(v)
-}
+})
 
-crmht2 = function(a,x,y,w,s) { ## posterior times x^2
+crmht2 = compiler::cmpfun(function(a,x,y,w,s) { ## posterior times x^2
   exp_a_ <- exp(a)
   v = a^2 * exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
   for (i in which(y==0)) {
     v = v * (1 - w[i] * x[i]^exp_a_)
   }
   return(v)
-}
+})
 
 crmhlgt <- function(a,x,y,w,s,alp0)  { ## posterior logit model
   v = exp(-a^2/2/s^2)
@@ -101,7 +101,7 @@ lcrmlgt <- function(a,x,y,w,alp0) { #loglikelihood of logit function
   return(v)
 }
 
-crm <- function(prior, target, tox, level, n=length(level),
+crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
                 scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE) {
@@ -176,7 +176,7 @@ crm <- function(prior, target, tox, level, n=length(level),
               patient.detail=patient.detail,tite=FALSE,dosescaled=dosescaled,var.est=var.est)
   class(foo) <- "mtd"
   foo
-}
+})
 
 crmsim <- function(PI, prior, target, n, x0, nsim=1, mcohort=1, restrict=TRUE, count=TRUE,
                     method="bayes", model="empiric", intcpt=3, scale=sqrt(1.34),seed=1009) {
