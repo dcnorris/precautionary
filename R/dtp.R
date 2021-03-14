@@ -1,5 +1,33 @@
 ## Exploring speedups for DTP computations
 
+## Identical to dtpcrm::applied_crm, except that it uses
+## the more performant, package-local version of crm().
+applied_crm <- function (prior, target, tox, level,
+                         no_skip_esc = TRUE, no_skip_deesc = TRUE,
+                         global_coherent_esc = TRUE, stop_func = NULL, ...)
+{
+  x <- crm(prior = prior, target = target,
+           tox = tox, level = level,
+           var.est = TRUE, ...)
+  if (no_skip_esc & x$mtd > (max(level) + 1)) {
+    x$mtd <- max(level) + 1
+  }
+  if (no_skip_deesc & x$mtd < (min(level) - 1)) {
+    x$mtd <- min(level) - 1
+  }
+  if (global_coherent_esc) {
+    last_dose <- utils::tail(level, 1)
+    tox_rate_last_dose <- sum(tox[level == last_dose])/sum(level == last_dose)
+    if (tox_rate_last_dose > target) {
+      x$mtd <- min(x$mtd, last_dose)
+    }
+  }
+  if (!is.null(stop_func)) {
+    x = stop_func(x)
+  }
+  return(x)
+}
+
 ##' Faster Dose Transition Pathways (DTP) calculation
 ##'
 ##' TODO: Fill in more details.
@@ -96,7 +124,7 @@ stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
   ## >                               sd = sqrt(post_beta_var))
   ## > post_prob_tox_samp = x$prior[dose]^exp(post_beta_samp)
   ## > prob_too_toxic = mean(post_prob_tox_samp > tox_lim)
-  ## Yet a bit of math suffices to compute this exactly via pnorm():
+  ## Yet a bit of math suffices to compute this with ZERO MCSE, via pnorm():
   prob_too_toxic <- pnorm(log(log(tox_lim)/log(x$prior[dose])),
                           mean = post_beta_mean, sd = sqrt(post_beta_var))
   stop_decision = prob_too_toxic > prob_cert
