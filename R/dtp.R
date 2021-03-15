@@ -92,7 +92,8 @@ calculate_dtps <- function (next_dose, cohort_sizes,
              skipped <- skipped + 1
            }
   }
-  cat("skipped =", skipped, paste0("(", round(100*skipped/nrow(paths)), "%)"), "\n")
+  message("skipped ", skipped,"/",nrow(paths), " degenerate paths ",
+          paste0("(", round(100*skipped/nrow(paths)), "%)"))
   dtps <- data.frame(dtps)
   colnames(dtps) <- c("D0", as.vector(rbind(paste0("T", 1:num_cohorts),
                                             paste0("D", 1:num_cohorts))))
@@ -110,12 +111,11 @@ calculate_dtps <- function (next_dose, cohort_sizes,
 ##' @param tox_lim
 ##' @param prob_cert
 ##' @param dose
-##' @param nsamps
 ##' @param suppress_dose
 ##' @return
 ##' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
 stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
-                                              nsamps = 10^6, suppress_dose = TRUE) {
+                                              suppress_dose = TRUE) {
   post_beta_mean = x$estimate
   post_beta_var = x$post.var
   ## The following was massively wasteful, with the stats::rnorm()

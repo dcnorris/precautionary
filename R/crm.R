@@ -38,7 +38,7 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
   print(t_old)
   print(t_new)
   speedup <- median(t_old$time)/median(t_new$time)
-  cat(paste0("speedup: ", round(speedup,2), "x\n"))
+  message("speedup: ", round(speedup,2), "x")
   invisible(list(old=t_old, new=t_new))
 })
 
