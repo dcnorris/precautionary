@@ -8,10 +8,6 @@
 #' @useDynLib precautionary, .registration = TRUE
 NULL
 
-#' Return string `"Hello world!"` to R.
-#' @export
-hello_world <- function() .Call(wrap__hello_world)
-
 #' Return string `"Adios, C!"` to R.
 #' @export
 adios <- function() .Call(wrap__adios)
@@ -22,7 +18,11 @@ adios <- function() .Call(wrap__adios)
 #' @export
 rcrmh <- function(a, x, y, w, s) .Call(wrap__rcrmh, a, x, y, w, s)
 
+#' Posterior times x
+#' @export
 rcrmht <- function(a, x, y, w, s) .Call(wrap__rcrmht, a, x, y, w, s)
 
+#' Posterior times x^2
+#' @export
 rcrmht2 <- function(a, x, y, w, s) .Call(wrap__rcrmht2, a, x, y, w, s)
 

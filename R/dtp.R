@@ -177,8 +177,7 @@ dtp <- function(C=4) {
     y <- stop_for_excess_toxicity_empiric(x,
                                           tox_lim = target.DLT + 0.1,
                                           prob_cert = 0.72,
-                                          dose = 1,
-                                          nsamps = 100000)
+                                          dose = 1)
     if(y$stop){
       x <- y
     } else {

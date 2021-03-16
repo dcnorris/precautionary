@@ -1,12 +1,5 @@
 use extendr_api::prelude::*;
 
-/// Return string `"Hello world!"` to R.
-/// @export
-#[extendr]
-fn hello_world() -> &'static str {
-    "Hello world!"
-}
-
 /// Return string `"Adios, C!"` to R.
 /// @export
 #[extendr]
@@ -14,22 +7,31 @@ fn adios() -> &'static str {
     "Adios, C!"
 }
 
-// A utility function not exported
+#[inline(always)]
+fn crmh_(a: &f64, // NB: *NOT* vectorized on a
+	 x: &[f64],
+	 y: &[i32],
+	 w: &[f64],
+	 s: f64,
+	 b: i32) -> f64 {
+    let mut v = a.powi(b) * (-0.5*a/s).exp();
+    for i in 0 .. y.len() {
+	let p_i = x[i].powf(a.exp()); // 'power model' CRM
+	v = v * if y[i] == 0 { 1.0 - w[i] * p_i } else { p_i };
+    }
+    v
+}
+
+// Vectorize crmh1 on the 'a' parameter
 fn rcrmh_(a: &[f64],
 	  x: &[f64],
-	  y: &[f64],
+	  y: &[i32],
 	  w: &[f64],
-	  s: &[f64],
+	  s: f64,
 	  b: i32) -> Robj {
     // TODO: Assert that x, y and w all have same length?
-    let v = a.iter().map(|a| {
-	let mut v_ = a.powi(b) * (-0.5*a/s[0]).exp();
-	for i in 0 .. y.len() {
-	    let p_i = x[i].powf(a.exp()); // 'power model' CRM
-	    v_ = v_ * if y[i] == 0.0 { 1.0 - w[i] * p_i } else { p_i };
-	}
-	v_
-    });
+    // TODO: Assert that y is always in {0,1}?
+    let v = a.iter().map(|a| crmh_(a,x,y,w,s,b));
     v.collect_robj()
 }
 
@@ -38,19 +40,21 @@ fn rcrmh_(a: &[f64],
 /// R code from package 'dfcrm'.
 /// @export
 #[extendr]
-fn rcrmh(a: &[f64], x: &[f64], y: &[f64], w: &[f64], s: &[f64]) -> Robj {
+fn rcrmh(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
     rcrmh_(a, x, y, w, s, 0)
 }
 
-// Posterior times x
+/// Posterior times x
+/// @export
 #[extendr]
-fn rcrmht(a: &[f64], x: &[f64], y: &[f64], w: &[f64], s: &[f64]) -> Robj {
+fn rcrmht(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
     rcrmh_(a, x, y, w, s, 1)
 }
 
-// Posterior times x^2
+/// Posterior times x^2
+/// @export
 #[extendr]
-fn rcrmht2(a: &[f64], x: &[f64], y: &[f64], w: &[f64], s: &[f64]) -> Robj {
+fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
     rcrmh_(a, x, y, w, s, 2)
 }
 
@@ -59,7 +63,6 @@ fn rcrmht2(a: &[f64], x: &[f64], y: &[f64], w: &[f64], s: &[f64]) -> Robj {
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod precautionary;
-    fn hello_world;
     fn adios;
     fn rcrmh;
     fn rcrmht;
