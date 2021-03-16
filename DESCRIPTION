@@ -48,6 +48,7 @@ Collate:
     'dtp.R'
     'enhance.R'
     'exact.R'
+    'extendr-wrappers.R'
     'precautionary-package.R'
     'toxicity_generators.R'
     'simulate_trials.R'

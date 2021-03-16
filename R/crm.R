@@ -28,18 +28,26 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
                       x=c(1,2,3,2,3,3)*0.1,
                       y=c(0,0,1,0,0,1),
                       w=rep(1,length(y)), s=500) {
-  old <- crmh(a,x,y,w,s)
-  new <- mat_crmh(a,x,y,w,s)
+  old <- dfcrm::crmh(a,x,y,w,s)
+  new <- crmh(a,x,y,w,s)
+  rust <- rcrmh(a,x,y,w,s)
   delta <- max(abs(new - old))
   if (delta > .Machine$double.eps)
-    cat("max difference:", delta, "\n")
-  t_old <- microbenchmark(integrate(crmh, -10, 10, x, y, w, 500))
-  t_new <- microbenchmark(integrate(mat_crmh, -10, 10, x, y, w, 500))
+    cat("|new - old| =", delta, "\n")
+  deltar <- max(abs(rust - old))
+  if (deltar > .Machine$double.eps)
+    cat("|rust - old| =", deltar, "\n")
+  t_old <- microbenchmark::microbenchmark(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s))
+  t_new <- microbenchmark::microbenchmark(integrate(crmh, -Inf, Inf, x, y, w, s))
+  t_rust <- microbenchmark::microbenchmark(integrate(rcrmh, -Inf, Inf, x, y, w, s))
   print(t_old)
   print(t_new)
+  print(t_rust)
   speedup <- median(t_old$time)/median(t_new$time)
-  message("speedup: ", round(speedup,2), "x")
-  invisible(list(old=t_old, new=t_new))
+  message("speedup (new): ", round(speedup,2), "x")
+  speedupr <- median(t_old$time)/median(t_rust$time)
+  message("speedup (rust): ", round(speedupr,2), "x")
+  invisible(list(old=t_old, new=t_new, rust=t_rust))
 })
 
 crmht = compiler::cmpfun(function(a,x,y,w,s) { ## posterior times x
