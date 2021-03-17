@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+use peroxide::numerical::integral::*;
 
 /// Return string `"Adios, C!"` to R.
 /// @export
@@ -21,6 +22,19 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
     }
     v
 }
+
+/// Integrate one of the power-model moments
+/// @export
+#[extendr]
+fn icrm(x: &[f64],
+	y: &[i32],
+	w: &[f64],
+	s: f64,
+	b: i32) -> f64 {
+    integrate(|u| crmh_(&u,x,y,w,s,b), (-10.0, 10.0),
+	      Integral::G7K15(0.000001))
+}
+
 
 // Vectorize crmh1 on the 'a' parameter
 fn rcrmh_(a: &[f64],
@@ -64,6 +78,7 @@ fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
 extendr_module! {
     mod precautionary;
     fn adios;
+    fn icrm;
     fn rcrmh;
     fn rcrmht;
     fn rcrmht2;

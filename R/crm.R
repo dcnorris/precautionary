@@ -22,6 +22,22 @@ crmh = compiler::cmpfun(function(a,x,y,w,s) {  ## posterior
   return(v)
 })
 
+comp_icrm <- function(x=c(1,2,3,2,3,3)*0.1,
+                      y=c(0L,0L,1L,0L,0L,1L),
+                      w=rep(1,length(y)),
+                      s=500) {
+  old0 <- integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)[[1]]
+  old1 <- integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)[[1]]
+  old2 <- integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)[[1]]
+  rust0 <- icrm(x, y, w, s, 0)
+  rust1 <- icrm(x, y, w, s, 1)
+  rust2 <- icrm(x, y, w, s, 2)
+  data.frame(old0 = old0, rust0 = rust0,
+             old1 = old1, rust1 = rust1,
+             old2 = old2, rust2 = rust2)
+
+}
+
 ## TODO: Test in case where w not identically 1.
 comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
                       x=c(1,2,3,2,3,3)*0.1,

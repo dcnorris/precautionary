@@ -12,6 +12,10 @@ NULL
 #' @export
 adios <- function() .Call(wrap__adios)
 
+#' Integrate one of the power-model moments
+#' @export
+icrm <- function(x, y, w, s, b) .Call(wrap__icrm, x, y, w, s, b)
+
 #' A Rust implementation of the dfcrm::crmh posterior, which I hope will prove
 #' faster to integrate() than my tuned-up (2x) reimplementation of Ken Cheung's
 #' R code from package 'dfcrm'.
