@@ -3,7 +3,7 @@
 ## have been optimized, with microbenchmarked speedups noted.
 
 ## Parameters of objective functions are as follows:
-## a: The parameter of single-parameter CRM. This function is
+## a: The single parameter of 1-parameter CRM. This function is
 ##    vectorized over this parameter, as required by 'integrate'.
 ## x: Vector of prior probabilities of tox at administered doses
 ## y: Vector of 0/1 indicators of toxicity, patient-wise
@@ -21,6 +21,65 @@ crmh = compiler::cmpfun(function(a,x,y,w,s) {  ## posterior
   v[!is.finite(v)] <- 0.0
   return(v)
 })
+
+## This seems to be converging on a reasonable generic pattern.
+## The idea is to write an expression 'expr' that includes '...'
+## which can be filled in using (most appropriately!) this very
+## function's '...' argument!)
+benchtab <- function(expr, ...) {
+  ## In general, this function should evaluate <expr> with various
+  ## substitutions as provided in the ... args.
+  ## Perhaps the ... will consist of a small number (1--3) of
+  ## arguments, each of which is given as a short vector of
+  ## alternative values. The resulting performance comparison
+  ## ought to tabulate the performance against the full outer
+  ## product of the possible values.
+  fun <- eval(substitute(function(...) expr))
+  perf <- CJ(..., sorted = FALSE)
+  mb <- list()
+  for (i in seq(nrow(perf))) {
+    mb[[i]] <- microbenchmark::microbenchmark(do.call(fun, perf[i, ]))
+  }
+  perf$milliseconds <- sapply(mb, function(.) median(.$time)/1e6)
+  perf$evals.per.sec <- sapply(mb, function(.) mean(1e9/.$time))
+  perf
+}
+
+bt_crms <- function() {
+  benchtab(crm(prior=c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70), target=0.2,
+               tox=c(0L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L),
+               level=c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2), ...),
+           impl=c("dfcrm","Ri","rusti","rustq"))
+}
+
+## This set-up is verbatim from the example in dfcrm::crm
+comp_crms <- function(prior = c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70),
+                      target = 0.2,
+                      level = c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
+                      y = c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0),
+                      impl = c("dfcrm","Ri","rusti","rustq")) {
+  ## TODO: Get this working:
+  ##comp_impl(quote(crm(prior, target, y, level, impl)), impl=impl)
+  ## Until the above works, do it 'by hand':
+  perf <- CJ(impl = impl, sorted = FALSE)
+  for (i in seq(nrow(perf))) {
+    crm_call <- substitute(crm(prior, target, y, level, impl=impl), perf[i,])
+    perf$median.ms[i] <- median(microbenchmark::microbenchmark({
+      eval(crm_call, perf[i,])
+    })$time/1000000) # convert ns -> ms
+    perf[i,'call'] <- deparse(crm_call)
+  }
+  perf
+}
+
+## Figure out why I'm having trouble invoking crm(impl="rustq") ...
+qcrm <- function(prior = c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70),
+                 target = 0.2,
+                 level = c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
+                 y = c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0),
+                 impl = "dfcrm") {
+  crm(prior, target, y, level, impl=impl)
+}
 
 comp_icrm <- function(x=c(1,2,3,2,3,3)*0.1,
                       y=c(0L,0L,1L,0L,0L,1L),
@@ -135,9 +194,6 @@ crmht2lgt <- function(a,x,y,w,s,alp0)  { ## posterior times x^2
   }
   return(v)
 }
-
-
-
 lcrm <- function(a,x,y,w) { #loglikelihood of empiric function
   v <- 0
   for (i in 1:length(x))
@@ -153,12 +209,29 @@ lcrmlgt <- function(a,x,y,w,alp0) { #loglikelihood of logit function
   return(v)
 }
 
+## This local (as-yet, unexported) copy of dfcrm:crm serves as a test harness
+## for various performance tuning experiments. The 'impl' arg allows selection
+## of various alternative implementations:
+## - Ri uses the improved (roughly 2x speedup) R integrands [crmh,crmht,crmh2] above
+## - rusti substitutes integrands [rcrmh,rcrmht,rcrmht2] written in Rust
+## - rustq uses Rust for the quadrature itself
 crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
-                scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE) {
-
+                scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE,
+                impl=c("Ri","rusti","rustq","dfcrm")) { # implementation switch
+  if (impl[1]=="dfcrm")
+    return(dfcrm::crm(prior, target, tox, level, n, dosename, include, pid, conf.level,
+                      method, model, intcpt, scale, model.detail, patient.detail, var.est))
+  if (method != "bayes")
+    warning("CRM method '", method, "' has no '", impl, "' implementation as yet.")
+  if (model != "empiric")
+    warning("The '", model, "' model has no '", impl, "' implementation as yet.")
+  ## NB: If we reach this point without warnings, then we're estimating
+  ##     the empiric model using Bayes method. This is the test case for
+  ##     my alternative implementations.
   y1p <- tox[include]
+  y1p <- as.integer(y1p) # Rust methods require this
   w1p <- rep(1,length(include))
   if (model=="empiric") {
     dosescaled <- prior
@@ -170,9 +243,25 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
       if (var.est) { e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,500,abs.tol=0)[[1]] / integrate(crmh,-Inf,Inf,x1p,y1p,w1p,500,abs.tol=0)[[1]]; }
     }
     else if (method=="bayes") {
-      den <- integrate(crmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
-      est <- integrate(crmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
-      if (var.est) { e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den; }
+      switch(impl[1],
+             Ri = {
+               den <- integrate(crmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
+               est <- integrate(crmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+               if (var.est)
+                 e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+             },
+             rusti = {
+               den <- integrate(rcrmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
+               est <- integrate(rcrmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+               if (var.est)
+                 e2 <- integrate(rcrmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+             },
+             rustq = {
+               den <- icrm(x1p, y1p, w1p, scale, 0)
+               est <- icrm(x1p, y1p, w1p, scale, 1) / den
+               if (var.est)
+                 e2 <- icrm(x1p, y1p, w1p, scale, 2) / den
+             })
     }
     else { stop(" unknown estimation method"); }
     ptox <- prior^exp(est)
