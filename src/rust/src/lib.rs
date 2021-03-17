@@ -31,8 +31,12 @@ fn icrm(x: &[f64],
 	w: &[f64],
 	s: f64,
 	b: i32) -> f64 {
-    integrate(|u| crmh_(&u,x,y,w,s,b), (-10.0, 10.0),
-	      Integral::G7K15(0.000001))
+    integrate(|u| {
+	let u2 = &u.powi(2);
+	let a = &u/(1.0-u2); // map u in (-1,1) --> a in (-Inf,Inf)
+	let da = (1.0+u2)/(1.0-u2).powi(2); // ..with change of measure
+	crmh_(&a,x,y,w,s,b)*da
+    }, (-1.0, 1.0), Integral::G30K61(0.000001)) // Integral::G25K51(0.0000001))
 }
 
 

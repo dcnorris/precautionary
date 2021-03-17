@@ -26,16 +26,21 @@ comp_icrm <- function(x=c(1,2,3,2,3,3)*0.1,
                       y=c(0L,0L,1L,0L,0L,1L),
                       w=rep(1,length(y)),
                       s=500) {
-  old0 <- integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)[[1]]
+  mb_old <- microbenchmark::microbenchmark(
+                              old0 <- integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)[[1]])
   old1 <- integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)[[1]]
   old2 <- integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)[[1]]
-  rust0 <- icrm(x, y, w, s, 0)
+  mb_rust <- microbenchmark::microbenchmark(rust0 <- icrm(x, y, w, s, 0))
   rust1 <- icrm(x, y, w, s, 1)
   rust2 <- icrm(x, y, w, s, 2)
+
+  speedup <- mean(mb_old$time) / mean(mb_rust$time)
+  cat(paste0("speedup: ", format(speedup, digits=2), "x\n"))
+
+  ## TODO: Undertake a more comprehensive examination of convergence
   data.frame(old0 = old0, rust0 = rust0,
              old1 = old1, rust1 = rust1,
              old2 = old2, rust2 = rust2)
-
 }
 
 ## TODO: Test in case where w not identically 1.
