@@ -7,7 +7,7 @@ test_that("crm() yields same result as dfcrm::crm, but faster", {
   level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
   y <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
   mb_old <- microbenchmark(old <- dfcrm::crm(prior, target, y, level))
-  mb_new <- microbenchmark(new <- precautionary::crm(prior, target, y, level))
+  mb_new <- microbenchmark(new <- crm(prior, target, y, level, impl="Ri"))
 
   expect_equal(old$ptox, new$ptox) # TODO: Do a fuller check; consider waldo::compare()
 
