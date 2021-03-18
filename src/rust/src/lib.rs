@@ -16,6 +16,7 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 	 s: f64,
 	 b: i32) -> f64 {
     let mut v = a.powi(b) * (-0.5*a/s).exp();
+    if v.is_infinite() { return 0.0; }
     for i in 0 .. y.len() {
 	let p_i = x[i].powf(a.exp()); // 'power model' CRM
 	v = v * if y[i] == 0 { 1.0 - w[i] * p_i } else { p_i };
