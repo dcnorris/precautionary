@@ -28,17 +28,58 @@ applied_crm <- function (prior, target, tox, level,
   return(x)
 }
 
+## Copied verbatim from package:dtpcrm, to avoid package check NOTE re ':::'
+.conduct_dose_finding_cohorts <- function (next_dose, tox_counts, cohort_sizes,
+                                           prev_tox = c(), prev_dose = c(),
+                                           dose_func = applied_crm, ...)
+{
+    if (length(prev_dose) != length(prev_tox)) {
+        stop("prev_doses and prev_tox should be same length.")
+    }
+    toxes = prev_tox
+    doses = prev_dose
+    dose_recs = integer(length(tox_counts))
+    dose = next_dose
+    num_cohorts = length(tox_counts)
+    for (i in 1:num_cohorts) {
+        these_toxes = c(rep(1, tox_counts[i]), rep(0, cohort_sizes[i] -
+            tox_counts[i]))
+        toxes = c(toxes, these_toxes)
+        these_doses = rep(dose, cohort_sizes[i])
+        doses = c(doses, these_doses)
+        x = dose_func(tox = toxes, level = doses, ...)
+        if ("mtd" %in% names(x)) {
+            dose = x$mtd
+        }
+        else {
+            dose = x
+        }
+        dose_recs[i] = dose
+        if ("stop" %in% names(x)) {
+            if (x[["stop"]]) {
+                dose_recs[i:num_cohorts] = NA
+                break
+            }
+        }
+    }
+    return(dose_recs)
+}
+
 ##' Faster Dose Transition Pathways (DTP) calculation
 ##'
-##' TODO: Fill in more details.
-##' @param next_dose
-##' @param cohort_sizes
-##' @param prev_tox
-##' @param prev_dose
-##' @param dose_func
-##' @param ...
-##' @return
-##' @author Adapted by David C. Norris from original dtpcrm::calculate_dtps
+##' This function reimplements \code{dtpcrm::calculate_dtps} with algorithmic
+##' improvements that achieve signficant speedups, rendering it suitable for
+##' comprehensive enumeration of all paths of a trial.
+##' @param next_dose The root dose of the trial-path tree to be computed
+##' @param cohort_sizes An integer vector of
+##' @param prev_tox An integer vector of previous cohorts' tox counts
+##' @param prev_dose An integer vector of previous cohorts' enrollment
+##' @param dose_func An adapter function
+##' @param ... Ultimately passed to the \code{...} argument of \code{crm},
+##' and therefore useful for selecting optional implementations, e.g. via
+##' the \code{impl} parameter.
+##' @return A \code{data.frame} listing trial pathways
+##' @author Adapted by David C. Norris from original \code{dtpcrm::calculate_dtps}
 calculate_dtps <- function (next_dose, cohort_sizes,
                             prev_tox = c(), prev_dose = c(),
                             dose_func = applied_crm, ...)
@@ -71,11 +112,11 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   while (i < nrow(paths)) {
     i <- i + 1
     x <- as.integer(paths[i,])
-    dose_recs <- dtpcrm:::.conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
-                                                        prev_tox = prev_tox,
-                                                        prev_dose = prev_dose,
-                                                        dose_func = dose_func,
-                                                        ...)
+    dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
+                                               prev_tox = prev_tox,
+                                               prev_dose = prev_dose,
+                                               dose_func = dose_func,
+                                               ...)
     dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: interleaves x, dose_recs
     ## Here is the point where I might recognize an early-termination case,
     ## and propagate it forward (LOCF-like) through the current degeneracy.
@@ -101,19 +142,22 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   return(dtps)
 }
 
-##' An infinitely faster version of a function from 'dtpcrm' v0.1.1
+##' A supremely faster version of a function from 'dtpcrm' v0.1.1
 ##'
 ##' Originally, the sampling in stats::rnorm() (see inline comments in code)
 ##' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
 ##' doesn't even show up! More importantly, the consumption is now dominated
 ##' by (at 75%) by the objective function 'f' in integrate().
-##' @param x
-##' @param tox_lim
-##' @param prob_cert
-##' @param dose
-##' @param suppress_dose
+##' @param x A object of class \code{mtd}
+##' @param tox_lim Scalar upper threshold on estimated toxicity rate
+##' @param prob_cert Confidence level for threshold exceedance
+##' @param dose Integer scalar, the dose being considered
+##' @param suppress_dose Logical; if TRUE the MTD is set to \code{NA} when
+##' trial stop is recommended.
 ##' @return
+##' The \code{mtd} object x, with stop decision annotated
 ##' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
+##' @importFrom stats pnorm
 stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
                                               suppress_dose = TRUE) {
   post_beta_mean = x$estimate
@@ -181,7 +225,7 @@ dtp <- function(C=4) {
     if(y$stop){
       x <- y
     } else {
-      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+      x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
     }
   }
 
