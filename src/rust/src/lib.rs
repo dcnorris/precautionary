@@ -8,7 +8,7 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 	 w: &[f64],
 	 s: f64,
 	 b: i32) -> f64 {
-    let mut v = a.powi(b) * (-0.5*a/s).exp();
+    let mut v = a.powi(b) * (-0.5*(a/s).powi(2)).exp();
     if v.is_infinite() { return 0.0; }
     for i in 0 .. y.len() {
 	let p_i = x[i].powf(a.exp()); // 'power model' CRM
