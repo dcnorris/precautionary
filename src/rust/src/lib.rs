@@ -1,13 +1,6 @@
 use extendr_api::prelude::*;
 use peroxide::numerical::integral::*;
 
-/// Return string `"Adios, C!"` to R.
-/// @export
-#[extendr]
-fn adios() -> &'static str {
-    "Adios, C!"
-}
-
 #[inline(always)]
 fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 	 x: &[f64],
@@ -25,6 +18,9 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 }
 
 /// Integrate one of the power-model moments
+///
+/// @inheritParams rcrmh
+/// @param b Integer in {0,1,2} telling which moment of posterior to compute
 /// @export
 #[extendr]
 fn icrm(x: &[f64],
@@ -54,23 +50,28 @@ fn rcrmh_(a: &[f64],
     v.collect_robj()
 }
 
-/// A Rust implementation of the dfcrm::crmh posterior, which I hope will prove
-/// faster to integrate() than my tuned-up (2x) reimplementation of Ken Cheung's
-/// R code from package 'dfcrm'.
+/// Rust implementation of \code{dfcrm::crmh*} integrands
+///
+/// @param a Numeric vector of evaluation points
+/// @param x Numeric vector of dose-wise prior probabilities of toxicity
+/// @param y Integer vector of patient-wise 0/1 toxicity indicators
+/// @param w Patient-wise weights (used for TITE CRM)
+/// @param s Scalar scale factor
+/// @describeIn rcrmh Posterior for 1-parameter empiric (aka 'power') model
 /// @export
 #[extendr]
 fn rcrmh(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
     rcrmh_(a, x, y, w, s, 0)
 }
 
-/// Posterior times x
+/// @describeIn rcrmh Integrand for 1st moment of empiric posterior
 /// @export
 #[extendr]
 fn rcrmht(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
     rcrmh_(a, x, y, w, s, 1)
 }
 
-/// Posterior times x^2
+/// @describeIn rcrmh Integrand for 2nd moment of empiric posterior
 /// @export
 #[extendr]
 fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
@@ -82,7 +83,6 @@ fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod precautionary;
-    fn adios;
     fn icrm;
     fn rcrmh;
     fn rcrmht;

@@ -8,25 +8,29 @@
 #' @useDynLib precautionary, .registration = TRUE
 NULL
 
-#' Return string `"Adios, C!"` to R.
-#' @export
-adios <- function() .Call(wrap__adios)
-
 #' Integrate one of the power-model moments
+#'
+#' @inheritParams rcrmh
+#' @param b Integer in {0,1,2} telling which moment of posterior to compute
 #' @export
 icrm <- function(x, y, w, s, b) .Call(wrap__icrm, x, y, w, s, b)
 
-#' A Rust implementation of the dfcrm::crmh posterior, which I hope will prove
-#' faster to integrate() than my tuned-up (2x) reimplementation of Ken Cheung's
-#' R code from package 'dfcrm'.
+#' Rust implementation of \code{dfcrm::crmh*} integrands
+#'
+#' @param a Numeric vector of evaluation points
+#' @param x Numeric vector of dose-wise prior probabilities of toxicity
+#' @param y Integer vector of patient-wise 0/1 toxicity indicators
+#' @param w Patient-wise weights (used for TITE CRM)
+#' @param s Scalar scale factor
+#' @describeIn rcrmh Posterior for 1-parameter empiric (aka 'power') model
 #' @export
 rcrmh <- function(a, x, y, w, s) .Call(wrap__rcrmh, a, x, y, w, s)
 
-#' Posterior times x
+#' @describeIn rcrmh Integrand for 1st moment of empiric posterior
 #' @export
 rcrmht <- function(a, x, y, w, s) .Call(wrap__rcrmht, a, x, y, w, s)
 
-#' Posterior times x^2
+#' @describeIn rcrmh Integrand for 2nd moment of empiric posterior
 #' @export
 rcrmht2 <- function(a, x, y, w, s) .Call(wrap__rcrmht2, a, x, y, w, s)
 
