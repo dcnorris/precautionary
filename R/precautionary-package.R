@@ -73,7 +73,21 @@ NULL
 
 #' Plan
 #'
+#' @section Fast CRM:
+#' * Analyze numeric stability of CRM implementations
+#' * Implement logistic model
+#' * Implement TITE CRM
+#'
+#' @section Fast DTP:
+#' * Rprof the new DTP calculation
+#' * Rprof-targeted tuning
+#' * Parallelize DTP (R workers)
+#' * Native Rust DTP
+#'
 #' @section Document:
+#' * Use @describeIn to merge Rust moments in same help page
+#' * Add examples to the documented Rust functions?
+#' * Use fast DTP (not cached) in VIOLA vignette
 #' * Add a vignette applying DTP to mTPI and BOIN
 #'
 #' @section Refactor:
