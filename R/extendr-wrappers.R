@@ -8,8 +8,11 @@
 #' @useDynLib precautionary, .registration = TRUE
 NULL
 
-#' Integrate one of the power-model moments
+#' Rust quadrature for moments of the empiric model posterior
 #'
+#' To match the QAGI routine used by R's \code{integrate(f, lower = -Inf, upper = Inf)},
+#' we employ here the same $x = (1-t)/t$ transformation, and 15-point Gauss-Kronrod quadrature
+#' used in QUADPACK.
 #' @inheritParams rcrmh
 #' @param b Integer in {0,1,2} telling which moment of posterior to compute
 #' @export

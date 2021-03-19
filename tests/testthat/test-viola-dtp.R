@@ -34,7 +34,7 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
                               no_skip_esc = TRUE,
                               no_skip_deesc = FALSE,
                               global_coherent_esc = TRUE,
-                              impl = "Ri"
+                              impl = "rusti"
                               )
   row.names(viola.dtp) <- as.character(row.names(viola.dtp))
   ## Compare vs cached (17-minute) computation. Because the cached original used
