@@ -11,8 +11,10 @@ NULL
 #' Rust quadrature for moments of the empiric model posterior
 #'
 #' To match the QAGI routine used by R's \code{integrate(f, lower = -Inf, upper = Inf)},
-#' we employ here the same $x = (1-t)/t$ transformation, and 15-point Gauss-Kronrod quadrature
+#' the same $x = (1-t)/t$ transformation used in QUADPACK's QAGI routine is employed here,
+#' albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
 #' used in QUADPACK.
+#' @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
 #' @inheritParams rcrmh
 #' @param b Integer in {0,1,2} telling which moment of posterior to compute
 #' @export

@@ -20,8 +20,10 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 /// Rust quadrature for moments of the empiric model posterior
 ///
 /// To match the QAGI routine used by R's \code{integrate(f, lower = -Inf, upper = Inf)},
-/// we employ here the same $x = (1-t)/t$ transformation, and 15-point Gauss-Kronrod quadrature
+/// the same $x = (1-t)/t$ transformation used in QUADPACK's QAGI routine is employed here,
+/// albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
 /// used in QUADPACK.
+/// @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
 /// @inheritParams rcrmh
 /// @param b Integer in {0,1,2} telling which moment of posterior to compute
 /// @export
@@ -37,7 +39,7 @@ fn icrm(x: &[f64],
 	let fa  = crmh_(& a,x,y,w,s,b); // we integrate twice the even part of f
 	let f_a = crmh_(&-a,x,y,w,s,b); // (i.e., f(a)+f(-a) over the right half
 	(fa + f_a)*da
-    }, (0.0, 1.0), Integral::G7K15(0.000001)) // Integral::G25K51(0.0000001))
+    }, (0.0, 1.0), Integral::G15K31(1e-10)) // Integral::G25K51(0.0000001))
 }
 
 
