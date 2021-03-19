@@ -7,3 +7,4 @@
 ^vignettes/DTP-vs-Korn94.*
 ^exec/prolog/.*
 ^exec/T[5-9].tab
+^tests/*.R
