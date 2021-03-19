@@ -44,6 +44,7 @@ NeedsCompilation: no
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
+    'crm-numerics.R'
     'crm.R'
     'data.R'
     'dtp.R'
