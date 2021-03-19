@@ -74,7 +74,7 @@ NULL
 #' Plan
 #'
 #' @section Fast CRM:
-#' * Analyze numeric stability of CRM implementations
+#' * Drop Ri implementation (adds complexity w/o benefit!)
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
@@ -83,10 +83,12 @@ NULL
 #' * Rprof-targeted tuning
 #' * Parallelize DTP (R workers)
 #' * Native Rust DTP
+#' * Are there opportunities to run crm *incrementally*?
+#'   - Could Rust take over role of .conduct_dose_finding_cohorts
+#'   - Any speedup from allowing cohort n>1?
 #'
 #' @section Document:
-#' * Use @describeIn to merge Rust moments in same help page
-#' * Add examples to the documented Rust functions?
+#' * Add examples to the documented Rust functions
 #' * Use fast DTP (not cached) in VIOLA vignette
 #' * Add a vignette applying DTP to mTPI and BOIN
 #'
