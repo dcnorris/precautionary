@@ -8,15 +8,27 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
   s <- 500
 
   integrals <- list(
-    dfcrm = integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)
-  , Ri = integrate(precautionary:::crmh, -Inf, Inf, x, y, w, s)
-  , rusti = integrate(rcrmh, -Inf, Inf, x, y, w, s)
-  , rustq = icrm(x, y, w, s, 0)
+    dfcrm = c(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)$value
+             ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
+             ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
+              )
+  , Ri = c(integrate(precautionary:::crmh, -Inf, Inf, x, y, w, s)$value
+          ,integrate(precautionary:::crmht, -Inf, Inf, x, y, w, s)$value
+          ,integrate(precautionary:::crmht2, -Inf, Inf, x, y, w, s)$value
+           )
+  , rusti = c(integrate(rcrmh, -Inf, Inf, x, y, w, s)$value
+             ,integrate(rcrmht, -Inf, Inf, x, y, w, s)$value
+             ,integrate(rcrmht2, -Inf, Inf, x, y, w, s)$value
+              )
+  , rustq = c(icrm(x, y, w, s, 0)
+             ,icrm(x, y, w, s, 1)
+             ,icrm(x, y, w, s, 2)
+              )
   )
 
-  expect_equal(integrals$dfcrm[[1]], integrals$Ri[[1]])
-  expect_equal(integrals$dfcrm[[1]], integrals$rusti[[1]])
-  expect_equal(integrals$dfcrm[[1]], integrals$rustq[[1]])
+  expect_equal(integrals$dfcrm, integrals$Ri)
+  expect_equal(integrals$dfcrm, integrals$rusti)
+  expect_equal(integrals$dfcrm, integrals$rustq)
 })
 
 test_that("crm() yields same result as dfcrm::crm, but faster", {
@@ -34,6 +46,5 @@ test_that("crm() yields same result as dfcrm::crm, but faster", {
   expect_lt(summary(mb_new, unit="ms")$uq,
             summary(mb_old, unit="ms")$lq)
 
-  speedup <- mean(mb_old$time) / mean(mb_new$time)
-  message(paste0("speedup: ", format(speedup, digits=2), "x"))
+  speedup_message(mb_new, mb_old)
 })

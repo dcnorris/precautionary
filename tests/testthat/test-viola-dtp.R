@@ -23,24 +23,34 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     }
   }
 
-  viola.dtp <- calculate_dtps(next_dose = start.dose.level,
-                              cohort_sizes = rep(cohort.size,
-                                                 max.sample.size/cohort.size),
-                              dose_func = applied_crm,
-                              prior = prior.DLT,
-                              target = target.DLT,
-                              stop_func = stop_func,
-                              scale = sqrt(prior.var),
-                              no_skip_esc = TRUE,
-                              no_skip_deesc = FALSE,
-                              global_coherent_esc = TRUE,
-                              impl = "rusti"
-                              )
-  row.names(viola.dtp) <- as.character(row.names(viola.dtp))
-  ## Compare vs cached (17-minute) computation. Because the cached original used
-  ## dtpcrm's stochastic stop_for_excess_toxicity_empiric(), some irregularities
-  ## emerge in a range of indices where high toxicities make a late appearance.
-  ## I exclude these indices from the comparison, since they represent errors in
-  ## the cached version!
-  expect_identical(viola.dtp[-(4810:4870),], precautionary::viola_dtp[-(4810:4870),])
+  timings <- list()
+  dtps <- list()
+  for (impl in c('dfcrm','Ri','rusti','rustq')) {
+    timings[[impl]] <- system.time(
+      dtps[[impl]] <- calculate_dtps(next_dose = start.dose.level,
+                                     cohort_sizes = rep(cohort.size,
+                                                        max.sample.size/cohort.size),
+                                     dose_func = applied_crm,
+                                     prior = prior.DLT,
+                                     target = target.DLT,
+                                     stop_func = stop_func,
+                                     scale = sqrt(prior.var),
+                                     no_skip_esc = TRUE,
+                                     no_skip_deesc = FALSE,
+                                     global_coherent_esc = TRUE,
+                                     impl = impl)
+    )
+  }
+
+  with(timings, {
+    speedup_message(Ri, dfcrm)
+    speedup_message(rusti, dfcrm)
+    speedup_message(rustq, dfcrm)
+  })
+
+  with(dtps, {
+    expect_equal(dfcrm, Ri)
+    expect_equal(dfcrm, rusti)
+    expect_equal(rusti, rustq)
+  })
 })

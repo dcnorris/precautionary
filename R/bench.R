@@ -22,3 +22,18 @@ benchtab <- function(expr, ...) {
   perf$evals.per.sec <- sapply(mb, function(.) mean(1e9/.$time))
   perf
 }
+
+## Make reporting of speedups simple and uniform
+speedup_message <- function(fast, slow,
+                            prefix = paste(substitute(fast), "vs", substitute(slow)),
+                            digits = 2) {
+  speedup <-
+    if (is(fast,'microbenchmark')) {
+      mean(slow$time) / mean(fast$time)
+    } else if (is(fast,'proc.time')) {
+      slow$user.self / fast$user.self
+    } else { # unwise to assume?
+      slow[1] / fast[1]
+    }
+  message(prefix, " speedup: ", format(speedup, digits = digits), "x")
+}
