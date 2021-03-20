@@ -73,9 +73,13 @@ NULL
 
 #' Plan
 #'
+#' @section Packaging Overrides:
+#' * Manage namespaces for overrides
+#'
+#' @section Correct CRM:
+#' * Understand the 'scale' factor and ensure I use it properly
+#'
 #' @section Fast CRM:
-#' * Drop Ri implementation (adds complexity w/o benefit!)
-#' * Rename Rust implementation to names from package:dfcrm
 #' * Document Rust integrands a bit better
 #' * Document Rust quadrature as 'experimental'
 #'   - perhaps don't even export it in this next release?
@@ -83,8 +87,6 @@ NULL
 #' * Implement TITE CRM
 #'
 #' @section Fast DTP:
-#' * Rprof the new DTP calculation
-#' * Rprof-targeted tuning
 #' * Parallelize DTP (R workers)
 #' * Drop viola_dtp cached data
 #' * Native Rust DTP

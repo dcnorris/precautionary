@@ -1,3 +1,7 @@
+library(dfcrm)
+library(dtpcrm)
+library(precautionary)
+
 ## To avoid a NOTE on package check, a dummy '...' formal argument is written.
 ## But this should not be taken as an invitation to provide actual arguments!
 bt_crms <- function(...) {
@@ -81,3 +85,122 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
   speedup_message(t_old, t_rust)
   invisible(list(old=t_old, rust=t_rust))
 })
+
+## Let's do some profiling!
+prof_viola_dtp <- function(impl="dfcrm") {
+
+  prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+  prior.var <- 0.75
+
+  stop_func <- function(x) {
+    y <- stop_for_excess_toxicity_empiric(x,
+                                          tox_lim = 0.3,
+                                          prob_cert = 0.72,
+                                          dose = 1)
+    if(y$stop){
+      x <- y
+    } else {
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    }
+  }
+
+  Rprof()
+  calculate_dtps(next_dose = 3,
+                 cohort_sizes = rep(3, 7),
+                 dose_func = precautionary:::applied_crm,
+                 prior = prior.DLT,
+                 target = 0.2,
+                 stop_func = stop_func,
+                 scale = sqrt(prior.var),
+                 no_skip_esc = TRUE,
+                 no_skip_deesc = FALSE,
+                 global_coherent_esc = TRUE,
+                 impl = impl)
+  Rprof(NULL)
+  summaryRprof()
+}
+
+## Calculate potential savings (%) in the cascade
+## of function calls during VIOLA DTP
+find_dtp_savings <- function(impl="rusti") {
+  prof <- prof_viola_dtp(impl)$by.total
+  ##prof <- rusti$by.total
+  nuisance <- rownames(prof) %in% c('"find_dtp_savings"',
+                                    '"prof_viola_dtp"')
+  prof <- prof[!nuisance, ]
+  savings <- as.data.table(-diff(as.matrix(prof)), keep.rownames="function")
+  ## Drop irrelevant columns
+  savings[, total.time := NULL]
+  savings[, self.time := NULL]
+  savings[, self.pct := NULL]
+  savings <- savings[1:10,]
+  savings
+}
+
+## Maybe I'd be better off summarizing self.time across impls?
+compare_dtp_effort <- function() {
+  dfcrm <- as.data.table(dfcrm$by.self, keep.rownames="routine")[,c('routine','self.time')]
+  rusti <- as.data.table(rusti$by.self, keep.rownames="routine")[,c('routine','self.time')]
+  rustq <- as.data.table(rustq$by.self, keep.rownames="routine")[,c('routine','self.time')]
+  setnames(dfcrm, "self.time", "dfcrm")
+  setnames(rusti, "self.time", "rusti")
+  setnames(rustq, "self.time", "rustq")
+  merged <- merge(dfcrm, rusti, by="routine", all=TRUE)
+  merged <- merge(merged, rustq, by="routine", all=TRUE)
+  merged$routine <- gsub("\"", "", merged$routine, fixed=TRUE)
+  ## Calculate a margin row at top
+  totals <- colSums(merged[,-1], na.rm=TRUE)
+  merged <- rbind(merged[1,], merged)
+  merged[1, routine := "Total"]
+  merged[1, names(totals)] <- as.list(totals)
+  merged[, worst := pmax(dfcrm, rusti, rustq, na.rm=TRUE)]
+  merged <- merged[order(-worst),]
+  merged[, worst := NULL]
+  merged
+}
+
+## From this effort comparison, I gather a few conclusions:
+## (a) Conversion of objective function 'f' in integrate(f...)
+##     accounts for the vast majority of the speedup.
+## (b) Together f+.External+integrate=3.00 in rusti, nearly
+##     cancelling out its .Call advantage of 11.12-7.38=3.74
+##     relative to rustq.
+## (c) rustq's further 1.04 advantage on <Anonymous> then
+##     puts it in the lead, which it never loses to rusti's
+##     miscellaneous accumulated R-related costs.
+## (d) Given how the costs are spread out, no remaining routine
+##     will reward effort invested in performance tuning.
+## (e) Given how close rustq is to rusti, there seems to be
+##     little reason to export it at this time.
+##
+##                              routine dfcrm rusti rustq
+##  1:                            Total 56.68 20.16 17.38
+##  2:                                f 43.64  0.56    NA
+##  3:                            .Call    NA  7.38 11.12
+##  4:                        .External  1.78  1.16    NA
+##  5:                        integrate  1.20  1.28    NA
+##  6:                      <Anonymous>  1.20  1.12  0.08
+##  7:                              crm  0.20  1.10  0.70
+##  8:                       dfcrm::crm  0.78    NA    NA
+##  9:                        dose_func  0.42  0.52  0.58
+## 10: stop_for_excess_toxicity_empiric  0.44  0.30  0.18
+## 11:                               [[  0.42  0.36  0.16
+## 12:                     [.data.frame  0.40  0.36  0.24
+## 13:                       match.call  0.36  0.38    NA
+## 14:                        stopifnot  0.38  0.32    NA
+## 15:       stop_for_consensus_reached  0.12  0.26  0.36
+## 16:                                $  0.34  0.18  0.24
+## 17:    .conduct_dose_finding_cohorts  0.22  0.26  0.34
+## 18:                            order  0.30  0.22  0.14
+## 19:                    [[.data.frame  0.26  0.26  0.22
+## 20:                             %in%  0.12  0.24  0.18
+## 21:                              all  0.14  0.24  0.18
+## 22:                   calculate_dtps  0.24  0.14  0.16
+## 23:                         sys.call  0.18  0.24  0.08
+## 24:                      utils::tail  0.10  0.20  0.08
+## 25:                           length  0.18  0.02  0.08
+## 26:                        match.arg  0.08  0.18  0.08
+## 27:                     sys.function  0.12  0.18  0.04
+## 28:                            pnorm  0.10  0.04  0.16
+## 29:                        stop_func  0.14  0.16  0.04
+## 30:                           vapply  0.16  0.14  0.04

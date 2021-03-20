@@ -80,6 +80,7 @@ applied_crm <- function (prior, target, tox, level,
 ##' the \code{impl} parameter.
 ##' @return A \code{data.frame} listing trial pathways
 ##' @author Adapted by David C. Norris from original \code{dtpcrm::calculate_dtps}
+##' @export
 calculate_dtps <- function (next_dose, cohort_sizes,
                             prev_tox = c(), prev_dose = c(),
                             dose_func = applied_crm, ...)
@@ -158,6 +159,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
 ##' The \code{mtd} object x, with stop decision annotated
 ##' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
 ##' @importFrom stats pnorm
+##' @export
 stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
                                               suppress_dose = TRUE) {
   post_beta_mean = x$estimate
