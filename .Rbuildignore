@@ -8,3 +8,4 @@
 ^exec/prolog/.*
 ^exec/T[5-9].tab
 ^tests/manual
+^Rprof.out

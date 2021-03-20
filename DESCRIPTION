@@ -17,9 +17,11 @@ Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: 
     magrittr,
     escalation,
+    dfcrm,
+    dtpcrm,
     data.table,
     R (>= 3.5.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, dtpcrm
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark
 Suggests: 
     rmarkdown,
     bookdown,

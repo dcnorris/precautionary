@@ -29,6 +29,7 @@ applied_crm <- function (prior, target, tox, level,
 }
 
 ## Copied verbatim from package:dtpcrm, to avoid package check NOTE re ':::'
+## TODO: Consider opportunities for speedups here, including parallelization.
 .conduct_dose_finding_cohorts <- function (next_dose, tox_counts, cohort_sizes,
                                            prev_tox = c(), prev_dose = c(),
                                            dose_func = applied_crm, ...)
@@ -208,6 +209,7 @@ stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
 ## The C=4 default yields 4^4 = 256 paths, with 1.54x degeneracy.
 ## This offers up plenty of speedup opportunity, while completing
 ## in just 10s even with the original dtpcrm version.
+##' @importFrom dtpcrm stop_for_consensus_reached
 dtp <- function(C=4) {
   ## VIOLA trial set-up
   number.doses <- 7
@@ -227,7 +229,7 @@ dtp <- function(C=4) {
     if(y$stop){
       x <- y
     } else {
-      x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
     }
   }
 
