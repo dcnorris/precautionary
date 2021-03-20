@@ -7,5 +7,4 @@
 ^vignettes/DTP-vs-Korn94.*
 ^exec/prolog/.*
 ^exec/T[5-9].tab
-^tests/pending.R
-^tests/crm-numerics.R
+^tests/manual
