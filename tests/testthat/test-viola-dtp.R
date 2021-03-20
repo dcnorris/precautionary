@@ -25,7 +25,7 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
 
   timings <- list()
   dtps <- list()
-  for (impl in c('dfcrm','rusti','rustq')) {
+  for (impl in c('dfcrm','rusti')) {
     timings[[impl]] <- system.time(
       dtps[[impl]] <- calculate_dtps(next_dose = start.dose.level,
                                      cohort_sizes = rep(cohort.size,
@@ -44,11 +44,9 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
 
   with(timings, {
     speedup_message(rusti, dfcrm)
-    speedup_message(rustq, dfcrm)
   })
 
   with(dtps, {
     expect_equal(dfcrm, rusti)
-    expect_equal(rusti, rustq)
   })
 })

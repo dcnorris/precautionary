@@ -8,18 +8,6 @@
 #' @useDynLib precautionary, .registration = TRUE
 NULL
 
-#' Rust quadrature for moments of the empiric model posterior
-#'
-#' To match the QAGI routine used by R's \code{integrate(f, lower = -Inf, upper = Inf)},
-#' the same $x = (1-t)/t$ transformation used in QUADPACK's QAGI routine is employed here,
-#' albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
-#' used in QUADPACK.
-#' @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
-#' @inheritParams crmh
-#' @param b Integer in {0,1,2} telling which moment of posterior to compute
-#' @export
-icrm <- function(x, y, w, s, b) .Call(wrap__icrm, x, y, w, s, b)
-
 #' Rust implementation of \code{dfcrm::crmh*} integrands
 #'
 #' @param a Numeric vector of evaluation points

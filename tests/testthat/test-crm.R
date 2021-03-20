@@ -16,14 +16,9 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , rustq = c(icrm(x, y, w, s, 0)
-             ,icrm(x, y, w, s, 1)
-             ,icrm(x, y, w, s, 2)
-              )
   )
 
   expect_equal(integrals$dfcrm, integrals$rusti)
-  expect_equal(integrals$dfcrm, integrals$rustq)
 })
 
 test_that("crm() yields same result as dfcrm::crm, but faster", {

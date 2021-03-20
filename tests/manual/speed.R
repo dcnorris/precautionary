@@ -11,7 +11,7 @@ bt_crms <- function(...) {
                tox=c(0L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L),
                level=c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
                ...),
-           impl=c("dfcrm","rusti","rustq"))
+           impl=c("dfcrm","rusti"))
 }
 
 ## This set-up is verbatim from the example in dfcrm::crm
@@ -19,7 +19,7 @@ comp_crms <- function(prior = c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70),
                       target = 0.2,
                       level = c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
                       y = c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0),
-                      impl = c("dfcrm","rusti","rustq")) {
+                      impl = c("dfcrm","rusti")) {
   ## TODO: Get this working:
   ##comp_impl(quote(crm(prior, target, y, level, impl)), impl=impl)
   ## Until the above works, do it 'by hand':
@@ -141,19 +141,16 @@ find_dtp_savings <- function(impl="rusti") {
 compare_dtp_effort <- function() {
   dfcrm <- as.data.table(dfcrm$by.self, keep.rownames="routine")[,c('routine','self.time')]
   rusti <- as.data.table(rusti$by.self, keep.rownames="routine")[,c('routine','self.time')]
-  rustq <- as.data.table(rustq$by.self, keep.rownames="routine")[,c('routine','self.time')]
   setnames(dfcrm, "self.time", "dfcrm")
   setnames(rusti, "self.time", "rusti")
-  setnames(rustq, "self.time", "rustq")
   merged <- merge(dfcrm, rusti, by="routine", all=TRUE)
-  merged <- merge(merged, rustq, by="routine", all=TRUE)
   merged$routine <- gsub("\"", "", merged$routine, fixed=TRUE)
   ## Calculate a margin row at top
   totals <- colSums(merged[,-1], na.rm=TRUE)
   merged <- rbind(merged[1,], merged)
   merged[1, routine := "Total"]
   merged[1, names(totals)] <- as.list(totals)
-  merged[, worst := pmax(dfcrm, rusti, rustq, na.rm=TRUE)]
+  merged[, worst := pmax(dfcrm, rusti, na.rm=TRUE)]
   merged <- merged[order(-worst),]
   merged[, worst := NULL]
   merged

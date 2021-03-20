@@ -81,8 +81,6 @@ NULL
 #'
 #' @section Fast CRM:
 #' * Document Rust integrands a bit better
-#' * Document Rust quadrature as 'experimental'
-#'   - perhaps don't even export it in this next release?
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'

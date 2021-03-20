@@ -1,5 +1,4 @@
 use extendr_api::prelude::*;
-use peroxide::numerical::integral::*;
 
 #[inline(always)]
 fn crmh_(a: &f64, // NB: *NOT* vectorized on a
@@ -16,32 +15,6 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
     }
     v
 }
-
-/// Rust quadrature for moments of the empiric model posterior
-///
-/// To match the QAGI routine used by R's \code{integrate(f, lower = -Inf, upper = Inf)},
-/// the same $x = (1-t)/t$ transformation used in QUADPACK's QAGI routine is employed here,
-/// albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
-/// used in QUADPACK.
-/// @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
-/// @inheritParams crmh
-/// @param b Integer in {0,1,2} telling which moment of posterior to compute
-/// @export
-#[extendr]
-fn icrm(x: &[f64],
-	y: &[i32],
-	w: &[f64],
-	s: f64,
-	b: i32) -> f64 {
-    integrate(|u| {
-	let a = (1.0 - &u)/&u; // map u in (0,1) --> a in (0,Inf)
-	let da = &u.powi(-2); // ..with change of measure
-	let fa  = crmh_(& a,x,y,w,s,b); // we integrate twice the even part of f
-	let f_a = crmh_(&-a,x,y,w,s,b); // (i.e., f(a)+f(-a) over the right half
-	(fa + f_a)*da
-    }, (0.0, 1.0), Integral::G15K31(1e-10)) // Integral::G25K51(0.0000001))
-}
-
 
 // Vectorize crmh1 on the 'a' parameter
 fn crmh_v(a: &[f64],
@@ -89,7 +62,6 @@ fn crmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod precautionary;
-    fn icrm;
     fn crmh;
     fn crmht;
     fn crmht2;

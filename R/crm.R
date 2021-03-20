@@ -15,7 +15,6 @@
 ## for various performance tuning experiments. The 'impl' arg allows selection
 ## of various alternative implementations:
 ## - rusti substitutes integrands [crmh,crmht,crmht2] written in Rust
-## - rustq uses Rust for the quadrature itself
 ##' @importFrom stats integrate optimize qnorm
 ##' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
 ##' @importFrom dfcrm lcrm lcrmlgt
@@ -23,7 +22,7 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
                 scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE,
-                impl=c("rusti","rustq","dfcrm")) { # implementation switch
+                impl=c("rusti","dfcrm")) { # implementation switch
   if (impl[1]=="dfcrm")
     return(dfcrm::crm(prior, target, tox, level, n, dosename, include, pid, conf.level,
                       method, model, intcpt, scale, model.detail, patient.detail, var.est))
@@ -54,12 +53,7 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
                if (var.est)
                  e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
              },
-             rustq = {
-               den <- icrm(x1p, y1p, w1p, scale, 0)
-               est <- icrm(x1p, y1p, w1p, scale, 1) / den
-               if (var.est)
-                 e2 <- icrm(x1p, y1p, w1p, scale, 2) / den
-             })
+             stop(paste("impl =", impl, "not recognized.")))
     }
     else { stop(" unknown estimation method"); }
     ptox <- prior^exp(est)
