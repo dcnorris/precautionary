@@ -75,6 +75,10 @@ NULL
 #'
 #' @section Fast CRM:
 #' * Drop Ri implementation (adds complexity w/o benefit!)
+#' * Rename Rust implementation to names from package:dfcrm
+#' * Document Rust integrands a bit better
+#' * Document Rust quadrature as 'experimental'
+#'   - perhaps don't even export it in this next release?
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
@@ -82,6 +86,7 @@ NULL
 #' * Rprof the new DTP calculation
 #' * Rprof-targeted tuning
 #' * Parallelize DTP (R workers)
+#' * Drop viola_dtp cached data
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts

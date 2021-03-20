@@ -12,13 +12,9 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , Ri = c(integrate(precautionary:::crmh, -Inf, Inf, x, y, w, s)$value
-          ,integrate(precautionary:::crmht, -Inf, Inf, x, y, w, s)$value
-          ,integrate(precautionary:::crmht2, -Inf, Inf, x, y, w, s)$value
-           )
-  , rusti = c(integrate(rcrmh, -Inf, Inf, x, y, w, s)$value
-             ,integrate(rcrmht, -Inf, Inf, x, y, w, s)$value
-             ,integrate(rcrmht2, -Inf, Inf, x, y, w, s)$value
+  , rusti = c(integrate(crmh, -Inf, Inf, x, y, w, s)$value
+             ,integrate(crmht, -Inf, Inf, x, y, w, s)$value
+             ,integrate(crmht2, -Inf, Inf, x, y, w, s)$value
               )
   , rustq = c(icrm(x, y, w, s, 0)
              ,icrm(x, y, w, s, 1)
@@ -26,7 +22,6 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
               )
   )
 
-  expect_equal(integrals$dfcrm, integrals$Ri)
   expect_equal(integrals$dfcrm, integrals$rusti)
   expect_equal(integrals$dfcrm, integrals$rustq)
 })
@@ -38,9 +33,10 @@ test_that("crm() yields same result as dfcrm::crm, but faster", {
   level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
   y <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
   mb_old <- microbenchmark(old <- dfcrm::crm(prior, target, y, level))
-  mb_new <- microbenchmark(new <- crm(prior, target, y, level, impl="Ri"))
+  mb_new <- microbenchmark(new <- crm(prior, target, y, level, impl="rusti"))
 
-  expect_equal(old$ptox, new$ptox) # TODO: Do a fuller check; consider waldo::compare()
+  ###expect_equal(old$ptox, new$ptox) # TODO: Do a fuller check; consider waldo::compare()
+  expect_equal(old, new) # TODO: Do a fuller check; consider waldo::compare()
 
   ## Expect DEFINITE improvement, with new UPPER quartile < old LOWER:
   expect_lt(summary(mb_new, unit="ms")$uq,

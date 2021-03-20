@@ -11,38 +11,6 @@
 ## s: A (scalar) scale factor
 
 
-## These 3 functions reimplement the 'empiric' (aka 'power') model
-## integrands, achieving a 2x speedup for crm(impl="Ri") vs "dfcrm".
-crmh = compiler::cmpfun(function(a,x,y,w,s) {  ## posterior
-  exp_a_ <- exp(a)
-  v = exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
-  for (i in which(y==0)) {
-    v = v * (1 - w[i] * x[i]^exp_a_)
-  }
-  v[!is.finite(v)] <- 0.0
-  return(v)
-})
-
-crmht = compiler::cmpfun(function(a,x,y,w,s) { ## posterior times x
-  exp_a_ <- exp(a)
-  v = a * exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
-  for (i in which(y==0)) {
-    v = v * (1 - w[i] * x[i]^exp_a_)
-  }
-  v[!is.finite(v)] <- 0.0
-  return(v)
-})
-
-crmht2 = compiler::cmpfun(function(a,x,y,w,s) { ## posterior times x^2
-  exp_a_ <- exp(a)
-  v = a^2 * exp( -0.5*(a/s)^2  +  sum(log(x[y==1])) * exp_a_ )
-  for (i in which(y==0)) {
-    v = v * (1 - w[i] * x[i]^exp_a_)
-  }
-  v[!is.finite(v)] <- 0.0
-  return(v)
-})
-
 ## To avoid a NOTE on package check, a dummy '...' formal argument is written.
 ## But this should not be taken as an invitation to provide actual arguments!
 bt_crms <- function(...) {
@@ -52,7 +20,7 @@ bt_crms <- function(...) {
                tox=c(0L, 0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L),
                level=c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
                ...),
-           impl=c("dfcrm","Ri","rusti","rustq"))
+           impl=c("dfcrm","rusti","rustq"))
 }
 
 ## This set-up is verbatim from the example in dfcrm::crm
@@ -60,7 +28,7 @@ comp_crms <- function(prior = c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70),
                       target = 0.2,
                       level = c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2),
                       y = c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0),
-                      impl = c("dfcrm","Ri","rusti","rustq")) {
+                      impl = c("dfcrm","rusti","rustq")) {
   ## TODO: Get this working:
   ##comp_impl(quote(crm(prior, target, y, level, impl)), impl=impl)
   ## Until the above works, do it 'by hand':
@@ -111,94 +79,35 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
                       y=c(0L,0L,1L,0L,0L,1L),
                       w=rep(1,length(y)), s=500) {
   old <- dfcrm::crmh(a,x,y,w,s)
-  new <- crmh(a,x,y,w,s)
-  rust <- rcrmh(a,x,y,w,s)
-  delta <- max(abs(new - old))
-  if (delta > .Machine$double.eps)
-    cat("crmh |new - old| =", delta, "\n")
+  rust <- crmh(a,x,y,w,s)
   deltar <- max(abs(rust - old))
   if (deltar > .Machine$double.eps)
     cat("crmh |rust - old| =", deltar, "\n")
   ##
   old <- dfcrm::crmht(a,x,y,w,s)
-  new <- crmht(a,x,y,w,s)
-  rust <- rcrmht(a,x,y,w,s)
-  tdelta <- max(abs(new - old))
-  if (tdelta > .Machine$double.eps)
-    cat("crmht |new - old| =", tdelta, "\n")
+  rust <- crmht(a,x,y,w,s)
   tdeltar <- max(abs(rust - old))
   if (tdeltar > .Machine$double.eps)
     cat("crmht |rust - old| =", tdeltar, "\n")
   ##
   old <- dfcrm::crmht(a,x,y,w,s)
-  new <- crmht(a,x,y,w,s)
-  rust <- rcrmht(a,x,y,w,s)
-  t2delta <- max(abs(new - old))
-  if (t2delta > .Machine$double.eps)
-    cat("crmht2 |new - old| =", t2delta, "\n")
+  rust <- crmht(a,x,y,w,s)
   t2deltar <- max(abs(rust - old))
   if (t2deltar > .Machine$double.eps)
     cat("crmht2 |rust - old| =", t2deltar, "\n")
 
   t_old <- microbenchmark::microbenchmark(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s))
-  t_new <- microbenchmark::microbenchmark(integrate(crmh, -Inf, Inf, x, y, w, s))
-  t_rust <- microbenchmark::microbenchmark(integrate(rcrmh, -Inf, Inf, x, y, w, s))
+  t_rust <- microbenchmark::microbenchmark(integrate(crmh, -Inf, Inf, x, y, w, s))
   print(t_old)
-  print(t_new)
   print(t_rust)
-  speedup <- median(t_old$time)/median(t_new$time)
-  message("speedup (new): ", round(speedup,2), "x")
-  speedupr <- median(t_old$time)/median(t_rust$time)
-  message("speedup (rust): ", round(speedupr,2), "x")
-  invisible(list(old=t_old, new=t_new, rust=t_rust))
+  speedup_message(t_old, t_rust)
+  invisible(list(old=t_old, rust=t_rust))
 })
-
-## TODO: Re-implement and test these objective functions:
-
-## crmhlgt <- function(a,x,y,w,s,alp0)  { ## posterior logit model
-##   v = exp(-a^2/2/s^2)
-##   for (i in 1:length(x)) {
-##  	PSI <- (1 + exp(-alp0-exp(a)*x[i]))^{-1}
-##     	v <- v * (PSI^y[i]) * (1-w[i]*PSI)^(1-y[i])
-##   }
-##   return(v)
-## }
-## crmhtlgt <- function(a,x,y,w,s,alp0)  { ## posterior times x
-##   v = a * exp(-a^2/2/s^2)
-##   for (i in 1:length(x)) {
-##  	PSI <- (1 + exp(-alp0-exp(a)*x[i]))^{-1}
-##     	v <- v * (PSI^y[i]) * (1-w[i]*PSI)^(1-y[i])
-##   }
-##   return(v)
-## }
-## crmht2lgt <- function(a,x,y,w,s,alp0)  { ## posterior times x^2
-##   v = a^2 * exp(-a^2/2/s^2)
-##   for (i in 1:length(x)) {
-##  	PSI <- (1 + exp(-alp0-exp(a)*x[i]))^{-1}
-##     	v <- v * (PSI^y[i]) * (1-w[i]*PSI)^(1-y[i])
-##   }
-##   return(v)
-## }
-## lcrm <- function(a,x,y,w) { #loglikelihood of empiric function
-##   v <- 0
-##   for (i in 1:length(x))
-##     v <- v + y[i]*log(x[i])*exp(a) + (1-y[i])*log(1 - w[i]*x[i]^exp(a))
-##   return(v)
-## }
-## lcrmlgt <- function(a,x,y,w,alp0) { #loglikelihood of logit function
-##   v <- 0
-##   for (i in 1:length(x)) {
-##     PSI <- (1 + exp(-alp0-exp(a)*x[i]))^{-1}
-##     v <- v + y[i]*log(PSI) + (1-y[i])*log(1-w[i]*PSI)
-##   }
-##   return(v)
-## }
 
 ## This local (as-yet, unexported) copy of dfcrm:crm serves as a test harness
 ## for various performance tuning experiments. The 'impl' arg allows selection
 ## of various alternative implementations:
-## - Ri uses the improved (roughly 2x speedup) R integrands [crmh,crmht,crmh2] above
-## - rusti substitutes integrands [rcrmh,rcrmht,rcrmht2] written in Rust
+## - rusti substitutes integrands [crmh,crmht,crmht2] written in Rust
 ## - rustq uses Rust for the quadrature itself
 ##' @importFrom stats integrate optimize qnorm
 ##' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
@@ -207,7 +116,7 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
                 scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE,
-                impl=c("Ri","rusti","rustq","dfcrm")) { # implementation switch
+                impl=c("rusti","rustq","dfcrm")) { # implementation switch
   if (impl[1]=="dfcrm")
     return(dfcrm::crm(prior, target, tox, level, n, dosename, include, pid, conf.level,
                       method, model, intcpt, scale, model.detail, patient.detail, var.est))
@@ -232,17 +141,11 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
     }
     else if (method=="bayes") {
       switch(impl[1],
-             Ri = {
+             rusti = {
                den <- integrate(crmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
                est <- integrate(crmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
                if (var.est)
                  e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
-             },
-             rusti = {
-               den <- integrate(rcrmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
-               est <- integrate(rcrmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
-               if (var.est)
-                 e2 <- integrate(rcrmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
              },
              rustq = {
                den <- icrm(x1p, y1p, w1p, scale, 0)

@@ -15,7 +15,7 @@ NULL
 #' albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
 #' used in QUADPACK.
 #' @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
-#' @inheritParams rcrmh
+#' @inheritParams crmh
 #' @param b Integer in {0,1,2} telling which moment of posterior to compute
 #' @export
 icrm <- function(x, y, w, s, b) .Call(wrap__icrm, x, y, w, s, b)
@@ -27,15 +27,15 @@ icrm <- function(x, y, w, s, b) .Call(wrap__icrm, x, y, w, s, b)
 #' @param y Integer vector of patient-wise 0/1 toxicity indicators
 #' @param w Patient-wise weights (used for TITE CRM)
 #' @param s Scalar scale factor
-#' @describeIn rcrmh Posterior for 1-parameter empiric (aka 'power') model
+#' @describeIn crmh Posterior for 1-parameter empiric (aka 'power') model
 #' @export
-rcrmh <- function(a, x, y, w, s) .Call(wrap__rcrmh, a, x, y, w, s)
+crmh <- function(a, x, y, w, s) .Call(wrap__crmh, a, x, y, w, s)
 
-#' @describeIn rcrmh Integrand for 1st moment of empiric posterior
+#' @describeIn crmh Integrand for 1st moment of empiric posterior
 #' @export
-rcrmht <- function(a, x, y, w, s) .Call(wrap__rcrmht, a, x, y, w, s)
+crmht <- function(a, x, y, w, s) .Call(wrap__crmht, a, x, y, w, s)
 
-#' @describeIn rcrmh Integrand for 2nd moment of empiric posterior
+#' @describeIn crmh Integrand for 2nd moment of empiric posterior
 #' @export
-rcrmht2 <- function(a, x, y, w, s) .Call(wrap__rcrmht2, a, x, y, w, s)
+crmht2 <- function(a, x, y, w, s) .Call(wrap__crmht2, a, x, y, w, s)
 

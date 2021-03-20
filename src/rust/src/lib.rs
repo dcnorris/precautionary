@@ -24,7 +24,7 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
 /// albeit with 31-point Gauss-Kronrod quadrature instead of the 15-point GK reportedly
 /// used in QUADPACK.
 /// @seealso \url{https://en.wikipedia.org/wiki/QUADPACK#General-purpose_routines}
-/// @inheritParams rcrmh
+/// @inheritParams crmh
 /// @param b Integer in {0,1,2} telling which moment of posterior to compute
 /// @export
 #[extendr]
@@ -44,7 +44,7 @@ fn icrm(x: &[f64],
 
 
 // Vectorize crmh1 on the 'a' parameter
-fn rcrmh_(a: &[f64],
+fn crmh_v(a: &[f64],
 	  x: &[f64],
 	  y: &[i32],
 	  w: &[f64],
@@ -63,25 +63,25 @@ fn rcrmh_(a: &[f64],
 /// @param y Integer vector of patient-wise 0/1 toxicity indicators
 /// @param w Patient-wise weights (used for TITE CRM)
 /// @param s Scalar scale factor
-/// @describeIn rcrmh Posterior for 1-parameter empiric (aka 'power') model
+/// @describeIn crmh Posterior for 1-parameter empiric (aka 'power') model
 /// @export
 #[extendr]
-fn rcrmh(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
-    rcrmh_(a, x, y, w, s, 0)
+fn crmh(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
+    crmh_v(a, x, y, w, s, 0)
 }
 
-/// @describeIn rcrmh Integrand for 1st moment of empiric posterior
+/// @describeIn crmh Integrand for 1st moment of empiric posterior
 /// @export
 #[extendr]
-fn rcrmht(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
-    rcrmh_(a, x, y, w, s, 1)
+fn crmht(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
+    crmh_v(a, x, y, w, s, 1)
 }
 
-/// @describeIn rcrmh Integrand for 2nd moment of empiric posterior
+/// @describeIn crmh Integrand for 2nd moment of empiric posterior
 /// @export
 #[extendr]
-fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
-    rcrmh_(a, x, y, w, s, 2)
+fn crmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
+    crmh_v(a, x, y, w, s, 2)
 }
 
 // Macro to generate exports.
@@ -90,7 +90,7 @@ fn rcrmht2(a: &[f64], x: &[f64], y: &[i32], w: &[f64], s: f64) -> Robj {
 extendr_module! {
     mod precautionary;
     fn icrm;
-    fn rcrmh;
-    fn rcrmht;
-    fn rcrmht2;
+    fn crmh;
+    fn crmht;
+    fn crmht2;
 }
