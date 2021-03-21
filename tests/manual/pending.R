@@ -17,7 +17,7 @@ viola_prior <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
 test_viola_dtp <- function(scale = sqrt(0.75)) {
   timings <- list()
   outputs <- list()
-  for (impl in c('dfcrm','Ri','rusti')) {
+  for (impl in c('dfcrm','rusti')) {
     timings[[impl]] <- system.time(
       outputs[[impl]] <- calculate_dtps(next_dose = 3,
                                         cohort_sizes = rep(3, 7),
@@ -34,52 +34,6 @@ test_viola_dtp <- function(scale = sqrt(0.75)) {
   }
   lookhere <<- list(timings = timings, outputs = outputs)
   return(timings)
-  viola.dtp <- list(
-    dfcrm = calculate_dtps(next_dose = 3,
-                           cohort_sizes = rep(3, 7),
-                           dose_func = applied_crm,
-                           prior = viola_prior,
-                           target = 0.2,
-                           stop_func = viola_stop_func,
-                           scale = scale,
-                           no_skip_esc = TRUE,
-                           no_skip_deesc = FALSE,
-                           global_coherent_esc = TRUE,
-                           impl = "dfcrm"
-                           )
-  , Ri    = calculate_dtps(next_dose = 3,
-                           cohort_sizes = rep(3, 7),
-                           dose_func = applied_crm,
-                           prior = viola_prior,
-                           target = 0.2,
-                           stop_func = viola_stop_func,
-                           scale = scale,
-                           no_skip_esc = TRUE,
-                           no_skip_deesc = FALSE,
-                           global_coherent_esc = TRUE,
-                           impl = "Ri"
-                           )
-  , rusti = calculate_dtps(next_dose = 3,
-                           cohort_sizes = rep(3, 7),
-                           dose_func = applied_crm,
-                           prior = viola_prior,
-                           target = 0.2,
-                           stop_func = viola_stop_func,
-                           scale = scale,
-                           no_skip_esc = TRUE,
-                           no_skip_deesc = FALSE,
-                           global_coherent_esc = TRUE,
-                           impl = "rusti"
-                           )
-    )
-  ## Compare vs cached (17-minute) computation. Because the cached original used
-  ## dtpcrm's stochastic stop_for_excess_toxicity_empiric(), some irregularities
-  ## emerge in a range of indices where high toxicities make a late appearance.
-  ## I exclude these indices from the comparison, since they represent errors in
-  ## the cached version!
-  rust_viola_dtp <<- viola.dtp
-  ##testthat::expect_identical(viola.dtp[-(4810:4870),], precautionary::viola_dtp[-(4810:4870),])
-
 }
 
 

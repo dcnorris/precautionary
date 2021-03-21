@@ -1,7 +1,28 @@
 ## Exploring speedups for DTP computations
 
-## Identical to dtpcrm::applied_crm, except that it uses
-## the more performant, package-local version of crm().
+##' Execute CRM
+##'
+##' Run a CRM trial under given design options for dose-escalation decisions.
+##' This is identical to \code{\link{dtpcrm::applied_crm}}, except that it uses
+##' \code{precautionary}'s more performant version of \code{crm}.
+##'
+##' @param prior A vector of prior estimates of toxicity probabilties
+##' for the dose levels
+##' @param target The target DLT rate
+##' @param tox A patient-wise vector of 0/1 toxicity indicators
+##' @param level A patient-wise vector of dose-level assignments
+##' @param no_skip_esc If FALSE, the method will not enforce no skipping
+##' of doses in escalation. Default is TRUE.
+##' @param no_skip_deesc If FALSE, the method will not enforce no skipping
+##' of doses in de-escalation. Default is TRUE.
+##' @param global_coherent_esc If FALSE, the method will not enforce global
+##' coherent escalation, that is, escalation if the overall rate of toxicity
+##' seen at the current dose level is above the target rate. Default is TRUE.
+##' @param stop_func An optional argument to provide a function which will
+##' utilised alongside the CRM to determine if the trial should be stopped.
+##' @param ... Additional parameters passed to \code{precautionary::crm}
+##' @return An object of class \code{'mtd'}, as per \CRANpkg{dfcrm}
+##' @export
 applied_crm <- function (prior, target, tox, level,
                          no_skip_esc = TRUE, no_skip_deesc = TRUE,
                          global_coherent_esc = TRUE, stop_func = NULL, ...)
@@ -71,6 +92,16 @@ applied_crm <- function (prior, target, tox, level,
 ##' This function reimplements \code{dtpcrm::calculate_dtps} with algorithmic
 ##' improvements that achieve signficant speedups, rendering it suitable for
 ##' comprehensive enumeration of all paths of a trial.
+##'
+##' @details
+##' For consistency with the DTP representation of \code{dtpcrm}, we adopt
+##' a tabular enumeration of all Early stopping (whether due to excessive toxicity or 'consensus') prunes
+##' the tree of necessary computations, giving rise to degeneracies in the
+##' tabular of Because degeneracies readily arise due to
+##'
+##' Coarse-grained parallelism is also provided automatically, via \code{mclapply}.
+##' The
+##'
 ##' @param next_dose The root dose of the trial-path tree to be computed
 ##' @param cohort_sizes An integer vector of
 ##' @param prev_tox An integer vector of previous cohorts' tox counts
