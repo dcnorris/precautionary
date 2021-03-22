@@ -86,8 +86,8 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
   invisible(list(old=t_old, rust=t_rust))
 })
 
-## Let's do some profiling!
-prof_viola_dtp <- function(impl="dfcrm") {
+## The defaults select the old routine, but skip.degenerate=TRUE engages other options
+prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1) {
 
   prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
   prior.var <- 0.75
@@ -104,21 +104,87 @@ prof_viola_dtp <- function(impl="dfcrm") {
     }
   }
 
-  Rprof()
-  calculate_dtps(next_dose = 3,
-                 cohort_sizes = rep(3, 7),
-                 dose_func = precautionary:::applied_crm,
-                 prior = prior.DLT,
-                 target = 0.2,
-                 stop_func = stop_func,
-                 scale = sqrt(prior.var),
-                 no_skip_esc = TRUE,
-                 no_skip_deesc = FALSE,
-                 global_coherent_esc = TRUE,
-                 impl = impl)
-  Rprof(NULL)
-  summaryRprof()
+  system.time(
+    if (!skip.degenerate) { # original dfcrm, but with my pnorm fix
+      dtpcrm::calculate_dtps(next_dose = 3,
+                             cohort_sizes = rep(3, 7),
+                             prior = prior.DLT,
+                             target = 0.2,
+                             stop_func = stop_func,
+                             scale = sqrt(prior.var),
+                             no_skip_esc = TRUE,
+                             no_skip_deesc = FALSE,
+                             global_coherent_esc = TRUE)
+    } else {
+      calculate_dtps(next_dose = 3,
+                     cohort_sizes = rep(3, 7),
+                     prior = prior.DLT,
+                     target = 0.2,
+                     stop_func = stop_func,
+                     scale = sqrt(prior.var),
+                     no_skip_esc = TRUE,
+                     no_skip_deesc = FALSE,
+                     global_coherent_esc = TRUE,
+                     impl = impl,
+                     mc.cores = mc.cores)
+    }
+  )
+
 }
+
+viola_speedup_report <- function() {
+  elapsed <- numeric(7)
+  names(elapsed) <- c("pnorm", "skipt", "rusti", "core2", "core4", "core6", "core8")
+
+  cat("Running original dtpcrm::calculate_dtps, but with rnorm->pnorm fix...\n")
+  pnorm <- prof_viola_dtp(skip=FALSE)
+  elapsed['pnorm'] <- pnorm['elapsed']
+  cat("Elapsed: ", elapsed['pnorm'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
+  skipt <- prof_viola_dtp(skip=TRUE)
+  elapsed['skipt'] <- skipt['elapsed']
+  cat("Elapsed: ", elapsed['skipt'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'rusti') ...\n")
+  rusti <- prof_viola_dtp(skip=TRUE, impl="rusti")
+  elapsed['rusti'] <- rusti['elapsed']
+  cat("Elapsed: ", elapsed['rusti'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 2) ...\n")
+  core2 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=2)
+  elapsed['core2'] <- core2['elapsed']
+  cat("Elapsed: ", elapsed['core2'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 4) ...\n")
+  core4 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=4)
+  elapsed['core4'] <- core4['elapsed']
+  cat("Elapsed: ", elapsed['core4'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 6) ...\n")
+  core6 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=6)
+  elapsed['core6'] <- core6['elapsed']
+  cat("Elapsed: ", elapsed['core6'], "\n")
+
+  cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 8) ...\n")
+  core8 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=8)
+  elapsed['core8'] <- core8['elapsed']
+  cat("Elapsed: ", elapsed['core8'], "\n")
+
+  elapsed
+}
+
+## Very interesting results!
+##   pnorm   skipt   rusti   core2   core4   core6   core8
+## 110.639  82.744  40.744  14.284  10.842   8.531   8.468
+##
+## The skipping of a 71% degeneracy apparently yields only 110/83 = 1.3x speedup,
+## not the 1/0.29 = 3.5x speedup expected from avoiding 71% of the effort!
+## The transition from mc.cores=1 to mc.cores=2 however provides a strong hint
+## as to the cause of this. The 40./14.3 = 2.85x improvement here (where at most
+## 2x would be anticipated) shows that the chunking (suppressed in case mc.cores=1)
+## itself accomplishes a great deal. This suggests that my earlier 'rolling' while
+## loop may have been the more efficient way to traverse the degeneracy, after all!
 
 ## Calculate potential savings (%) in the cascade
 ## of function calls during VIOLA DTP
