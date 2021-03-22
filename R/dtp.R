@@ -163,37 +163,37 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   ##                                                           ...)))
   ## dtps <- t(dtps)
   scan_dtps <- function(paths) {
-  dtps <- matrix(99, nrow = nrow(paths),
-                 ncol = 1+2*ncol(paths)) # preallocate the matrix
-  skipped <- 0 # to keep track of efficiencies
-  i <- 0
-  while (i < nrow(paths)) {
-    i <- i + 1
-    x <- as.integer(paths[i,])
-    dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
-                                               prev_tox = prev_tox,
-                                               prev_dose = prev_dose,
-                                               dose_func = dose_func,
-                                               ...)
-    dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
-    ## Here is the point where I might recognize an early-termination case,
-    ## and propagate it forward (LOCF-like) through the current degeneracy.
-    ## The early termination is recognizable from the index of the first NA
-    ## value in dose_recs.
-    etcoh <- match(NA, dose_recs)
-    if (is.na(etcoh))
-      next
-    ## Upon reaching this point, we have detected an early termination (ET).
-    while (i < nrow(paths) &&
-           all(as.integer(paths[i+1, 1:etcoh]) == x[1:etcoh])) {
-             dtps[i+1,] <- dtps[i,]
-             i <- i + 1
-             skipped <- skipped + 1
-           }
-  }
-  message("[impl=",list(...)$impl,"] skipped ", skipped,"/",nrow(paths), " degenerate paths ",
-          paste0("(", round(100*skipped/nrow(paths)), "%)"))
-  dtps <- data.frame(dtps)
+    dtps <- matrix(99, nrow = nrow(paths),
+                   ncol = 1+2*ncol(paths)) # preallocate the matrix
+    skipped <- 0 # to keep track of efficiencies
+    i <- 0
+    while (i < nrow(paths)) {
+      i <- i + 1
+      x <- as.integer(paths[i,])
+      dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
+                                                 prev_tox = prev_tox,
+                                                 prev_dose = prev_dose,
+                                                 dose_func = dose_func,
+                                                 ...)
+      dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
+      ## Here is the point where I might recognize an early-termination case,
+      ## and propagate it forward (LOCF-like) through the current degeneracy.
+      ## The early termination is recognizable from the index of the first NA
+      ## value in dose_recs.
+      etcoh <- match(NA, dose_recs)
+      if (is.na(etcoh))
+        next
+      ## Upon reaching this point, we have detected an early termination (ET).
+      while (i < nrow(paths) &&
+             all(as.integer(paths[i+1, 1:etcoh]) == x[1:etcoh])) {
+               dtps[i+1,] <- dtps[i,]
+               i <- i + 1
+               skipped <- skipped + 1
+             }
+    }
+    message("[impl=",list(...)$impl,"] skipped ", skipped,"/",nrow(paths), " degenerate paths ",
+            paste0("(", round(100*skipped/nrow(paths)), "%)"))
+    dtps <- data.frame(dtps)
   }
   chunks <- if (mc.cores == 1)
               list(paths) # singleton 'chunk'
