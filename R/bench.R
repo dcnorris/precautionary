@@ -30,8 +30,8 @@ speedup_message <- function(fast, slow,
   speedup <-
     if (is(fast,'microbenchmark')) {
       mean(slow$time) / mean(fast$time)
-    } else if (is(fast,'proc.time')) {
-      slow$user.self / fast$user.self
+    } else if (is(fast,'proc_time')) {
+      slow['elapsed'] / fast['elapsed'] # unlike 'self.time', 'elapsed' is valid for mclapply
     } else { # unwise to assume?
       slow[1] / fast[1]
     }
