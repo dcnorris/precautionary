@@ -2,11 +2,8 @@ library(dtpcrm)
 
 test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
   ## VIOLA trial set-up
-  number.doses <- 7
   start.dose.level <- 3
-  max.sample.size <- 21
   target.DLT <- 0.2
-  cohort.size <- 3
 
   prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
   prior.var <- 0.75
@@ -23,30 +20,39 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     }
   }
 
-  timings <- list()
-  dtps <- list()
-  for (impl in c('dfcrm','rusti')) {
-    timings[[impl]] <- system.time(
-      dtps[[impl]] <- calculate_dtps(next_dose = start.dose.level,
-                                     cohort_sizes = rep(cohort.size,
-                                                        max.sample.size/cohort.size),
-                                     dose_func = applied_crm,
-                                     prior = prior.DLT,
-                                     target = target.DLT,
-                                     stop_func = stop_func,
-                                     scale = sqrt(prior.var),
-                                     no_skip_esc = TRUE,
-                                     no_skip_deesc = FALSE,
-                                     global_coherent_esc = TRUE,
-                                     impl = impl)
+  timings <- list(
+    dtpcrm = system.time(
+      old <- dtpcrm::calculate_dtps(
+                       next_dose = start.dose.level,
+                       cohort_sizes = rep(3, 7),
+                       prior = prior.DLT,
+                       target = target.DLT,
+                       stop_func = stop_func,
+                       scale = sqrt(prior.var),
+                       no_skip_esc = TRUE,
+                       no_skip_deesc = FALSE,
+                       global_coherent_esc = TRUE)
     )
-  }
+  , newdtp = system.time(
+      new <- calculate_dtps(
+        next_dose = start.dose.level,
+        cohort_sizes = rep(3, 7),
+        dose_func = applied_crm, # i.e., precautionary::applied_crm
+        prior = prior.DLT,
+        target = target.DLT,
+        stop_func = stop_func,
+        scale = sqrt(prior.var),
+        no_skip_esc = TRUE,
+        no_skip_deesc = FALSE,
+        global_coherent_esc = TRUE,
+        impl = 'rusti')
+    )
+  )
 
   with(timings, {
-    speedup_message(rusti, dfcrm)
+    speedup_message(newdtp, dtpcrm)
   })
 
-  with(dtps, {
-    expect_equal(dfcrm, rusti)
-  })
+  rownames(new) <- rownames(old) # don't compare rownames
+  expect_equal(old, new)
 })

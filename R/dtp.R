@@ -3,7 +3,7 @@
 ##' Execute CRM
 ##'
 ##' Run a CRM trial under given design options for dose-escalation decisions.
-##' This is identical to \code{\link{dtpcrm::applied_crm}}, except that it uses
+##' This is identical to \code{\link[dtpcrm]{applied_crm}}, except that it uses
 ##' \code{precautionary}'s more performant version of \code{crm}.
 ##'
 ##' @param prior A vector of prior estimates of toxicity probabilties
@@ -94,13 +94,34 @@ applied_crm <- function (prior, target, tox, level,
 ##' comprehensive enumeration of all paths of a trial.
 ##'
 ##' @details
-##' For consistency with the DTP representation of \code{dtpcrm}, we adopt
-##' a tabular enumeration of all Early stopping (whether due to excessive toxicity or 'consensus') prunes
-##' the tree of necessary computations, giving rise to degeneracies in the
-##' tabular of Because degeneracies readily arise due to
+##' In accord with the chosen DTP representation of \pkg{dtpcrm}, we pursue a tabular
+##' listing of all paths, inclusive of the degeneracies engendered by early stopping.
+##' During the DTP computation, however, these degeneracies are recognized and
+##' handled efficiently here, avoiding costly reduplication of CRM model runs.
+##' The algorithm employs a top-to-bottom scan of the path table, in the
+##' lexicographic order of increasing toxicity counts which naturally arises from
+##' \code{expand.grid} used here and in the original \code{dtpcrm::calculate_dtps}.
+##' The early termination of any path in the course of this scan may then be carried
+##' forward through all subsequent paths which share the same dose assignments and
+##' toxicity counts. (In the case of early termination specifically for excessive
+##' toxicity, this principle could also be applied 'one level up', possibly capturing
+##' some additional efficiencies. But implementing this safely would require greater
+##' control over early-termination semantics than \pkg{dtpcrm} --- or indeed perhaps
+##' any R package --- seems capable of achieving. So it is not implemented here.)
 ##'
-##' Coarse-grained parallelism is also provided automatically, via \code{mclapply}.
-##' The
+##' The substantial efficiencies (3.5x speedup of VIOLA trial DTP) obtained in the
+##' above-described scan can readily be preserved under coarse-grained parallelization,
+##' on account of the DTP table's recursive structure. If the first cohort has size \deqn{n},
+##' then it gives rise to \deqn{n+1} independent chunks within which the scan logic applies,
+##' one chunk for each possible toxicity count in \deqn{\{0,1,...,n\}}.
+##' This principle applies also at the level of the next cohort, and so on. With each
+##' such refinement to the chunking of the DTP calculation, some re-work is introduced
+##' where the same early termination even is discovered independently in several chunks.
+##' But given that few reasonable trial designs will have a substantial number of paths
+##' terminating before 6 patients, this re-work should be irrelevant to parallelization
+##' of DTP computation over the 4--16 threads of a single modern, multicore processor.
+##' (Consider that chunking just the first 2 cohorts of a trial with cohort size 3
+##' yields $(3+1)^2=16$ chunks.)
 ##'
 ##' @param next_dose The root dose of the trial-path tree to be computed
 ##' @param cohort_sizes An integer vector of
@@ -110,12 +131,15 @@ applied_crm <- function (prior, target, tox, level,
 ##' @param ... Ultimately passed to the \code{...} argument of \code{crm},
 ##' and therefore useful for selecting optional implementations, e.g. via
 ##' the \code{impl} parameter.
+##' @param mc.cores Number of logical cores available for parallelizing DTP computation.
+##' Setting this to 1 prevents chunking of the computation.
 ##' @return A \code{data.frame} listing trial pathways
 ##' @author Adapted by David C. Norris from original \code{dtpcrm::calculate_dtps}
 ##' @export
 calculate_dtps <- function (next_dose, cohort_sizes,
                             prev_tox = c(), prev_dose = c(),
-                            dose_func = applied_crm, ...)
+                            dose_func = applied_crm, ...,
+                            mc.cores = getOption("mc.cores", 2L))
 {
   num_cohorts <- length(cohort_sizes)
   feasible_tox_counts <- lapply(cohort_sizes, function(x) 0:x)
@@ -138,6 +162,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   ##                                                           dose_func = dose_func,
   ##                                                           ...)))
   ## dtps <- t(dtps)
+  scan_dtps <- function(paths) {
   dtps <- matrix(99, nrow = nrow(paths),
                  ncol = 1+2*ncol(paths)) # preallocate the matrix
   skipped <- 0 # to keep track of efficiencies
@@ -150,7 +175,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
                                                prev_dose = prev_dose,
                                                dose_func = dose_func,
                                                ...)
-    dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: interleaves x, dose_recs
+    dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
     ## Here is the point where I might recognize an early-termination case,
     ## and propagate it forward (LOCF-like) through the current degeneracy.
     ## The early termination is recognizable from the index of the first NA
@@ -169,6 +194,13 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   message("[impl=",list(...)$impl,"] skipped ", skipped,"/",nrow(paths), " degenerate paths ",
           paste0("(", round(100*skipped/nrow(paths)), "%)"))
   dtps <- data.frame(dtps)
+  }
+  chunks <- if (mc.cores == 1)
+              list(paths) # singleton 'chunk'
+            else # TODO: Split on cols 3:1 or 4:1 in case of smaller (e.g., n=1) cohorts
+              split(paths, paths[,2:1], drop=TRUE) # note reversed order of factor columns
+  dtps <- do.call("rbind",
+                  parallel::mclapply(chunks, scan_dtps, mc.cores = mc.cores))
   colnames(dtps) <- c("D0", as.vector(rbind(paste0("T", 1:num_cohorts),
                                             paste0("D", 1:num_cohorts))))
   dtps[t(apply(is.na(dtps), 1, cumsum)) > 0] <- NA
