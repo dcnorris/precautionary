@@ -134,6 +134,37 @@ applied_crm <- function (prior, target, tox, level,
 ##' @param mc.cores Number of logical cores available for parallelizing DTP computation.
 ##' Setting this to 1 prevents chunking of the computation.
 ##' @return A \code{data.frame} listing trial pathways
+##' @examples
+##' ## VIOLA trial
+##' prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+##' prior.var <- 0.75
+##'
+##' stop_func <- function(x) {
+##'   y <- stop_for_excess_toxicity_empiric(x,
+##'                                         tox_lim = 0.3,
+##'                                         prob_cert = 0.72,
+##'                                         dose = 1)
+##'   if(y$stop){
+##'     x <- y
+##'   } else {
+##'     x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+##'   }
+##' }
+##'
+##' if (interactive()) { # don't overtax CRAN servers
+##' restore <- options(mc.cores = 1) # you can reasonably set as high as detectCores()
+##' dtps <- calculate_dtps(next_dose = 3,
+##'                        cohort_sizes = rep(3, 7),
+##'                        prior = prior.DLT,
+##'                        target = 0.2,
+##'                        stop_func = stop_func,
+##'                        scale = sqrt(prior.var),
+##'                        no_skip_esc = TRUE,
+##'                        no_skip_deesc = FALSE,
+##'                        global_coherent_esc = TRUE,
+##'                        impl = "rusti")
+##' options(mc.cores = restore)
+##' }
 ##' @author Adapted by David C. Norris from original \code{dtpcrm::calculate_dtps}
 ##' @export
 calculate_dtps <- function (next_dose, cohort_sizes,
@@ -163,11 +194,18 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   ##                                                           ...)))
   ## dtps <- t(dtps)
   scan_dtps <- function(paths) {
-    dtps <- matrix(99, nrow = nrow(paths),
-                   ncol = 1+2*ncol(paths)) # preallocate the matrix
+    ## NB: Storing the paths in columns helps vectorize handling of degeneracies.
+    dtps <- matrix(NA_integer_, ncol = nrow(paths),
+                   nrow = 1+2*ncol(paths)) # preallocate matrix work area
+    ## TODO: Given R's column-major storage order, it may help to represent
+    ##       not only 'dtps' but also 'paths' with paths on the *columns*.
+    ##       I doubt there would be any great performance increase from
+    ##       transposing 'paths' in this way, but it seems possible that
+    ##       my code here could be simplified -- and perhaps also better
+    ##       prepared for translation into Rust.
     skipped <- 0 # to keep track of efficiencies
     i <- 0
-    while (i < nrow(paths)) {
+    while (i < ncol(dtps)) {
       i <- i + 1
       x <- as.integer(paths[i,])
       dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
@@ -175,25 +213,23 @@ calculate_dtps <- function (next_dose, cohort_sizes,
                                                  prev_dose = prev_dose,
                                                  dose_func = dose_func,
                                                  ...)
-      dtps[i,] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
+      dtps[,i] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
       ## Here is the point where I might recognize an early-termination case,
       ## and propagate it forward (LOCF-like) through the current degeneracy.
       ## The early termination is recognizable from the index of the first NA
       ## value in dose_recs.
       etcoh <- match(NA, dose_recs)
-      if (is.na(etcoh))
+      if (is.na(etcoh) || etcoh==length(dose_recs))
         next
       ## Upon reaching this point, we have detected an early termination (ET).
-      while (i < nrow(paths) &&
-             all(as.integer(paths[i+1, 1:etcoh]) == x[1:etcoh])) {
-               dtps[i+1,] <- dtps[i,]
-               i <- i + 1
-               skipped <- skipped + 1
-             }
+      degen <- which(apply(t(paths[,1:etcoh]) == x[1:etcoh], 2, all))[-1]
+      dtps[,degen] <- dtps[,i] # note how contiguous column-wise paths help vectorize this
+      i <- i + length(degen)
+      skipped <- skipped + length(degen)
     }
     message("[impl=",list(...)$impl,"] skipped ", skipped,"/",nrow(paths), " degenerate paths ",
             paste0("(", round(100*skipped/nrow(paths)), "%)"))
-    dtps <- data.frame(dtps)
+    dtps <- data.frame(t(dtps))
   }
   chunks <- if (mc.cores == 1)
               list(paths) # singleton 'chunk'
