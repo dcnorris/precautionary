@@ -178,6 +178,22 @@ viola_speedup_report <- function() {
 ## 2x would be anticipated) shows that the chunking (suppressed in case mc.cores=1)
 ## itself accomplishes a great deal. This suggests that my earlier 'rolling' while
 ## loop may have been the more efficient way to traverse the degeneracy, after all!
+## ...
+## More learning...
+## A more efficient loop (with en bloc degeneracy skip) achieves this:
+##   pnorm   skipt   rusti   core2   core4   core6   core8
+## 107.239  59.965  21.064  13.445  10.223   8.081   7.945
+##
+## Now the improvement is 107/60 = 1.8x, and deeper thinking about the algorithm
+## reveals why this should not be 3.5x. The more highly degenerate paths have
+## fewer crm() calls, so the savings are not proportional to path degeneracy.
+## ...
+## Now splitting more finely (on first 3 columns) yields this:
+##   pnorm   skipt   rusti   core2   core4   core6   core8
+## 107.874  60.159  21.056  13.164   9.558   7.805   7.753
+##
+## Exactly as one might expect, the finer division helps squeeze extra value
+## out of more cores.
 
 ## Calculate potential savings (%) in the cascade
 ## of function calls during VIOLA DTP

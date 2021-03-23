@@ -218,17 +218,18 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       if (is.na(etcoh) || etcoh==length(dose_recs))
         next
       ## Upon reaching this point, we have detected an early termination (ET).
-      degen <- prod(1 + cohort_sizes[-(1:etcoh)]) - 1
+      degen <- min(prod(1 + cohort_sizes[-(1:etcoh)]) - 1,
+                   ncol(dtps) - i) # avoid overrunning bounds
       dtps[,i + (1:degen)] <- dtps[,i]
       i <- i + degen
       skipped <- skipped + degen
     }
     dtps <- data.frame(t(dtps))
   }
-  chunks <- if (mc.cores == 1)
+  chunks <- if (mc.cores == 1 || ncol(paths)<3)
               list(paths) # singleton 'chunk'
-            else # TODO: Split on cols 3:1 or 4:1 in case of smaller (e.g., n=1) cohorts
-              split(paths, paths[,2:1], drop=TRUE) # note reversed order of factor columns
+            else # TODO: Split into about mc.cores^2 chunks
+              split(paths, paths[,3:1], drop=TRUE) # note reversed order of factor columns
   dtps <- do.call("rbind",
                   parallel::mclapply(chunks, scan_dtps, mc.cores = mc.cores))
   colnames(dtps) <- c("D0", as.vector(rbind(paste0("T", 1:num_cohorts),
