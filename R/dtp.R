@@ -124,7 +124,9 @@ applied_crm <- function (prior, target, tox, level,
 ##' yields $(3+1)^2=16$ chunks.)
 ##'
 ##' @param next_dose The root dose of the trial-path tree to be computed
-##' @param cohort_sizes An integer vector of
+##' @param cohort_sizes An integer vector of cohort sizes, with length equal to
+##' the maximum number of cohorts that may be enrolled. (Thus, \code{sum(cohort_sizes)}
+##' is the trial's maximum enrollment.)
 ##' @param prev_tox An integer vector of previous cohorts' tox counts
 ##' @param prev_dose An integer vector of previous cohorts' enrollment
 ##' @param dose_func An adapter function
@@ -194,18 +196,12 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   ##                                                           ...)))
   ## dtps <- t(dtps)
   scan_dtps <- function(paths) {
-    ## NB: Storing the paths in columns helps vectorize handling of degeneracies.
+    ## NB: Storing the paths in columns improves locality of reference
     dtps <- matrix(NA_integer_, ncol = nrow(paths),
                    nrow = 1+2*ncol(paths)) # preallocate matrix work area
-    ## TODO: Given R's column-major storage order, it may help to represent
-    ##       not only 'dtps' but also 'paths' with paths on the *columns*.
-    ##       I doubt there would be any great performance increase from
-    ##       transposing 'paths' in this way, but it seems possible that
-    ##       my code here could be simplified -- and perhaps also better
-    ##       prepared for translation into Rust.
     skipped <- 0 # to keep track of efficiencies
     i <- 0
-    while (i < ncol(dtps)) {
+    while (i < nrow(paths)) {
       i <- i + 1
       x <- as.integer(paths[i,])
       dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
@@ -222,13 +218,11 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       if (is.na(etcoh) || etcoh==length(dose_recs))
         next
       ## Upon reaching this point, we have detected an early termination (ET).
-      degen <- which(apply(t(paths[,1:etcoh]) == x[1:etcoh], 2, all))[-1]
-      dtps[,degen] <- dtps[,i] # note how contiguous column-wise paths help vectorize this
-      i <- i + length(degen)
-      skipped <- skipped + length(degen)
+      degen <- prod(1 + cohort_sizes[-(1:etcoh)]) - 1
+      dtps[,i + (1:degen)] <- dtps[,i]
+      i <- i + degen
+      skipped <- skipped + degen
     }
-    message("[impl=",list(...)$impl,"] skipped ", skipped,"/",nrow(paths), " degenerate paths ",
-            paste0("(", round(100*skipped/nrow(paths)), "%)"))
     dtps <- data.frame(t(dtps))
   }
   chunks <- if (mc.cores == 1)
