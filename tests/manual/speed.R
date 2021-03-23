@@ -137,38 +137,31 @@ viola_speedup_report <- function() {
   names(elapsed) <- c("pnorm", "skipt", "rusti", "core2", "core4", "core6", "core8")
 
   cat("Running original dtpcrm::calculate_dtps, but with rnorm->pnorm fix...\n")
-  pnorm <- prof_viola_dtp(skip=FALSE)
-  elapsed['pnorm'] <- pnorm['elapsed']
+  elapsed['pnorm'] <- prof_viola_dtp(skip=FALSE)['elapsed']
   cat("Elapsed: ", elapsed['pnorm'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
-  skipt <- prof_viola_dtp(skip=TRUE)
-  elapsed['skipt'] <- skipt['elapsed']
+  elapsed['skipt'] <- prof_viola_dtp(skip=TRUE)['elapsed']
   cat("Elapsed: ", elapsed['skipt'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti') ...\n")
-  rusti <- prof_viola_dtp(skip=TRUE, impl="rusti")
-  elapsed['rusti'] <- rusti['elapsed']
+  elapsed['rusti'] <- prof_viola_dtp(skip=TRUE, impl="rusti")['elapsed']
   cat("Elapsed: ", elapsed['rusti'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 2) ...\n")
-  core2 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=2)
-  elapsed['core2'] <- core2['elapsed']
+  elapsed['core2'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=2)['elapsed']
   cat("Elapsed: ", elapsed['core2'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 4) ...\n")
-  core4 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=4)
-  elapsed['core4'] <- core4['elapsed']
+  elapsed['core4'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=4)['elapsed']
   cat("Elapsed: ", elapsed['core4'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 6) ...\n")
-  core6 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=6)
-  elapsed['core6'] <- core6['elapsed']
+  elapsed['core6'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=6)['elapsed']
   cat("Elapsed: ", elapsed['core6'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 8) ...\n")
-  core8 <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=8)
-  elapsed['core8'] <- core8['elapsed']
+  elapsed['core8'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=8)['elapsed']
   cat("Elapsed: ", elapsed['core8'], "\n")
 
   elapsed
