@@ -1,9 +1,13 @@
 use extendr_api::prelude::*;
 
+#[allow(non_snake_case)]
+
 #[inline(always)]
 fn crmh_(a: &f64, // NB: *NOT* vectorized on a
-	 x: &[f64],
-	 y: &[i32],
+	 lnX: &[f64],
+	 D: usize,
+	 Y: &[f64],
+	 notox: &[i32],
 	 w: &[f64],
 	 s: f64,
 	 b: i32) -> f64 {
@@ -34,27 +38,6 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
     // in this routine; but this computation is one that ought to be
     // bubbled upward as far as possible.
 
-    // To enable a dose-wise (rather than patent-wise) computation
-    // with the x[i]^exp_a_ values, we require a vector of unique dose
-    // levels thus far tried.
-    let mut X: Vec<f64> = x.to_vec();
-    // NB: -^ doses expressed on a prior-prob scale!
-    X.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    X.dedup();
-
-    // It also proves useful to tally dose-wise sums of toxicities:
-    let mut Y: [f64; 10] = [0.0; 10]; // Static allocation sufficient for 10 doses
-    for i in 0 .. y.len() {
-	match X.iter().position(|&p| p==x[i]) {
-	    Some(d) => {
-		if y[i]==1 {
-		    Y[d] += 1.0; // tally toxicities
-		}
-	    }
-	    None => {}
-	}
-    }
-
     if a > &709.0 { return 0.0 } // "Not gonna exp() it; wouldn't be prudent."
     let exp_a_ = a.exp();                                             // 1 exp()
 
@@ -64,8 +47,8 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
     if log_vconst > 709.0 { return 0.0; } // saves time, avoids returning Inf*0=NaN
 
     let mut log_vtox = 0.0;
-    for d in 0 .. X.len() { // TODO: Use an iterator-based expression?
-	log_vtox = log_vtox + Y[d]*X[d].ln();                         // D ln()'s [TODO: pass]
+    for d in 0 .. D { // TODO: Use an iterator-based expression?
+	log_vtox += Y[d]*lnX[d];
     }
     log_vtox = log_vtox * exp_a_; // this completes the toxic term
 
@@ -77,13 +60,12 @@ fn crmh_(a: &f64, // NB: *NOT* vectorized on a
     // The key point is that the following computation costs only
     // X.len() transcendental ops -- just 1 powf() per dose tried.
     let mut v_non = 1.0; // to build non-tox factor by straight multiplication
-    for d in 0 .. X.len() { // For each dose X[d] that was tried
-	let p_d = X[d].powf(exp_a_); // .. compute p_d = X[d]^exp_a_ JUST ONCE
-	for i in 0 .. y.len() {      // .. then scan over all patients
-	    if y[i] == 0 && x[i] == X[d] { // .. without tox, assigned to X[d]
-		v_non = v_non * (1.0 - w[i]*p_d); // .. and multiply on (1-w*p_d).
-	    }
-	}                                                             // D powf()'s
+    for d in 0 .. D { // For each dose X[d] that was tried
+	let p_d = (lnX[d]*exp_a_).exp();                              // D powf()'s
+	for i in 0 .. notox[d] {
+	    v_non *= (1.0 - 1.0*p_d) // TODO: support general case as below:
+	    //v_non *= (1.0 - w[i]*p_d)
+	}
     }
 
     let vfast = a.powi(b) * (log_vconst + log_vtox).exp() * v_non;    // 1 exp()
@@ -99,7 +81,47 @@ fn crmh_v(a: &[f64],
 	  b: i32) -> Robj {
     // TODO: Assert that x, y and w all have same length?
     // TODO: Assert that y is always in {0,1}?
-    let v = a.iter().map(|a| crmh_(a,x,y,w,s,b));
+    let mut X: Vec<f64> = x.to_vec();
+    // NB: -^ doses expressed on a prior-prob scale!
+    X.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    X.dedup();
+
+    const D: usize = 10; // for statically allocating several arrays
+
+    let mut X_: [f64; 10] = [0.0; D];
+    let mut lnX_: [f64; 10] = [0.0; D];
+    for d in 0 .. X.len() {
+	X_[d] = X[d];
+	lnX_[d] = X_[d].ln();
+    }
+
+    // It also proves useful to tally dose-wise sums of toxicities:
+    let mut Y: [f64; 10] = [0.0; 10]; // Static allocation sufficient for 10 doses
+    for i in 0 .. y.len() {
+	match X.iter().position(|&p| p==x[i]) {
+	    Some(d) => {
+		if y[i]==1 {
+		    Y[d] += 1.0; // tally toxicities
+		}
+	    }
+	    None => {}
+	}
+    }
+
+    // To speed up the no-tox factor iteration in crmh_ (also eliminating the need
+    // for passing X_ at all!), we now precompute some details of that loop.
+    // Initially, let me treat the w==1 case, where all I need is a D-vector of
+    // counts of no-tox cases.
+    let mut notox: [i32; 10] = [0; D];
+    for d in 0 .. X.len() {
+	for i in 0 .. y.len() {
+	    if y[i] == 0 && x[i] == X[d] {
+		notox[d] += 1;
+	    }
+	}
+    }
+
+    let v = a.iter().map(|a| crmh_(a,&lnX_,X.len(),&Y,&notox,w,s,b));
     v.collect_robj()
 }
 

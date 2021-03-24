@@ -202,6 +202,10 @@ viola_speedup_report <- function() {
 ## with the D X[d].ln()'s.
 ##   pnorm   skipt   rusti   core2   core4   core6   core8
 ## 106.571  57.845  20.872  12.853   9.161   7.789   7.947
+##
+## Implementing a D+1 txop routine (w==1 case) with pre-bookkeeping, I obtain:
+##   pnorm   skipt   rusti   core2   core4   core6   core8
+## 105.905  58.509  15.275  10.068   6.656   5.266   5.623
 
 
 ## Calculate potential savings (%) in the cascade
