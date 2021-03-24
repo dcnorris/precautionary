@@ -20,39 +20,21 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     }
   }
 
-  timings <- list(
-    dtpcrm = system.time(
-      old <- dtpcrm::calculate_dtps(
-                       next_dose = start.dose.level,
-                       cohort_sizes = rep(3, 7),
-                       prior = prior.DLT,
-                       target = target.DLT,
-                       stop_func = stop_func,
-                       scale = sqrt(prior.var),
-                       no_skip_esc = TRUE,
-                       no_skip_deesc = FALSE,
-                       global_coherent_esc = TRUE)
-    )
-  , newdtp = system.time(
-      new <- calculate_dtps(
-        next_dose = start.dose.level,
-        cohort_sizes = rep(3, 7),
-        dose_func = applied_crm, # i.e., precautionary::applied_crm
-        prior = prior.DLT,
-        target = target.DLT,
-        stop_func = stop_func,
-        scale = sqrt(prior.var),
-        no_skip_esc = TRUE,
-        no_skip_deesc = FALSE,
-        global_coherent_esc = TRUE,
-        impl = 'rusti')
-    )
-  )
+  new <- calculate_dtps(
+    next_dose = start.dose.level,
+    cohort_sizes = rep(3, 7),
+    dose_func = applied_crm, # i.e., precautionary::applied_crm
+    prior = prior.DLT,
+    target = target.DLT,
+    stop_func = stop_func,
+    scale = sqrt(prior.var),
+    no_skip_esc = TRUE,
+    no_skip_deesc = FALSE,
+    global_coherent_esc = TRUE,
+    impl = 'rusti')
 
-  with(timings, {
-    speedup_message(newdtp, dtpcrm)
-  })
+  data(viola_dtp) # saved for comparison
 
-  rownames(new) <- rownames(old) # don't compare rownames
-  expect_equal(old, new)
+  rownames(new) <- rownames(viola_dtp) # don't compare rownames
+  expect_equal(viola_dtp, new)
 })
