@@ -194,6 +194,15 @@ viola_speedup_report <- function() {
 ##
 ## Exactly as one might expect, the finer division helps squeeze extra value
 ## out of more cores.
+##
+## After switching to a scheme that saves N-D transcendental ops (on the screen,
+## that is -- not sure what optimizing compiler might figure out), I obtain
+## essentially unchanged results. It will be interesting to see what happens
+## as I move the bookkeeping overhead into the caller, and then do the same
+## with the D X[d].ln()'s.
+##   pnorm   skipt   rusti   core2   core4   core6   core8
+## 106.571  57.845  20.872  12.853   9.161   7.789   7.947
+
 
 ## Calculate potential savings (%) in the cascade
 ## of function calls during VIOLA DTP
