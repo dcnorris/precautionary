@@ -40,15 +40,15 @@ double_bits <- function(x) {
 }
 
 ## Initially, let's assume n=3 cohorts. (But it would be ideal to support all of n=1:3
-## in the same encoding! I probably have just enough bits to manage that!)
+## in the same encoding! I may have just enough bits to manage that!)
 encode_cohorts <- function(tox, enr) {
   ## 'tox' is expected to be an integer vector (length < 9) of dose-wise
   ##       toxicity counts, ordered from lowest to highest doses.
-  stopifnot(is.integer(tox))
+  ##stopifnot(is.integer(tox))
   stopifnot(length(tox) <= 8)
   stopifnot(all(tox %in% 0:15))
   ## 'enr' is an integer vector of cohort counts, ordered likewise
-  stopifnot(is.integer(enr))
+  ##stopifnot(is.integer(enr))
   stopifnot(length(enr) <= 8)
   stopifnot(all(enr >= 0))
   stopifnot(all(enr <= 5))
@@ -58,8 +58,10 @@ encode_cohorts <- function(tox, enr) {
   enr8[seq_along(enr)] <- enr
   tox8[seq_along(tox)] <- tox
 
-  ## Let the toxicity be represented in the MSB, and enrollment in LSBs.
-  x <- sum(tox8 * 16^(0:7)) + sum(enr8 * 6^-(1:8))
+  ## Since the base-16 encoding of tox will not spawn continuted binary fractions,
+  ## we put tox in the fractional part. This should enable recovery of more decimal
+  ## digits of representations from the decoder. (A cosmetic issue, I believe.)
+  x <- sum(enr8 * 6^(0:7)) + sum(tox8 * 16^-(1:8))
 
   check <- decode_cohorts(x)
   if (all(check$tox == tox8))
@@ -75,12 +77,12 @@ encode_cohorts <- function(tox, enr) {
 }
 
 decode_cohorts <- function(x) {
-  tox <- sapply(1:8, function(d) (x %% 16^d) %/% 16^(d-1)) # base-16 decoding
+  enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1)) # base-6 decoding
   .x <- x %% 1 # fractional part
-  enr <- sapply(-(0:7), function(d) (.x %% 6^d) %/% 6^(d-1)) # base-6 decoding
+  tox <- sapply(-(0:7), function(d) (.x %% 16^d) %/% 16^(d-1)) # base-6 decoding
 
-  list(tox = tox,
-       enr = enr)
+  list(enr = enr,
+       tox = tox)
 }
 
 ## Let me initially expect an 'xtabs' object.
