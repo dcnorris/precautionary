@@ -41,24 +41,23 @@ double_bits <- function(x) {
 
 ## Initially, let's assume n=3 cohorts. (But it would be ideal to support all of n=1:3
 ## in the same encoding! I may have just enough bits to manage that!)
-encode_cohorts <- function(tox, enr) {
-  ## 'tox' is expected to be an integer vector (length < 9) of dose-wise
-  ##       toxicity counts, ordered from lowest to highest doses.
-  ##stopifnot(is.integer(tox))
-  stopifnot(length(tox) <= 8)
-  stopifnot(all(tox %in% 0:15))
-  ## 'enr' is an integer vector of cohort counts, ordered likewise
-  ##stopifnot(is.integer(enr))
+encode_cohorts <- function(enr, tox) {
+  ## 'enr' is a vector of cohort counts, ordered dose-wise
+  stopifnot(all(enr %% 1 == 0))
   stopifnot(length(enr) <= 8)
   stopifnot(all(enr >= 0))
   stopifnot(all(enr <= 5))
+  ## 'tox' is a integer vector of dose-wise toxicity counts
+  stopifnot(all(tox %% 1 == 0))
+  stopifnot(length(tox) <= 8)
+  stopifnot(all(tox %in% 0:15))
 
   ## Extend tox & enr to length-8 vectors
   enr8 <- tox8 <- integer(8)
   enr8[seq_along(enr)] <- enr
   tox8[seq_along(tox)] <- tox
 
-  ## Since the base-16 encoding of tox will not spawn continuted binary fractions,
+  ## Since the base-16 encoding of tox will not spawn continued binary fractions,
   ## we put tox in the fractional part. This should enable recovery of more decimal
   ## digits of representations from the decoder. (A cosmetic issue, I believe.)
   x <- sum(enr8 * 6^(0:7)) + sum(tox8 * 16^-(1:8))
@@ -72,6 +71,7 @@ encode_cohorts <- function(tox, enr) {
   else
     message("tox = ", tox8, " != check$tox = ", check$tox)
 
+  stop("INCONCEIVABLE!") # This encoding 'cannot fail'
   return(NULL)
 
 }
@@ -79,11 +79,78 @@ encode_cohorts <- function(tox, enr) {
 decode_cohorts <- function(x) {
   enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1)) # base-6 decoding
   .x <- x %% 1 # fractional part
-  tox <- sapply(-(0:7), function(d) (.x %% 16^d) %/% 16^(d-1)) # base-6 decoding
+  tox <- sapply(-(0:7), function(d) (.x %% 16^d) %/% 16^(d-1)) # base-16 decoding
 
   list(enr = enr,
        tox = tox)
 }
+
+## Encode CRM obs expressed as a vector of interleaved dose assignments and tox counts.
+encode_dose_ntox <- function(dt, interleaved=TRUE) {
+  ## dt is an integer vector of (dose,ntox) pairs
+  stopifnot(all(dt %% 1 == 0, na.rm=TRUE))
+  dt <- as.integer(dt)
+  stopifnot(length(dt) %% 2 == 0) # must have even number of elements
+  stopifnot(length(dt) %/% 2 <= 8)
+
+  if (interleaved) {
+    dt <- t(matrix(dt, nrow=2))
+  } else {
+    dt <- matrix(dt, ncol=2)
+  }
+  dimnames(dt) <- list(cohort = 1:nrow(dt), c("D","T"))
+  df <- as.data.frame(dt)          # TODO: See whether sticking with matrix
+  df$D <- factor(df$D, levels=1:8) #       speeds this up when applied.
+
+  enr <- tabulate(df$D, nbins=8)
+  tox <- as.integer(xtabs(T ~ D, data=df))
+  ## list(enr = enr,
+  ##      tox = tox,
+  ##      dt  = t(dt), # 2 x 8 matrix makes for easier viewing
+  ##      enc = encode_cohorts(enr, tox))
+
+  encode_cohorts(enr, tox)
+}
+
+quadcodes <- function(dtp) {
+  qc <- matrix(nrow = nrow(dtp),
+               ncol = ncol(dtp) %/% 2)
+  for (c in seq.int(ncol(qc))) {
+    qc[,c] <- apply(dtp[,1:(2*c)], MARGIN=1, encode_dose_ntox)
+  }
+  qc
+}
+
+## I find that I get 3041 unique codes from all steps of all rows of viola_dtp.
+## Furthermore, at the console I find:
+## > path_length <- apply(viola_dtp[,paste0("D",0:6)], MARGIN=1, function(.) sum(!is.na(.)))
+## > xtabs(~path_length)
+## path_length
+##    2    3    4    5    6    7
+## 4096 2560 1792 2272 1540 4124
+##
+## The transcendental burden of quadratures along a path of length l is (l+1)*l/2.
+## > n <- xtabs(~path_length)
+## > l <- 2:7
+## > (l+1)*l/2 -> txops
+## > txops
+## [1]  3  6 10 15 21 28
+## > sum(n * txops)
+## [1] 227460
+##
+## Even if the cost of every one of the 3041 unique quadratures were 28 (the max!),
+## I would still get a 2.67 speedup!
+## > 227460 / (28*3041)
+## [1] 2.671349
+
+## TODO: Note that the quadcode can also be used to figure out the txcost!
+##       Thus, I can do this calculation in a quite refined manner.
+txcost <- function(enc) {
+  coh <- decode_cohorts(enc)
+  ## Let's revisit my former tally of txops!
+  ##
+}
+
 
 ## Let me initially expect an 'xtabs' object.
 ## I map to a double-precision float.
@@ -165,7 +232,7 @@ quadrature_hash <- function(dtp) {
   ## At this point, the index is formed from the pair cbind(rep(ve), tc)
   qh <- cbind(vex, tc)
   cat("There are ", nrow(unique(qh)), " unique quadrature indices.\n")
-
+  tc <<- tc
   qh
 }
 
