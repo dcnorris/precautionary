@@ -41,26 +41,37 @@ double_bits <- function(x) {
 
 ## Initially, let's assume n=3 cohorts. (But it would be ideal to support all of n=1:3
 ## in the same encoding! I may have just enough bits to manage that!)
+##
+## TODO: Can I write this naturally to take matrices 'enr' and 'tox',
+## and not just vectors?
 encode_cohorts <- function(enr, tox) {
-  ## 'enr' is a vector of cohort counts, ordered dose-wise
+  ## Convert special case of 1-D vectors to 1xN matrices:
+  if (!is.matrix(enr))
+    enr <- matrix(enr, nrow=1)
+  if (!is.matrix(tox))
+    tox <- matrix(tox, nrow=1)
+
+  ## Now we can assume the general case!
+
+  ## 'enr' rows are vectors of cohort counts, ordered dose-wise
   stopifnot(all(enr %% 1 == 0))
-  stopifnot(length(enr) <= 8)
+  stopifnot(ncol(enr) <= 8)
   stopifnot(all(enr >= 0))
   stopifnot(all(enr <= 5))
-  ## 'tox' is a integer vector of dose-wise toxicity counts
+  ## 'tox' rows are integer vectors of dose-wise toxicity counts
   stopifnot(all(tox %% 1 == 0))
-  stopifnot(length(tox) <= 8)
+  stopifnot(ncol(tox) <= 8)
   stopifnot(all(tox %in% 0:15))
 
-  ## Extend tox & enr to length-8 vectors
-  enr8 <- tox8 <- integer(8)
-  enr8[seq_along(enr)] <- enr
-  tox8[seq_along(tox)] <- tox
+  ## Extend tox & enr to 8 columns as needed, while casting to integer
+  enr8 <- tox8 <- matrix(integer(8*nrow(enr)), nrow=nrow(enr))
+  enr8[seq_along(enr)] <- as.integer(enr)
+  tox8[seq_along(tox)] <- as.integer(tox)
 
   ## Since the base-16 encoding of tox will not spawn continued binary fractions,
   ## we put tox in the fractional part. This should enable recovery of more decimal
   ## digits of representations from the decoder. (A cosmetic issue, I believe.)
-  x <- sum(enr8 * 6^(0:7)) + sum(tox8 * 16^-(1:8))
+  x <- as.vector( enr8 %*% 6^(0:7) + tox8 %*% 16^-(1:8) )
 
   check <- decode_cohorts(x)
   if (all(check$tox == tox8))
@@ -71,7 +82,7 @@ encode_cohorts <- function(enr, tox) {
   else
     message("tox = ", tox8, " != check$tox = ", check$tox)
 
-  stop("INCONCEIVABLE!") # This encoding 'cannot fail'
+  stop("INCONCEIVABLE!") # 'The encoding that cannot fail'
   return(NULL)
 
 }
