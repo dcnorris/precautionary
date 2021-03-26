@@ -73,9 +73,6 @@ NULL
 
 #' Plan
 #'
-#' @section Packaging Overrides:
-#' * Manage namespaces for overrides
-#'
 #' @section Correct CRM:
 #' * Understand the 'scale' factor and ensure I use it properly
 #'
@@ -85,8 +82,9 @@ NULL
 #' * Implement TITE CRM
 #'
 #' @section Fast DTP:
-#' * Parallelize DTP (R workers)
-#' * Drop viola_dtp cached data
+#' * Implement a \code{crmh_ev} that accepts f64 encoding of toxicity counts
+#' * Add an \code{impl="ruste"} to invoke this
+#' * Implement a CRM 'server' in R
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts

@@ -42,8 +42,7 @@ double_bits <- function(x) {
 ## Initially, let's assume n=3 cohorts. (But it would be ideal to support all of n=1:3
 ## in the same encoding! I may have just enough bits to manage that!)
 ##
-## TODO: Can I write this naturally to take matrices 'enr' and 'tox',
-## and not just vectors?
+## Note that this works when tox is of type 'xtabs'.
 encode_cohorts <- function(enr, tox) {
   ## Convert special case of 1-D vectors to 1xN matrices:
   if (!is.matrix(enr))

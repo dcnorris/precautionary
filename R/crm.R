@@ -36,7 +36,8 @@
 ##' @param var.est TODO: Appreciate the history and usage of this
 ##' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
 ##' Currently the \code{'rusti'} option is implemented only for the Bayes method
-##' of the empirical (\sQuote{power}) model.
+##' of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}
+##' implementaton is in the works.
 ##' @importFrom stats integrate optimize qnorm
 ##' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
 ##' @importFrom dfcrm lcrm lcrmlgt
@@ -44,7 +45,7 @@ crm <- function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
                 scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE,
-                impl=c("rusti","dfcrm")) { # implementation switch
+                impl=c("rusti","ruste","dfcrm")) { # implementation switch
   if (impl[1]=="dfcrm")
     return(dfcrm::crm(prior, target, tox, level, n, dosename, include, pid, conf.level,
                       method, model, intcpt, scale, model.detail, patient.detail, var.est))
@@ -76,6 +77,16 @@ crm <- function(prior, target, tox, level, n=length(level),
                est <- integrate(crmht,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]] / den
                if (var.est)
                  e2 <- integrate(crmht2,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]] / den
+             },
+             ruste = {
+               obs <- encode_cohorts(enr = tabulate(level, nbins=8)/3
+                                    ,tox = xtabs(tox ~ factor(level, levels=1:8))
+                                     )
+               ln_prior <- log(prior)
+               den <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,0,abs.tol=0)[[1]]
+               est <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,1,abs.tol=0)[[1]] / den
+               if (var.est)
+                 e2 <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,2,abs.tol=0)[[1]] / den
              },
              stop(paste("impl =", impl, "not recognized.")))
     }

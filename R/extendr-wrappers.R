@@ -8,6 +8,16 @@
 #' @useDynLib precautionary, .registration = TRUE
 NULL
 
+#' Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
+#'
+#' @param a Numeric vector of evaluation points
+#' @param obs: An f64-encoding of dose-wise enrollment and toxicity counts
+#' @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
+#' @param s Scalar scale factor
+#' @param b Order of moment to calculate (0, 1 or 2)
+#' @export
+crmh_ev <- function(a, obs, ln_x, s, b) .Call(wrap__crmh_ev, a, obs, ln_x, s, b)
+
 #' Rust implementation of \code{dfcrm::crmh*} integrands
 #'
 #' @param a Numeric vector of evaluation points

@@ -2,12 +2,18 @@ library(microbenchmark)
 
 test_that("Faster objective functions integrate same as 'dfcrm' originals", {
 
-  x <- c(1,2,3,2,3,3)*0.1
+  level <- c(1L,2L,3L,2L,3L,3L)
+  x <- level * 0.1 # an easy prior!
   ln_x <- log(x)
   y <- c(0L,0L,1L,0L,0L,1L)
   w <- rep(1,length(y))
   w[y == 1] <- 0.0 # encode y in wy
   s <- 500
+  obs <- encode_cohorts(enr = tabulate(level, nbins=8)
+                       ,tox = xtabs(y ~ factor(level, levels=1:8),
+                                    data=data.frame(y = y,
+                                                    level = level))
+                        )
 
   integrals <- list(
     dfcrm = c(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)$value
@@ -18,10 +24,16 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
              ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
               )
+  , ruste = c(integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 0)$value
+             ,integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 1)$value
+             ,integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 2)$value
+              )
   )
 
-  with(integrals,
-       expect_equal(dfcrm, rusti))
+  with(integrals, {
+    expect_equal(dfcrm, rusti)
+    expect_equal(dfcrm, ruste)
+  })
 
   ## Now again, but with weights not all 1.0:
   w <- runif(n = length(y), min=0.8, max=1.0)
@@ -36,6 +48,7 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
              ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
               )
+    # NB: 'ruste' inapplicable when patients not exchangeable
   )
 
   with(nontrivial_weights,
