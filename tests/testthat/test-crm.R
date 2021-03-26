@@ -3,8 +3,10 @@ library(microbenchmark)
 test_that("Faster objective functions integrate same as 'dfcrm' originals", {
 
   x <- c(1,2,3,2,3,3)*0.1
+  ln_x <- log(x)
   y <- c(0L,0L,1L,0L,0L,1L)
   w <- rep(1,length(y))
+  w[y == 1] <- 0.0 # encode y in wy
   s <- 500
 
   integrals <- list(
@@ -12,9 +14,9 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , rusti = c(integrate(crmh, -Inf, Inf, x, y, w, s)$value
-             ,integrate(crmht, -Inf, Inf, x, y, w, s)$value
-             ,integrate(crmht2, -Inf, Inf, x, y, w, s)$value
+  , rusti = c(integrate(crmh, -Inf, Inf, ln_x, w, s)$value
+             ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
+             ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
               )
   )
 
@@ -23,15 +25,16 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
 
   ## Now again, but with weights not all 1.0:
   w <- runif(n = length(y), min=0.8, max=1.0)
+  w[y==1] <- 0.0
 
   nontrivial_weights <- list(
     dfcrm = c(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , rusti = c(integrate(crmh, -Inf, Inf, x, y, w, s)$value
-             ,integrate(crmht, -Inf, Inf, x, y, w, s)$value
-             ,integrate(crmht2, -Inf, Inf, x, y, w, s)$value
+  , rusti = c(integrate(crmh, -Inf, Inf, ln_x, w, s)$value
+             ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
+             ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
               )
   )
 

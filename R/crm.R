@@ -11,14 +11,36 @@
 ## s: A (scalar) scale factor
 
 
-## This local (as-yet, unexported) copy of dfcrm:crm serves as a test harness
-## for various performance tuning experiments. The 'impl' arg allows selection
-## of various alternative implementations:
-## - rusti substitutes integrands [crmh,crmht,crmht2] written in Rust
+##' A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().
+##'
+##' for various performance tuning experiments. The 'impl' arg allows selection
+##' of various alternative implementations:
+##' - rusti substitutes integrands crmh, crmht, crmht2 written in Rust
+##' - dfcrm is the original as implemented in package \code{dfcrm}.
+##' @param prior The CRM skeleton: dose-wise prior probabilities of toxicity
+##' @param target Target toxicity rate
+##' @param tox A patient-wise vector of toxicity counts
+##' @param level A patient-wise vector of dose level assignments
+##' @param n The number of patients enrolled
+##' @param dosename Optional designators for the doses
+##' @param include Index of patients to include
+##' @param pid Vector of patient ID labels
+##' @param conf.level TODO
+##' @param method Estimation method:
+##' @param model Presently, only the \sQuote{empiric} (or \sQuote{power}) model
+##' has a Rust likelihood implementation.
+##' @param intcpt Intercept for \sQuote{logistic} model
+##' @param scale TODO: Investgate the history and intent of this scale factor
+##' @param model.detail TODO
+##' @param patient.detail TODO
+##' @param var.est TODO: Appreciate the history and usage of this
+##' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
+##' Currently the \code{'rusti'} option is implemented only for the Bayes method
+##' of the empirical (\sQuote{power}) model.
 ##' @importFrom stats integrate optimize qnorm
 ##' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
 ##' @importFrom dfcrm lcrm lcrmlgt
-crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
+crm <- function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,
                 scale=sqrt(1.34), model.detail=TRUE, patient.detail=TRUE, var.est=TRUE,
@@ -36,22 +58,24 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
   y1p <- tox[include]
   y1p <- as.integer(y1p) # Rust methods require this
   w1p <- rep(1,length(include))
+  w1p[y1p == 1] <- 0; # encode y in w1p
   if (model=="empiric") {
     dosescaled <- prior
 
     x1p <- prior[level[include]]
+    ln_x1p <- log(x1p) # Rust integrands {crmh,crmht,crmht2} take a log-skeleton to spare txops
     if (method=="mle") {
       if (sum(y1p)==0 | sum(y1p)==length(y1p)) stop(" mle does not exist!")
       est <- optimize(lcrm,c(-10,10),x1p,y1p,w1p,tol=0.0001,maximum=TRUE)$max
-      if (var.est) { e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,500,abs.tol=0)[[1]] / integrate(crmh,-Inf,Inf,x1p,y1p,w1p,500,abs.tol=0)[[1]]; }
+      if (var.est) { e2 <- integrate(crmht2,-Inf,Inf,ln_x1p,w1p,500,abs.tol=0)[[1]] / integrate(crmh,-Inf,Inf,x1p,y1p,w1p,500,abs.tol=0)[[1]]; }
     }
     else if (method=="bayes") {
       switch(impl[1],
              rusti = {
-               den <- integrate(crmh,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]]
-               est <- integrate(crmht,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+               den <- integrate(crmh,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]]
+               est <- integrate(crmht,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]] / den
                if (var.est)
-                 e2 <- integrate(crmht2,-Inf,Inf,x1p,y1p,w1p,scale,abs.tol=0)[[1]] / den
+                 e2 <- integrate(crmht2,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]] / den
              },
              stop(paste("impl =", impl, "not recognized.")))
     }
@@ -109,5 +133,5 @@ crm <- compiler::cmpfun(function(prior, target, tox, level, n=length(level),
               patient.detail=patient.detail,tite=FALSE,dosescaled=dosescaled,var.est=var.est)
   class(foo) <- "mtd"
   foo
-})
+}
 

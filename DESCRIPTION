@@ -48,6 +48,7 @@ Collate:
     'bench.R'
     'crm.R'
     'data.R'
+    'degen.R'
     'dtp.R'
     'enhance.R'
     'exact.R'

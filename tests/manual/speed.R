@@ -132,17 +132,21 @@ prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1) {
 
 }
 
-viola_speedup_report <- function() {
+viola_speedup_report <- function(full=FALSE) {
   elapsed <- numeric(7)
   names(elapsed) <- c("pnorm", "skipt", "rusti", "core2", "core4", "core6", "core8")
 
-  cat("Running original dtpcrm::calculate_dtps, but with rnorm->pnorm fix...\n")
-  elapsed['pnorm'] <- prof_viola_dtp(skip=FALSE)['elapsed']
-  cat("Elapsed: ", elapsed['pnorm'], "\n")
+  if (full) {
+    cat("Running original dtpcrm::calculate_dtps, but with rnorm->pnorm fix...\n")
+    elapsed['pnorm'] <- prof_viola_dtp(skip=FALSE)['elapsed']
+    cat("Elapsed: ", elapsed['pnorm'], "\n")
 
-  cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
-  elapsed['skipt'] <- prof_viola_dtp(skip=TRUE)['elapsed']
-  cat("Elapsed: ", elapsed['skipt'], "\n")
+    cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
+    elapsed['skipt'] <- prof_viola_dtp(skip=TRUE)['elapsed']
+    cat("Elapsed: ", elapsed['skipt'], "\n")
+  } else {
+    elapsed[c('pnorm','skipt')] <- NA
+  }
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti') ...\n")
   elapsed['rusti'] <- prof_viola_dtp(skip=TRUE, impl="rusti")['elapsed']

@@ -11,19 +11,19 @@ NULL
 #' Rust implementation of \code{dfcrm::crmh*} integrands
 #'
 #' @param a Numeric vector of evaluation points
-#' @param x Numeric vector of dose-wise prior probabilities of toxicity
-#' @param y Integer vector of patient-wise 0/1 toxicity indicators
-#' @param w Patient-wise weights (used for TITE CRM)
+#' @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
+#' @param w Patient-wise weights (used for TITE CRM), also encoding toxicity
+#' by \code{w[i] == 0.0}.
 #' @param s Scalar scale factor
 #' @describeIn crmh Posterior for 1-parameter empiric (aka 'power') model
 #' @export
-crmh <- function(a, x, y, w, s) .Call(wrap__crmh, a, x, y, w, s)
+crmh <- function(a, ln_x, w, s) .Call(wrap__crmh, a, ln_x, w, s)
 
 #' @describeIn crmh Integrand for 1st moment of empiric posterior
 #' @export
-crmht <- function(a, x, y, w, s) .Call(wrap__crmht, a, x, y, w, s)
+crmht <- function(a, ln_x, w, s) .Call(wrap__crmht, a, ln_x, w, s)
 
 #' @describeIn crmh Integrand for 2nd moment of empiric posterior
 #' @export
-crmht2 <- function(a, x, y, w, s) .Call(wrap__crmht2, a, x, y, w, s)
+crmht2 <- function(a, ln_x, w, s) .Call(wrap__crmht2, a, ln_x, w, s)
 
