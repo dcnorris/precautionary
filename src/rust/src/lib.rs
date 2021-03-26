@@ -8,13 +8,21 @@ fn crmh_non(exp_a_: &f64,  // NB: *NOT* vectorized
 	    w: &[f64]) -> f64 {
     // The non-tox factor is the nontrivial part of the CRM power model integrand,
     // because ln does not commute with any operations inside (1 - w * x^exp_a_).
-    // So we must iterate at least over the weights w[.] for patients without tox.
-    // BUT... this can be done without racking up per-patient transcendental ops,
-    // provided we collect our factor multiplicatively (not by logs).
-    let mut v_non = 1.0; // to build non-tox factor by straight multiplication
-    for i in 0 .. w.len() {
-	let p_d = (ln_x[i]*exp_a_).exp(); // TODO: wastes txops
-	v_non *= 1.0 - w[i]*p_d;
+    // By encoding y in w (via w==0.0 iff y==1), however, we can make the scan
+    // straightforward.
+    // It is also possible to skip some exp()'s in this loop, by sorting patients
+    // (i.e., ln_x's and w's) before entry, to make the ln_x's contiguous.
+    let mut ln_x_ = ln_x[0];
+    let mut p_ = (ln_x_*exp_a_).exp();
+    let mut v_non = 1.0 - w[0]*p_;
+    for i in 1 .. w.len() {
+	if w[i] > 0.0 { // This 'guard' is not necessary for correctness ...
+	    if ln_x[i] != ln_x_ {
+		ln_x_ = ln_x[i];
+		p_ = (ln_x_*exp_a_).exp(); // TXOP
+	    } // (above recalc gets skipped often if ln_x contiguous)
+	    v_non *= 1.0 - w[i]*p_; // ... because w[i]==0 case gives *= 1.0 here.
+	} // This guard's performance impacts are TBD, and likely data-dependent.
     }
 
     v_non
