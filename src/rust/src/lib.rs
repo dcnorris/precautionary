@@ -55,6 +55,46 @@ fn crmh_v(a: &[f64],
     v.collect_robj()
 }
 
+// Decode an f64-encoded trial-path tally to dose-wise numbers of tox & no-tox.
+// TODO: Generalize to cohorts with n=1 or n=2, ideally by encoding n itself
+//       within the 'obs'.
+#[inline(always)]
+fn decode_cohorts(obs: f64,
+		  tox: &mut [i32; 8], // dose-wise toxicity tally
+		  nos: &mut [i32; 8]  // dose-wise no-tox tally
+) -> () {
+    let iobs = obs as i32;  // integer part of obs
+    let fobs = obs.fract(); // fractional part
+    let mut d6 = 1;
+    let mut d_16 = 1.0;
+    for d in 0 .. 8 {
+	let enr_d = (iobs.rem_euclid(6*d6)).div_euclid(d6); // d6 is 6^d
+	d6 = 6*d6;
+	// Extract tox counts from fractional part of 'obs'
+	d_16 = d_16 / 16.0; // d_16 is 16^-(d+1)
+	tox[d] = fobs.rem_euclid(16.0*d_16).div_euclid(d_16) as i32;
+	// Compute non-toxicities
+	nos[d] = 3*enr_d - tox[d]; // NB: n=3 is hard-coded here
+    }
+}
+
+// TODO: Try mul_add for cleaner implementation.
+// TODO: Consider bitwise construction using f64::from_bits.
+fn encode_cohorts(enr: &[i32], // dose-wise number of cohorts enrolled
+		  tox: &[i32]  // dose-wise number of toxicities
+) -> f64 {
+    let mut obs = 0.0;
+    let mut eix = 1.0;
+    let mut tix = 1.0/16.0;
+    for d in 0 .. 8 {
+	obs += eix * enr[d] as f64;
+	eix = eix * 6.0;
+	obs += tix * tox[d] as f64;
+	tix = tix / 16.0;
+    }
+    obs
+}
+
 // A [w==1] version of crmh_v that takes f64-encoded trial observations as parameter.
 // When all w's are 1.0, the patients become exchangeable, and only *counts* (which
 // are encoded in the f64 'obs') need to be supplied.
@@ -83,37 +123,18 @@ fn crmh_ev(a: &[f64],
 
     const D: usize = 8;
     let mut enr: [i32; D] = [0; D]; // enrollment (in cohorts) at each dose
-    let mut tox: [i32; D] = [0; D]; // toxicities at each dose
-    let mut nos: [i32; D] = [0; D]; // non-tox count at each dose
+    let tox: &mut [i32; D] = &mut [0; D]; // toxicities at each dose
+    let nos: &mut [i32; D] = &mut [0; D]; // non-tox count at each dose
 
-    // TODO: Actually build enr & tox from obs
-    let iobs = obs as i32;
-    let fobs = obs.fract();
-    let mut d6 = 1;
-    let mut d_16 = 1.0;
-    for d in 0 .. D {
-	enr[d] = (iobs.rem_euclid(6*d6)).div_euclid(d6); // d6 is 6^d
-	d6 = 6*d6;
-	// Extract tox counts from fractional part of 'obs'
-	d_16 = d_16 / 16.0; // d_16 is 16^-(d+1)
-	tox[d] = fobs.rem_euclid(16.0*d_16).div_euclid(d_16) as i32;
-	// Compute non-toxicities
-	nos[d] = 3*enr[d] - tox[d];
-    }
+    decode_cohorts(obs, tox, nos);
 
     // As a check, reconstitute the 'obs'
-    // TODO: Try mul_add()'s as a cleaner implementation
-    let mut check = 0.0;
-    let mut eix = 1.0;
-    let mut tix = 1.0/16.0;
-    for d in 0 .. D {
-	check += eix * enr[d] as f64;
-	eix = eix * 6.0;
-	check += tix * tox[d] as f64;
-	tix = tix / 16.0;
+    for d in 0 .. 8 {
+	enr[d] = (tox[d] + nos[d])/3;
     }
+    let check = encode_cohorts(&enr, tox);
     let diff = (obs - check).abs();
-    assert!(diff < 1e-15, "Ouch! |obs-check| = {}; obs = {}, check = {}", diff, obs, check);
+    assert!(diff < 1e-15, "Ouch! obs = {}, check = {}", obs, check);
 
     // As in crmh_v, this calculation is something that could be done
     // by the caller. But note that, with ln_x being here DOSE-INDEXED,
