@@ -2,37 +2,44 @@ library(microbenchmark)
 
 test_that("Faster objective functions integrate same as 'dfcrm' originals", {
 
-  level <- c(1L,2L,3L,2L,3L,3L)
-  x <- level * 0.1 # an easy prior!
-  ln_x <- log(x)
-  y <- c(0L,0L,1L,0L,0L,1L)
-  w <- rep(1,length(y))
-  w[y == 1] <- 0.0 # encode y in wy
-  s <- 500
+  skeleton <- seq(0.1, 0.6, 0.1)
+
+  ## cohort-wise set-up
+  level <- c(1L, 2L, 3L, 2L, 3L, 3L)
+  n_tox <- c(0L, 0L, 1L, 0L, 0L, 1L)
   obs <- encode_cohorts(enr = tabulate(level, nbins=8)
-                       ,tox = xtabs(y ~ factor(level, levels=1:8),
-                                    data=data.frame(y = y,
+                       ,tox = xtabs(n_tox ~ factor(level, levels=1:8),
+                                    data=data.frame(n_tox = n_tox,
                                                     level = level))
                         )
+
+  ## The 'dfcrm' & 'rusti' implementations take patient-wise vectors x and y,
+  ## and patient-wise weights w that 'break exchangeability'.
+  x <- skeleton[rep(level, each=3)]
+  coh <- function(tox, n=3) c(rep(0L,n-tox), rep(1L,tox))
+  y <- as.integer(sapply(n_tox, coh))
+  w <- rep(1,length(y))
+  w[y == 1] <- 0.0 # encode y in w for rusti's benefit (dfcrm is unaffected)
+  s <- 500
 
   integrals <- list(
     dfcrm = c(integrate(dfcrm::crmh, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , rusti = c(integrate(crmh, -Inf, Inf, ln_x, w, s)$value
-             ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
-             ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
+  , rusti = c(integrate(crmh, -Inf, Inf, log(x), w, s)$value
+             ,integrate(crmht, -Inf, Inf, log(x), w, s)$value
+             ,integrate(crmht2, -Inf, Inf, log(x), w, s)$value
               )
-  , ruste = c(integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 0)$value
-             ,integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 1)$value
-             ,integrate(crmh_ev, -Inf, Inf, obs, ln_x, s, 2)$value
+  , ruste = c(integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 0)$value
+             ,integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 1)$value
+             ,integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 2)$value
               )
   )
 
   with(integrals, {
-    expect_equal(dfcrm, rusti)
-    expect_equal(dfcrm, ruste)
+    expect_equal(rusti, dfcrm)
+    expect_equal(ruste, dfcrm)
   })
 
   ## Now again, but with weights not all 1.0:
@@ -44,15 +51,15 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(dfcrm::crmht, -Inf, Inf, x, y, w, s)$value
              ,integrate(dfcrm::crmht2, -Inf, Inf, x, y, w, s)$value
               )
-  , rusti = c(integrate(crmh, -Inf, Inf, ln_x, w, s)$value
-             ,integrate(crmht, -Inf, Inf, ln_x, w, s)$value
-             ,integrate(crmht2, -Inf, Inf, ln_x, w, s)$value
+  , rusti = c(integrate(crmh, -Inf, Inf, log(x), w, s)$value
+             ,integrate(crmht, -Inf, Inf, log(x), w, s)$value
+             ,integrate(crmht2, -Inf, Inf, log(x), w, s)$value
               )
     # NB: 'ruste' inapplicable when patients not exchangeable
   )
 
   with(nontrivial_weights,
-       expect_equal(dfcrm, rusti))
+       expect_equal(rusti, dfcrm))
 
 })
 

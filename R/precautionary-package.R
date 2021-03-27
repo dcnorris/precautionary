@@ -75,6 +75,7 @@ NULL
 #'
 #' @section Correct CRM:
 #' * Understand the 'scale' factor and ensure I use it properly
+#'   - I suspect it's a numerical 'wart' that I ought to handle for the user
 #'
 #' @section Fast CRM:
 #' * Document Rust integrands a bit better
@@ -84,7 +85,7 @@ NULL
 #' @section Fast DTP:
 #' * Implement a \code{crmh_ev} that accepts f64 encoding of toxicity counts
 #' * Add an \code{impl="ruste"} to invoke this
-#' * Implement a CRM 'server' in R
+#' * Implement a CRM 'server' within \code{crm(impl="ruste")}
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts
@@ -94,6 +95,7 @@ NULL
 #' * Add examples to the documented Rust functions
 #' * Use fast DTP (not cached) in VIOLA vignette
 #' * Add a vignette applying DTP to mTPI and BOIN
+#' * Expose some visual numerics checks, via vignette or documented function
 #'
 #' @section Refactor:
 #' * Remove the `$safety` component of exact trials?

@@ -69,7 +69,7 @@ fn crmh_v(a: &[f64],
 /// Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
 ///
 /// @param a Numeric vector of evaluation points
-/// @param obs: An f64-encoding of dose-wise enrollment and toxicity counts
+/// @param obs An f64-encoding of dose-wise enrollment and toxicity counts
 /// @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
 /// @param s Scalar scale factor
 /// @param b Order of moment to calculate (0, 1 or 2)
@@ -92,16 +92,17 @@ fn crmh_ev(a: &[f64],
     let mut d6 = 1;
     let mut d_16 = 1.0;
     for d in 0 .. D {
-	d6 = d6 * 6; // d6 is 6^d
-	enr[d] = (iobs % (6*d6)).rem_euclid(d6);
+	enr[d] = (iobs.rem_euclid(6*d6)).div_euclid(d6); // d6 is 6^d
+	d6 = 6*d6;
 	// Extract tox counts from fractional part of 'obs'
-	d_16 = d_16 / 16.0; // d_16 is 16^-d
-	tox[d] = fobs.div_euclid(d_16/16.0).rem_euclid(d_16) as i32;
+	d_16 = d_16 / 16.0; // d_16 is 16^-(d+1)
+	tox[d] = fobs.rem_euclid(16.0*d_16).div_euclid(d_16) as i32;
 	// Compute non-toxicities
 	nos[d] = 3*enr[d] - tox[d];
     }
 
     // As a check, reconstitute the 'obs'
+    // TODO: Try mul_add()'s as a cleaner implementation
     let mut check = 0.0;
     let mut eix = 1.0;
     let mut tix = 1.0/16.0;
@@ -112,15 +113,15 @@ fn crmh_ev(a: &[f64],
 	tix = tix / 16.0;
     }
     let diff = (obs - check).abs();
-    assert!(diff < 1e-15, "Uh-oh! |obs-check| = {}; obs = {}, check = {}", diff, obs, check);
+    assert!(diff < 1e-15, "Ouch! |obs-check| = {}; obs = {}, check = {}", diff, obs, check);
 
     // As in crmh_v, this calculation is something that could be done
     // by the caller. But note that, with ln_x being here DOSE-INDEXED,
     // the proper approach to the calculation is somewhat different.
     // So I demonstrate that approach here for the caller's benefit.
     let mut log_vtox = 0.0;
-    for d in 0 .. D {
-	log_vtox +=  ln_x[d] * tox[d] as f64;
+    for d in 0 .. ln_x.len() {
+	log_vtox +=  ln_x[d] * tox[d] as f64; // TODO: mul_add
     }
 
     let v = a.iter().map(|a| if a > &709.0 { 0.0 } else {
@@ -128,14 +129,18 @@ fn crmh_ev(a: &[f64],
 	let exp_a_ = a.exp();
 	let o_factor = { // x/o-notation-inspired name for 'non-tox factor'
 	    let mut nontox_ = 1.0;
-	    for d in 0 .. D {
-		nontox_ *= (1.0 - ln_x[d]*exp_a_).powi(nos[d]);
+	    for d in 0 .. ln_x.len() {
+		if nos[d] > 0 { // skip over any 100%-toxic dose
+		    let p_d = (ln_x[d]*exp_a_).exp(); // TXOP
+		    nontox_ *= (1.0 - p_d).powi(nos[d]);
+		}
 	    }
 	    nontox_
 	};
-	o_factor
-	    * (log_vconst + exp_a_*log_vtox).exp()
-	    * a.powi(b)
+	let x_term = log_vconst + exp_a_*log_vtox;
+	assert!(o_factor.is_finite(), "O-factor = {}; obs = {}, a = {}", o_factor, obs, a);
+	assert!(x_term.exp().is_finite(), "X-term = {}", x_term);
+	o_factor * x_term.exp() * a.powi(b)
     });
 
     v.collect_robj()
