@@ -63,17 +63,15 @@ fn decode_cohorts(obs: f64,
 		  tox: &mut [i32; 8], // dose-wise toxicity tally
 		  nos: &mut [i32; 8]  // dose-wise no-tox tally
 ) -> () {
-    let iobs = obs as i32;  // integer part of obs
-    let fobs = obs.fract(); // fractional part
-    let mut d6 = 1;
-    let mut d_16 = 1.0;
-    for d in 0 .. 8 {
-	let enr_d = (iobs.rem_euclid(6*d6)).div_euclid(d6); // d6 is 6^d
-	d6 = 6*d6;
-	// Extract tox counts from fractional part of 'obs'
-	d_16 = d_16 / 16.0; // d_16 is 16^-(d+1)
-	tox[d] = fobs.rem_euclid(16.0*d_16).div_euclid(d_16) as i32;
-	// Compute non-toxicities
+    let mut iobs = obs as i32;  // integer part of obs
+    let mut fobs: u32 = (obs.fract() * 4294967296.0) as u32;
+    for d in (0 .. 8).rev() { // Extract tox counts from fractional part of 'obs'
+	tox[d] = (fobs % 16) as i32; // NB: low bits of fobs count high-dose toxicities
+	fobs >>= 4; // shift lowest 4 bits off
+    }
+    for d in 0 .. 8 {	// Compute non-toxicities
+	let enr_d = iobs % 6;
+	iobs /= 6;
 	nos[d] = 3*enr_d - tox[d]; // NB: n=3 is hard-coded here
     }
 }
@@ -122,19 +120,10 @@ fn crmh_ev(a: &[f64],
 	   b: i32) -> Robj {
 
     const D: usize = 8;
-    let mut enr: [i32; D] = [0; D]; // enrollment (in cohorts) at each dose
     let tox: &mut [i32; D] = &mut [0; D]; // toxicities at each dose
     let nos: &mut [i32; D] = &mut [0; D]; // non-tox count at each dose
 
     decode_cohorts(obs, tox, nos);
-
-    // As a check, reconstitute the 'obs'
-    for d in 0 .. 8 {
-	enr[d] = (tox[d] + nos[d])/3;
-    }
-    let check = encode_cohorts(&enr, tox);
-    let diff = (obs - check).abs();
-    assert!(diff < 1e-15, "Ouch! obs = {}, check = {}", obs, check);
 
     // As in crmh_v, this calculation is something that could be done
     // by the caller. But note that, with ln_x being here DOSE-INDEXED,
@@ -159,8 +148,6 @@ fn crmh_ev(a: &[f64],
 	    nontox_
 	};
 	let x_term = log_vconst + exp_a_*log_vtox;
-	assert!(o_factor.is_finite(), "O-factor = {}; obs = {}, a = {}", o_factor, obs, a);
-	assert!(x_term.exp().is_finite(), "X-term = {}", x_term);
 	o_factor * x_term.exp() * a.powi(b)
     });
 

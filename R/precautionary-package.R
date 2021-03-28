@@ -78,7 +78,11 @@ NULL
 #'   - I suspect it's a numerical 'wart' that I ought to handle for the user
 #'
 #' @section Fast CRM:
-#' * Document Rust integrands a bit better
+#' * Improve decode performance
+#' * Benchmark; try mul_add()'s
+#' * R6 Crm class
+#' - impl by method choice
+#' - pull out constants
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
@@ -92,6 +96,7 @@ NULL
 #'   - Any speedup from allowing cohort n>1?
 #'
 #' @section Document:
+#' * Document Rust integrands a bit better
 #' * Add examples to the documented Rust functions
 #' * Use fast DTP (not cached) in VIOLA vignette
 #' * Add a vignette applying DTP to mTPI and BOIN
