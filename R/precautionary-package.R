@@ -75,10 +75,13 @@ NULL
 #'
 #' @section Correct CRM:
 #' * Understand the 'scale' factor and ensure I use it properly
-#'   - I suspect it's a numerical 'wart' that I ought to handle for the user
+#'   - I see it's the sigma parameter of a lognormal prior on beta of 1-parameter CRM.
+#'   - On what basis is it typically chosen?
+#'   - How sensitive are results to the chosen value? Braun sim-free 2020 does exhibit
+#'     some implications for skeleton choice, although a wide range of sigma proves to
+#'     yield optimality on the performance characteristics in his example.
 #'
 #' @section Fast CRM:
-#' * Improve decode performance
 #' * Benchmark; try mul_add()'s
 #' * R6 Crm class
 #' - impl by method choice

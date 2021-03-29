@@ -21,7 +21,7 @@ Depends:
     dtpcrm,
     data.table,
     R (>= 3.5.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, R6
 Suggests: 
     rmarkdown,
     bookdown,
