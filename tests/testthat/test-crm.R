@@ -63,22 +63,44 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
 
 })
 
-test_that("crm() yields same result as dfcrm::crm, but faster", {
+test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
   ## This set-up is verbatim from the example in dfcrm::crm
   prior <- c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70)
   target <- 0.2
   level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
-  y <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
+  y     <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
+  s <- sqrt(1.34)
+  ##  We provide the levels in a new way to the faster code, however ...
+  x <- xtabs(y ~ factor(level, levels=seq_along(prior)))
+  o <- xtabs(!y ~ factor(level, levels=seq_along(prior)))
   crm_old <- microbenchmark(old <- dfcrm::crm(prior, target, y, level))
   crm_new <- microbenchmark(new <- crm(prior, target, y, level, impl="rusti"))
+  r6model <- Crm$new(skeleton = prior, target = target)$observe(x, o)
+  crm_ri <- microbenchmark(r6i <- r6model$est(impl="rusti"))
+  ## TODO: Let 'ruste' method send dosewise x and o vectors directly,
+  ##       without asking the Rust routine to reconstruct these.
+  ##crm_re <- microbenchmark(r6e <- r6model$est(impl="ruste"))
 
-  expect_equal(old, new)
+  expect_equal(new, old)
+
+  ## Initially, I won't burden class 'Crm' with preserving identity
+  ## where dose-wise observations are exchangeable in the likelihood.
+  ## So to effect a check, I simply sort 'old' to match my construction
+  ## (o first, then x) of the Crm fields.
+  exch <- order(paste(old$tox, old$level, sep='.'))
+  old$tox <- old$tox[exch]
+  old$level <- old$level[exch]
+  expect_equal(r6i, old)
+
+  ##expect_equal(r6e, old)
 
   ## Expect DEFINITE improvement, with new UPPER quartile < old LOWER:
   expect_lt(summary(crm_new, unit="ms")$uq,
             summary(crm_old, unit="ms")$lq)
 
   speedup_message(crm_new, crm_old)
+  speedup_message(crm_ri, crm_old)
+  ##speedup_message(crm_re, crm_old)
 })
 
 ## test_that("titecrm() yields same result as dfcrm::crm, but faster", {

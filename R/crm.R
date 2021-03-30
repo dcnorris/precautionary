@@ -11,9 +11,13 @@ Crm <- R6::R6Class("Crm",
                  }
                 ,conf_level = function(conf){
                   private$conf.level <- conf
-                  return(self)
+                  invisible(self)
                 }
+                ## TODO: Can I have an observe(level, x) function also?
+                ##       Or perhaps it's better to provide levels() and
+                ##       tox() as 'active fields'?
                 ,observe = function(x, o){
+                  D <- length(private$ln_skel)
                   ## As a special case, we allow 'o' to be missing, and 'x' to be
                   ## a full x/o tally encoded in a numeric(1) -- i.e. a single f64.
                   if (missing(o) && is.numeric(x) && length(x) == 1) {
@@ -35,7 +39,6 @@ Crm <- R6::R6Class("Crm",
                                      rep(0, sum(tox)))
                       ## Now, we need to lay out a vector of dose-level assignments
                       ## consistent with the given data.
-                      D <- length(private$ln_skel)
                       private$level <- c(rep(1:D, nos[1:D]),
                                          rep(1:D, tox[1:D]))
                     } else {
@@ -47,22 +50,25 @@ Crm <- R6::R6Class("Crm",
                       ## (32+27=59 bits just fits in a float if I use 9 bits of exponent)
                     }
                     ## It might even make sense in general to ...
-                    return(self) # Enable method chaining, e.g. .$observe()$est()!
+                    invisible(self) # Enable method chaining, e.g. .$observe()$est()!
                   }
 
                   ## Otherwise ...
-                  private$obs <- NaN # ensure we don't take any shortcuts!
-                  ## we expect 'x' to be a dose-vector x of exchangeable toxicity counts
-                  stopifnot(length(x) == length(private$ln_skel))
+                  ## we expect 'x' to be a dosewise vector of exchangeable toxicity counts
+                  stopifnot(length(x) == D)
                   stopifnot(is.numeric(x))
                   stopifnot(all(round(x) == x))
                   private$x <- as.integer(x)
 
-                  ## And we expect dosewise a 'o' that is:
-                  stopifnot(length(o) == length(private$ln_skel))
-                  ## either a numeric vector of exchangeable tox counts ...
+                  ## And we expect a dosewise 'o'
+                  stopifnot(length(o) == D)
+                  ## that is either a numeric vector of exchangeable nontox counts ...
                   if (is.numeric(o)) {
                     private$o <- as.integer(o)
+                    private$level <- c(rep(1:D, o),
+                                       rep(1:D, x))
+                    private$w <- c(rep(1, sum(o)),
+                                   rep(0, sum(x)))
                   } else { # .. or a _list_ of weight vectors breaking exchangeability.
                     ## TODO: Consider a more functional construction of $w and $level:
                     private$w <- numeric(length(o) +
@@ -76,6 +82,15 @@ Crm <- R6::R6Class("Crm",
                     }
                     private$o <- lapply(o, length)
                   }
+                  ## TODO: See above note about how this 'muddies the water'
+                  enr <- tabulate(private$level, nbins=8)/3
+                  if (all(enr %% 3 == 0)) {
+                    tox <- xtabs(private$w==0 ~ factor(private$level, levels=1:8))
+                    private$obs <- encode_cohorts(enr = enr, tox = tox)
+                  } else {
+                    private$obs <- NaN
+                  }
+                  invisible(self)
                 }
                ,target = NA
                ,est = function(impl=c('dfcrm','rusti','ruste')){
@@ -96,32 +111,33 @@ Crm <- R6::R6Class("Crm",
                                        var.est=TRUE)
                           )
                         }
-                  ,rusti = {
-                    ln_x1p <- private$ln_skel[private$level]
-                    m0 <- integrate(crmh  ,-Inf,Inf,ln_x1p,private$w,scale,abs.tol=0)[[1]]
-                    m1 <- integrate(crmht ,-Inf,Inf,ln_x1p,private$w,scale,abs.tol=0)[[1]]
-                    m2 <- integrate(crmht2,-Inf,Inf,ln_x1p,private$w,scale,abs.tol=0)[[1]]
-                    ans <- list(est = m1/m0, e2 = m2/m0)
-                  }
-                 ,ruste = {
-                   ln_p <- private$ln_skel
-                   m0 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,0,abs.tol=0)[[1]]
-                   m1 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,1,abs.tol=0)[[1]]
-                   m2 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,2,abs.tol=0)[[1]]
-                   ans <- list(est = m1/m0, e2 = m2/m0)
-                 }
-                 )
+                       ,rusti = {
+                         ln_x1p <- private$ln_skel[private$level]
+                         w <- private$w
+                         m0 <- integrate(crmh  ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                         m1 <- integrate(crmht ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                         m2 <- integrate(crmht2,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                         ans <- list(estimate = m1/m0, e2 = m2/m0)
+                       }
+                      ,ruste = {
+                        ln_p <- private$ln_skel
+                        m0 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,0,abs.tol=0)[[1]]
+                        m1 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,1,abs.tol=0)[[1]]
+                        m2 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,2,abs.tol=0)[[1]]
+                        ans <- list(estimate = m1/m0, e2 = m2/m0)
+                      }
+                      )
                  ans <- within(ans, {
                    prior <- exp(private$ln_skel)
                    target <- self$target
-                   ptox <- prior^exp(est)
-                   post.var <- e2 - est^2
+                   ptox <- prior^exp(estimate)
+                   post.var <- e2 - estimate^2
                    conf.level <- private$conf.level
                  })
                  ans <- within(ans, {
                    crit <- qnorm(0.5 + conf.level/2)
-                   lb <- est - crit*sqrt(post.var)
-                   ub <- est + crit*sqrt(post.var)
+                   lb <- estimate - crit*sqrt(post.var)
+                   ub <- estimate + crit*sqrt(post.var)
                  })
                  ans <- within(ans, {
                    ptoxL <- prior^exp(ub)
@@ -137,11 +153,10 @@ Crm <- R6::R6Class("Crm",
                    ## TODO: Substitute smart_mtd if no complaints.
                  })
                  ans <- within(ans, {
-                   tox <- (private$w==0)
+                   tox <- 1.0*(private$w==0) # NB: dfcrm's "mdt" holds tox as double
                    level <- private$level
                    dosename <- NULL
                    subset <- pid[include]
-                   estimate <- est
                    model <- model
                    prior.var <- scale^2
                    method <- method
@@ -159,6 +174,12 @@ Crm <- R6::R6Class("Crm",
                  })
                  ans$crit <- NULL # let's not add stuff that isn't in dfcrm's answer
 
+                 ## Order components to enable testthat::expect_equal()
+                 ans <- ans[c("prior","target","tox","level","dosename","subset",
+                              "estimate","model","prior.var","post.var","method",
+                              "mtd","include","pid","model.detail","intcpt",
+                              "ptox","ptoxL","ptoxU","conf.level","patient.detail",
+                              "tite","dosescaled","var.est")]
                  class(ans) <- "mtd"
                  ans
                }
@@ -172,7 +193,7 @@ Crm <- R6::R6Class("Crm",
                , obs = NaN
                , cached = list()
                , conf.level = 0.90
-               , scale = sqrt(1.34) # TODO: Expose to user? Why?
+               , scale = sqrt(1.34)
                , cohort.size = 3
                )
                )
