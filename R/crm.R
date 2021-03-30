@@ -7,10 +7,11 @@
 ##' @importFrom R6 R6Class
 Crm <- R6::R6Class("Crm",
                public = list(
-                 initialize = function(skeleton, target, cohort.size = 3) {
+                 initialize = function(skeleton, scale = sqrt(1.34), target, cohort.size = 3) {
                    private$ln_skel = log(skeleton)
+                   private$scale = scale
                    private$cohort.size = 3
-                   self$target = target
+                   private$target = target
                  }
                 ,conf_level = function(conf){
                   private$conf.level <- conf
@@ -20,10 +21,6 @@ Crm <- R6::R6Class("Crm",
                   stopifnot(length(level) == length(tox))
                   stopifnot(all(tox %in% c(0,1)))
                   D <- length(private$ln_skel)
-                  if (!(all(level %in% 1:D))) {
-                    cat("levels =", level, "\n")
-                    cat("   1:D =", 1:D, "\n")
-                  }
                   stopifnot(all(level %in% 1:D))
                   level <- factor(level, levels=1:D)
                   self$tally(x = xtabs(tox ~ level),
@@ -91,7 +88,6 @@ Crm <- R6::R6Class("Crm",
                   }
                   invisible(self)
                 }
-               ,target = NA
                ,est = function(impl=c('dfcrm','rusti','ruste')){
                  scale <- private$scale
                  model <- "empiric"
@@ -101,7 +97,7 @@ Crm <- R6::R6Class("Crm",
                  switch(impl,
                         dfcrm = {
                           return(
-                            dfcrm::crm(prior = exp(private$ln_skel), target = self$target,
+                            dfcrm::crm(prior = exp(private$ln_skel), target = private$target,
                                        tox=(private$w==0), level=private$level,
                                        n=length(private$w), dosename=NULL,
                                        include=include, pid=pid, conf.level=private$conf.level,
@@ -130,7 +126,7 @@ Crm <- R6::R6Class("Crm",
                       )
                  ans <- within(ans, {
                    prior <- exp(private$ln_skel)
-                   target <- self$target
+                   target <- private$target
                    ptox <- prior^exp(estimate)
                    post.var <- e2 - estimate^2
                    conf.level <- private$conf.level
@@ -176,6 +172,9 @@ Crm <- R6::R6Class("Crm",
                  class(ans) <- "mtd"
                  return(ans)
                } #</est()>
+              ,applied = function(...){
+                stop("unimplemented")
+              }
               ,run = function(next_dose, tox_counts, cohort_sizes,
                               prev_tox = c(), prev_dose = c(),
                               dose_func = applied_crm, ...,
@@ -224,6 +223,9 @@ Crm <- R6::R6Class("Crm",
               ) # </public>
               ,private = list(
                  ln_skel = NA
+               , scale = NA
+               , target = NA
+               , cohort.size = 3 # TODO: Factor this out? It seems like a 'wart'.
                , x = NA
                , o = NA
                , w = NA # in general, this will encode y as well
@@ -231,8 +233,6 @@ Crm <- R6::R6Class("Crm",
                , obs = NaN
                , cached = list()
                , conf.level = 0.90
-               , scale = sqrt(1.34)
-               , cohort.size = 3
                )
                )
 

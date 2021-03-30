@@ -25,9 +25,9 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     cohort_sizes = rep(3, 7),
     dose_func = applied_crm, # i.e., precautionary::applied_crm
     prior = prior.DLT,
+    scale = sqrt(prior.var),
     target = target.DLT,
     stop_func = stop_func,
-    scale = sqrt(prior.var),
     no_skip_esc = TRUE,
     no_skip_deesc = FALSE,
     global_coherent_esc = TRUE,

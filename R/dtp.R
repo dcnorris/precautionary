@@ -8,6 +8,9 @@
 ##'
 ##' @param prior A vector of prior estimates of toxicity probabilties
 ##' for the dose levels
+##' @param scale The sigma parameter of a lognormal prior (denoted \deqn{g(a)}
+##' in the original 1990 O'Quigley et al. paper) over the single parameter
+##' of the empiric or logistic CRM models.
 ##' @param target The target DLT rate
 ##' @param tox A patient-wise vector of 0/1 toxicity indicators
 ##' @param level A patient-wise vector of dose-level assignments
@@ -20,16 +23,21 @@
 ##' seen at the current dose level is above the target rate. Default is TRUE.
 ##' @param stop_func An optional argument to provide a function which will
 ##' utilised alongside the CRM to determine if the trial should be stopped.
-##' @param ... Additional parameters passed to \code{precautionary::crm}
+##' @param ... Additional params addressed to the CRM numerical routines.
+##' Presently used to select optional implementations via \code{impl}.
 ##' @return An object of class \code{'mtd'}, as per \CRANpkg{dfcrm}
 ##' @export
-applied_crm <- function (prior, target, tox, level,
+applied_crm <- function (prior, scale, target, tox, level,
                          no_skip_esc = TRUE, no_skip_deesc = TRUE,
                          global_coherent_esc = TRUE, stop_func = NULL, ...)
 {
-  x <- crm(prior = prior, target = target,
-           tox = tox, level = level,
-           var.est = TRUE, ...)
+  ## TODO: Factor this toward a Crm$applied() method that obviates
+  ##       repeated $new(...) calls.
+  ## NOTE: It might well be possible to pass <Crm object>$applied
+  ##       as a parameter to the existing DTP infrastructure here.
+  x <- Crm$new(skeleton = prior, scale = scale, target = target)$
+    observe(level = level, tox = tox)$
+    est(...) # ... contains impl=___
   if (no_skip_esc & x$mtd > (max(level) + 1)) {
     x$mtd <- max(level) + 1
   }
