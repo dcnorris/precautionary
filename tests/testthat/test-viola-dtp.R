@@ -20,17 +20,18 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     }
   }
 
+  crm <- Crm$new(skeleton = prior.DLT,
+                 scale = sqrt(prior.var),
+                 target = target.DLT)$
+    stop_func(stop_func)$
+    no_skip_esc(TRUE)$
+    no_skip_deesc(FALSE)$
+    global_coherent_esc(TRUE)
+
   new <- calculate_dtps(
     next_dose = start.dose.level,
     cohort_sizes = rep(3, 7),
-    dose_func = applied_crm, # i.e., precautionary::applied_crm
-    prior = prior.DLT,
-    scale = sqrt(prior.var),
-    target = target.DLT,
-    stop_func = stop_func,
-    no_skip_esc = TRUE,
-    no_skip_deesc = FALSE,
-    global_coherent_esc = TRUE,
+    dose_func = crm$applied,
     impl = 'rusti')
 
   data(viola_dtp) # saved for comparison

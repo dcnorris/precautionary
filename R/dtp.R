@@ -145,9 +145,11 @@ applied_crm <- function (prior, scale, target, tox, level,
 ##' @param prev_tox An integer vector of previous cohorts' tox counts
 ##' @param prev_dose An integer vector of previous cohorts' enrollment
 ##' @param dose_func An adapter function
-##' @param ... Ultimately passed to the \code{...} argument of \code{crm},
-##' and therefore useful for selecting optional implementations, e.g. via
-##' the \code{impl} parameter.
+##' @param ... Ultimately passed to \code{.conduct_dose_finding_cohorts}, whence
+##' it ends up informing the \code{dose_func}. Thanks to the method chaining of
+##' R6 class \code{Crm}, the role of this argument has been sharply curtailed
+##' compared with the original \code{dtpcrm::calculate_dtps}. Here, we use it
+##' only for selecting optional CRM numerical implementations via \code{impl}.
 ##' @param mc.cores Number of logical cores available for parallelizing DTP computation.
 ##' Setting this to 1 prevents chunking of the computation.
 ##' @return A \code{data.frame} listing trial pathways
@@ -319,7 +321,7 @@ stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
 ## This offers up plenty of speedup opportunity, while completing
 ## in just 10s even with the original dtpcrm version.
 ##' @importFrom dtpcrm stop_for_consensus_reached
-dtp <- function(C=4) {
+dtp <- function(C=4, mc.cores=1) {
   ## VIOLA trial set-up
   number.doses <- 7
   start.dose.level <- 3
@@ -342,18 +344,21 @@ dtp <- function(C=4) {
     }
   }
 
+  crm <- Crm$new(skeleton = prior.DLT,
+                 scale = sqrt(prior.var),
+                 target = target.DLT)$
+    stop_func(stop_func)$
+    no_skip_esc(TRUE)$
+    no_skip_deesc(FALSE)$
+    global_coherent_esc(TRUE)
+
   ## Get timing
   t0 <- proc.time()
   viola_dtp <- calculate_dtps(next_dose = start.dose.level,
                               cohort_sizes = rep(cohort.size, C),
-                              dose_func = applied_crm,
-                              prior = prior.DLT,
-                              target = target.DLT,
-                              stop_func = stop_func,
-                              scale = sqrt(prior.var),
-                              no_skip_esc = TRUE,
-                              no_skip_deesc = FALSE,
-                              global_coherent_esc = TRUE
+                              dose_func = crm$applied,
+                              mc.cores = mc.cores,
+                              impl = 'rusti'
                               )
   print(proc.time() - t0)
   invisible(viola_dtp)

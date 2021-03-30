@@ -116,15 +116,17 @@ prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1) {
                              no_skip_deesc = FALSE,
                              global_coherent_esc = TRUE)
     } else {
+      crm <- Crm$new(skeleton = prior.DLT,
+                     scale = sqrt(prior.var),
+                     target = 0.2)$
+        stop_func(stop_func)$
+        no_skip_esc(TRUE)$
+        no_skip_deesc(FALSE)$
+        global_coherent_esc(TRUE)
+
       calculate_dtps(next_dose = 3,
                      cohort_sizes = rep(3, 7),
-                     prior = prior.DLT,
-                     target = 0.2,
-                     stop_func = stop_func,
-                     scale = sqrt(prior.var),
-                     no_skip_esc = TRUE,
-                     no_skip_deesc = FALSE,
-                     global_coherent_esc = TRUE,
+                     dose_func = crm$applied,
                      impl = impl,
                      mc.cores = mc.cores)
     }
@@ -298,63 +300,3 @@ compare_dtp_effort <- function() {
 ## 29:                        stop_func  0.14  0.16  0.04
 ## 30:                           vapply  0.16  0.14  0.04
 
-## Let's profile the DTP computations to find out why degeneracy skipping
-## doesn't yield speedup of 1/degeneracy. (I suspect it's the while loop.)
-## So let's compare Rprof output for the two routines
-prof_skipping <- function() {
-  ## VIOLA trial set-up
-  start.dose.level <- 3
-  target.DLT <- 0.2
-
-  prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
-  prior.var <- 0.75
-
-  stop_func <- function(x) {
-    y <- stop_for_excess_toxicity_empiric(x,
-                                          tox_lim = target.DLT + 0.1,
-                                          prob_cert = 0.72,
-                                          dose = 1)
-    if(y$stop){
-      x <- y
-    } else {
-      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
-    }
-  }
-
-  skip_prof <- list()
-
-  restore <- options(mc.cores = 1)
-
-  Rprof()
-  dtpcrm::calculate_dtps(
-    next_dose = start.dose.level,
-    cohort_sizes = rep(3, 7),
-    prior = prior.DLT,
-    target = target.DLT,
-    stop_func = stop_func,
-    scale = sqrt(prior.var),
-    no_skip_esc = TRUE,
-    no_skip_deesc = FALSE,
-    global_coherent_esc = TRUE)
-  Rprof(NULL)
-  skip_prof$all <- summaryRprof()
-
-  Rprof()
-  calculate_dtps(
-    next_dose = start.dose.level,
-    cohort_sizes = rep(3, 7),
-    prior = prior.DLT,
-    target = target.DLT,
-    stop_func = stop_func,
-    scale = sqrt(prior.var),
-    no_skip_esc = TRUE,
-    no_skip_deesc = FALSE,
-    global_coherent_esc = TRUE,
-    impl = 'dfcrm') # avoid advantage here vs dtpcrm original
-  Rprof(NULL)
-  skip_prof$skip <- summaryRprof()
-
-  options(mc.cores = restore)
-
-  skip_prof
-}

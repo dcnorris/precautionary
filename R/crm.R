@@ -13,6 +13,29 @@ Crm <- R6::R6Class("Crm",
                    private$cohort.size = 3
                    private$target = target
                  }
+                ,stop_func = function(sfunc){
+                  private$.stop_func <- sfunc
+                  ## TODO: Does this invalidate CRM model cache? (I don't believe so.)
+                  invisible(self)
+                }
+                ,no_skip_esc = function(tf){
+                  stopifnot(is.logical(tf))
+                  stopifnot(length(tf) == 1)
+                  private$.no_skip_esc = tf
+                  invisible(self)
+                }
+                ,no_skip_deesc = function(tf){
+                  stopifnot(is.logical(tf))
+                  stopifnot(length(tf) == 1)
+                  private$.no_skip_deesc = tf
+                  invisible(self)
+                }
+                ,global_coherent_esc = function(tf){
+                  stopifnot(is.logical(tf))
+                  stopifnot(length(tf) == 1)
+                  private$.global_coherent_esc = tf
+                  invisible(self)
+                }
                 ,conf_level = function(conf){
                   private$conf.level <- conf
                   invisible(self)
@@ -172,8 +195,26 @@ Crm <- R6::R6Class("Crm",
                  class(ans) <- "mtd"
                  return(ans)
                } #</est()>
-              ,applied = function(...){
-                stop("unimplemented")
+              ,applied = function(level, tox, ...){
+                x <- self$observe(level = level, tox = tox)$est(...)
+                ## Much of the rest is verbatim from dtpcrm::applied_crm()
+                if (private$.no_skip_esc & x$mtd > (max(level) + 1)) {
+                  x$mtd <- max(level) + 1
+                }
+                if (private$.no_skip_deesc & x$mtd < (min(level) - 1)) {
+                  x$mtd <- min(level) - 1
+                }
+                if (private$.global_coherent_esc) {
+                  last_dose <- utils::tail(level, 1)
+                  tox_rate_last_dose <- sum(tox[level == last_dose])/sum(level == last_dose)
+                  if (tox_rate_last_dose > target) {
+                    x$mtd <- min(x$mtd, last_dose)
+                  }
+                }
+                if (!is.null(private$.stop_func)) {
+                  x = private$.stop_func(x)
+                }
+                return(x)
               }
               ,run = function(next_dose, tox_counts, cohort_sizes,
                               prev_tox = c(), prev_dose = c(),
@@ -226,6 +267,10 @@ Crm <- R6::R6Class("Crm",
                , scale = NA
                , target = NA
                , cohort.size = 3 # TODO: Factor this out? It seems like a 'wart'.
+               , .stop_func = NULL
+               , .no_skip_esc = TRUE     # These would seem to be the
+               , .no_skip_deesc = FALSE  # 'safest' defaults.
+               , .global_coherent_esc = TRUE  # This sounds like a good thing.
                , x = NA
                , o = NA
                , w = NA # in general, this will encode y as well
