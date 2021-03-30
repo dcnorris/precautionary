@@ -45,10 +45,10 @@ fn crmh_v(a: &[f64],
     }
 
     let v = a.iter().map(|a| if a > &709.0 { 0.0 } else {
-	let log_vconst = -0.5 * (a/s).powi(2);
+	let log_g = -0.5 * (a/s).powi(2);
 	let exp_a_ = a.exp();
 	crmh_non(&exp_a_,&ln_x,&w)
-	    * (log_vconst + exp_a_*log_vtox).exp()
+	    * (log_g + exp_a_*log_vtox).exp()
 	    * a.powi(b)
     });
 
@@ -125,6 +125,26 @@ fn crmh_ev(a: &[f64],
 
     decode_cohorts(obs, tox, nos);
 
+    crmh_xo(a, ln_x, tox, nos, s, b)
+}
+
+/// Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
+///
+/// @param a Numeric vector of evaluation points
+/// @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
+/// @param tox A numeric vector; a dose-wise tally of toxicities
+/// @param nos A numeric vector; a dose-wise tally of non-toxicities
+/// @param s Scalar scale factor
+/// @param b Order of moment to calculate (0, 1 or 2)
+/// @export
+#[extendr]
+fn crmh_xo(a: &[f64],
+	   ln_x: &[f64], // DOSE-WISE log-skeleton -- different from crmh_v!
+	   tox: &[i32],
+	   nos: &[i32],
+	   s: f64,
+	   b: i32) -> Robj {
+
     // As in crmh_v, this calculation is something that could be done
     // by the caller. But note that, with ln_x being here DOSE-INDEXED,
     // the proper approach to the calculation is somewhat different.
@@ -135,7 +155,7 @@ fn crmh_ev(a: &[f64],
     }
 
     let v = a.iter().map(|a| if a > &709.0 { 0.0 } else {
-	let log_vconst = -0.5 * (a/s).powi(2);
+	let log_g = -0.5 * (a/s).powi(2);
 	let exp_a_ = a.exp();
 	let o_factor = { // x/o-notation-inspired name for 'non-tox factor'
 	    let mut nontox_ = 1.0;
@@ -147,7 +167,7 @@ fn crmh_ev(a: &[f64],
 	    }
 	    nontox_
 	};
-	let x_term = log_vconst + exp_a_*log_vtox;
+	let x_term = log_g + exp_a_*log_vtox;
 	o_factor * x_term.exp() * a.powi(b)
     });
 
@@ -188,6 +208,7 @@ fn crmht2(a: &[f64], ln_x: &[f64], w: &[f64], s: f64) -> Robj {
 extendr_module! {
     mod precautionary;
     fn crmh_ev;
+    fn crmh_xo;
     fn crmh;
     fn crmht;
     fn crmht2;

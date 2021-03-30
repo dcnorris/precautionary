@@ -49,7 +49,7 @@ applied_crm <- function (prior, target, tox, level,
   return(x)
 }
 
-## Copied verbatim from package:dtpcrm, to avoid package check NOTE re ':::'
+## Adapted from package:dtpcrm.
 ## TODO: Consider opportunities for speedups here, including parallelization.
 .conduct_dose_finding_cohorts <- function (next_dose, tox_counts, cohort_sizes,
                                            prev_tox = c(), prev_dose = c(),
@@ -69,7 +69,14 @@ applied_crm <- function (prior, target, tox, level,
         toxes = c(toxes, these_toxes)
         these_doses = rep(dose, cohort_sizes[i])
         doses = c(doses, these_doses)
-        x = dose_func(tox = toxes, level = doses, ...)
+        ## This use of ... represents an implicit (disguised) use of reference semantics,
+        ## since it defers to values in environment of caller. So I see a clear invitation
+        ## here to introduce the R6 'Crm' class.
+        ## But these abstract aspects of software construction may not fully comprise the
+        ## needed perspective on this. Perhaps what '.conduct_dose_finding_cohorts' really
+        ## points to, is a missing feature of 'dfcrm'. That is, perhaps this function
+        ## itself belongs as a method of 'Crm'.
+        x = dose_func(tox = toxes, level = doses, ...) # TODO: Use the R6 'Crm' class here
         if ("mtd" %in% names(x)) {
             dose = x$mtd
         }

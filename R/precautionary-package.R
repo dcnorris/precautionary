@@ -82,17 +82,20 @@ NULL
 #'     yield optimality on the performance characteristics in his example.
 #'
 #' @section Fast CRM:
+#' * Expunge decode from crmh_ev
 #' * Benchmark; try mul_add()'s
 #' * R6 Crm class
-#' - impl by method choice
-#' - pull out constants
+#' / impl by method choice
+#' / Add 'ruste' option fully to test-crm.R
+#' - Write method to support DTP
+#' - Hook up the DTP benchmarks to 'Crm' class
+#' - pull out constants such as log_vtox
+#' - Develop a shortcut Crm method that skips "mtd" extras
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
 #' @section Fast DTP:
-#' * Implement a \code{crmh_ev} that accepts f64 encoding of toxicity counts
-#' * Add an \code{impl="ruste"} to invoke this
-#' * Implement a CRM 'server' within \code{crm(impl="ruste")}
+#' * Implement a CRM 'server' within R6 Crm class
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts

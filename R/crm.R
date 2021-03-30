@@ -1,6 +1,9 @@
 ## Introducing an R6 class for CRM models, capable of supporting
 ## efficient caching maneuvers.
 
+## TODO: Organize a class hierarchy of model types (empiric, logistic),
+##       exploiting inheritance to clarify what is special vs shared.
+
 ##' @importFrom R6 R6Class
 Crm <- R6::R6Class("Crm",
                public = list(
@@ -13,22 +16,24 @@ Crm <- R6::R6Class("Crm",
                   private$conf.level <- conf
                   invisible(self)
                 }
-                ## TODO: Can I have an observe(level, x) function also?
-                ##       Or perhaps it's better to provide levels() and
-                ##       tox() as 'active fields'?
-                ,observe = function(x, o){
+                ,observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
+                  stopifnot(length(level) == length(tox))
+                  stopifnot(all(tox %in% c(0,1)))
+                  D <- length(private$ln_skel)
+                  if (!(all(level %in% 1:D))) {
+                    cat("levels =", level, "\n")
+                    cat("   1:D =", 1:D, "\n")
+                  }
+                  stopifnot(all(level %in% 1:D))
+                  level <- factor(level, levels=1:D)
+                  self$tally(x = xtabs(tox ~ level),
+                             o = xtabs(!tox ~ level))
+                }
+                ,tally = function(x, o){
                   D <- length(private$ln_skel)
                   ## As a special case, we allow 'o' to be missing, and 'x' to be
                   ## a full x/o tally encoded in a numeric(1) -- i.e. a single f64.
                   if (missing(o) && is.numeric(x) && length(x) == 1) {
-                    ## TODO: I probably ought to spare the Rust code the trouble
-                    ##       of unpacking an f64 'obs', even if the cost is quite
-                    ##       low in practical terms. As a matter of separation of
-                    ##       concerns, delegating this to the Rust code muddies
-                    ##       the water.
-                    private$obs <- x
-                    ## But in any case, I want to be ready to call any impl, and
-                    ## so I need to unravel the obs into 'w' and 'l' vectors.
                     if (private$cohort.size == 3) {
                       enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1))
                       tox <- sapply(-(0:7), function(d) ((x %% 1) %% 16^d) %/% 16^(d-1))
@@ -49,12 +54,14 @@ Crm <- R6::R6Class("Crm",
                       ## - then 8*log2(8+1) = 27 bits needed
                       ## (32+27=59 bits just fits in a float if I use 9 bits of exponent)
                     }
-                    ## It might even make sense in general to ...
-                    invisible(self) # Enable method chaining, e.g. .$observe()$est()!
+                    invisible(self)
                   }
 
                   ## Otherwise ...
                   ## we expect 'x' to be a dosewise vector of exchangeable toxicity counts
+                  if (length(x) != D) {
+                    cat("x =", deparse(x), "\n")
+                  }
                   stopifnot(length(x) == D)
                   stopifnot(is.numeric(x))
                   stopifnot(all(round(x) == x))
@@ -81,14 +88,6 @@ Crm <- R6::R6Class("Crm",
                       ix <- ix + len
                     }
                     private$o <- lapply(o, length)
-                  }
-                  ## TODO: See above note about how this 'muddies the water'
-                  enr <- tabulate(private$level, nbins=8)/3
-                  if (all(enr %% 3 == 0)) {
-                    tox <- xtabs(private$w==0 ~ factor(private$level, levels=1:8))
-                    private$obs <- encode_cohorts(enr = enr, tox = tox)
-                  } else {
-                    private$obs <- NaN
                   }
                   invisible(self)
                 }
@@ -121,9 +120,11 @@ Crm <- R6::R6Class("Crm",
                        }
                       ,ruste = {
                         ln_p <- private$ln_skel
-                        m0 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,0,abs.tol=0)[[1]]
-                        m1 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,1,abs.tol=0)[[1]]
-                        m2 <- integrate(crmh_ev,-Inf,Inf,private$obs,ln_p,scale,2,abs.tol=0)[[1]]
+                        tox <- private$x
+                        nos <- private$o
+                        m0 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,0,abs.tol=0)[[1]]
+                        m1 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,1,abs.tol=0)[[1]]
+                        m2 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,2,abs.tol=0)[[1]]
                         ans <- list(estimate = m1/m0, e2 = m2/m0)
                       }
                       )
@@ -142,18 +143,10 @@ Crm <- R6::R6Class("Crm",
                  ans <- within(ans, {
                    ptoxL <- prior^exp(ub)
                    ptoxU <- prior^exp(lb)
-                   mtd <- if (all(ptox <= target))
-                          length(private$ln_skel)
-                        else if (all(ptox >= target))
-                          1
-                        else
-                          order(abs(ptox-self$target))[1]
-                   smart_mtd <- which.min(abs(ptox - target))
-                   stopifnot(smart_mtd == mtd)
-                   ## TODO: Substitute smart_mtd if no complaints.
+                   mtd <- which.min(abs(ptox - target))
                  })
                  ans <- within(ans, {
-                   tox <- 1.0*(private$w==0) # NB: dfcrm's "mdt" holds tox as double
+                   tox <- 1.0*(private$w==0) # NB: dfcrm's "mtd" holds tox as double
                    level <- private$level
                    dosename <- NULL
                    subset <- pid[include]
@@ -169,10 +162,10 @@ Crm <- R6::R6Class("Crm",
                    ptoxU <- ptoxU
                    patient.detail <- TRUE
                    tite <- FALSE
-                   dosescaled <- prior # TODO: applies to EMPIRIC MODEL ONLY
+                   dosescaled <- prior # TODO: this is correct for EMPIRIC MODEL ONLY
                    var.est <- TRUE
                  })
-                 ans$crit <- NULL # let's not add stuff that isn't in dfcrm's answer
+                 ans$crit <- NULL # don't add stuff that isn't in dfcrm's answer
 
                  ## Order components to enable testthat::expect_equal()
                  ans <- ans[c("prior","target","tox","level","dosename","subset",
@@ -181,9 +174,54 @@ Crm <- R6::R6Class("Crm",
                               "ptox","ptoxL","ptoxU","conf.level","patient.detail",
                               "tite","dosescaled","var.est")]
                  class(ans) <- "mtd"
-                 ans
-               }
-               ) # </public>
+                 return(ans)
+               } #</est()>
+              ,run = function(next_dose, tox_counts, cohort_sizes,
+                              prev_tox = c(), prev_dose = c(),
+                              dose_func = applied_crm, ...,
+                              impl=c('dfcrm','rusti','ruste')){
+                ## Basically, recapitulate .conduct_dose_finding_cohorts ...
+                    if (length(prev_dose) != length(prev_tox)) {
+                      stop("prev_doses and prev_tox should be same length.")
+                    }
+                toxes = prev_tox
+                doses = prev_dose
+                dose_recs = integer(length(tox_counts))
+                dose = next_dose
+                num_cohorts = length(tox_counts)
+                for (i in 1:num_cohorts) {
+                  these_toxes = c(rep(1, tox_counts[i]),
+                                  rep(0, cohort_sizes[i] - tox_counts[i]))
+                  toxes = c(toxes, these_toxes)
+                  these_doses = rep(dose, cohort_sizes[i])
+                  doses = c(doses, these_doses)
+                  ## Key question in adapting .conduct_dose_finding_cohorts as a Crm method
+                  ## is what function I call next (qua 'dose_func'), and how I need to prep
+                  ## its parameters.
+                  ##
+                  ## So far, I have patientwise dose assignments and toxicity assesments.
+                  ## But I want dose-wise x and o.
+                  x <- self$
+                    observe(doses, toxes)$
+                    est(impl = impl)
+                  ## x = dose_func(tox = toxes, level = doses, ...)
+                  if ("mtd" %in% names(x)) {
+                    dose = x$mtd
+                  }
+                  else {
+                    dose = x
+                  }
+                  dose_recs[i] = dose
+                  if ("stop" %in% names(x)) {
+                    if (x[["stop"]]) {
+                      dose_recs[i:num_cohorts] = NA
+                      break
+                    }
+                  }
+                }
+                return(dose_recs)
+              } # </run()>
+              ) # </public>
               ,private = list(
                  ln_skel = NA
                , x = NA
@@ -279,11 +317,11 @@ crm <- function(prior, target, tox, level, n=length(level),
                obs <- encode_cohorts(enr = tabulate(level, nbins=8)/3
                                     ,tox = xtabs(tox ~ factor(level, levels=1:8))
                                      )
-               ln_prior <- log(prior)
-               den <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,0,abs.tol=0)[[1]]
-               est <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,1,abs.tol=0)[[1]] / den
+               ln_skel <- log(prior)
+               den <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,0,abs.tol=0)[[1]]
+               est <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,1,abs.tol=0)[[1]] / den
                if (var.est)
-                 e2 <- integrate(crmh_ev,-Inf,Inf,obs,ln_prior,scale,2,abs.tol=0)[[1]] / den
+                 e2 <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,2,abs.tol=0)[[1]] / den
              },
              stop(paste("impl =", impl, "not recognized.")))
     }
