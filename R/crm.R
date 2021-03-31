@@ -4,42 +4,100 @@
 ## TODO: Organize a class hierarchy of model types (empiric, logistic),
 ##       exploiting inheritance to clarify what is special vs shared.
 
-##' @importFrom R6 R6Class
+##' @name Crm-class
+##' @title An R6 class encapsulating CRM models
+##'
+##' This class wraps the functionality of package \CRANpkg{dfcrm}, adding
+##' efficient Rust implementations of some numerical routines.
+##'
+##' @details
+##' Syntactically, the method chaining supported by R6 classes makes the
+##' invocation of CRM models more transparent. The mutability conferred
+##' by reference semantics enables memoization (caching) of results, which
+##' can speed up DTP calculations significantly.
+##'
+##' Presently, this class supports only the 'empiric' (aka 'power') model.
+##' But it is hoped that inheritance will assist in rendering other models
+##' implemented in package \CRANpkg{dfcrm} clearly, with code reuse.
+##' @export
 Crm <- R6::R6Class("Crm",
                public = list(
+                 ##' @details
+                 ##' Create a new `Crm` object.
+                 ##'
+                 ##' @param skeleton CRM skeleton
+                 ##' @param scale Sigma parameter of prior on beta parameter
+                 ##' @param target Target toxicity rate
+                 ##' @param cohort.size Size of enrolled cohorts
+                 ##' @return A Crm object.
+                 ##'
+                 ##' @examples
+                 ##' ## TODO.
                  initialize = function(skeleton, scale = sqrt(1.34), target, cohort.size = 3) {
                    private$ln_skel = log(skeleton)
                    private$scale = scale
                    private$cohort.size = 3
                    private$target = target
                  }
+                 ##' @details
+                 ##' Set the stopping function
+                 ##'
+                 ##' @param sfunc A function taking \code{mtd} objects to \code{mtd} objects,
+                 ##' attaching suitable stopping information
+                 ##' @return Self, invisibly
                 ,stop_func = function(sfunc){
                   private$.stop_func <- sfunc
                   ## TODO: Does this invalidate CRM model cache? (I don't believe so.)
                   invisible(self)
                 }
+                 ##' @details
+                 ##' Set the \code{no_skip_esc} behavior
+                 ##'
+                 ##' @param tf An atomic logical value, TRUE or FALSE
+                 ##' @return Self, invisibly
                 ,no_skip_esc = function(tf){
                   stopifnot(is.logical(tf))
                   stopifnot(length(tf) == 1)
                   private$.no_skip_esc = tf
                   invisible(self)
                 }
+                 ##' @details
+                 ##' Set the \code{no_skip_deesc} behavior
+                 ##'
+                 ##' @param tf An atomic logical value, TRUE or FALSE
+                 ##' @return Self, invisibly
                 ,no_skip_deesc = function(tf){
                   stopifnot(is.logical(tf))
                   stopifnot(length(tf) == 1)
                   private$.no_skip_deesc = tf
                   invisible(self)
                 }
+                 ##' @details
+                 ##' Set the \code{global_coherent_esc} behavior
+                 ##'
+                 ##' @param tf An atomic logical value, TRUE or FALSE
+                 ##' @return Self, invisibly
                 ,global_coherent_esc = function(tf){
                   stopifnot(is.logical(tf))
                   stopifnot(length(tf) == 1)
                   private$.global_coherent_esc = tf
                   invisible(self)
                 }
+                 ##' @details
+                 ##' Set the required confidence level for escalation decisions
+                 ##'
+                 ##' @param conf A numeric confidence less than 1.0
+                 ##' @return Self, invisibly
                 ,conf_level = function(conf){
                   private$conf.level <- conf
                   invisible(self)
                 }
+                 ##' @details
+                 ##' Set patient-wise toxicity observations
+                 ##'
+                 ##' @param level A patient-wise vector of dose assignments
+                 ##' @param tox A patient-wise vector of 0/1 toxicity assessments
+                 ##' @return Self, invisibly
                 ,observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
                   stopifnot(length(level) == length(tox))
                   stopifnot(all(tox %in% c(0,1)))
@@ -49,6 +107,12 @@ Crm <- R6::R6Class("Crm",
                   self$tally(x = xtabs(tox ~ level),
                              o = xtabs(!tox ~ level))
                 }
+                 ##' @details
+                 ##' Set dose-wise toxicity observations
+                 ##'
+                 ##' @param x A dose-wise vector of toxicity counts
+                 ##' @param o A dose-wise vector of non-toxicity counts
+                 ##' @return Self, invisibly
                 ,tally = function(x, o){
                   D <- length(private$ln_skel)
                   ## As a special case, we allow 'o' to be missing, and 'x' to be
@@ -111,6 +175,12 @@ Crm <- R6::R6Class("Crm",
                   }
                   invisible(self)
                 }
+                ##' @details
+                ##' Set patient-wise toxicity observations
+                ##'
+                ##' @param impl A string choosing the low-level implementation to use.
+                ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
+                ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
                ,est = function(impl=c('dfcrm','rusti','ruste')){
                  scale <- private$scale
                  model <- "empiric"
@@ -195,72 +265,36 @@ Crm <- R6::R6Class("Crm",
                  class(ans) <- "mtd"
                  return(ans)
                } #</est()>
-              ,applied = function(level, tox, ...){
-                x <- self$observe(level = level, tox = tox)$est(...)
-                ## Much of the rest is verbatim from dtpcrm::applied_crm()
-                if (private$.no_skip_esc & x$mtd > (max(level) + 1)) {
-                  x$mtd <- max(level) + 1
+               ##' @details
+               ##' Return dose recommendation for given tox/no-tox tallies.
+               ##'
+               ##' @param x A dose-wise vector of toxicity counts
+               ##' @param o A dose-wise vector of non-toxicity counts
+               ##' @param last_dose The most recently given dose, as required to implement
+               ##' the \code{global_coherent_esc=TRUE} behavior
+               ##' @param ... Optional parameters passed to \code{Crm$esc()}, enabling
+               ##' the passthru of the \code{impl} parameter.
+               ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
+              ,applied = function(x, o, last_dose = NA, ...){
+                level <- which((x+o) > 0) # vector of levels that have been tried
+                est <- self$tally(x, o)$est(...)
+                if (private$.no_skip_esc) {
+                  est$mtd <- min(est$mtd, max(level) + 1)
                 }
-                if (private$.no_skip_deesc & x$mtd < (min(level) - 1)) {
-                  x$mtd <- min(level) - 1
+                if (private$.no_skip_deesc) {
+                  est$mtd <- max(est$mtd, min(level) - 1)
                 }
                 if (private$.global_coherent_esc) {
-                  last_dose <- utils::tail(level, 1)
-                  tox_rate_last_dose <- sum(tox[level == last_dose])/sum(level == last_dose)
-                  if (tox_rate_last_dose > target) {
-                    x$mtd <- min(x$mtd, last_dose)
+                  if(is.na(last_dose)) stop("last_dose required if global_coherent_esc = TRUE")
+                  if (x[last_dose] > private$target * (x+o)[last_dose]) {
+                    est$mtd <- min(est$mtd, last_dose)
                   }
                 }
                 if (!is.null(private$.stop_func)) {
-                  x = private$.stop_func(x)
+                  est = private$.stop_func(est)
                 }
-                return(x)
+                return(est)
               }
-              ,run = function(next_dose, tox_counts, cohort_sizes,
-                              prev_tox = c(), prev_dose = c(),
-                              dose_func = applied_crm, ...,
-                              impl=c('dfcrm','rusti','ruste')){
-                ## Basically, recapitulate .conduct_dose_finding_cohorts ...
-                    if (length(prev_dose) != length(prev_tox)) {
-                      stop("prev_doses and prev_tox should be same length.")
-                    }
-                toxes = prev_tox
-                doses = prev_dose
-                dose_recs = integer(length(tox_counts))
-                dose = next_dose
-                num_cohorts = length(tox_counts)
-                for (i in 1:num_cohorts) {
-                  these_toxes = c(rep(1, tox_counts[i]),
-                                  rep(0, cohort_sizes[i] - tox_counts[i]))
-                  toxes = c(toxes, these_toxes)
-                  these_doses = rep(dose, cohort_sizes[i])
-                  doses = c(doses, these_doses)
-                  ## Key question in adapting .conduct_dose_finding_cohorts as a Crm method
-                  ## is what function I call next (qua 'dose_func'), and how I need to prep
-                  ## its parameters.
-                  ##
-                  ## So far, I have patientwise dose assignments and toxicity assesments.
-                  ## But I want dose-wise x and o.
-                  x <- self$
-                    observe(doses, toxes)$
-                    est(impl = impl)
-                  ## x = dose_func(tox = toxes, level = doses, ...)
-                  if ("mtd" %in% names(x)) {
-                    dose = x$mtd
-                  }
-                  else {
-                    dose = x
-                  }
-                  dose_recs[i] = dose
-                  if ("stop" %in% names(x)) {
-                    if (x[["stop"]]) {
-                      dose_recs[i:num_cohorts] = NA
-                      break
-                    }
-                  }
-                }
-                return(dose_recs)
-              } # </run()>
               ) # </public>
               ,private = list(
                  ln_skel = NA

@@ -58,48 +58,39 @@ applied_crm <- function (prior, scale, target, tox, level,
 }
 
 ## Adapted from package:dtpcrm.
-## TODO: Consider opportunities for speedups here, including parallelization.
+## TODO: Refactor this as a method of class 'Crm'. (It is no longer feasible
+##       to achieve high performance within the interface set forth in 'dtpcrm'.)
 .conduct_dose_finding_cohorts <- function (next_dose, tox_counts, cohort_sizes,
-                                           prev_tox = c(), prev_dose = c(),
                                            dose_func = applied_crm, ...)
 {
-    if (length(prev_dose) != length(prev_tox)) {
-        stop("prev_doses and prev_tox should be same length.")
+  num_cohorts <- length(tox_counts)
+  dose_recs <- integer(num_cohorts+1) # used as if a 0-based array
+  dose_recs[1] <- next_dose
+  D <- length(environment(dose_func)$private$ln_skel) # by the skin of my teeth!
+  for (coh in 1:num_cohorts) {
+    ## Work out the recommendation for (coh+1)th cohort ...
+    tox <- tox_counts[1:coh]
+    level <- factor(dose_recs[1:coh], levels=1:D)
+    xs <- xtabs(tox ~ level)
+    ns <- xtabs(cohort_sizes[1:coh] ~ level)
+    os <- ns - xs
+
+    x = dose_func(x = xs, o = os, last_dose = dose_recs[coh], ...)
+    if ("mtd" %in% names(x)) {
+      dose = x$mtd
     }
-    toxes = prev_tox
-    doses = prev_dose
-    dose_recs = integer(length(tox_counts))
-    dose = next_dose
-    num_cohorts = length(tox_counts)
-    for (i in 1:num_cohorts) {
-        these_toxes = c(rep(1, tox_counts[i]), rep(0, cohort_sizes[i] -
-            tox_counts[i]))
-        toxes = c(toxes, these_toxes)
-        these_doses = rep(dose, cohort_sizes[i])
-        doses = c(doses, these_doses)
-        ## This use of ... represents an implicit (disguised) use of reference semantics,
-        ## since it defers to values in environment of caller. So I see a clear invitation
-        ## here to introduce the R6 'Crm' class.
-        ## But these abstract aspects of software construction may not fully comprise the
-        ## needed perspective on this. Perhaps what '.conduct_dose_finding_cohorts' really
-        ## points to, is a missing feature of 'dfcrm'. That is, perhaps this function
-        ## itself belongs as a method of 'Crm'.
-        x = dose_func(tox = toxes, level = doses, ...) # TODO: Use the R6 'Crm' class here
-        if ("mtd" %in% names(x)) {
-            dose = x$mtd
-        }
-        else {
-            dose = x
-        }
-        dose_recs[i] = dose
-        if ("stop" %in% names(x)) {
-            if (x[["stop"]]) {
-                dose_recs[i:num_cohorts] = NA
-                break
-            }
-        }
+    else {
+      dose = x
     }
-    return(dose_recs)
+    dose_recs[coh+1] = dose
+    if ("stop" %in% names(x)) {
+      if (x[["stop"]]) {
+        dose_recs[1 + coh:num_cohorts] = NA
+        break
+      }
+    }
+  }
+  return(dose_recs[-1]) # accommodate the quirky aliasing of original dtpcrm code
 }
 
 ##' Faster Dose Transition Pathways (DTP) calculation
@@ -142,8 +133,6 @@ applied_crm <- function (prior, scale, target, tox, level,
 ##' @param cohort_sizes An integer vector of cohort sizes, with length equal to
 ##' the maximum number of cohorts that may be enrolled. (Thus, \code{sum(cohort_sizes)}
 ##' is the trial's maximum enrollment.)
-##' @param prev_tox An integer vector of previous cohorts' tox counts
-##' @param prev_dose An integer vector of previous cohorts' enrollment
 ##' @param dose_func An adapter function
 ##' @param ... Ultimately passed to \code{.conduct_dose_finding_cohorts}, whence
 ##' it ends up informing the \code{dose_func}. Thanks to the method chaining of
@@ -170,24 +159,25 @@ applied_crm <- function (prior, scale, target, tox, level,
 ##'   }
 ##' }
 ##'
+##' crm <- Crm$new(skeleton = prior.DLT,
+##'                scale = sqrt(prior.var),
+##'                target = 0.2)$
+##'   stop_func(stop_func)$
+##'   no_skip_esc(TRUE)$
+##'   no_skip_deesc(FALSE)$
+##'   global_coherent_esc(TRUE)
+##'
 ##' if (interactive()) { # don't overtax CRAN servers
 ##' restore <- options(mc.cores = 1) # you can reasonably set as high as detectCores()
 ##' dtps <- calculate_dtps(next_dose = 3,
 ##'                        cohort_sizes = rep(3, 7),
-##'                        prior = prior.DLT,
-##'                        target = 0.2,
-##'                        stop_func = stop_func,
-##'                        scale = sqrt(prior.var),
-##'                        no_skip_esc = TRUE,
-##'                        no_skip_deesc = FALSE,
-##'                        global_coherent_esc = TRUE,
+##'                        dose_func = crm$applied,
 ##'                        impl = "rusti")
 ##' options(mc.cores = restore)
 ##' }
 ##' @author Adapted by David C. Norris from original \code{dtpcrm::calculate_dtps}
 ##' @export
 calculate_dtps <- function (next_dose, cohort_sizes,
-                            prev_tox = c(), prev_dose = c(),
                             dose_func = applied_crm, ...,
                             mc.cores = getOption("mc.cores", 2L))
 {
@@ -222,8 +212,6 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       i <- i + 1
       x <- as.integer(paths[i,])
       dose_recs <- .conduct_dose_finding_cohorts(next_dose, x, cohort_sizes,
-                                                 prev_tox = prev_tox,
-                                                 prev_dose = prev_dose,
                                                  dose_func = dose_func,
                                                  ...)
       dtps[,i] <- c(next_dose, c(rbind(x, dose_recs))) # NB: c(rbind(a,b)) interleaves a,b
