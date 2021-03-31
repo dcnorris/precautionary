@@ -67,24 +67,19 @@ applied_crm <- function (prior, scale, target, tox, level,
   dose_recs <- integer(num_cohorts+1) # used as if a 0-based array
   dose_recs[1] <- next_dose
   D <- length(environment(dose_func)$private$ln_skel) # by the skin of my teeth!
+  x <- o <- integer(D)
   for (coh in 1:num_cohorts) {
     ## Work out the recommendation for (coh+1)th cohort ...
     tox <- tox_counts[1:coh]
     level <- factor(dose_recs[1:coh], levels=1:D)
-    xs <- xtabs(tox ~ level)
-    ns <- xtabs(cohort_sizes[1:coh] ~ level)
-    os <- ns - xs
+    d <- dose_recs[coh]
+    x[d] <- x[d] + tox_counts[coh]
+    o[d] <- o[d] + (cohort_sizes[coh] - tox_counts[coh])
 
-    x = dose_func(x = xs, o = os, last_dose = dose_recs[coh], ...)
-    if ("mtd" %in% names(x)) {
-      dose = x$mtd
-    }
-    else {
-      dose = x
-    }
-    dose_recs[coh+1] = dose
-    if ("stop" %in% names(x)) {
-      if (x[["stop"]]) {
+    rec <- dose_func(x, o, last_dose = dose_recs[coh], ...)
+    dose_recs[coh+1] <- rec$mtd
+    if ("stop" %in% names(rec)) {
+      if (rec[["stop"]]) {
         dose_recs[1 + coh:num_cohorts] = NA
         break
       }
@@ -309,7 +304,7 @@ stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
 ## This offers up plenty of speedup opportunity, while completing
 ## in just 10s even with the original dtpcrm version.
 ##' @importFrom dtpcrm stop_for_consensus_reached
-dtp <- function(C=4, mc.cores=1) {
+dtp <- function(C=4, mc.cores=1, profile=FALSE, impl='rusti') {
   ## VIOLA trial set-up
   number.doses <- 7
   start.dose.level <- 3
@@ -341,13 +336,21 @@ dtp <- function(C=4, mc.cores=1) {
     global_coherent_esc(TRUE)
 
   ## Get timing
-  t0 <- proc.time()
+  if (profile)
+    Rprof()
+  else
+    t0 <- proc.time()
   viola_dtp <- calculate_dtps(next_dose = start.dose.level,
                               cohort_sizes = rep(cohort.size, C),
                               dose_func = crm$applied,
                               mc.cores = mc.cores,
-                              impl = 'rusti'
+                              impl = impl
                               )
-  print(proc.time() - t0)
+  if (profile) {
+    Rprof(NULL)
+    return(summaryRprof())
+  } else {
+    print(proc.time() - t0)
+  }
   invisible(viola_dtp)
 }

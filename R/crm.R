@@ -181,7 +181,7 @@ Crm <- R6::R6Class("Crm",
                 ##' @param impl A string choosing the low-level implementation to use.
                 ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
-               ,est = function(impl=c('dfcrm','rusti','ruste')){
+               ,est = function(impl){
                  scale <- private$scale
                  model <- "empiric"
                  method <- "bayes"
@@ -216,6 +216,7 @@ Crm <- R6::R6Class("Crm",
                         m2 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,2,abs.tol=0)[[1]]
                         ans <- list(estimate = m1/m0, e2 = m2/m0)
                       }
+                      ,stop("must specify impl in Crm$est()")
                       )
                  ans <- within(ans, {
                    prior <- exp(private$ln_skel)
