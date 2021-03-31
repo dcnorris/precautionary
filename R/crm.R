@@ -180,8 +180,11 @@ Crm <- R6::R6Class("Crm",
                 ##'
                 ##' @param impl A string choosing the low-level implementation to use.
                 ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
+                ##' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
+                ##' object is returned to save execution time. If FALSE, a complete object is
+                ##' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
-               ,est = function(impl){
+               ,est = function(impl, abbrev=TRUE){
                  scale <- private$scale
                  model <- "empiric"
                  method <- "bayes"
@@ -205,7 +208,6 @@ Crm <- R6::R6Class("Crm",
                          m0 <- integrate(crmh  ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
                          m1 <- integrate(crmht ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
                          m2 <- integrate(crmht2,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
-                         ans <- list(estimate = m1/m0, e2 = m2/m0)
                        }
                       ,ruste = {
                         ln_p <- private$ln_skel
@@ -214,28 +216,32 @@ Crm <- R6::R6Class("Crm",
                         m0 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,0,abs.tol=0)[[1]]
                         m1 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,1,abs.tol=0)[[1]]
                         m2 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,2,abs.tol=0)[[1]]
-                        ans <- list(estimate = m1/m0, e2 = m2/m0)
                       }
                       ,stop("must specify impl in Crm$est()")
                       )
+                 estimate <- m1/m0
+                 post.var <- m2/m0 - estimate^2
+                 prior <- exp(private$ln_skel)
+                 ptox <- prior^exp(estimate)
+                 ## TODO: Document why each component of this return value is necessary:
+                 ans <- list(prior = prior,       # used by stop_for_excess_toxicity_empiric
+                             estimate = estimate, # used by stop_for_excess_toxicity_empiric
+                             post.var = post.var, # used by stop_for_excess_toxicity_empiric
+                             ptox = ptox,         # ???
+                             mtd = which.min(abs(ptox - private$target)))
+                 if (abbrev)
+                   return(ans)
+                 ## Otherwise we build out the whole return value of class "mtd"
+                 crit <- qnorm(0.5 + private$conf.level/2)
+                 lb <- estimate - crit*sqrt(post.var)
+                 ub <- estimate + crit*sqrt(post.var)
+                 ## TODO: Might 'within(.)' itself be costly? Try flattening
+                 ##       this code to a series of straight component assignments.
                  ans <- within(ans, {
-                   prior <- exp(private$ln_skel)
                    target <- private$target
-                   ptox <- prior^exp(estimate)
-                   post.var <- e2 - estimate^2
                    conf.level <- private$conf.level
-                 })
-                 ans <- within(ans, {
-                   crit <- qnorm(0.5 + conf.level/2)
-                   lb <- estimate - crit*sqrt(post.var)
-                   ub <- estimate + crit*sqrt(post.var)
-                 })
-                 ans <- within(ans, {
                    ptoxL <- prior^exp(ub)
                    ptoxU <- prior^exp(lb)
-                   mtd <- which.min(abs(ptox - target))
-                 })
-                 ans <- within(ans, {
                    tox <- 1.0*(private$w==0) # NB: dfcrm's "mtd" holds tox as double
                    level <- private$level
                    dosename <- NULL
@@ -247,7 +253,6 @@ Crm <- R6::R6Class("Crm",
                    pid <- pid
                    model.detail <- TRUE
                    intcpt <- 3 # TODO: Un-hard-code this
-                   ptox <- ptox
                    ptoxL <- ptoxL
                    ptoxU <- ptoxU
                    patient.detail <- TRUE
@@ -255,7 +260,6 @@ Crm <- R6::R6Class("Crm",
                    dosescaled <- prior # TODO: this is correct for EMPIRIC MODEL ONLY
                    var.est <- TRUE
                  })
-                 ans$crit <- NULL # don't add stuff that isn't in dfcrm's answer
 
                  ## Order components to enable testthat::expect_equal()
                  ans <- ans[c("prior","target","tox","level","dosename","subset",

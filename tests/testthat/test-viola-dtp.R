@@ -44,7 +44,7 @@ test_that(".conduct_dose_finding_cohorts agrees with dtpcrm's version", {
                                             tox_counts = path,
                                             cohort_sizes = cohort_sizes,
                                             dose_func = crm$applied,
-                                            impl = "rusti"
+                                            impl = "rusti", abbrev=FALSE
                                             )
 
   expect_equal(new_recs, old_recs)
@@ -82,7 +82,7 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
     next_dose = start.dose.level,
     cohort_sizes = rep(3, 7),
     dose_func = crm$applied,
-    impl = 'rusti')
+    impl = 'rusti', abbrev=FALSE)
 
   data(viola_dtp) # saved for comparison
 

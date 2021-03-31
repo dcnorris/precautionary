@@ -77,10 +77,10 @@ test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
   crm_new <- microbenchmark(new <- crm(prior, target, y, level, impl="rusti"))
   ##r6model <- Crm$new(skeleton = prior, target = target)$tally(x, o)
   r6model <- Crm$new(skeleton = prior, target = target)$observe(level, y)
-  crm_ri <- microbenchmark(r6i <- r6model$est(impl="rusti"))
+  crm_ri <- microbenchmark(r6i <- r6model$est(impl="rusti", abbrev=FALSE))
   ## TODO: Let 'ruste' method send dosewise x and o vectors directly,
   ##       without asking the Rust routine to reconstruct these.
-  ##crm_re <- microbenchmark(r6e <- r6model$est(impl="ruste"))
+  crm_re <- microbenchmark(r6e <- r6model$est(impl="ruste", abbrev=FALSE))
 
   expect_equal(new, old)
 

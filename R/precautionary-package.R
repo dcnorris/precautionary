@@ -89,9 +89,8 @@ NULL
 #' / Add 'ruste' option fully to test-crm.R
 #' - Write method to support DTP
 #' / Hook up the DTP benchmarks to 'Crm' class
-#' - pull out constants such as log_vtox
-#' - Develop a shortcut Crm method that skips "mtd" extras
-#' - Roxygen documentation; see https://github.com/r-lib/roxygen2/pull/922
+#' ~ Develop a shortcut Crm method that skips "mtd" extras
+#'   > $est(abbrev=TRUE) broke DTP expect_equal()s
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
