@@ -2,6 +2,7 @@
 
 ## Changes
 
+* Implements R6 class to wrap CRM functions, with caching to speed DTP
 * Implements faster versions of certain objective functions from package 'dtpcrm'
 * Explicitly integrate() over c(-Inf,Inf) in 'crm' function (as per documentation)
 * Implements faster version of dtpcrm::stop_for_excess_toxicity_empiric

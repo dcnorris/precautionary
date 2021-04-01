@@ -272,16 +272,26 @@ Crm <- R6::R6Class("Crm",
                ##' @details
                ##' Return dose recommendation for given tox/no-tox tallies.
                ##'
+               ##' This function caches results, which greatly saves computation time
+               ##' in DTP calculations. (It yields approximately a 5x speedup for the
+               ##' VIOLA trial example!)
                ##' @param x A dose-wise vector of toxicity counts
                ##' @param o A dose-wise vector of non-toxicity counts
                ##' @param last_dose The most recently given dose, as required to implement
                ##' the \code{global_coherent_esc=TRUE} behavior
-               ##' @param ... Optional parameters passed to \code{Crm$esc()}, enabling
-               ##' the passthru of the \code{impl} parameter.
-               ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
+               ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
+               ##' of required \code{impl} parameter and optional \code{abbrev} flag.
+               ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
+               ##' or possibly an abbreviated version of such object as returned by
+               ##' method \code{Crm$est()}.
               ,applied = function(x, o, last_dose = NA, ...){
+                key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
+                if (private$.global_coherent_esc)
+                  key <- paste(key, last_dose, sep='@') # last_dose becomes relevant to lookup
+                if (!is.null(est <- get0(key, envir = private$cache)))
+                  return(est)
                 level <- which((x+o) > 0) # vector of levels that have been tried
-                est <- self$tally(x, o)$est(...)
+                est <- self$tally(x, o)$est(...) # NB: Won't work with o=NA case of $tally
                 if (private$.no_skip_esc) {
                   est$mtd <- min(est$mtd, max(level) + 1)
                 }
@@ -297,6 +307,7 @@ Crm <- R6::R6Class("Crm",
                 if (!is.null(private$.stop_func)) {
                   est = private$.stop_func(est)
                 }
+                assign(key, est, envir = private$cache)
                 return(est)
               }
               ) # </public>
@@ -314,7 +325,7 @@ Crm <- R6::R6Class("Crm",
                , w = NA # in general, this will encode y as well
                , level = NA # patient-wise dose level, such that ln_skel[l] aligns with w
                , obs = NaN
-               , cached = list()
+               , cache = new.env(hash = TRUE, size = 10000L)
                , conf.level = 0.90
                )
                )

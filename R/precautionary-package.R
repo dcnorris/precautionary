@@ -95,6 +95,7 @@ NULL
 #'
 #' @section Fast DTP:
 #' * Implement a CRM 'server' within R6 Crm class
+#'   - Try sharing cache between forked DTP workers
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts
