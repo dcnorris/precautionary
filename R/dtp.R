@@ -304,6 +304,7 @@ stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
 ## This offers up plenty of speedup opportunity, while completing
 ## in just 10s even with the original dtpcrm version.
 ##' @importFrom dtpcrm stop_for_consensus_reached
+##' @importFrom utils Rprof summaryRprof
 dtp <- function(C=4, mc.cores=1, profile=FALSE, impl='rusti') {
   ## VIOLA trial set-up
   number.doses <- 7
