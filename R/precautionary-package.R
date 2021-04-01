@@ -89,8 +89,7 @@ NULL
 #' / Add 'ruste' option fully to test-crm.R
 #' - Write method to support DTP
 #' / Hook up the DTP benchmarks to 'Crm' class
-#' ~ Develop a shortcut Crm method that skips "mtd" extras
-#'   > $est(abbrev=TRUE) broke DTP expect_equal()s
+#' / Develop a shortcut Crm method that skips "mtd" extras
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'

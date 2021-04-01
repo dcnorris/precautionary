@@ -223,11 +223,10 @@ Crm <- R6::R6Class("Crm",
                  post.var <- m2/m0 - estimate^2
                  prior <- exp(private$ln_skel)
                  ptox <- prior^exp(estimate)
-                 ## TODO: Document why each component of this return value is necessary:
                  ans <- list(prior = prior,       # used by stop_for_excess_toxicity_empiric
                              estimate = estimate, # used by stop_for_excess_toxicity_empiric
                              post.var = post.var, # used by stop_for_excess_toxicity_empiric
-                             ptox = ptox,         # ???
+                             level = private$level, # used by stop_for_consensus_reached
                              mtd = which.min(abs(ptox - private$target)))
                  if (abbrev)
                    return(ans)
@@ -240,10 +239,10 @@ Crm <- R6::R6Class("Crm",
                  ans <- within(ans, {
                    target <- private$target
                    conf.level <- private$conf.level
+                   ptox <- ptox
                    ptoxL <- prior^exp(ub)
                    ptoxU <- prior^exp(lb)
                    tox <- 1.0*(private$w==0) # NB: dfcrm's "mtd" holds tox as double
-                   level <- private$level
                    dosename <- NULL
                    subset <- pid[include]
                    model <- model
