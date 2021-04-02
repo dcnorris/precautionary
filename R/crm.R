@@ -38,7 +38,41 @@ Crm <- R6::R6Class("Crm",
                    private$scale = scale
                    private$cohort.size = 3
                    private$target = target
+                   private$cache <- new.env(hash = TRUE, size = 10000L)
                  }
+                 ##' @details
+                 ##' Set private cache to NULL; useful for performance testing
+                 ##'
+                 ##' @return Self, invisibly
+                ,dontcache = function() {
+                  private$cache <- NULL
+                  private$skips <- NA
+                  invisible(self)
+                }
+                 ##' @details
+                 ##' Report performance statistics upon deletion.
+                 ##'
+                 ##' @return A short string summarizing lifetime duty and performance,
+                 ##' suitable for \code{cat()}'ting to console.
+                ,finalize = function() {
+                  deparse(self$report())
+                }
+                 ##' @details
+                 ##' Report performance statistics upon deletion.
+                 ##'
+                 ##' @return A named vector summarizing lifetime duty and performance
+               ,report = function() {
+                 c(pid = Sys.getpid(),
+                   cached = if (!is.null(private$cache))
+                             sum(env.profile(private$cache)$counts)
+                           else
+                             NA,
+                   evals = private$evals,
+                   skips = private$skips,
+                   calc.ms = as.integer(1000*sum(private$user)),
+                   'us/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
+                   )
+               }
                  ##' @details
                  ##' Set the stopping function
                  ##'
@@ -185,6 +219,8 @@ Crm <- R6::R6Class("Crm",
                 ##' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
                ,est = function(impl, abbrev=TRUE){
+                 private$evals <- private$evals + 1
+                 t0 <- proc.time()
                  scale <- private$scale
                  model <- "empiric"
                  method <- "bayes"
@@ -192,7 +228,7 @@ Crm <- R6::R6Class("Crm",
                  pid <- include
                  switch(impl,
                         dfcrm = {
-                          return(
+                          ans <-
                             dfcrm::crm(prior = exp(private$ln_skel), target = private$target,
                                        tox=(private$w==0), level=private$level,
                                        n=length(private$w), dosename=NULL,
@@ -200,7 +236,9 @@ Crm <- R6::R6Class("Crm",
                                        method=method, model=model, intcpt=3,
                                        scale=scale, model.detail=TRUE, patient.detail=TRUE,
                                        var.est=TRUE)
-                          )
+                          private$user['dfcrm'] <- private$user['dfcrm'] +
+                            sum((proc.time() - t0)[c('user.self','user.child')])
+                          return(ans)
                         }
                        ,rusti = {
                          ln_x1p <- private$ln_skel[private$level]
@@ -219,6 +257,8 @@ Crm <- R6::R6Class("Crm",
                       }
                       ,stop("must specify impl in Crm$est()")
                       )
+                 private$user[impl] <- private$user[impl] +
+                   sum((proc.time() - t0)[c('user.self','user.child')])
                  estimate <- m1/m0
                  post.var <- m2/m0 - estimate^2
                  prior <- exp(private$ln_skel)
@@ -285,11 +325,15 @@ Crm <- R6::R6Class("Crm",
                ##' or possibly an abbreviated version of such object as returned by
                ##' method \code{Crm$est()}.
               ,applied = function(x, o, last_dose = NA, ...){
+                if (!is.null(private$cache)) {
                 key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
                 if (private$.global_coherent_esc)
                   key <- paste(key, last_dose, sep='@') # last_dose becomes relevant to lookup
-                if (!is.null(est <- get0(key, envir = private$cache)))
+                if (!is.null(est <- get0(key, envir = private$cache))) {
+                  private$skips <- private$skips + 1
                   return(est)
+                }
+                }
                 level <- which((x+o) > 0) # vector of levels that have been tried
                 est <- self$tally(x, o)$est(...) # NB: Won't work with o=NA case of $tally
                 if (private$.no_skip_esc) {
@@ -307,7 +351,8 @@ Crm <- R6::R6Class("Crm",
                 if (!is.null(private$.stop_func)) {
                   est = private$.stop_func(est)
                 }
-                assign(key, est, envir = private$cache)
+                if (!is.null(private$cache))
+                  assign(key, est, envir = private$cache)
                 return(est)
               }
               ) # </public>
@@ -325,7 +370,12 @@ Crm <- R6::R6Class("Crm",
                , w = NA # in general, this will encode y as well
                , level = NA # patient-wise dose level, such that ln_skel[l] aligns with w
                , obs = NaN
-               , cache = new.env(hash = TRUE, size = 10000L)
+               , cache = NULL
+               , evals = 0
+               , skips = 0
+               , user = c(dfcrm = 0.0,
+                          rusti = 0.0,
+                          ruste = 0.0)
                , conf.level = 0.90
                )
                )

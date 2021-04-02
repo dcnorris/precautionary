@@ -87,7 +87,7 @@ comp_crmh <- compiler::cmpfun(function(a=seq(-0.5, 0.5, 0.05),
 })
 
 ## The defaults select the old routine, but skip.degenerate=TRUE engages other options
-prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1) {
+prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1, cache=TRUE) {
 
   prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
   prior.var <- 0.75
@@ -124,17 +124,22 @@ prof_viola_dtp <- function(skip.degenerate=FALSE, impl="dfcrm", mc.cores=1) {
         no_skip_deesc(FALSE)$
         global_coherent_esc(TRUE)
 
+      if (!cache) crm$dontcache()
+
+      Z <-
       calculate_dtps(next_dose = 3,
                      cohort_sizes = rep(3, 7),
                      dose_func = crm$applied,
                      impl = impl,
                      mc.cores = mc.cores)
+
+      print(attr(Z,'performance'))
     }
   )
 
 }
 
-viola_speedup_report <- function(full=FALSE) {
+viola_speedup_report <- function(full=FALSE, ...) {
   elapsed <- numeric(8)
   names(elapsed) <- c("pnorm", "skipt", "rusti", "ruste", "core2", "core4", "core6", "core8")
 
@@ -143,35 +148,36 @@ viola_speedup_report <- function(full=FALSE) {
     elapsed['pnorm'] <- prof_viola_dtp(skip=FALSE)['elapsed']
     cat("Elapsed: ", elapsed['pnorm'], "\n")
 
-    cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
-    elapsed['skipt'] <- prof_viola_dtp(skip=TRUE)['elapsed']
-    cat("Elapsed: ", elapsed['skipt'], "\n")
   } else {
-    elapsed[c('pnorm','skipt')] <- NA
+    elapsed[c('pnorm')] <- NA
   }
 
+  cat("Running precautionary::calculate_dtps(impl = 'dfcrm') ...\n")
+  elapsed['skipt'] <- prof_viola_dtp(skip=TRUE, impl="dfcrm", ...)['elapsed']
+  cat("Elapsed: ", elapsed['skipt'], "\n")
+
   cat("Running precautionary::calculate_dtps(impl = 'rusti') ...\n")
-  elapsed['rusti'] <- prof_viola_dtp(skip=TRUE, impl="rusti")['elapsed']
+  elapsed['rusti'] <- prof_viola_dtp(skip=TRUE, impl="rusti", ...)['elapsed']
   cat("Elapsed: ", elapsed['rusti'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'ruste') ...\n")
-  elapsed['ruste'] <- prof_viola_dtp(skip=TRUE, impl="ruste")['elapsed']
+  elapsed['ruste'] <- prof_viola_dtp(skip=TRUE, impl="ruste", ...)['elapsed']
   cat("Elapsed: ", elapsed['ruste'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 2) ...\n")
-  elapsed['core2'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=2)['elapsed']
+  elapsed['core2'] <- prof_viola_dtp(skip=TRUE, impl="rusti", ..., mc.cores=2)['elapsed']
   cat("Elapsed: ", elapsed['core2'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 4) ...\n")
-  elapsed['core4'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=4)['elapsed']
+  elapsed['core4'] <- prof_viola_dtp(skip=TRUE, impl="rusti", ..., mc.cores=4)['elapsed']
   cat("Elapsed: ", elapsed['core4'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 6) ...\n")
-  elapsed['core6'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=6)['elapsed']
+  elapsed['core6'] <- prof_viola_dtp(skip=TRUE, impl="rusti", ..., mc.cores=6)['elapsed']
   cat("Elapsed: ", elapsed['core6'], "\n")
 
   cat("Running precautionary::calculate_dtps(impl = 'rusti', mc.cores = 8) ...\n")
-  elapsed['core8'] <- prof_viola_dtp(skip=TRUE, impl="rusti", mc.cores=8)['elapsed']
+  elapsed['core8'] <- prof_viola_dtp(skip=TRUE, impl="rusti", ..., mc.cores=8)['elapsed']
   cat("Elapsed: ", elapsed['core8'], "\n")
 
   elapsed

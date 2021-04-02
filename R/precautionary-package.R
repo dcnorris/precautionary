@@ -83,6 +83,8 @@ NULL
 #'
 #' @section Fast CRM:
 #' * Expunge decode from crmh_ev
+#' * Expunge encode/decode from everywhere!
+#'   - including the wonky tally(x, o=NA) signature
 #' * Benchmark; try mul_add()'s
 #' * R6 Crm class
 #' / impl by method choice
@@ -95,6 +97,7 @@ NULL
 #'
 #' @section Fast DTP:
 #' * Implement a CRM 'server' within R6 Crm class
+#'   - Record performance stats, and report summary upon destruction
 #'   - Try sharing cache between forked DTP workers
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?

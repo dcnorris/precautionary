@@ -75,8 +75,9 @@ test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
   o <- xtabs(!y ~ factor(level, levels=seq_along(prior)))
   crm_old <- microbenchmark(old <- dfcrm::crm(prior, target, y, level))
   crm_new <- microbenchmark(new <- crm(prior, target, y, level, impl="rusti"))
-  ##r6model <- Crm$new(skeleton = prior, target = target)$tally(x, o)
-  r6model <- Crm$new(skeleton = prior, target = target)$observe(level, y)
+  r6model <- Crm$new(skeleton = prior, target = target)$
+    dontcache()$
+    observe(level, y)
   crm_ri <- microbenchmark(r6i <- r6model$est(impl="rusti", abbrev=FALSE))
   ## TODO: Let 'ruste' method send dosewise x and o vectors directly,
   ##       without asking the Rust routine to reconstruct these.
@@ -92,8 +93,7 @@ test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
   old$tox <- old$tox[exch]
   old$level <- old$level[exch]
   expect_equal(r6i, old)
-
-  ##expect_equal(r6e, old)
+  expect_equal(r6e, old)
 
   ## Expect DEFINITE improvement, with new UPPER quartile < old LOWER:
   expect_lt(summary(crm_new, unit="ms")$uq,
@@ -101,7 +101,7 @@ test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
 
   speedup_message(crm_new, crm_old)
   speedup_message(crm_ri, crm_old)
-  ##speedup_message(crm_re, crm_old)
+  speedup_message(crm_re, crm_old)
 })
 
 ## test_that("titecrm() yields same result as dfcrm::crm, but faster", {

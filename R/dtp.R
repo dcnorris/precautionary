@@ -197,7 +197,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
   ##                                                           dose_func = dose_func,
   ##                                                           ...)))
   ## dtps <- t(dtps)
-  scan_dtps <- function(paths) {
+  scan_dtps <- function(paths, ...) {
     ## NB: Storing the paths in columns improves locality of reference
     dtps <- matrix(NA_integer_, ncol = nrow(paths),
                    nrow = 1+2*ncol(paths)) # preallocate matrix work area
@@ -225,16 +225,25 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       skipped <- skipped + degen
     }
     dtps <- data.frame(t(dtps))
+    ## TODO: Here, I should be able to apply the technique below, to obtain the
+    ##       performance stats from this particular forked process, and attach
+    ##       these as an attribute to 'dtps' before returning it.
+    attr(dtps,'performance') <- environment(dose_func)$self$report()
+    return(dtps)
   }
   chunks <- if (mc.cores == 1 || ncol(paths)<3)
               list(paths) # singleton 'chunk'
             else # TODO: Split into about mc.cores^2 chunks
               split(paths, paths[,3:1], drop=TRUE) # note reversed order of factor columns
-  dtps <- do.call("rbind",
-                  parallel::mclapply(chunks, scan_dtps, mc.cores = mc.cores))
+  chunked_dtps <- parallel::mclapply(chunks, scan_dtps, ..., mc.cores = mc.cores)
+  dtps <- do.call(rbind, chunked_dtps)
   colnames(dtps) <- c("D0", as.vector(rbind(paste0("T", 1:num_cohorts),
                                             paste0("D", 1:num_cohorts))))
   dtps[t(apply(is.na(dtps), 1, cumsum)) > 0] <- NA
+  ## TODO: Make a nice data frame, possibly with PIDs as rownames.
+  ##       Alternatively, consider a table or more sophisticated summary
+  ##       that explores (e.g.) workload balance across forked processes.
+  attr(dtps,'performance') <- do.call(rbind, lapply(chunked_dtps, attr, which='performance'))
   return(dtps)
 }
 
