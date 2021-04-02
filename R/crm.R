@@ -34,329 +34,329 @@ Crm <- R6::R6Class("Crm",
                  ##' @examples
                  ##' ## TODO.
                  initialize = function(skeleton, scale = sqrt(1.34), target, cohort.size = 3) {
-                   private$ln_skel = log(skeleton)
-                   private$scale = scale
-                   private$cohort.size = 3
-                   private$target = target
+                   private$ln_skel <- log(skeleton)
+                   private$scale <- scale
+                   private$cohort.size <- 3
+                   private$target <- target
                    private$cache <- new.env(hash = TRUE, size = 10000L)
-                 }
+                 },
                  ##' @details
                  ##' Set private cache to NULL; useful for performance testing
                  ##'
                  ##' @return Self, invisibly
-                ,dontcache = function() {
-                  private$cache <- NULL
-                  private$skips <- NA
-                  invisible(self)
-                }
+                 dontcache = function() {
+                   private$cache <- NULL
+                   private$skips <- NA
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Report performance statistics upon deletion.
                  ##'
                  ##' @return A short string summarizing lifetime duty and performance,
                  ##' suitable for \code{cat()}'ting to console.
-                ,finalize = function() {
-                  deparse(self$report())
-                }
+                 finalize = function() {
+                   deparse(self$report())
+                 },
                  ##' @details
                  ##' Report performance statistics upon deletion.
                  ##'
                  ##' @return A named vector summarizing lifetime duty and performance
-               ,report = function() {
-                 c(pid = Sys.getpid(),
-                   cached = if (!is.null(private$cache))
-                             sum(env.profile(private$cache)$counts)
-                           else
-                             NA,
-                   evals = private$evals,
-                   skips = private$skips,
-                   calc.ms = as.integer(1000*sum(private$user)),
-                   'us/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
-                   )
-               }
+                 report = function() {
+                   c(pid = Sys.getpid(),
+                     cached = if (!is.null(private$cache))
+                                sum(env.profile(private$cache)$counts)
+                              else
+                                NA,
+                     evals = private$evals,
+                     skips = private$skips,
+                     calc.ms = as.integer(1000*sum(private$user)),
+                     'us/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
+                     )
+                 },
                  ##' @details
                  ##' Set the stopping function
                  ##'
                  ##' @param sfunc A function taking \code{mtd} objects to \code{mtd} objects,
                  ##' attaching suitable stopping information
                  ##' @return Self, invisibly
-                ,stop_func = function(sfunc){
-                  private$.stop_func <- sfunc
-                  ## TODO: Does this invalidate CRM model cache? (I don't believe so.)
-                  invisible(self)
-                }
+                 stop_func = function(sfunc){
+                   private$.stop_func <- sfunc
+                   ## TODO: Does this invalidate CRM model cache? (I don't believe so.)
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Set the \code{no_skip_esc} behavior
                  ##'
                  ##' @param tf An atomic logical value, TRUE or FALSE
                  ##' @return Self, invisibly
-                ,no_skip_esc = function(tf){
-                  stopifnot(is.logical(tf))
-                  stopifnot(length(tf) == 1)
-                  private$.no_skip_esc = tf
-                  invisible(self)
-                }
+                 no_skip_esc = function(tf){
+                   stopifnot(is.logical(tf))
+                   stopifnot(length(tf) == 1)
+                   private$.no_skip_esc = tf
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Set the \code{no_skip_deesc} behavior
                  ##'
                  ##' @param tf An atomic logical value, TRUE or FALSE
                  ##' @return Self, invisibly
-                ,no_skip_deesc = function(tf){
-                  stopifnot(is.logical(tf))
-                  stopifnot(length(tf) == 1)
-                  private$.no_skip_deesc = tf
-                  invisible(self)
-                }
+                 no_skip_deesc = function(tf){
+                   stopifnot(is.logical(tf))
+                   stopifnot(length(tf) == 1)
+                   private$.no_skip_deesc = tf
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Set the \code{global_coherent_esc} behavior
                  ##'
                  ##' @param tf An atomic logical value, TRUE or FALSE
                  ##' @return Self, invisibly
-                ,global_coherent_esc = function(tf){
-                  stopifnot(is.logical(tf))
-                  stopifnot(length(tf) == 1)
-                  private$.global_coherent_esc = tf
-                  invisible(self)
-                }
+                 global_coherent_esc = function(tf){
+                   stopifnot(is.logical(tf))
+                   stopifnot(length(tf) == 1)
+                   private$.global_coherent_esc = tf
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Set the required confidence level for escalation decisions
                  ##'
                  ##' @param conf A numeric confidence less than 1.0
                  ##' @return Self, invisibly
-                ,conf_level = function(conf){
-                  private$conf.level <- conf
-                  invisible(self)
-                }
+                 conf_level = function(conf){
+                   private$conf.level <- conf
+                   invisible(self)
+                 },
                  ##' @details
                  ##' Set patient-wise toxicity observations
                  ##'
                  ##' @param level A patient-wise vector of dose assignments
                  ##' @param tox A patient-wise vector of 0/1 toxicity assessments
                  ##' @return Self, invisibly
-                ,observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
-                  stopifnot(length(level) == length(tox))
-                  stopifnot(all(tox %in% c(0,1)))
-                  D <- length(private$ln_skel)
-                  stopifnot(all(level %in% 1:D))
-                  level <- factor(level, levels=1:D)
-                  self$tally(x = xtabs(tox ~ level),
-                             o = xtabs(!tox ~ level))
-                }
+                 observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
+                   stopifnot(length(level) == length(tox))
+                   stopifnot(all(tox %in% c(0,1)))
+                   D <- length(private$ln_skel)
+                   stopifnot(all(level %in% 1:D))
+                   level <- factor(level, levels=1:D)
+                   self$tally(x = xtabs(tox ~ level),
+                              o = xtabs(!tox ~ level))
+                 },
                  ##' @details
                  ##' Set dose-wise toxicity observations
                  ##'
                  ##' @param x A dose-wise vector of toxicity counts
                  ##' @param o A dose-wise vector of non-toxicity counts
                  ##' @return Self, invisibly
-                ,tally = function(x, o){
-                  D <- length(private$ln_skel)
-                  ## As a special case, we allow 'o' to be missing, and 'x' to be
-                  ## a full x/o tally encoded in a numeric(1) -- i.e. a single f64.
-                  if (missing(o) && is.numeric(x) && length(x) == 1) {
-                    if (private$cohort.size == 3) {
-                      enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1))
-                      tox <- sapply(-(0:7), function(d) ((x %% 1) %% 16^d) %/% 16^(d-1))
-                      nos <- 3 * enr - tox
-                      ## Ideally, the tox and no-tox individuals are contiguous.
-                      ## This is especially helpful (numerically) for the no-tox (w>0) cases.
-                      private$w <- c(rep(1, sum(nos)),
-                                     rep(0, sum(tox)))
-                      ## Now, we need to lay out a vector of dose-level assignments
-                      ## consistent with the given data.
-                      private$level <- c(rep(1:D, nos[1:D]),
-                                         rep(1:D, tox[1:D]))
-                    } else {
-                      stop("unimplemented")
-                      ## TODO: implement n=1 case:
-                      ## - enroll at most 15 per dose ==> 8*4 = 32 bits
-                      ## - suppose up to 8 tox may occur at each dose
-                      ## - then 8*log2(8+1) = 27 bits needed
-                      ## (32+27=59 bits just fits in a float if I use 9 bits of exponent)
-                    }
-                    invisible(self)
-                  }
+                 tally = function(x, o){
+                   D <- length(private$ln_skel)
+                   ## As a special case, we allow 'o' to be missing, and 'x' to be
+                   ## a full x/o tally encoded in a numeric(1) -- i.e. a single f64.
+                   if (missing(o) && is.numeric(x) && length(x) == 1) {
+                     if (private$cohort.size == 3) {
+                       enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1))
+                       tox <- sapply(-(0:7), function(d) ((x %% 1) %% 16^d) %/% 16^(d-1))
+                       nos <- 3 * enr - tox
+                       ## Ideally, the tox and no-tox individuals are contiguous.
+                       ## This is especially helpful (numerically) for the no-tox (w>0) cases.
+                       private$w <- c(rep(1, sum(nos)),
+                                      rep(0, sum(tox)))
+                       ## Now, we need to lay out a vector of dose-level assignments
+                       ## consistent with the given data.
+                       private$level <- c(rep(1:D, nos[1:D]),
+                                          rep(1:D, tox[1:D]))
+                     } else {
+                       stop("unimplemented")
+                       ## TODO: implement n=1 case:
+                       ## - enroll at most 15 per dose ==> 8*4 = 32 bits
+                       ## - suppose up to 8 tox may occur at each dose
+                       ## - then 8*log2(8+1) = 27 bits needed
+                       ## (32+27=59 bits just fits in a float if I use 9 bits of exponent)
+                     }
+                     invisible(self)
+                   }
 
-                  ## Otherwise ...
-                  ## we expect 'x' to be a dosewise vector of exchangeable toxicity counts
-                  if (length(x) != D) {
-                    cat("x =", deparse(x), "\n")
-                  }
-                  stopifnot(length(x) == D)
-                  stopifnot(is.numeric(x))
-                  stopifnot(all(round(x) == x))
-                  private$x <- as.integer(x)
+                   ## Otherwise ...
+                   ## we expect 'x' to be a dosewise vector of exchangeable toxicity counts
+                   if (length(x) != D) {
+                     cat("x =", deparse(x), "\n")
+                   }
+                   stopifnot(length(x) == D)
+                   stopifnot(is.numeric(x))
+                   stopifnot(all(round(x) == x))
+                   private$x <- as.integer(x)
 
-                  ## And we expect a dosewise 'o'
-                  stopifnot(length(o) == D)
-                  ## that is either a numeric vector of exchangeable nontox counts ...
-                  if (is.numeric(o)) {
-                    private$o <- as.integer(o)
-                    private$level <- c(rep(1:D, o),
-                                       rep(1:D, x))
-                    private$w <- c(rep(1, sum(o)),
-                                   rep(0, sum(x)))
-                  } else { # .. or a _list_ of weight vectors breaking exchangeability.
-                    ## TODO: Consider a more functional construction of $w and $level:
-                    private$w <- numeric(length(o) +
-                                         sum(x)) # initialized to 0, thus encoding y
-                    ix <- 0
-                    for (level in 1:length(o)) {
-                      len <- length(o[[level]])
-                      private$w[ix + 1:len] <- o[[level]]
-                      private$level[ix + 1:len] <- level
-                      ix <- ix + len
-                    }
-                    private$o <- lapply(o, length)
-                  }
-                  invisible(self)
-                }
-                ##' @details
-                ##' Set patient-wise toxicity observations
-                ##'
-                ##' @param impl A string choosing the low-level implementation to use.
-                ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
-                ##' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
-                ##' object is returned to save execution time. If FALSE, a complete object is
-                ##' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
-                ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
-               ,est = function(impl, abbrev=TRUE){
-                 private$evals <- private$evals + 1
-                 t0 <- proc.time()
-                 scale <- private$scale
-                 model <- "empiric"
-                 method <- "bayes"
-                 include <- seq_along(private$w)
-                 pid <- include
-                 switch(impl,
-                        dfcrm = {
-                          ans <-
-                            dfcrm::crm(prior = exp(private$ln_skel), target = private$target,
-                                       tox=(private$w==0), level=private$level,
-                                       n=length(private$w), dosename=NULL,
-                                       include=include, pid=pid, conf.level=private$conf.level,
-                                       method=method, model=model, intcpt=3,
-                                       scale=scale, model.detail=TRUE, patient.detail=TRUE,
-                                       var.est=TRUE)
-                          private$user['dfcrm'] <- private$user['dfcrm'] +
-                            sum((proc.time() - t0)[c('user.self','user.child')])
-                          return(ans)
+                   ## And we expect a dosewise 'o'
+                   stopifnot(length(o) == D)
+                   ## that is either a numeric vector of exchangeable nontox counts ...
+                   if (is.numeric(o)) {
+                     private$o <- as.integer(o)
+                     private$level <- c(rep(1:D, o),
+                                        rep(1:D, x))
+                     private$w <- c(rep(1, sum(o)),
+                                    rep(0, sum(x)))
+                   } else { # .. or a _list_ of weight vectors breaking exchangeability.
+                     ## TODO: Consider a more functional construction of $w and $level:
+                     private$w <- numeric(length(o) +
+                                          sum(x)) # initialized to 0, thus encoding y
+                     ix <- 0
+                     for (level in 1:length(o)) {
+                       len <- length(o[[level]])
+                       private$w[ix + 1:len] <- o[[level]]
+                       private$level[ix + 1:len] <- level
+                       ix <- ix + len
+                     }
+                     private$o <- lapply(o, length)
+                   }
+                   invisible(self)
+                 },
+                 ##' @details
+                 ##' Set patient-wise toxicity observations
+                 ##'
+                 ##' @param impl A string choosing the low-level implementation to use.
+                 ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
+                 ##' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
+                 ##' object is returned to save execution time. If FALSE, a complete object is
+                 ##' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
+                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
+                 est = function(impl, abbrev=TRUE){
+                   private$evals <- private$evals + 1
+                   t0 <- proc.time()
+                   scale <- private$scale
+                   model <- "empiric"
+                   method <- "bayes"
+                   include <- seq_along(private$w)
+                   pid <- include
+                   switch(impl,
+                          dfcrm = {
+                            ans <-
+                              dfcrm::crm(prior = exp(private$ln_skel), target = private$target,
+                                         tox=(private$w==0), level=private$level,
+                                         n=length(private$w), dosename=NULL,
+                                         include=include, pid=pid, conf.level=private$conf.level,
+                                         method=method, model=model, intcpt=3,
+                                         scale=scale, model.detail=TRUE, patient.detail=TRUE,
+                                         var.est=TRUE)
+                            private$user['dfcrm'] <- private$user['dfcrm'] +
+                              sum((proc.time() - t0)[c('user.self','user.child')])
+                            return(ans)
+                          }
+                         ,rusti = {
+                           ln_x1p <- private$ln_skel[private$level]
+                           w <- private$w
+                           m0 <- integrate(crmh  ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                           m1 <- integrate(crmht ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                           m2 <- integrate(crmht2,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
+                         }
+                        ,ruste = {
+                          ln_p <- private$ln_skel
+                          tox <- private$x
+                          nos <- private$o
+                          m0 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,0,abs.tol=0)[[1]]
+                          m1 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,1,abs.tol=0)[[1]]
+                          m2 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,2,abs.tol=0)[[1]]
                         }
-                       ,rusti = {
-                         ln_x1p <- private$ln_skel[private$level]
-                         w <- private$w
-                         m0 <- integrate(crmh  ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
-                         m1 <- integrate(crmht ,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
-                         m2 <- integrate(crmht2,-Inf,Inf, ln_x1p, w, scale, abs.tol=0)[[1]]
-                       }
-                      ,ruste = {
-                        ln_p <- private$ln_skel
-                        tox <- private$x
-                        nos <- private$o
-                        m0 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,0,abs.tol=0)[[1]]
-                        m1 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,1,abs.tol=0)[[1]]
-                        m2 <- integrate(crmh_xo,-Inf,Inf,ln_p,tox,nos,scale,2,abs.tol=0)[[1]]
-                      }
-                      ,stop("must specify impl in Crm$est()")
-                      )
-                 private$user[impl] <- private$user[impl] +
-                   sum((proc.time() - t0)[c('user.self','user.child')])
-                 estimate <- m1/m0
-                 post.var <- m2/m0 - estimate^2
-                 prior <- exp(private$ln_skel)
-                 ptox <- prior^exp(estimate)
-                 ans <- list(prior = prior,       # used by stop_for_excess_toxicity_empiric
-                             estimate = estimate, # used by stop_for_excess_toxicity_empiric
-                             post.var = post.var, # used by stop_for_excess_toxicity_empiric
-                             level = private$level, # used by stop_for_consensus_reached
-                             mtd = which.min(abs(ptox - private$target)))
-                 if (abbrev)
-                   return(ans)
-                 ## Otherwise we build out the whole return value of class "mtd"
-                 crit <- qnorm(0.5 + private$conf.level/2)
-                 lb <- estimate - crit*sqrt(post.var)
-                 ub <- estimate + crit*sqrt(post.var)
-                 ## TODO: Might 'within(.)' itself be costly? Try flattening
-                 ##       this code to a series of straight component assignments.
-                 ans <- within(ans, {
-                   target <- private$target
-                   conf.level <- private$conf.level
-                   ptox <- ptox
-                   ptoxL <- prior^exp(ub)
-                   ptoxU <- prior^exp(lb)
-                   tox <- 1.0*(private$w==0) # NB: dfcrm's "mtd" holds tox as double
-                   dosename <- NULL
-                   subset <- pid[include]
-                   model <- model
-                   prior.var <- scale^2
-                   method <- method
-                   include <- include
-                   pid <- pid
-                   model.detail <- TRUE
-                   intcpt <- 3 # TODO: Un-hard-code this
-                   ptoxL <- ptoxL
-                   ptoxU <- ptoxU
-                   patient.detail <- TRUE
-                   tite <- FALSE
-                   dosescaled <- prior # TODO: this is correct for EMPIRIC MODEL ONLY
-                   var.est <- TRUE
-                 })
+                       ,stop("must specify impl in Crm$est()")
+                        )
+                   private$user[impl] <- private$user[impl] +
+                     sum((proc.time() - t0)[c('user.self','user.child')])
+                   estimate <- m1/m0
+                   post.var <- m2/m0 - estimate^2
+                   prior <- exp(private$ln_skel)
+                   ptox <- prior^exp(estimate)
+                   ans <- list(prior = prior,       # used by stop_for_excess_toxicity_empiric
+                               estimate = estimate, # used by stop_for_excess_toxicity_empiric
+                               post.var = post.var, # used by stop_for_excess_toxicity_empiric
+                               level = private$level, # used by stop_for_consensus_reached
+                               mtd = which.min(abs(ptox - private$target)))
+                   if (abbrev)
+                     return(ans)
+                   ## Otherwise we build out the whole return value of class "mtd"
+                   crit <- qnorm(0.5 + private$conf.level/2)
+                   lb <- estimate - crit*sqrt(post.var)
+                   ub <- estimate + crit*sqrt(post.var)
+                   ## TODO: Might 'within(.)' itself be costly? Try flattening
+                   ##       this code to a series of straight component assignments.
+                   ans <- within(ans, {
+                     target <- private$target
+                     conf.level <- private$conf.level
+                     ptox <- ptox
+                     ptoxL <- prior^exp(ub)
+                     ptoxU <- prior^exp(lb)
+                     tox <- 1.0*(private$w==0) # NB: dfcrm's "mtd" holds tox as double
+                     dosename <- NULL
+                     subset <- pid[include]
+                     model <- model
+                     prior.var <- scale^2
+                     method <- method
+                     include <- include
+                     pid <- pid
+                     model.detail <- TRUE
+                     intcpt <- 3 # TODO: Un-hard-code this
+                     ptoxL <- ptoxL
+                     ptoxU <- ptoxU
+                     patient.detail <- TRUE
+                     tite <- FALSE
+                     dosescaled <- prior # TODO: this is correct for EMPIRIC MODEL ONLY
+                     var.est <- TRUE
+                   })
 
-                 ## Order components to enable testthat::expect_equal()
-                 ans <- ans[c("prior","target","tox","level","dosename","subset",
-                              "estimate","model","prior.var","post.var","method",
-                              "mtd","include","pid","model.detail","intcpt",
-                              "ptox","ptoxL","ptoxU","conf.level","patient.detail",
-                              "tite","dosescaled","var.est")]
-                 class(ans) <- "mtd"
-                 return(ans)
-               } #</est()>
-               ##' @details
-               ##' Return dose recommendation for given tox/no-tox tallies.
-               ##'
-               ##' This function caches results, which greatly saves computation time
-               ##' in DTP calculations. (It yields approximately a 5x speedup for the
-               ##' VIOLA trial example!)
-               ##' @param x A dose-wise vector of toxicity counts
-               ##' @param o A dose-wise vector of non-toxicity counts
-               ##' @param last_dose The most recently given dose, as required to implement
-               ##' the \code{global_coherent_esc=TRUE} behavior
-               ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
-               ##' of required \code{impl} parameter and optional \code{abbrev} flag.
-               ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
-               ##' or possibly an abbreviated version of such object as returned by
-               ##' method \code{Crm$est()}.
-              ,applied = function(x, o, last_dose = NA, ...){
-                if (!is.null(private$cache)) {
-                key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
-                if (private$.global_coherent_esc)
-                  key <- paste(key, last_dose, sep='@') # last_dose becomes relevant to lookup
-                if (!is.null(est <- get0(key, envir = private$cache))) {
-                  private$skips <- private$skips + 1
-                  return(est)
-                }
-                }
-                level <- which((x+o) > 0) # vector of levels that have been tried
-                est <- self$tally(x, o)$est(...) # NB: Won't work with o=NA case of $tally
-                if (private$.no_skip_esc) {
-                  est$mtd <- min(est$mtd, max(level) + 1)
-                }
-                if (private$.no_skip_deesc) {
-                  est$mtd <- max(est$mtd, min(level) - 1)
-                }
-                if (private$.global_coherent_esc) {
-                  if(is.na(last_dose)) stop("last_dose required if global_coherent_esc = TRUE")
-                  if (x[last_dose] > private$target * (x+o)[last_dose]) {
-                    est$mtd <- min(est$mtd, last_dose)
-                  }
-                }
-                if (!is.null(private$.stop_func)) {
-                  est = private$.stop_func(est)
-                }
-                if (!is.null(private$cache))
-                  assign(key, est, envir = private$cache)
-                return(est)
-              }
-              ) # </public>
-              ,private = list(
+                   ## Order components to enable testthat::expect_equal()
+                   ans <- ans[c("prior","target","tox","level","dosename","subset",
+                                "estimate","model","prior.var","post.var","method",
+                                "mtd","include","pid","model.detail","intcpt",
+                                "ptox","ptoxL","ptoxU","conf.level","patient.detail",
+                                "tite","dosescaled","var.est")]
+                   class(ans) <- "mtd"
+                   return(ans)
+                 }, #</est()>
+                 ##' @details
+                 ##' Return dose recommendation for given tox/no-tox tallies.
+                 ##'
+                 ##' This function caches results, which greatly saves computation time
+                 ##' in DTP calculations. (It yields approximately a 5x speedup for the
+                 ##' VIOLA trial example!)
+                 ##' @param x A dose-wise vector of toxicity counts
+                 ##' @param o A dose-wise vector of non-toxicity counts
+                 ##' @param last_dose The most recently given dose, as required to implement
+                 ##' the \code{global_coherent_esc=TRUE} behavior
+                 ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
+                 ##' of required \code{impl} parameter and optional \code{abbrev} flag.
+                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
+                 ##' or possibly an abbreviated version of such object as returned by
+                 ##' method \code{Crm$est()}.
+                 applied = function(x, o, last_dose = NA, ...){
+                   if (!is.null(private$cache)) {
+                     key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
+                     if (private$.global_coherent_esc)
+                       key <- paste(key, last_dose, sep='@') # last_dose becomes relevant to lookup
+                     if (!is.null(est <- get0(key, envir = private$cache))) {
+                       private$skips <- private$skips + 1
+                       return(est)
+                     }
+                   }
+                   level <- which((x+o) > 0) # vector of levels that have been tried
+                   est <- self$tally(x, o)$est(...) # NB: Won't work with o=NA case of $tally
+                   if (private$.no_skip_esc) {
+                     est$mtd <- min(est$mtd, max(level) + 1)
+                   }
+                   if (private$.no_skip_deesc) {
+                     est$mtd <- max(est$mtd, min(level) - 1)
+                   }
+                   if (private$.global_coherent_esc) {
+                     if(is.na(last_dose)) stop("last_dose required if global_coherent_esc = TRUE")
+                     if (x[last_dose] > private$target * (x+o)[last_dose]) {
+                       est$mtd <- min(est$mtd, last_dose)
+                     }
+                   }
+                   if (!is.null(private$.stop_func)) {
+                     est = private$.stop_func(est)
+                   }
+                   if (!is.null(private$cache))
+                     assign(key, est, envir = private$cache)
+                   return(est)
+                 }
+               ), # </public>
+               private = list(
                  ln_skel = NA
                , scale = NA
                , target = NA
