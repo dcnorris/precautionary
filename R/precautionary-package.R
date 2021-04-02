@@ -96,9 +96,6 @@ NULL
 #' * Implement TITE CRM
 #'
 #' @section Fast DTP:
-#' * Implement a CRM 'server' within R6 Crm class
-#'   - Record performance stats, and report summary upon destruction
-#'   - Try sharing cache between forked DTP workers
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts
@@ -107,7 +104,6 @@ NULL
 #' @section Document:
 #' * Document Rust integrands a bit better
 #' * Add examples to the documented Rust functions
-#' * Use fast DTP (not cached) in VIOLA vignette
 #' * Add a vignette applying DTP to mTPI and BOIN
 #' * Expose some visual numerics checks, via vignette or documented function
 #'

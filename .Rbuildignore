@@ -9,3 +9,5 @@
 ^exec/T[5-9].tab
 ^tests/manual
 ^Rprof.out
+^doc$
+^Meta$
