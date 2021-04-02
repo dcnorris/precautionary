@@ -81,7 +81,9 @@ Crm <- R6::R6Class("Crm",
                  ##' @return Self, invisibly
                  stop_func = function(sfunc){
                    private$.stop_func <- sfunc
-                   ## TODO: Does this invalidate CRM model cache? (I don't believe so.)
+                   ## NB: Changing stop_func does NOT invalidate cache, since the
+                   ##     dose recommmendation from $esc() gets cached *before*
+                   ##     application of stopping rules occurs in $applied().
                    invisible(self)
                  },
                  ##' @details
@@ -403,15 +405,19 @@ Crm <- R6::R6Class("Crm",
 ##' @param dosename Optional designators for the doses
 ##' @param include Index of patients to include
 ##' @param pid Vector of patient ID labels
-##' @param conf.level TODO
+##' @param conf.level Used to assign upper and lower bounds on predicted ptox,
+##' which in turn may be referenced in (de)escalation and stopping decisions.
 ##' @param method Estimation method:
 ##' @param model Presently, only the \sQuote{empiric} (or \sQuote{power}) model
 ##' has a Rust likelihood implementation.
 ##' @param intcpt Intercept for \sQuote{logistic} model
-##' @param scale TODO: Investgate the history and intent of this scale factor
-##' @param model.detail TODO
-##' @param patient.detail TODO
-##' @param var.est TODO: Appreciate the history and usage of this
+##' @param scale  Sigma parameter of prior on beta parameter
+##' @param model.detail If FALSE, the model content of an ‘"mtd"’ object will not
+##' be displayed.  Default is TRUE.
+##' @param patient.detail If FALSE, patient summary of an ‘"mtd"’ object will not
+##' be displayed.  Default is TRUE.
+##' @param var.est If TRUE, variance of the estimate of the model parameter and
+##' probability/confidence interval for the dose-toxicity curve will be computed
 ##' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
 ##' Currently the \code{'rusti'} option is implemented only for the Bayes method
 ##' of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}

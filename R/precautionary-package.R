@@ -73,14 +73,6 @@ NULL
 
 #' Plan
 #'
-#' @section Correct CRM:
-#' * Understand the 'scale' factor and ensure I use it properly
-#'   - I see it's the sigma parameter of a lognormal prior on beta of 1-parameter CRM.
-#'   - On what basis is it typically chosen?
-#'   - How sensitive are results to the chosen value? Braun sim-free 2020 does exhibit
-#'     some implications for skeleton choice, although a wide range of sigma proves to
-#'     yield optimality on the performance characteristics in his example.
-#'
 #' @section Fast CRM:
 #' * Expunge decode from crmh_ev
 #' * Expunge encode/decode from everywhere!
@@ -102,7 +94,6 @@ NULL
 #'   - Any speedup from allowing cohort n>1?
 #'
 #' @section Document:
-#' * Document Rust integrands a bit better
 #' * Add examples to the documented Rust functions
 #' * Add a vignette applying DTP to mTPI and BOIN
 #' * Expose some visual numerics checks, via vignette or documented function
