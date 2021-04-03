@@ -76,11 +76,7 @@ NULL
 #' @section Fast CRM:
 #' * Benchmark; try mul_add()'s
 #' * R6 Crm class
-#' / impl by method choice
-#' / Add 'ruste' option fully to test-crm.R
-#' - Write method to support DTP
-#' / Hook up the DTP benchmarks to 'Crm' class
-#' / Develop a shortcut Crm method that skips "mtd" extras
+#'   - Write method to support DTP
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'

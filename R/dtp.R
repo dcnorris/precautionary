@@ -221,9 +221,6 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       skipped <- skipped + degen
     }
     dtps <- data.frame(t(dtps))
-    ## TODO: Here, I should be able to apply the technique below, to obtain the
-    ##       performance stats from this particular forked process, and attach
-    ##       these as an attribute to 'dtps' before returning it.
     attr(dtps,'performance') <- environment(dose_func)$self$report()
     return(dtps)
   }
