@@ -76,7 +76,7 @@ test_that("Crm$est() yields same result as dfcrm::crm, but faster", {
   o <- xtabs(!y ~ factor(level, levels=seq_along(prior)))
   crm_old <- microbenchmark(old <- dfcrm::crm(prior, target, y, level))
   crm_new <- microbenchmark(new <- crm(prior, target, y, level, impl="rusti"))
-  r6model <- Crm$new(skeleton = prior, target = target)$
+  r6model <- Crm$new(skeleton = prior, scale = s, target = target)$
     dontcache()$
     observe(level, y)
   crm_ri <- microbenchmark(r6i <- r6model$est(impl="rusti", abbrev=FALSE))

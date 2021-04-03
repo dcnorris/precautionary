@@ -32,7 +32,17 @@ Crm <- R6::R6Class("Crm",
                  ##' @return A Crm object.
                  ##'
                  ##' @examples
-                 ##' ## TODO.
+                 ##' # An example verbatim from dfcrm::crm()
+                 ##' prior <- c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70)
+                 ##' target <- 0.2
+                 ##' level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
+                 ##' y     <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
+                 ##' s <- sqrt(1.34)
+                 ##' old <- dfcrm::crm(prior, target, y, level)
+                 ##' new <- Crm$new(skeleton = prior, target = target)$
+                 ##'          dontcache()$
+                 ##'          observe(level, y)$
+                 ##'          est(impl="rusti", abbrev=FALSE)
                  initialize = function(skeleton, scale = sqrt(1.34), target, cohort.size = 3) {
                    private$ln_skel <- log(skeleton)
                    private$scale <- scale

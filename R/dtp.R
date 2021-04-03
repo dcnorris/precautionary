@@ -31,10 +31,6 @@ applied_crm <- function (prior, scale, target, tox, level,
                          no_skip_esc = TRUE, no_skip_deesc = TRUE,
                          global_coherent_esc = TRUE, stop_func = NULL, ...)
 {
-  ## TODO: Factor this toward a Crm$applied() method that obviates
-  ##       repeated $new(...) calls.
-  ## NOTE: It might well be possible to pass <Crm object>$applied
-  ##       as a parameter to the existing DTP infrastructure here.
   x <- Crm$new(skeleton = prior, scale = scale, target = target)$
     observe(level = level, tox = tox)$
     est(...) # ... contains impl=___
