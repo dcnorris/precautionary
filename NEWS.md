@@ -6,7 +6,7 @@
 * Implements faster versions of certain objective functions from package 'dtpcrm'
 * Explicitly integrate() over c(-Inf,Inf) in 'crm' function (as per documentation)
 * Implements faster version of dtpcrm::stop_for_excess_toxicity_empiric
-* Corrected overloaded use of 'C' variable in DTP vignette
+* Corrected overloaded use of 'C' variable in text of DTP vignette
 
 # precautionary 0.2-1
 
