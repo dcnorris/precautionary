@@ -60,15 +60,7 @@ Crm <- R6::R6Class("Crm",
                    invisible(self)
                  },
                  ##' @details
-                 ##' Report performance statistics upon deletion.
-                 ##'
-                 ##' @return A short string summarizing lifetime duty and performance,
-                 ##' suitable for \code{cat()}'ting to console.
-                 finalize = function() {
-                   deparse(self$report())
-                 },
-                 ##' @details
-                 ##' Report performance statistics upon deletion.
+                 ##' Report lifetime duty & performance statistics
                  ##'
                  ##' @return A named vector summarizing lifetime duty and performance
                  report = function() {
