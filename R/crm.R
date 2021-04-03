@@ -151,37 +151,7 @@ Crm <- R6::R6Class("Crm",
                  ##' @return Self, invisibly
                  tally = function(x, o){
                    D <- length(private$ln_skel)
-                   ## As a special case, we allow 'o' to be missing, and 'x' to be
-                   ## a full x/o tally encoded in a numeric(1) -- i.e. a single f64.
-                   if (missing(o) && is.numeric(x) && length(x) == 1) {
-                     if (private$cohort.size == 3) {
-                       enr <- sapply(1:8, function(d) (x %% 6^d) %/% 6^(d-1))
-                       tox <- sapply(-(0:7), function(d) ((x %% 1) %% 16^d) %/% 16^(d-1))
-                       nos <- 3 * enr - tox
-                       ## Ideally, the tox and no-tox individuals are contiguous.
-                       ## This is especially helpful (numerically) for the no-tox (w>0) cases.
-                       private$w <- c(rep(1, sum(nos)),
-                                      rep(0, sum(tox)))
-                       ## Now, we need to lay out a vector of dose-level assignments
-                       ## consistent with the given data.
-                       private$level <- c(rep(1:D, nos[1:D]),
-                                          rep(1:D, tox[1:D]))
-                     } else {
-                       stop("unimplemented")
-                       ## TODO: implement n=1 case:
-                       ## - enroll at most 15 per dose ==> 8*4 = 32 bits
-                       ## - suppose up to 8 tox may occur at each dose
-                       ## - then 8*log2(8+1) = 27 bits needed
-                       ## (32+27=59 bits just fits in a float if I use 9 bits of exponent)
-                     }
-                     invisible(self)
-                   }
-
-                   ## Otherwise ...
-                   ## we expect 'x' to be a dosewise vector of exchangeable toxicity counts
-                   if (length(x) != D) {
-                     cat("x =", deparse(x), "\n")
-                   }
+                   ## We expect 'x' to be a dosewise vector of exchangeable toxicity counts
                    stopifnot(length(x) == D)
                    stopifnot(is.numeric(x))
                    stopifnot(all(round(x) == x))
@@ -463,16 +433,7 @@ crm <- function(prior, target, tox, level, n=length(level),
                if (var.est)
                  e2 <- integrate(crmht2,-Inf,Inf,ln_x1p,w1p,scale,abs.tol=0)[[1]] / den
              },
-             ruste = {
-               obs <- encode_cohorts(enr = tabulate(level, nbins=8)/3
-                                    ,tox = xtabs(tox ~ factor(level, levels=1:8))
-                                     )
-               ln_skel <- log(prior)
-               den <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,0,abs.tol=0)[[1]]
-               est <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,1,abs.tol=0)[[1]] / den
-               if (var.est)
-                 e2 <- integrate(crmh_ev,-Inf,Inf,obs,ln_skel,scale,2,abs.tol=0)[[1]] / den
-             },
+             ruste = stop("impl='ruste' is inefficient unless invoked from class Crm"),
              stop(paste("impl =", impl, "not recognized.")))
     }
     else { stop(" unknown estimation method"); }

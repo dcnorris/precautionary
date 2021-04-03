@@ -55,79 +55,6 @@ fn crmh_v(a: &[f64],
     v.collect_robj()
 }
 
-// Decode an f64-encoded trial-path tally to dose-wise numbers of tox & no-tox.
-// TODO: Generalize to cohorts with n=1 or n=2, ideally by encoding n itself
-//       within the 'obs'.
-#[inline(always)]
-fn decode_cohorts(obs: f64,
-		  tox: &mut [i32; 8], // dose-wise toxicity tally
-		  nos: &mut [i32; 8]  // dose-wise no-tox tally
-) -> () {
-    let mut iobs = obs as i32;  // integer part of obs
-    let mut fobs: u32 = (obs.fract() * 4294967296.0) as u32;
-    for d in (0 .. 8).rev() { // Extract tox counts from fractional part of 'obs'
-	tox[d] = (fobs % 16) as i32; // NB: low bits of fobs count high-dose toxicities
-	fobs >>= 4; // shift lowest 4 bits off
-    }
-    for d in 0 .. 8 {	// Compute non-toxicities
-	let enr_d = iobs % 6;
-	iobs /= 6;
-	nos[d] = 3*enr_d - tox[d]; // NB: n=3 is hard-coded here
-    }
-}
-
-// TODO: Try mul_add for cleaner implementation.
-// TODO: Consider bitwise construction using f64::from_bits.
-fn encode_cohorts(enr: &[i32], // dose-wise number of cohorts enrolled
-		  tox: &[i32]  // dose-wise number of toxicities
-) -> f64 {
-    let mut obs = 0.0;
-    let mut eix = 1.0;
-    let mut tix = 1.0/16.0;
-    for d in 0 .. 8 {
-	obs += eix * enr[d] as f64;
-	eix = eix * 6.0;
-	obs += tix * tox[d] as f64;
-	tix = tix / 16.0;
-    }
-    obs
-}
-
-// A [w==1] version of crmh_v that takes f64-encoded trial observations as parameter.
-// When all w's are 1.0, the patients become exchangeable, and only *counts* (which
-// are encoded in the f64 'obs') need to be supplied.
-// (This could also be seen from the converse perspective: the non-exchangeability
-// of patients 'breaks' the encoding used here, necessitating the more complicated
-// routine implmented in crmh_v.)
-// The encoding assumes a skeleton of 8 doses at most, which I allocate statically.
-// Note that this implementation allows the caller to provide the raw log-skeleton
-// without any path-specific pre-processing, which is a benefit!
-// One way to see this function in general, is as exploring a special case of the
-// general concept of creating atomic indexes for caching expensive computations.
-/// Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
-///
-/// @param a Numeric vector of evaluation points
-/// @param obs An f64-encoding of dose-wise enrollment and toxicity counts
-/// @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
-/// @param s Scalar scale factor
-/// @param b Order of moment to calculate (0, 1 or 2)
-/// @export
-#[extendr]
-fn crmh_ev(a: &[f64],
-	   obs: f64, // encoding of dose-wise enrolled cohorts & toxicity counts
-	   ln_x: &[f64], // DOSE-WISE log-skeleton -- different from crmh_v!
-	   s: f64,
-	   b: i32) -> Robj {
-
-    const D: usize = 8;
-    let tox: &mut [i32; D] = &mut [0; D]; // toxicities at each dose
-    let nos: &mut [i32; D] = &mut [0; D]; // non-tox count at each dose
-
-    decode_cohorts(obs, tox, nos);
-
-    crmh_xo(a, ln_x, tox, nos, s, b)
-}
-
 /// Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
 ///
 /// @param a Numeric vector of evaluation points
@@ -207,7 +134,6 @@ fn crmht2(a: &[f64], ln_x: &[f64], w: &[f64], s: f64) -> Robj {
 // See corresponding C code in `entrypoint.c`.
 extendr_module! {
     mod precautionary;
-    fn crmh_ev;
     fn crmh_xo;
     fn crmh;
     fn crmht;

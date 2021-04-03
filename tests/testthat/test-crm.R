@@ -7,11 +7,12 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
   ## cohort-wise set-up
   level <- c(1L, 2L, 3L, 2L, 3L, 3L)
   n_tox <- c(0L, 0L, 1L, 0L, 0L, 1L)
-  obs <- encode_cohorts(enr = tabulate(level, nbins=8)
-                       ,tox = xtabs(n_tox ~ factor(level, levels=1:8),
-                                    data=data.frame(n_tox = n_tox,
-                                                    level = level))
-                        )
+  enr <- tabulate(level, nbins=length(skeleton))
+  tox <- xtabs(n_tox ~ factor(level, levels=seq_along(skeleton)),
+               data=data.frame(n_tox = n_tox,
+                               level = level))
+  tox <- as.vector(tox) # NOTE: Integrand crmh_xo requires that
+  nos <- 3L*enr - tox   #       these args be *integer* vectors.
 
   ## The 'dfcrm' & 'rusti' implementations take patient-wise vectors x and y,
   ## and patient-wise weights w that 'break exchangeability'.
@@ -31,9 +32,9 @@ test_that("Faster objective functions integrate same as 'dfcrm' originals", {
              ,integrate(crmht, -Inf, Inf, log(x), w, s)$value
              ,integrate(crmht2, -Inf, Inf, log(x), w, s)$value
               )
-  , ruste = c(integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 0)$value
-             ,integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 1)$value
-             ,integrate(crmh_ev, -Inf, Inf, obs, log(skeleton), s, 2)$value
+  , ruste = c(integrate(crmh_xo, -Inf, Inf, log(skeleton), tox, nos, s, 0)$value
+             ,integrate(crmh_xo, -Inf, Inf, log(skeleton), tox, nos, s, 1)$value
+             ,integrate(crmh_xo, -Inf, Inf, log(skeleton), tox, nos, s, 2)$value
               )
   )
 

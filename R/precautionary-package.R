@@ -74,9 +74,6 @@ NULL
 #' Plan
 #'
 #' @section Fast CRM:
-#' * Expunge decode from crmh_ev
-#' * Expunge encode/decode from everywhere!
-#'   - including the wonky tally(x, o=NA) signature
 #' * Benchmark; try mul_add()'s
 #' * R6 Crm class
 #' / impl by method choice
