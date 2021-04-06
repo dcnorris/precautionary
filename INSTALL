@@ -1,16 +1,129 @@
-Users of the binary package do **not** need to have Cargo (the package manager
-of the Rust programming language).  Installing the source package, however,
-uses Cargo to compile Rust source code.  The "cargo" package on CRAN
-facilitates finding and running Cargo on the system.  If a suitable Cargo
-installation is not available, a static library is instead downloaded for
-select operating systems and CPU architectures.
+## Acknowlegment
 
-See https://rustup.rs to set up Cargo.  The default options are sufficient in
-most situations.  On Windows, however, please do the following:
+I've adapted these instructions from the INSTALL file of package [baseflow](https://CRAN.R-project.org/package=baseflow).
 
-   - Download rustup-init.exe from https://win.rustup.rs
-   - In the terminal, run:  rustup-init.exe -y --default-host x86_64-pc-windows-gnu
-   - Restart the terminal (so the new terminal picks up changes to your PATH).
-   - In a new terminal, run:  rustup target add i686-pc-windows-gnu
+## Installation
 
+### Requirements
 
+This package has been developed and tested on macOS (10.15 Catalina), using cross-platform languages (Rust and R) that should enable it to work on other platforms. Beginning with version 0.2-2, this package makes substantive use of parallel::mclapply, which does not actually parallelize computations on Windows due to that platform's lack of fork(). This will not affect correctness of results, only how long Windows users have to wait for them.
+
+For installing this package from source, the following are needed:
+
+* A building environmment such as is generally installed with R on Linux distributions. On Windows, **Rtools** (available [here](https://cran.r-project.org/bin/windows/Rtools/)).
+* **cargo** Rust compilation platform, version 1.42 or above. Detailed installation instructions are given below.
+
+### Rust platform
+
+General instructions to install the Rust compilation platform are given on the website [RustUp](https://rustup.rs/). It can be installed without administrator privileges - you do not need to ask your local computer technician that does not know Rust.
+
+#### Prior notice: PATH environment variable modification
+
+By default, the Rust compilation plaform is installed in `$HOME/.cargo` on Unix platforms and `%USERPROFILE%/.cargo` on Windows. This directory is then added to the PATH environment variable for the user to be able to use the toolchain without refering to the installation directory. 
+
+If you plan to use Rust for other purpose than installing `precautionary`, you may prefer to set the *modify PATH variable* to *yes*. But if you wish only to build and install *precautionary*, to avoid any side-effect of the installation, you may set this option to *no* as explained below.
+CRAN policy prohibits published R packages from altering the user environment or filesystem apart from the R session.
+
+#### Windows
+
+On Windows, download and launch the rustup-init.exe script (64 bits version is [here](https://win.rustup.rs/x86_64), 32 bits is [here](https://win.rustup.rs/i686)). In the command prompt window, choose the second option `Customize installation` and set configuration as below.
+
+```
+default host triple: i686-pc-windows-gnu
+default toolchain: stable
+profile: default
+modify PATH variable: no
+```
+
+Then, choose the first option `Proceed with installation`.
+
+On 64-bits Windows systems, you also need to install the x64 target. After installation, open a terminal and type:
+
+```
+%USERPROFILE%\cargo\.bin\rustup.exe target add x86_64-pc-windows-gnu
+```
+
+#### Unix systems (GNU/Linux and macOS)
+
+On GNU/Linux platforms and other Unix systems, launch the following command into a terminal:
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+Here again, chose the second option `Customize installation` and set configuration as below.
+
+For GNU/Linux 64 bits systems:
+
+```
+default host triple: x86_64-unknown-linux-gnu
+default toolchain: stable
+profile: default
+modify PATH variable: no
+```
+
+For GNU/Linux 32 bits systems:
+
+```
+default host triple: i686-unknown-linux-gnu
+default toolchain: stable
+profile: default
+modify PATH variable: no
+```
+
+For macOS with Intel x86-64 architecture:
+
+```
+default host triple: x86_64-apple-darwin
+default toolchain: stable
+profile: default
+modify PATH variable: no
+```
+
+For macOS with ARM64 architecture (Apple Silicon):
+
+```
+default host triple: aarch64-apple-darwin
+default toolchain: stable
+profile: default
+modify PATH variable: no
+```
+
+For other platforms, detailed information about Rust support can be found [here](https://doc.rust-lang.org/rustc/platform-support.html).
+
+After modifying configuration, choose option 1 `Proceed with installation`.
+
+### Package compilation and installation
+
+Download the source package as a `.tar.gz` file. Start R and run the following command in the console, where `path_to_package` is the path of the downloaded `.tar.gz` file of the package.
+
+```
+install.packages("path_to_package", repos = NULL, type = "source")
+```
+
+On Windows, you can directly download the binary `.zip` file, and run the following command, where `path_to_binary_package` is the path of the downloaded `.zip` file of the package.
+
+```
+install.packages("path_to_binary_package", repos = NULL, type = "win.binary")
+```
+
+After installation, try to load package using command
+
+```
+library(precautionary)
+```
+
+### Uninstalling Rust platform after installation
+
+To uninstall Rust toolchain after installing the package, use the following commands:
+
+On Windows:
+
+```
+%USERPROFILE%\cargo\.bin\rustup.exe self uninstall
+```
+
+On Unix-based systems (macOS and GNU/Linux):
+
+```
+~/cargo/.bin/rustup self uninstall
+```
