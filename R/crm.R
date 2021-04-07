@@ -28,7 +28,6 @@ Crm <- R6::R6Class("Crm",
                  ##' @param skeleton CRM skeleton
                  ##' @param scale Sigma parameter of prior on beta parameter
                  ##' @param target Target toxicity rate
-                 ##' @param cohort.size Size of enrolled cohorts
                  ##' @return A Crm object.
                  ##'
                  ##' @examples
@@ -43,10 +42,9 @@ Crm <- R6::R6Class("Crm",
                  ##'          dontcache()$
                  ##'          observe(level, y)$
                  ##'          est(impl="rusti", abbrev=FALSE)
-                 initialize = function(skeleton, scale = sqrt(1.34), target, cohort.size = 3) {
+                 initialize = function(skeleton, scale = sqrt(1.34), target) {
                    private$ln_skel <- log(skeleton)
                    private$scale <- scale
-                   private$cohort.size <- 3
                    private$target <- target
                    private$cache <- new.env(hash = TRUE, size = 10000L)
                  },
@@ -334,7 +332,6 @@ Crm <- R6::R6Class("Crm",
                  ln_skel = NA
                , scale = NA
                , target = NA
-               , cohort.size = 3 # TODO: Factor this out? It seems like a 'wart'.
                , .stop_func = NULL
                , .no_skip_esc = TRUE     # These would seem to be the
                , .no_skip_deesc = FALSE  # 'safest' defaults.
