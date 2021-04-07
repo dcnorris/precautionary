@@ -132,7 +132,7 @@ applied_crm <- function (prior, scale, target, tox, level,
 ##' only for selecting optional CRM numerical implementations via \code{impl}.
 ##' @param mc.cores Number of logical cores available for parallelizing DTP computation.
 ##' Setting this to 1 prevents chunking of the computation.
-##' @return A \code{data.frame} listing trial pathways
+##' @return A \code{data.table} listing trial pathways
 ##' @examples
 ##' ## VIOLA trial
 ##' prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
@@ -220,7 +220,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
       i <- i + degen
       skipped <- skipped + degen
     }
-    dtps <- data.frame(t(dtps))
+    dtps <- data.table(t(dtps))
     attr(dtps,'performance') <- environment(dose_func)$self$report()
     return(dtps)
   }
@@ -229,7 +229,7 @@ calculate_dtps <- function (next_dose, cohort_sizes,
             else # TODO: Split into about mc.cores^2 chunks
               split(paths, paths[,3:1], drop=TRUE) # note reversed order of factor columns
   chunked_dtps <- parallel::mclapply(chunks, scan_dtps, ..., mc.cores = mc.cores)
-  dtps <- do.call(rbind, chunked_dtps)
+  dtps <- rbindlist(chunked_dtps)
   colnames(dtps) <- c("D0", as.vector(rbind(paste0("T", 1:num_cohorts),
                                             paste0("D", 1:num_cohorts))))
   dtps[t(apply(is.na(dtps), 1, cumsum)) > 0] <- NA

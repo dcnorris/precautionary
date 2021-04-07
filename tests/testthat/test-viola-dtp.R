@@ -87,6 +87,5 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
   data(viola_dtp) # saved for comparison
 
   attr(new,'performance') <- NULL # drop incomparable attribute
-  rownames(new) <- rownames(viola_dtp) # don't compare rownames
-  expect_equal(viola_dtp, new)
+  expect_equal(new, as.data.table(viola_dtp))
 })
