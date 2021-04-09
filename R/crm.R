@@ -47,6 +47,7 @@ Crm <- R6::R6Class("Crm",
                    private$scale <- scale
                    private$target <- target
                    private$cache <- new.env(hash = TRUE, size = 10000L)
+                   private$x <- private$o <- integer(length(private$ln_skel))
                  },
                  ##' @details
                  ##' Set private cache to NULL; useful for performance testing
@@ -326,6 +327,55 @@ Crm <- R6::R6Class("Crm",
                    if (!is.null(private$cache))
                      assign(key, est, envir = private$cache)
                    return(est)
+                 }, #</applied>
+                 ##' @details
+                 ##' Compute trial paths forward from current tally
+                 ##'
+                 ##' @param root_dose The starting dose for tree of paths
+                 ##' @param cohort_sizes Integer vector giving sizes of future cohorts,
+                 ##' its length being the maximum number of cohorts to look ahead.
+                 ##' @param ... Parameters passed ultimately to \code{Crm$esc()},
+                 ##' enabling passthru of its required \code{impl} parameter.
+                 ##' @return A data.table with paired dose/ntox columns, one pair for
+                 ##' each enrolled cohort.
+                 paths = function(root_dose, cohort_sizes, ...){
+                   ## TODO: Consider allowing a starting value for 'dtp', thereby
+                   ##       enabling parallel computation of parts of the tree.
+                   ##       (This might not be terribly useful, if it turns out
+                   ##       that we almost always wish to compute full paths for
+                   ##       many different skeletons/scale factors at one time.
+                   ##       If so, then the incomplete cache sharing by parallel
+                   ##       workers on one complete path makes parallelism more
+                   ##       effective at a coarser level, *across* paths.)
+                   ## TODO: ENSURE D_ and T_ COLUMNS GET WRITTEN AS *INTEGER* VECTORS!
+                   dtp <- data.table(D0 = root_dose)
+                   stopped <- list() # a 'staging area' to hold stopped trials
+                   D <- length(private$ln_skel)
+                   for (coh in seq_along(cohort_sizes)) {
+                     dtp <- dtp[, .(T_ = 0L:cohort_sizes[coh]), by=dtp] # compare 'expand.grid'
+                     colnames(dtp)[ncol(dtp)] <- paste0("T", coh)
+                     Dcoh <- paste0("D", coh)
+                     dtp[, (Dcoh) := NA_integer_] # make an empty column for D<coh>
+                     for (j in 1:nrow(dtp)) {
+                       last_dose <- dtp[j][[paste0("D",coh-1)]]
+                       if (is.na(last_dose))
+                         next  # Skip over already-terminated paths
+                       Dcols <- paste0("D",0:(coh-1))
+                       dose <- factor(dtp[j, ..Dcols], levels=1:D)
+                       Tcols <- paste0("T",1:coh)
+                       tox <- unlist(dtp[j, ..Tcols])
+                       enr <- cohort_sizes[1:coh]
+                       x <- as.vector(xtabs(tox ~ dose)) # TODO: Does xtabs() hurt performance?
+                       n <- as.vector(xtabs(enr ~ dose)) #       Could I accumulate x, o?
+                       rec <- self$applied(x = x, o = n-x, last_dose = last_dose, ...)
+                       dtp[j, (Dcoh) := ifelse(rec$stop, NA_integer_, rec$mtd)]
+                     }
+                     terminated <- is.na(dtp[[Dcoh]])
+                     stopped[[coh]] <- dtp[terminated]
+                     dtp <- dtp[!terminated]
+                   }
+                   ## TODO: Consider attaching a 'performance' attribute
+                   rbindlist(c(list(dtp), stopped), fill=TRUE)
                  }
                ), # </public>
                private = list(

@@ -89,3 +89,41 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
   attr(new,'performance') <- NULL # drop incomparable attribute
   expect_equal(new, as.data.table(viola_dtp))
 })
+
+test_that("Crm$paths() yields same VIOLA result as dtpcrm's version", {
+  ## VIOLA trial set-up
+  start.dose.level <- 3
+  target.DLT <- 0.2
+
+  prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+  prior.var <- 0.75
+
+  stop_func <- function(x) {
+    y <- stop_for_excess_toxicity_empiric(x,
+                                          tox_lim = target.DLT + 0.1,
+                                          prob_cert = 0.72,
+                                          dose = 1)
+    if(y$stop){
+      x <- y
+    } else {
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    }
+  }
+
+  crm <- Crm$new(skeleton = prior.DLT,
+                 scale = sqrt(prior.var),
+                 target = target.DLT)$
+    stop_func(stop_func)$
+    no_skip_esc(TRUE)$
+    no_skip_deesc(FALSE)$
+    global_coherent_esc(TRUE)
+
+  new <- crm$paths(root_dose = start.dose.level,
+                   cohort_sizes = rep(3, 7),
+                   impl = 'rusti')
+
+  data(viola_dtp) # saved for comparison
+
+  expect_equal(new[order(new[,.(T1,T2,T3,T4,T5,T6,T7)])],
+               unique(as.data.table(lapply(viola_dtp, as.integer))))
+})
