@@ -306,3 +306,126 @@ compare_dtp_effort <- function() {
 ## 29:                        stop_func  0.14  0.16  0.04
 ## 30:                           vapply  0.16  0.14  0.04
 
+viola_Crm <- function(){
+
+  prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+  prior.var <- 0.75
+
+  stop_func <- function(x) {
+    y <- stop_for_excess_toxicity_empiric(x,
+                                          tox_lim = 0.3,
+                                          prob_cert = 0.72,
+                                          dose = 1)
+    if(y$stop){
+      x <- y
+    } else {
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    }
+  }
+
+  Crm$new(skeleton = prior.DLT,
+          scale = sqrt(prior.var),
+          target = 0.2)$
+    stop_func(stop_func)$
+      no_skip_esc(TRUE)$
+        no_skip_deesc(FALSE)$
+          global_coherent_esc(TRUE)
+}
+
+compare_dtp_functions <- function(cache=TRUE, impl='rusti', mc.cores=1) {
+  ## What's needed here are comparisons of the VIOLA DTP computation
+  ## between the fast, new override in 'precautionary' and the new
+  ## Crm$paths() method. The latter seems slower, and I ought to do
+  ## a single-threaded Rprof() of each, for side-by-side comparison.
+
+  crmA <- viola_Crm()
+
+  if (!cache) crmA$dontcache()
+
+  Rprof()
+  A <- calculate_dtps(next_dose = 3,
+                      cohort_sizes = rep(3, 7),
+                      dose_func = crmA$applied,
+                      impl = impl,
+                      mc.cores = mc.cores)
+  Rprof(NULL)
+
+  profA <- summaryRprof()
+
+  print(attr(A,'performance'))
+
+  crmB <- viola_Crm()
+
+  if (!cache) crmB$dontcache()
+
+  Rprof()
+  B <- crmB$paths(root_dose = 3,
+                  cohort_sizes = rep(3, 7),
+                  impl = impl)
+  Rprof(NULL)
+
+  profB <- summaryRprof()
+
+  list(crmA = crmA, A = A, profA = profA
+      ,crmB = crmB, B = B, profB = profB
+       )
+}
+
+## Aha! After commenting out the proc.time() calls that yielded calc.ms and us/calc report fields,
+## I obtained much-clarified Rprof$by.total results, showing that the excess time in Crm$paths()
+## is entirely attributable to various data.table overhead costs:
+##
+## > hmm$profA$by.total[1:20,]
+##                                 total.time total.pct self.time self.pct
+## "calculate_dtps"                      4.36    100.00      0.00     0.00
+## "compare_dtp_functions"               4.36    100.00      0.00     0.00
+## "FUN"                                 4.30     98.62      0.08     1.83
+## "lapply"                              4.28     98.17      0.00     0.00
+## "parallel::mclapply"                  4.28     98.17      0.00     0.00
+## ".conduct_dose_finding_cohorts"       3.62     83.03      0.38     8.72
+## "dose_func"                           2.58     59.17      0.22     5.05
+## "<Anonymous>"                         1.46     33.49      0.30     6.88
+## "integrate"                           1.24     28.44      0.20     4.59
+## ".External"                           0.90     20.64      0.24     5.50
+## "paste"                               0.68     15.60      0.54    12.39
+## "factor"                              0.60     13.76      0.42     9.63
+## "[.data.frame"                        0.54     12.39      0.10     2.29
+## "["                                   0.54     12.39      0.00     0.00
+## "f"                                   0.50     11.47      0.08     1.83
+## ".Call"                               0.42      9.63      0.42     9.63
+## "[["                                  0.34      7.80      0.08     1.83
+## "[[.data.frame"                       0.26      5.96      0.12     2.75
+## "self$tally"                          0.20      4.59      0.06     1.38
+## "%in%"                                0.16      3.67      0.12     2.75
+## > hmm$profB$by.total[1:20,]
+##                         total.time total.pct self.time self.pct
+## "crmB$paths"                 16.14    100.00      0.20     1.24
+## "compare_dtp_functions"      16.14    100.00      0.00     0.00
+## "["                           8.00     49.57      0.32     1.98
+## "as.vector"                   6.98     43.25      0.04     0.25
+## "xtabs"                       6.86     42.50      0.34     2.11
+## "[.data.table"                6.36     39.41      2.44    15.12
+## "eval"                        4.36     27.01      0.22     1.36
+## "stats::model.frame"          3.70     22.92      0.06     0.37
+## "model.frame.default"         3.64     22.55      0.40     2.48
+## "self$applied"                1.98     12.27      0.16     0.99
+## "factor"                      1.64     10.16      0.06     0.37
+## ".External2"                  1.48      9.17      0.16     0.99
+## "unlist"                      1.42      8.80      0.02     0.12
+## "<Anonymous>"                 1.32      8.18      0.08     0.50
+## "na.omit"                     1.32      8.18      0.06     0.37
+## "vapply"                      1.26      7.81      0.28     1.73
+## "na.omit.data.frame"          1.26      7.81      0.12     0.74
+## "[.data.frame"                1.24      7.68      0.46     2.85
+## "integrate"                   1.18      7.31      0.16     0.99
+## "tapply"                      1.08      6.69      0.26     1.61
+##
+## Indeed, comparing the numerics costs, we see that they are equal as expected
+## based on the individual report()s of each Crm object:
+##
+## > hmm$crmA$report()
+##     pid  cached   evals   skips calc.ms us/calc
+##   97689    3226    3226   28812       0       0
+## > hmm$crmB$report()
+##     pid  cached   evals   skips calc.ms us/calc
+##   97689    3226    3226    3030       0       0

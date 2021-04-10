@@ -80,7 +80,14 @@ NULL
 #' * Implement logistic model
 #' * Implement TITE CRM
 #'
+#' @section Space-efficient DTP:
+#' / Side-by-side Rprof's of Crm$paths() vs calculate_dtps()
+#' * Reduce data.table overhead revealed by above
+#' * Consider a trampoline implementation of Crm$paths
+#'   - https://tailrecursion.com/wondr/posts/tail-recursion-in-r.html
+#'
 #' @section Fast DTP:
+#' * Progress bar for long runs
 #' * Native Rust DTP
 #' * Are there opportunities to run crm *incrementally*?
 #'   - Could Rust take over role of .conduct_dose_finding_cohorts

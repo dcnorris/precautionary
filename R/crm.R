@@ -193,7 +193,7 @@ Crm <- R6::R6Class("Crm",
                  ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
                  est = function(impl, abbrev=TRUE){
                    private$evals <- private$evals + 1
-                   t0 <- proc.time()
+                   ###t0 <- proc.time()
                    scale <- private$scale
                    model <- "empiric"
                    method <- "bayes"
@@ -209,8 +209,8 @@ Crm <- R6::R6Class("Crm",
                                          method=method, model=model, intcpt=3,
                                          scale=scale, model.detail=TRUE, patient.detail=TRUE,
                                          var.est=TRUE)
-                            private$user['dfcrm'] <- private$user['dfcrm'] +
-                              sum((proc.time() - t0)[c('user.self','user.child')])
+                            ###private$user['dfcrm'] <- private$user['dfcrm'] +
+                            ###  sum((proc.time() - t0)[c('user.self','user.child')])
                             return(ans)
                           }
                          ,rusti = {
@@ -230,8 +230,8 @@ Crm <- R6::R6Class("Crm",
                         }
                        ,stop("must specify impl in Crm$est()")
                         )
-                   private$user[impl] <- private$user[impl] +
-                     sum((proc.time() - t0)[c('user.self','user.child')])
+                   ###private$user[impl] <- private$user[impl] +
+                   ###  sum((proc.time() - t0)[c('user.self','user.child')])
                    estimate <- m1/m0
                    post.var <- m2/m0 - estimate^2
                    prior <- exp(private$ln_skel)
@@ -308,7 +308,7 @@ Crm <- R6::R6Class("Crm",
                      }
                    }
                    level <- which((x+o) > 0) # vector of levels that have been tried
-                   est <- self$tally(x, o)$est(...) # NB: Won't work with o=NA case of $tally
+                   est <- self$tally(x, o)$est(...)
                    if (private$.no_skip_esc) {
                      est$mtd <- min(est$mtd, max(level) + 1)
                    }
@@ -347,10 +347,10 @@ Crm <- R6::R6Class("Crm",
                    ##       If so, then the incomplete cache sharing by parallel
                    ##       workers on one complete path makes parallelism more
                    ##       effective at a coarser level, *across* paths.)
-                   ## TODO: ENSURE D_ and T_ COLUMNS GET WRITTEN AS *INTEGER* VECTORS!
                    dtp <- data.table(D0 = root_dose)
                    stopped <- list() # a 'staging area' to hold stopped trials
                    D <- length(private$ln_skel)
+                   ## TODO: Initialize dtp with all possible columns allocated and pre-named.
                    for (coh in seq_along(cohort_sizes)) {
                      dtp <- dtp[, .(T_ = 0L:cohort_sizes[coh]), by=dtp] # compare 'expand.grid'
                      colnames(dtp)[ncol(dtp)] <- paste0("T", coh)
@@ -365,8 +365,8 @@ Crm <- R6::R6Class("Crm",
                        Tcols <- paste0("T",1:coh)
                        tox <- unlist(dtp[j, ..Tcols])
                        enr <- cohort_sizes[1:coh]
-                       x <- as.vector(xtabs(tox ~ dose)) # TODO: Does xtabs() hurt performance?
-                       n <- as.vector(xtabs(enr ~ dose)) #       Could I accumulate x, o?
+                       x <- as.vector(xtabs(tox ~ dose))
+                       n <- as.vector(xtabs(enr ~ dose))
                        rec <- self$applied(x = x, o = n-x, last_dose = last_dose, ...)
                        dtp[j, (Dcoh) := ifelse(rec$stop, NA_integer_, rec$mtd)]
                      }
