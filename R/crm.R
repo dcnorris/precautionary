@@ -336,46 +336,43 @@ Crm <- R6::R6Class("Crm",
                  ##' its length being the maximum number of cohorts to look ahead.
                  ##' @param ... Parameters passed ultimately to \code{Crm$esc()},
                  ##' enabling passthru of its required \code{impl} parameter.
-                 ##' @return A data.table with paired dose/ntox columns, one pair for
-                 ##' each enrolled cohort.
+                 ##' @return An integer matrix with the same column layout as the
+                 ##' DTP tables of \CRANpkg{dtpcrm}. That is, there is a D0 column
+                 ##' followed by paired Tc, Dc columns giving the toxicity count
+                 ##' for cohort c and the resulting dose recommendation \emph{yielded by}
+                 ##' cohort c -- which is generally the recommendation \emph{for} cohort
+                 ##' c+1.
                  paths = function(root_dose, cohort_sizes, ...){
-                   ## TODO: Consider allowing a starting value for 'dtp', thereby
-                   ##       enabling parallel computation of parts of the tree.
-                   ##       (This might not be terribly useful, if it turns out
-                   ##       that we almost always wish to compute full paths for
-                   ##       many different skeletons/scale factors at one time.
-                   ##       If so, then the incomplete cache sharing by parallel
-                   ##       workers on one complete path makes parallelism more
-                   ##       effective at a coarser level, *across* paths.)
-                   dtp <- data.table(D0 = root_dose)
-                   stopped <- list() # a 'staging area' to hold stopped trials
-                   D <- length(private$ln_skel)
-                   ## TODO: Initialize dtp with all possible columns allocated and pre-named.
-                   for (coh in seq_along(cohort_sizes)) {
-                     dtp <- dtp[, .(T_ = 0L:cohort_sizes[coh]), by=dtp] # compare 'expand.grid'
-                     colnames(dtp)[ncol(dtp)] <- paste0("T", coh)
-                     Dcoh <- paste0("D", coh)
-                     dtp[, (Dcoh) := NA_integer_] # make an empty column for D<coh>
-                     for (j in 1:nrow(dtp)) {
-                       last_dose <- dtp[j][[paste0("D",coh-1)]]
-                       if (is.na(last_dose))
-                         next  # Skip over already-terminated paths
-                       Dcols <- paste0("D",0:(coh-1))
-                       dose <- factor(dtp[j, ..Dcols], levels=1:D)
-                       Tcols <- paste0("T",1:coh)
-                       tox <- unlist(dtp[j, ..Tcols])
-                       enr <- cohort_sizes[1:coh]
-                       x <- as.vector(xtabs(tox ~ dose))
-                       n <- as.vector(xtabs(enr ~ dose))
-                       rec <- self$applied(x = x, o = n-x, last_dose = last_dose, ...)
-                       dtp[j, (Dcoh) := ifelse(rec$stop, NA_integer_, rec$mtd)]
+                   private$path_list <- list() # we'll accumulate dtp rows by appending to this
+                   paths_ <- function(n, x, coh, last_dose, path_m){
+                     d <- path_m["D",coh]
+                     n[d] <- n[d] + cohort_sizes[coh]
+                     x_d <- x[d]
+                     for (ntox in 0L:cohort_sizes[coh]) {
+                       path_m["T", coh] <- ntox
+                       x[d] <- x_d + ntox
+                       rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
+                       path_m["D", coh+1] <- as.integer(rec$mtd) # as.int corrects NA_logical_
+                       if (!rec$stop && coh < length(cohort_sizes))
+                         paths_(n, x, coh+1, d, path_m)
+                       else
+                         private$path_list[[length(private$path_list)+1]] <- as.vector(path_m)
                      }
-                     terminated <- is.na(dtp[[Dcoh]])
-                     stopped[[coh]] <- dtp[terminated]
-                     dtp <- dtp[!terminated]
-                   }
-                   ## TODO: Consider attaching a 'performance' attribute
-                   rbindlist(c(list(dtp), stopped), fill=TRUE)
+                   } #</paths_>
+                   ## With above 'lemma' defined, the work becomes mere set-up ...
+                   path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes))
+                   rownames(path_m) <- c("D","T")
+                   n <- x <- integer(length(private$ln_skel))
+                   path_m["D",1] <- as.integer(root_dose)
+                   paths_(n, x, coh=1, last_dose=NA_integer_, path_m)
+                   ## .. and cleanup:
+                   dtp <- matrix(NA_integer_,
+                                 nrow=length(private$path_list),
+                                 ncol=1+2*length(cohort_sizes))
+                   for (j in 1L:nrow(dtp))
+                     dtp[j,] <- private$path_list[[j]][1L:ncol(dtp)]
+                   colnames(dtp) <- paste0(c("T","D"), rep(0:length(cohort_sizes), each=2))[-1]
+                   dtp
                  }
                ), # </public>
                private = list(
@@ -398,6 +395,7 @@ Crm <- R6::R6Class("Crm",
                           rusti = 0.0,
                           ruste = 0.0)
                , conf.level = 0.90
+               , path_list = list()
                )
                )
 

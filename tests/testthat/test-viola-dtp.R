@@ -118,12 +118,18 @@ test_that("Crm$paths() yields same VIOLA result as dtpcrm's version", {
     no_skip_deesc(FALSE)$
     global_coherent_esc(TRUE)
 
-  new <- crm$paths(root_dose = start.dose.level,
+  pmx <- crm$paths(root_dose = start.dose.level,
                    cohort_sizes = rep(3, 7),
                    impl = 'rusti')
 
   data(viola_dtp) # saved for comparison
 
-  expect_equal(new[order(new[,.(T1,T2,T3,T4,T5,T6,T7)])],
-               unique(as.data.table(lapply(viola_dtp, as.integer))))
+  ## Of note, the new Crm$paths() method retains more dose-recommendation info
+  ## than the 'dtpcrm' code under its default settings which write 'NA' dose recs
+  ## when the trial stops early.
+  ## Consequently, to effect a test, we copy NA's over from viola_dtp to pmx:
+  viola_paths <- unique(viola_dtp)
+  pmx[is.na(viola_paths)] <- NA_integer_
+
+  expect_equal(as.integer(pmx), as.integer(as.matrix(viola_paths)))
 })
