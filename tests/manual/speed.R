@@ -371,6 +371,33 @@ compare_dtp_functions <- function(cache=TRUE, impl='rusti', mc.cores=1) {
        )
 }
 
+## Compared with earlier results (see below), this profile shows the new, recursive Crm$paths()
+## concentrates most (75%) of the evaluation time on the 'real work' of the numerics:
+##
+## > hmm$profB$by.total[1:20,]
+##                         total.time total.pct self.time self.pct
+## "compare_dtp_functions"       2.10    100.00      0.00     0.00
+## "crmB$paths"                  2.10    100.00      0.00     0.00
+## "paths_"                      2.08     99.05      0.50    23.81
+## "self$applied"                1.58     75.24      0.26    12.38
+## "<Anonymous>"                 1.02     48.57      0.16     7.62
+## "integrate"                   0.92     43.81      0.04     1.90
+## ".External"                   0.66     31.43      0.14     6.67
+## "f"                           0.42     20.00      0.06     2.86
+## ".Call"                       0.36     17.14      0.36    17.14
+## "paste"                       0.16      7.62      0.14     6.67
+## "match.call"                  0.12      5.71      0.04     1.90
+## "stopifnot"                   0.10      4.76      0.10     4.76
+## "self$tally"                  0.10      4.76      0.06     2.86
+## "[["                          0.04      1.90      0.04     1.90
+## "sys.function"                0.04      1.90      0.02     0.95
+## "get0"                        0.02      0.95      0.02     0.95
+## "isTRUE"                      0.02      0.95      0.02     0.95
+## "match.fun"                   0.02      0.95      0.02     0.95
+## "max"                         0.02      0.95      0.02     0.95
+## "ncol"                        0.02      0.95      0.02     0.95
+
+
 ## Aha! After commenting out the proc.time() calls that yielded calc.ms and us/calc report fields,
 ## I obtained much-clarified Rprof$by.total results, showing that the excess time in Crm$paths()
 ## is entirely attributable to various data.table overhead costs:
