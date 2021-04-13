@@ -1,0 +1,488 @@
+---
+title: "MCSE-Free CRM Performance and Safety Assessment"
+author: "David C. Norris"
+date: "4/7/2021"
+output:
+  bookdown::tufte_html2:
+    highlight: pygments
+vignette: <
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{MCSE-Free CRM Performance and Safety}
+  \usepackage[utf8]{inputenc}
+bibliography:
+  - precautionary-package.bib
+  - packages.bib
+header-includes:
+  \newcommand{\MTDi}{\mathrm{MTD}_i}
+  \newcommand{\MTDig}[1][g]{\mathrm{MTD}_i^{#1}}
+  \newcommand{\CV}{\mathrm{CV}}
+
+---
+
+```{r setup, include=FALSE}
+old <- options(rmarkdown.html_vignette.check_title = FALSE) # suppress un-needed warning
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.height = 4, fig.width = 6)
+knitr::opts_knit$set(eval.after = "fig.cap")
+
+library(precautionary)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(dtpcrm)
+library(latticeExtra)
+
+options(ordinalizer = NULL) # vignette presumes this is not already set
+
+# Echo source focused on package functionality by redacting calls to kable()
+# see https://bookdown.org/yihui/rmarkdown-cookbook/hook-hide.html:
+local({
+  hook_source <- knitr::knit_hooks$get('source')
+  knitr::knit_hooks$set(source = function(x, options) {
+    x <- gsub(" -> etc.", "", x)
+    x <- x[!grepl("^etc. %>%", x)] # strip lines starting "etc. %>% ..."
+    x <- x[!grepl("\\(etc.,", x)]  # strip lines with fun(etc., ...)
+    hook_source(x, options)
+  })
+})
+```
+
+# Aims
+
+@braun_simulation_2020 advanced a heuristic for fast, approximate analysis of certain 'performance characteristic' which have traditionally been of interest to the designers of 1-size-fits-all dose-finding trials. With version 0.2-2, package `precautionary` introduces a highly performant algorithm for complete path enumeration of such trials, which enables---by means of a matrix formalism outlined in @norris_what_2020---an exact computation of these same characteristics. The purpose of this vignette is to compare the performance of the latter technique with the former.
+
+# PLAN
+
+Having revisited the Braun 2020 sim-free paper on 4/12/21, with some serious CRM numerics programming under my belt, I now see a fuller shape for this paper. It might work best to deal with the two separate simulation modes of Braun in the opposite order in which he pursues them:
+
+1. Starting at the very bottom of p.8, Braun proceeds from a fixed skeleton and sigma, examining trials enrolling as many as N=100 participants, under 1000 different (random) true DLT probability settings. This (fixed-skeleton, fixed-sigma) mode of analysis is a point of special strength for my 'exact' approach. A single N=100 trial (if this were even feasible to trace all paths for) would yield a single (enormous!) T array which would enable PCS and other performance characteristics to be computed by fast matrix math.
+
+The N=100 of Braun's simulation is however quite challenging! Under the best of circumstances, might it turn out that allowing paths to 'merge' on tallies reduces the size of the matrix to something manageable? I doubt this really could work without some serious pruning of the exponentially-growing sheer *number* of paths, based e.g. on their not rising above some minimum probability threshold. But then again, there might be stopping criteria that quite effectively prune those paths. In any case, exploring that far out into the exponential explosion would require some kind of on-demand extensble computation not unlike my extensible sims.
+
+2. Braun's first exploration, with fixed 'truth' and flexible skeleton & sigma, is probably infeasible to 'take literally'. So my approach has to be about reducing the dimension of skeleton and sigma, so that fewer than Braun's 1000 (random) skeletons need to be assessed. To this end, I think I can appeal to the pharmacological rationality that CRM (and model-based methods generally) presume for themselves. My point must be that a random search for skeleton is itself a fictional undertaking that serves more to generate a performance benchmark than to solve a real problem in drug development. (These are perhaps the most important points I can make in this vignette!)
+
+# The case study of Braun (2020)
+
+@braun_simulation_2020 reports 2 distinct simulation-based exercises corresponding to model optimization activities which are apparently typical. In the first, he fixes the CRM skeleton for a 6-dos trial, and examines the effect of the $\sigma$ parameter on *probability of correct selection* (PCS). Using the machinery of package `precautionary`, we might do the same as follows:
+
+```{r sigma-effect}
+
+stop_func <- function(x) {
+    y <- stop_for_excess_toxicity_empiric(x,
+                                          tox_lim = target.DLT + 0.1,
+                                          prob_cert = 0.72,
+                                          dose = 1)
+    if(y$stop){
+      x <- y
+    } else {
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    }
+  }
+
+
+stopping_rule <- function(x, d1_maxn, cum_maxn) {
+  enrolled <- tabulate(x$level, nbins = length(x$prior))
+  x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
+  return(x)
+}
+
+pcs <- function(sigma, # NB: not vectorized (expects scalar sigma)
+                skeleton = c(0.01, 0.03, 0.11, 0.25, 0.41, 0.57),
+                target.toxrate = 0.25,
+                cohort.size = 2,
+                d1_maxn = 5,
+                cum_maxn = 10) {
+  ## 1. Enumerate the full DTP
+  craken <- Crm$new(skeleton = skeleton,
+                    scale = sigma,
+                    target = target.toxrate)$
+    stop_func(function(x) {
+      enrolled <- tabulate(x$level, nbins = length(x$prior))
+      x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
+      x
+    })
+  ## $
+  ##   no_skip_esc(TRUE)$             # TODO: Figure out (or ask)
+  ##     no_skip_deesc(FALSE)$        #       which escalation rules
+  ##       global_coherent_esc(FALSE) #       Braun applied.
+
+  paths <- craken$paths(root_dose = 1,
+                        cohort_sizes = rep(cohort.size, 15),
+                        impl = 'rusti')
+
+  as.matrix(unique(dtps))
+}
+
+## Interestingly, the 3^15 = 14,348,907 ex ante paths
+## yield just 35,817 distinct paths with DTP degeneracy.
+##
+## TODO: Find out how many distinct TALLIES there are on these paths.
+## TODO: Figure out whether any condensation of the J dimension (# paths)
+##       is possible. Perhaps only one coefficient per possible value of
+##       ((n+1) choose T) needs to be accumulated?
+## Do check Eq (4) from WWTT on this. Perhaps I can left-multiply by some
+## Y*J matrix that condenses the J dimension to an L (taLLy) dim?
+## Note that the *point* of all this could be to show matters are not even
+## as alarming as WWTT Table 1 would suggest.
+
+##   ## 2. Construct the DTP matrix and T[,,] array
+##   path_matrix <- as.matrix(unique(dtps))
+##   I <- outer(path_matrix[,paste0("D",0:14)], 1:15, FUN = "==")
+##   I[I] <- 1
+##   I[!I] <- NA
+##   ## Now I[j,c,d] is an indicator array that we may use
+##   ## in the manner of a bitmask, to select the toxicities
+##   ## into their proper positions within T[j,c,d]:
+##   T <- I * outer(path_matrix[,paste0("T",1:15)], rep(1,15))
+##   dimnames(T)[[2]] <- paste0("C",1:15) # best labeled as Cohorts
+##   dimnames(T)[[3]] <- paste0("X",1:6) # label as doses X1..X7
+##   dim(T)
+
+## }
+
+sigmas <- seq(0.7, 2.1, 0.01)
+
+## TODO: Consider doing a mclapply here,
+##       keeping the DTP single-threaded.
+##       This would most efficiently
+##       employ the Crm cache.
+t0 <- system.time()
+pcss <- sapply(sigmas, pcs)
+Dt <- system.time() - t0
+
+plot(pcss ~ sigmas)
+
+```
+
+Braun was able to perform this search in 18 seconds on a MacBook Pro. as given, and explores the consequences of Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecified doses, enrolling participants in small cohorts each of size $n$, at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a $C \times D$ matrix of toxicity counts $\{0, 1, ..., n, -\}$, with '$-$' being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.^[To see this, consider that one may 'read' such a matrix, starting from the (deterministic) starting dose, and applying the (deterministic) design rules at each step. That is, a deterministic design *by definition* imposes a unique sequence on the entries in such a matrix.] For designs with upper bounds on enrollment, $C$ may be fixed *ex ante*, and all possible paths comprehensively enumerated.
+
+In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
+
+Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is easily applied by using `NA` to represent '$-$', and performing aggregate operations with option `na.rm=TRUE`.]
+
+$$
+\begin{align}
+p_d &= P(\MTDi < X_d)\quad\mbox{(dose-wise toxicity probabilities)}\\
+q_d &= 1 - p_d\\
+\pi^j &= \prod_{c,d} {n \choose T_{c,d}^j} p_d^{T_{c,d}^j} q_d^{(n-T_{c,d}^j)}\quad\mbox{(path probabilities)} (\#eq:pi)
+\end{align}
+$$
+
+Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
+
+$$
+\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+$$
+where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the given dose-escalation design.
+
+Finally, we may as previously introduce the log-therapeutic index $\kappa$, enabling us to write the fatal (grade-5) fraction $f_d$ of DLTs as:
+
+$$
+f_d = \frac{P(e^{2\kappa} \MTDi <  X_d)}{P(\MTDi < X_d)}, (\#eq:fatalfraction)
+$$
+
+in terms of which the expected number of fatal toxicities is:
+
+$$
+\boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f},  (\#eq:fatalities)
+$$
+
+where $Y = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $U$.
+
+# Connection with DTP
+
+The DTP idea apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
+
+1. The "flexibility" of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.
+2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
+3. From the trialist's perspective, the 'black-box' recommendations of model-based designs "contrast unfavorably with the transparent, simple rules of a rule-based design."
+
+To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (e.g., $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs only in its *global* reach, and its intent to support *computation* over the paths as opposed to cursory inspection.
+
+# An application
+
+We will adopt the same parameters as in the `dtpcrm` [package vignette](https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html):^[See Table 1 in @craddock_combination_2019.]
+
+## VIOLA set-up
+
+### Clinical parameters
+
+```{r clinical-params}
+number.doses <- 7
+start.dose.level <- 3
+max.sample.size <- 21
+target.DLT <- 0.2
+cohort.size <- 3
+```
+
+Note that the sample size limit allows us to set $C=7$.
+
+### Model specification parameters
+
+```{r model-spec-params}
+prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+prior.var <- 0.75
+```
+
+### Early stopping
+
+```{r early-stopping}
+stop_func <- function(x) {
+  y <- stop_for_excess_toxicity_empiric(x,
+                                        tox_lim = target.DLT + 0.1,
+                                        prob_cert = 0.72,
+                                        dose = 1)
+  if(y$stop){
+    x <- y
+  } else {
+    x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+  }
+}
+```
+
+## Computing DTPs
+
+```{r compute-dtp}
+t0 <- proc.time()
+crm <- Crm$new(skeleton = prior.DLT,
+               scale = sqrt(prior.var),
+               target = target.DLT)$
+  stop_func(stop_func)$
+  no_skip_esc(TRUE)$
+    no_skip_deesc(FALSE)$
+      global_coherent_esc(TRUE)
+
+viola_dtp <- calculate_dtps(
+  next_dose = start.dose.level,
+  cohort_sizes = rep(3, 7),
+  dose_func = crm$applied,
+  impl = 'rusti')
+
+proc.time() - t0 # used to take ~17 minutes on a 2.6GHz Quad Core i7
+```
+
+```{r load-cached-dtp, echo=FALSE}
+data(viola_dtp) # Read cached viola_dtp from disk
+```
+
+With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ paths. These are not all distinct paths, however, since early stopping results in path degeneracy.^[Indeed, the underlying calculations exhbit an even more re remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class `Crm` introduced in version 0.2-2 of `precautionary`.] For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
+```{r degenerates}
+knitr::kable(viola_dtp[1000:1010,])
+```
+
+Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of ```r round(nrow(viola_dtp)/nrow(unique(viola_dtp)), 1)```:
+```{r degeneracy}
+viola_paths <- as.matrix(unique(viola_dtp))
+nrow(viola_paths)
+```
+
+To distinguish it from the degenerate DTP table returned by `dtpcrm::calculate_dtps`, we will refer to `viola_paths` as the DTP *matrix*.
+
+# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP matrix
+
+## Transform DTP table into $T_{c,d}^j$
+
+```{r T-constructed}
+I <- outer(viola_paths[,paste0("D",0:6)], 1:7, FUN = "==")
+I[I] <- 1
+I[!I] <- NA
+# Now I[j,c,d] is an indicator array that we may use
+# in the manner of a bitmask, to select the toxicities
+# into their proper positions within T[j,c,d]:
+T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
+dimnames(T)[[2]] <- paste0("C",1:7) # best labeled as Cohorts
+dimnames(T)[[3]] <- paste0("X",1:7) # label as doses X1..X7
+dim(T)
+```
+
+## Compute $\mathbf{b} = \sum_c {n \choose T_{c,d}}$
+
+```{r b-via-T}
+b <- apply(log(choose(3, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+length(b)
+```
+
+## Compute $\mathrm{U}$ and $\mathrm{Y}$
+
+```{r Y-soeasy}
+Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+Z <- apply(3-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+U <- cbind(Y, Z)
+dim(U)
+```
+
+## Derive $\mathbf{\pi}$ from the CRM skeleton, to check that $\sum_j \pi^j \equiv 1$ 
+
+```{r pi-per-skeleton}
+log_p <- log(prior.DLT)
+log_q <- log(1 - prior.DLT)
+log_pi <- b + U %*% c(log_p, log_q)
+sum(exp(log_pi)) # check probabilities sum to 1
+```
+
+
+# Fitting a lognormal $\MTDi$ to VIOLA's CRM skeleton
+
+Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling---at least for the nonzero doses:
+
+```{r VIOLA-dose-scaling}
+viola_dosing <-
+  data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
+            ,Level =  1:7  # We use integer dose indexes here
+            ,Dose_mg = c(0, 2.5, 5, 10, 15, 25, 35)
+            ,skeleton = prior.DLT
+             )
+viola_dosing <- viola_dosing %>%
+  mutate(log_dose = log(Dose_mg)
+        ,sqrt_dose = sqrt(Dose_mg)
+        )
+
+plot(Level ~ sqrt_dose, data = viola_dosing, type = 'b'
+     , ylab = "Dose Level"
+     , xlab = expression(sqrt(Dose[mg]))
+     , las = 1
+     )
+```
+
+Indeed, the CRM skeleton looks quite close to a normal distribution under this scaling:
+
+```{r skeleton-as-expectation, fig.cap="CRM skeleton probabilities vs $\\sqrt{\\mathrm{Dose}}$, with superimposed normal distribution having median $\\sqrt{33}$ and standard deviation 3."}
+plot(skeleton ~ sqrt_dose, data = viola_dosing
+     , type = 'b'
+     , xlab = expression(sqrt(Dose[mg]))
+     , ylim = c(0, 0.55)
+     , las = 1)
+x <- seq(0, 6, 0.1)
+y <- pnorm(x, mean = sqrt(33), sd = 3)
+lines(y ~ x, lty = 2)
+```
+
+Nevertheless, the treatment of zero dose under this scaling is pharmacologically problematic, if not outright homeopathic, so we will proceed instead using a lognormal $\MTDi$ distribution fitted to the CRM skeleton.
+
+```{r skeleton-log-match, fig.cap=paste0("CRM skeleton probabilities vs $\\log \\mathrm{Dose}$, with superimposed lognormal distribution having median $\\mu = ", exp(mu_opt), "$mg and $\\sigma = ", sigma_opt, "$.")}
+plot(skeleton ~ log_dose, data = subset(viola_dosing, is.finite(log_dose))
+     , type = 'b'
+     , xlab = expression(log(Dose[mg]))
+     , xlim = c(0.5, 3.6)
+     , ylim = c(0, 0.55)
+     , las = 1)
+
+sse <- function(mu_sigma, dose = viola_dosing$Dose_mg){
+  mu <- mu_sigma[1]
+  sigma <- mu_sigma[2]
+  lnorm.DLT <- plnorm(dose, meanlog = mu, sdlog = sigma)
+  sse <- sum((lnorm.DLT - prior.DLT)[dose > 0]^2)
+}
+fit <- optim(par = c(mu=log(38), sigma=1.8), fn = sse)
+mu_opt <- log(round(exp(fit$par['mu']), 1))
+sigma_opt <- round(fit$par['sigma'], 1)
+x <- seq(0.5, 3.55, 0.05)
+y <- plnorm(exp(x), meanlog = mu_opt, sdlog = sigma_opt)
+lines(y ~ x, lty = 2)
+```
+
+# VIOLA safety
+
+Taking this CRM skeleton fit as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
+
+```{r fatalities-vs-kappa}
+f <- function(kappa, mu=mu_opt, sigma=sigma_opt, X=viola_dosing$Dose_mg) {
+  # For ease of use, this function is VECTORIZED over kappa,
+  # generally returning a length(X) x length(kappa) MATRIX
+  # which can validly right-multiply Y in t(pi) %*% Y %*% f.
+  # (In the special case length(kappa)==1, a vector is returned.)
+  gr5 <- plnorm(outer(X, exp(-2*kappa)), meanlog = mu, sdlog = sigma)
+  dlt <- plnorm(outer(X, exp( 0*kappa)), meanlog = mu, sdlog = sigma)
+  ff <- gr5/dlt
+  ff[is.nan(ff)] <- 0 # replace NaN caused by X[1]==0
+  dimnames(ff) <- list(
+    dose = paste0("X", seq_along(X)),
+    kappa = round(kappa, 3)
+  )
+  if (length(kappa)==1)
+    return(as.vector(ff))
+  ff
+}
+
+kappa <- seq(0.2, 1.2, 0.02)
+F <- f(kappa = kappa)
+Ef <- t(exp(log_pi)) %*% Y %*% F
+Ef <- t(Ef) # transpose to a column-vector
+plot(Ef ~ kappa, type = 'l'
+     , xlab = expression(kappa)
+     , ylab = "Expected Number of Fatal DLTs"
+     , las=1)
+```
+
+## Beyond the skeleton
+
+The development of CRM methods has left the status of the *skeleton* somewhat ambiguous. While evading its realistic interpretation as an $\MTDi$ distribution,^[For a related perspective on interpretational issues, see @norris_comment_2020.] CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. @braun_simulationfree_2020, for example, develops an approach which "hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton."
+
+Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in @norris_what_2020 provides one approach.
+
+To enable parameter departures from our lognormal skeleton fit, we require $\log \boldsymbol{\pi}$ as a *function* of $(\mu, \sigma)$:
+
+```{r log_pi}
+log_pi <- function(mu, sigma){
+  p <- plnorm(viola_dosing$Dose_mg, meanlog = mu, sdlog = sigma)
+  log_pq <- c(log(p), log(1-p))
+  log_pi = b + U %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's  
+}
+```
+
+This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters $(\mu, \sigma, \kappa)$. But again as in @norris_what_2020 we employ a minimax framing of our safety question, to achieve a dimension reduction:
+
+```{r minimax}
+mu_minimax <- log(viola_dosing$Dose_mg)[3] # dose 3 is 2nd-highest *nonzero* dose
+```
+
+The irregularly spaced doses of VIOLA don't yield a unique delta, but the $2\times$ mulipliers either side of dose level 3 (our `mu_minimax`) allow us to select $\delta = \log 2$ as a local approximation:
+
+```{r delta}
+delta <- mean(diff(log(viola_dosing$Dose_mg)[2:4]))
+```
+
+We may now generate a grid of values, and plot contours:
+
+```{r kappa-delta-plane}
+focustab <- CJ(mu = mu_minimax
+              , K = seq(0.5, 1.65 , 0.01) # K = kappa / sigma
+              , sigma = delta/seq(0.4, 2.2, 0.01)
+              )
+focustab[, kappa := K * sigma]
+focustab[, value := t(exp(log_pi(mu,sigma))) %*%
+             Y %*% f(kappa=kappa, mu=mu, sigma=sigma)
+       , by = .(mu,sigma)]
+```
+
+```{r contourplot, echo=FALSE, fig.asp=1, fig.cap="Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-up of Figure 3 in @norris_what_2020. Therapeutic index $\\kappa/\\sigma$ gauges the target drug's aptness for safe-and-effective 1-size-fits-all dosing in the trial's combination regimen. Signal-to-noise index $\\delta/\\sigma$ governs the informativeness of the dose-escalation process. This analysis assumes a log-normally distributed $\\MTDi$, with median parameter set (on minimax grounds) at VIOLA dose level 3. Plotted values of $\\delta/\\sigma$ are based on $\\delta=\\log(2)$, selected according to the $2\\times$ VIOLA dose-level spacing around this dose level."}
+contourplot(value ~ K + (delta/sigma)
+          , data = focustab
+          , at = seq(0.0, 2.0, 0.1)
+          , par.strip.text = list(cex=0.7)
+          , xlab = list(expression(kappa / sigma), rot=0)
+          , ylab = list(expression(frac(delta, sigma)), rot=0)
+          , scale = list(cex=0.7, x=list(at=c(0.5, 1, 1.5)))
+          , label.style = "align"
+          , labels = list(cex=0.5)
+          , aspect = 1
+          , col.regions = hcl.colors(10)
+            )
+```
+
+# Conclusion
+
+Although initially put forward with different intent, the *dose transition pathways* of @yap_dose_2017 render the enumerative approach of @norris_what_2020 immediately applicable to the CRM. Importantly, the analysis is found to be computationally feasible in the setting of an actual trial. Indeed, with performance improvements debuted in version 0.2-2 of `precautionary`, the complete VIOLA enumeration becomes essentially trivial, taking just a few seconds on modern desktop hardware. This raises the prospect of scaling up our problems to meet the opportunities of massive parallelism [@gustafson_reevaluating_1988], expanding this mode of analysis to ever larger dose-finding trials.^[See also https://en.wikipedia.org/wiki/Gustafson%27s_law.]
+
+The approach taken here exemplifies a widely applicable scheme for the safety analysis of dose-escalation trials generally, rooted in the exhaustive enumeration of all possible trial paths.
+
+```{r echo=FALSE, results='hide'}
+options(old) # restore user's original options before finishing, per CRAN
+```
+
+```{r bib, include=FALSE, cache=FALSE}
+# Create a bib file for packages cited in this paper
+knitr::write_bib(c('dtpcrm'), file = 'packages.bib')
+```
+
+# References

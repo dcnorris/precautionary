@@ -5,6 +5,7 @@
 ^publicity
 ^inst/shiny-apps/.*/rsconnect
 ^vignettes/DTP-vs-Korn94.*
+^vignettes/MCSE-Free.*
 ^exec/prolog/.*
 ^exec/T[5-9].tab
 ^tests/manual
