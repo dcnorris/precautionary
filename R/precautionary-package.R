@@ -73,18 +73,23 @@ NULL
 
 #' Plan
 #'
+#' @section Dependencies:
+#' * Eliminate dependence/adherence to dtpcrm layout
+#'   - Package dtpcrm makes many design decisions unsuited to
+#'     comprehensive enumeration of whole trials.
+#'   - Allowing the Crm class to evolve along now-'natural' lines
+#'     probably makes a suitable 'plan' for now.
+#'   - Expunging superseded code/dependencies ASAP will facilitate
+#'     this evolution.
+#'   - Dependence on a possibly unmaintained 'dtpcrm' also represents
+#'     a risk that should induce some urgency on this question.
+#'   - Even the term 'DTP' isn't quite right anymore for a complete
+#'     path enumeration, and should be abandoned.
+#'
 #' @section Fast CRM:
 #' * Benchmark; try mul_add()'s
-#' * R6 Crm class
-#'   - Write method to support DTP
 #' * Implement logistic model
 #' * Implement TITE CRM
-#'
-#' @section Space-efficient DTP:
-#' / Side-by-side Rprof's of Crm$paths() vs calculate_dtps()
-#' * Reduce data.table overhead revealed by above
-#' * Consider a trampoline implementation of Crm$paths
-#'   - https://tailrecursion.com/wondr/posts/tail-recursion-in-r.html
 #'
 #' @section Fast DTP:
 #' * Progress bar for long runs
