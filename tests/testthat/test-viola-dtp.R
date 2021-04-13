@@ -90,7 +90,7 @@ test_that("calculate_dtps() yields same VIOLA result as dtpcrm's version", {
   expect_equal(new, as.data.table(viola_dtp))
 })
 
-test_that("Crm$paths() yields same VIOLA result as dtpcrm's version", {
+test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
   ## VIOLA trial set-up
   start.dose.level <- 3
   target.DLT <- 0.2
@@ -118,9 +118,9 @@ test_that("Crm$paths() yields same VIOLA result as dtpcrm's version", {
     no_skip_deesc(FALSE)$
     global_coherent_esc(TRUE)
 
-  pmx <- crm$paths(root_dose = start.dose.level,
-                   cohort_sizes = rep(3, 7),
-                   impl = 'rusti')
+  pmx <- crm$trace_paths(root_dose = start.dose.level,
+                         cohort_sizes = rep(3, 7),
+                         impl = 'rusti')$path_matrix()
 
   data(viola_dtp) # saved for comparison
 

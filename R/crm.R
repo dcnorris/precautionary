@@ -331,18 +331,17 @@ Crm <- R6::R6Class("Crm",
                  ##' @details
                  ##' Compute trial paths forward from current tally
                  ##'
+                 ##' The computed paths are saved in a private field, from which variously
+                 ##' formatted results may be obtained by accessor functions.
+                 ##'
                  ##' @param root_dose The starting dose for tree of paths
                  ##' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  ##' its length being the maximum number of cohorts to look ahead.
                  ##' @param ... Parameters passed ultimately to \code{Crm$esc()},
                  ##' enabling passthru of its required \code{impl} parameter.
-                 ##' @return An integer matrix with the same column layout as the
-                 ##' DTP tables of \CRANpkg{dtpcrm}. That is, there is a D0 column
-                 ##' followed by paired Tc, Dc columns giving the toxicity count
-                 ##' for cohort c and the resulting dose recommendation \emph{yielded by}
-                 ##' cohort c -- which is generally the recommendation \emph{for} cohort
-                 ##' c+1.
-                 paths = function(root_dose, cohort_sizes, ...){
+                 ##' @return Self, invisibly
+                 ##' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
+                 trace_paths = function(root_dose, cohort_sizes, ...){
                    private$path_list <- list() # we'll accumulate dtp rows by appending to this
                    paths_ <- function(n, x, coh, last_dose, path_m){
                      d <- path_m["D",coh]
@@ -359,21 +358,37 @@ Crm <- R6::R6Class("Crm",
                          private$path_list[[length(private$path_list)+1]] <- as.vector(path_m)
                      }
                    } #</paths_>
-                   ## With above 'lemma' defined, the work becomes mere set-up ...
+                   ## With above 'lemma' defined, we just set up and go!
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes))
                    rownames(path_m) <- c("D","T")
                    n <- x <- integer(length(private$ln_skel))
                    path_m["D",1] <- as.integer(root_dose)
                    paths_(n, x, coh=1, last_dose=NA_integer_, path_m)
-                   ## .. and cleanup:
-                   dtp <- matrix(NA_integer_,
+                   invisible(self)
+                 }, # </trace_paths>
+                 ##' @details
+                 ##' Return computed trial paths in matrix form
+                 ##'
+                 ##' @return An integer matrix with the same column layout as the
+                 ##' DTP tables of \CRANpkg{dtpcrm}. That is, there is a D0 column
+                 ##' followed by paired Tc, Dc columns giving the toxicity count
+                 ##' for cohort c and the resulting dose recommendation \emph{yielded by}
+                 ##' cohort c -- which is generally the recommendation \emph{for} cohort
+                 ##' c+1.
+                 ##' @seealso \code{trace_paths}, which must already have been invoked
+                 ##' if this method is to return a meaningful result.
+                 path_matrix = function() {
+                   stopifnot(length(private$path_list) > 0)
+                   Ncol <- max(sapply(private$path_list, length)) - 1L
+                   pmx <- matrix(NA_integer_,
                                  nrow=length(private$path_list),
-                                 ncol=1+2*length(cohort_sizes))
-                   for (j in 1L:nrow(dtp))
-                     dtp[j,] <- private$path_list[[j]][1L:ncol(dtp)]
-                   colnames(dtp) <- paste0(c("T","D"), rep(0:length(cohort_sizes), each=2))[-1]
-                   dtp
-                 }
+                                 ncol=Ncol)
+                   for (j in 1L:nrow(pmx))
+                     pmx[j,] <- private$path_list[[j]][1L:ncol(pmx)]
+                   Cmax <- (Ncol - 1L)/2L
+                   colnames(pmx) <- paste0(c("T","D"), rep(0:Cmax, each=2))[-1]
+                   pmx
+                 } #</path_matrix>
                ), # </public>
                private = list(
                  ln_skel = NA
