@@ -74,29 +74,35 @@ NULL
 #' Plan
 #'
 #' @section Dependencies:
-#' * Eliminate dependence/adherence to dtpcrm layout
+#' * Eliminate dependence on/adherence to dtpcrm layout
 #'   - Package dtpcrm makes many design decisions unsuited to
 #'     comprehensive enumeration of whole trials.
 #'   - Allowing the Crm class to evolve along now-'natural' lines
 #'     probably makes a suitable 'plan' for now.
 #'   - Expunging superseded code/dependencies ASAP will facilitate
 #'     this evolution.
-#'   - Dependence on a possibly unmaintained 'dtpcrm' also represents
-#'     a risk that should induce some urgency on this question.
-#'   - Even the term 'DTP' isn't quite right anymore for a complete
-#'     path enumeration, and should be abandoned.
+#'   - Even the term 'DTP' seems not quite right anymore for a complete
+#'     path enumeration (CPE?), and should be abandoned.
+#' * Eliminate dependence on 'escalation' and 'dfcrm'
+#'   - With the special emphasis on \emph{speed} created by CPE,
+#'     I now must implement all underlying trial designs in Rust.
+#' * What may be retained in each case are 'Suggests:'-type relations,
+#'   wherever regression tests are helpful -- esp. wrt dfcrm.
 #'
 #' @section Fast CRM:
 #' * Benchmark; try mul_add()'s
 #' * Implement logistic model
-#' * Implement TITE CRM
+#' * Implement TITE CRM?
+#'   - Is TITE even amenable to path enumeration?
+#'   - If not, there may be little sense in implementing it here!
+#'   - If TITE is truly off the table, can existing numerics be
+#'     sped up further?
+#'   - OTOH, implementing TITE would help place the numerics
+#'     for enumerable designs in context.
 #'
 #' @section Fast DTP:
 #' * Progress bar for long runs
 #' * Native Rust DTP
-#' * Are there opportunities to run crm *incrementally*?
-#'   - Could Rust take over role of .conduct_dose_finding_cohorts
-#'   - Any speedup from allowing cohort n>1?
 #'
 #' @section Document:
 #' * Add examples to the documented Rust functions
