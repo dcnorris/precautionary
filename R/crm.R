@@ -19,8 +19,9 @@
 ##' Presently, this class supports only the 'empiric' (aka 'power') model.
 ##' But it is hoped that inheritance will assist in rendering other models
 ##' implemented in package \CRANpkg{dfcrm} clearly, with code reuse.
+##' @importFrom R6 R6Class
 ##' @export
-Crm <- R6::R6Class("Crm",
+Crm <- R6Class("Crm",
                public = list(
                  ##' @details
                  ##' Create a new `Crm` object.
@@ -392,15 +393,16 @@ Crm <- R6::R6Class("Crm",
                  ##' @details
                  ##' Return computed trial paths in a 3D array
                  ##'
-                 ##' @return For the \code{j}'th path, the C*D matrix \code{T[j,,]} gives
-                 ##' the number of toxicities \code{T[j,c,d]} occurring in the \code{c}'th
-                 ##' cohort for dose d. In case \code{condense=FALSE}, the returned array
-                 ##' has cohorts indexed trial-wise instead of dose-wise. This inflates
-                 ##' the array more than needed for the matrix computations it must support
+                 ##' @param condense Logical value; if FALSE, the returned array has its
+                 ##' cohorts indexed trial-wise instead of dose-wise. This inflates the
+                 ##' array more than needed for the matrix computations it must support
                  ##' (observe that in Norris2020c Eq. (4), the \code{c} index is eliminated
                  ##' already by summation), but enables the sequence of events along a path
-                 ##' to be read off directly if this required e.g. for visualization or
-                 ##' debugging.
+                 ##' to be read off directly if this is required e.g. for visualization or
+                 ##' debugging. Default is TRUE.
+                 ##' @return For the \code{j}'th path, the C*D matrix \code{T[j,,]} gives
+                 ##' the number of toxicities \code{T[j,c,d]} occurring in the \code{c}'th
+                 ##' cohort for dose d. In case \code{condense=FALSE}, see above.
                  ##'
                  ##' @references
                  ##' Norris DC. What Were They Thinking? Pharmacologic priors implicit in
