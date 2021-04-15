@@ -47,7 +47,27 @@ local({
 })
 ```
 
+> "The main challenge when using the CRM is model calibration."
+> --- [@lee_calibration_2011]
+
+
+> "It is important to see to what extent the largely arbitrary specification of these features influences the operational nature of the method, as well as the conclusions reached.
+> Experimenters prefer methods which are relatively insensitive to prior specification as well as the form of the working model."
+> --- [@chevret_continual_1993]
+
+
+# Background
+
+TODO: Here, I need to offer as concisely as possible a swift overview of the model-calibration problem, and several prominent approaches to it.
+
+Perhaps start with [@yin_bayesian_2009], as the 'definitive' expression of a sincere Bayesian approach to the calibration problem. Then, introduce the L+S 2009,2011 papers as characteristic of the 'empirical' alternative which Braun has taken up and which shapes the approach I adopt *for purposes of criticism* in this vignette.
+
+However, I might be stuck with a historical approach that goes back to [@chevret_continual_1993]! (Why does this always happen to me?)
+Remarkably, [@chevret_continual_1993] exhibits concern for *overall toxicities* as a performance characteristic.
+
 # Aims
+
+TODO: I may have reached a point with all this, such that I am no longer mounting a focused critique of Braun 2020, but rather using it as the basis for a more comprehensive review of prior calibrations approaches and entry-point into my own emphasis on comprehensive path enumeration as the way forward. The general approach might be to offer as coherent and general a framing of the CRM calibration problem as possible, but then use Braun 2020 as the 'challenge' w.r.t. efficiency and speed.
 
 @braun_simulation_2020 advanced a heuristic for fast, approximate analysis of certain 'performance characteristic' which have traditionally been of interest to the designers of 1-size-fits-all dose-finding trials. With version 0.2-2, package `precautionary` introduces a highly performant algorithm for complete path enumeration of such trials, which enables---by means of a matrix formalism outlined in @norris_what_2020---an exact computation of these same characteristics. The purpose of this vignette is to compare the performance of the latter technique with the former.
 
@@ -59,7 +79,17 @@ Having revisited the Braun 2020 sim-free paper on 4/12/21, with some serious CRM
 
 The N=100 of Braun's simulation is however quite challenging! Under the best of circumstances, might it turn out that allowing paths to 'merge' on tallies reduces the size of the matrix to something manageable? I doubt this really could work without some serious pruning of the exponentially-growing sheer *number* of paths, based e.g. on their not rising above some minimum probability threshold. But then again, there might be stopping criteria that quite effectively prune those paths. In any case, exploring that far out into the exponential explosion would require some kind of on-demand extensble computation not unlike my extensible sims.
 
+I may gain more by an argument that emphasizes the practical irrelevance of such large trials. (Why should I feel obliged to play a pointless game?) Plainly, the conceit of retaining the original calibration past the first N~40 or so patients lacks credibility: after 40 patients dosed, any decent dose-finding experiment will have generated enough understanding of the clin pharm to render all pre-trial design decisions obsolete. (But doesn't Bayesianism in theory offer an excellent defense against this complaint? Or does that defense depend on precisely the asymptotic behavior we are trying to characterize?)
+
 2. Braun's first exploration, with fixed 'truth' and flexible skeleton & sigma, is probably infeasible to 'take literally'. So my approach has to be about reducing the dimension of skeleton and sigma, so that fewer than Braun's 1000 (random) skeletons need to be assessed. To this end, I think I can appeal to the pharmacological rationality that CRM (and model-based methods generally) presume for themselves. My point must be that a random search for skeleton is itself a fictional undertaking that serves more to generate a performance benchmark than to solve a real problem in drug development. (These are perhaps the most important points I can make in this vignette!)
+
+3. I probably need a whole section on 'confessions' that the literature effectively makes. One in particular (see [@chevret_continual_1993, p.1100]) is the retention of the same fixed doses out to some large number of patients!
+
+## Misc. reading notes
+
+* As I plumb the 2 Lee + Cheung papers, and some of their refs, I appreciate the complexity (and confusion!) of the literature around this.
+
+* The Bayesian model averaging of Yin and Yuan [-@yin_bayesian_2009] can't be ignored in my overall effort to bring sense and coherence to the CRM calibration literature.
 
 # The case study of Braun (2020)
 
