@@ -73,6 +73,39 @@ NULL
 
 #' Plan
 #'
+#' @section Version 0.2-3:
+#' * Complete MCSE-Free vignette
+#' * Restore Windows build
+#'
+#' @section Version 0.2-4:
+#' * Implement logistic model
+#' * Implement TITE CRM?
+#'   - Is TITE even amenable to path enumeration?
+#'   - If not, there may be little sense in implementing it here!
+#'   - If TITE is truly off the table, can existing numerics be
+#'     sped up further?
+#'   - OTOH, implementing TITE would help place the numerics
+#'     for enumerable designs in context.
+#'
+#' @section Version 0.2-5:
+#' * Enumerate BOIN designs
+#' * Convert EscRisk to MCSE-free CPE
+#' * Consider implications of Gabor Csardi's performance tips
+#'   here \url{https://stackoverflow.com/a/29482211/3338147}.
+#'
+#' @section Version 0.2-6:
+#' * Progress bar for long runs
+#' * Eliminate dependence on \pkg{dtpcrm}
+#'
+#' @section Version 0.3:
+#' * Demote \pkg{escalation} to a 'Suggests'
+#' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
+#'   - Ideally 100% sim-free via integration over the hyperprior!
+#' * Stop exposing the \code{impl} parameter
+#'
+#' @section Version 0.3-1
+#' * Native Rust DTP
+#'
 #' @section Dependencies:
 #' * Eliminate dependence on/adherence to dtpcrm layout
 #'   - Package dtpcrm makes many design decisions unsuited to
@@ -91,18 +124,6 @@ NULL
 #'
 #' @section Fast CRM:
 #' * Benchmark; try mul_add()'s
-#' * Implement logistic model
-#' * Implement TITE CRM?
-#'   - Is TITE even amenable to path enumeration?
-#'   - If not, there may be little sense in implementing it here!
-#'   - If TITE is truly off the table, can existing numerics be
-#'     sped up further?
-#'   - OTOH, implementing TITE would help place the numerics
-#'     for enumerable designs in context.
-#'
-#' @section Fast DTP:
-#' * Progress bar for long runs
-#' * Native Rust DTP
 #'
 #' @section Document:
 #' * Add examples to the documented Rust functions
