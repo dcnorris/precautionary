@@ -47,8 +47,8 @@ local({
 })
 ```
 
-> "The main challenge when using the CRM is model calibration."
-> --- [@lee_calibration_2011]
+> "In most trials, and in particular in cancer chemotherapy trials, it is rare that we have no idea at all about the dose-response relationship. Such information is implicitly used in the choice of dose levels available for use in the trial, and part of our approach here is to make an attempt to quantify such information."
+> --- [@oquigley_continual_1990]
 
 
 > "It is important to see to what extent the largely arbitrary specification of these features influences the operational nature of the method, as well as the conclusions reached.
@@ -56,7 +56,23 @@ local({
 > --- [@chevret_continual_1993]
 
 
+> "Most clinicians do not feel sufficiently confident in their initial toxicity probability estimates to start above the lowest dose (often chosen to be 10% of rodents' LD$_{10}$)."
+> --- [@goodman_practical_1995]
+
+
+> "The main challenge when using the CRM is model calibration."
+> --- [@lee_calibration_2011]
+
+
 # Background
+
+Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated utterly from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with [@goodman_practical_1995] unmistakably revealing the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions, abandoning any role for this prior curve in informing the trial starting dose.
+
+By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, viewing computer-based model tuning activities as "the main challenge when using the CRM" [@lee_calibration_2011].
+
+# On *calibration*
+
+It is interesting to see that the term 'tuning' employed by ... has become 'calibration' 
 
 TODO: Here, I need to offer as concisely as possible a swift overview of the model-calibration problem, and several prominent approaches to it.
 
@@ -84,6 +100,10 @@ I may gain more by an argument that emphasizes the practical irrelevance of such
 2. Braun's first exploration, with fixed 'truth' and flexible skeleton & sigma, is probably infeasible to 'take literally'. So my approach has to be about reducing the dimension of skeleton and sigma, so that fewer than Braun's 1000 (random) skeletons need to be assessed. To this end, I think I can appeal to the pharmacological rationality that CRM (and model-based methods generally) presume for themselves. My point must be that a random search for skeleton is itself a fictional undertaking that serves more to generate a performance benchmark than to solve a real problem in drug development. (These are perhaps the most important points I can make in this vignette!)
 
 3. I probably need a whole section on 'confessions' that the literature effectively makes. One in particular (see [@chevret_continual_1993, p.1100]) is the retention of the same fixed doses out to some large number of patients!
+
+4. It will also be very helpful to lean on [fractional factorial designs](https://en.wikipedia.org/wiki/Fractional_factorial_design), as a means to extend CPE-based trial analysis into the difficult territory Braun 2020 treks through.
+
+5. The whole question of how prior information is (not) used in CRM is fascinating. What does [@grieve_idle_2016] offer in regard to the connection between *calibration* and *prior information*? What does it tell us, that the CRM so rapidly lost its supposed connection with prior elicitation in the early 1990s? Already by 1995 we have [@goodman_practical_1995] starting from the lowest dose, insead of one selected on basis of the skeleton.
 
 ## Misc. reading notes
 
