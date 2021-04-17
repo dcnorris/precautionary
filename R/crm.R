@@ -412,21 +412,24 @@ Crm <- R6Class("Crm",
                  ##' if this method is to return a result.
                  path_array = function(condense=TRUE) {
                    pmx <- self$path_matrix()
-                   C <- (ncol(pmx) - 1L)/2L
-                   I <- outer(pmx[,paste0("D",(0:(C-1)))], 1:C, FUN = "==")
+                   C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
+                   D <- length(private$ln_skel) # dose levels range 1:D
+                   ## I believe I'm using C wrongly to obtain dim(T)[3].
+                   ## Perhaps I correctly obtain dim(T)[2], but I should double-check this too!
+                   I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
                    I[I] <- 1L
                    I[!I] <- NA_integer_
-                   ## Now I[j,c,d] is an indicator array that we may use
+                   ## Now I[,,] is a J*C*D indicator array that we may use
                    ## in the manner of a bitmask, to select the toxicities
                    ## into their proper positions within T[j,c,d]:
-                   T <- I * outer(pmx[,paste0("T",1:C)], rep(1,C))
+                   T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
                    dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
                    dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
                    if (!condense)
                      return(T)
                    ## T is at this point larger (sparser) than necessary for the
                    ## matrix computations which it is intended to support.
-                   ## Specifically, the cohorts are now indexed trial-wise,
+                   ## Specifically, the cohorts are now indexed within the whole trial,
                    ## whereas they really need only to be indexed on a per-dose basis.
                    ## We next identify the largest number of non-NA entries in any
                    ## dose column of the array; this will be the new, smaller
