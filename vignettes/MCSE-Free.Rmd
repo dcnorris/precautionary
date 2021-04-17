@@ -28,9 +28,9 @@ knitr::opts_knit$set(eval.after = "fig.cap")
 library(precautionary)
 library(knitr)
 library(kableExtra)
-library(dplyr)
-library(dtpcrm)
-library(latticeExtra)
+##library(dplyr)
+##library(dtpcrm)
+##library(latticeExtra)
 
 options(ordinalizer = NULL) # vignette presumes this is not already set
 
@@ -47,34 +47,92 @@ local({
 })
 ```
 
-> "In most trials, and in particular in cancer chemotherapy trials, it is rare that we have no idea at all about the dose-response relationship. Such information is implicitly used in the choice of dose levels available for use in the trial, and part of our approach here is to make an attempt to quantify such information."
-> --- [@oquigley_continual_1990]
-
+> "In most trials, and in particular in cancer chemotherapy trials, it is rare that we have no idea at all about the dose-response relationship. Such information is implicitly used in the choice of dose levels available for use in the trial, and part of our approach here is to make an attempt to quantify such information."^[@oquigley_continual_1990]
 
 > "It is important to see to what extent the largely arbitrary specification of these features influences the operational nature of the method, as well as the conclusions reached.
-> Experimenters prefer methods which are relatively insensitive to prior specification as well as the form of the working model."
-> --- [@chevret_continual_1993]
+> Experimenters prefer methods which are relatively insensitive to prior specification as well as the form of the working model."^[@chevret_continual_1993]
 
+> "Most clinicians do not feel sufficiently confident in their initial toxicity probability estimates to start above the lowest dose (often chosen to be 10% of rodents' LD$_{10}$)."^[@goodman_practical_1995]
 
-> "Most clinicians do not feel sufficiently confident in their initial toxicity probability estimates to start above the lowest dose (often chosen to be 10% of rodents' LD$_{10}$)."
-> --- [@goodman_practical_1995]
-
-
-> "The main challenge when using the CRM is model calibration."
-> --- [@lee_calibration_2011]
+> "The main challenge when using the CRM is model calibration."^[@lee_calibration_2011]
 
 
 # Background
 
 Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated utterly from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with [@goodman_practical_1995] unmistakably revealing the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions, abandoning any role for this prior curve in informing the trial starting dose.
 
-By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, with computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011].^[This reframing of tuning as 'calibration' is itself notable, and will be discussed below.] The field remains to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulation_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
+By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, with computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011].^[This reframing of tuning as 'calibration' is itself notable, and will be discussed below.] Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulationfree_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
 
-Here I revisit Braun's application from the perspective of *complete path enumeration* (CPE), in order to place this preoccupation with calibration in a fresh context.
+Here I revisit Braun's application from the perspective of *complete path enumeration* (CPE), which package `precautionary` now implements for the CRM. Because CPE in order to place this emergent preoccupation with calibration in a fresh context.
 
 # Performance characterization for a given CRM model
 
-Although multi-scenario performance characterization
+Prerequisite to any CRM prior calibration procedure aiming to optimize selected performance characteristics, is the ability to characterize performance for any given CRM model with fixed prior parameters.^[This is just the observation that we must be able to calculate an objective function in order to optimize it.] So we begin by repeating Braun's characterization of his calibrated model.^[This starts at the bottom of page 8 in @braun_simulationfree_2020.] The calibrated model is as follows:
+
+```{r calibrated-model}
+calmod <- Crm$new(skeleton = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71),
+                  scale = 0.85, # aka 'sigma'
+                  target = 0.25)
+```
+
+Braun's initial characterization is of trials of fixed enrollment $N=30$, with a cohort size of 2.^[The cohort size is not mentioned in the text, but see the example at the bottom of Appendix 1, where Braun sets `cohort_size <- 2`.] Trials of this size readily yield to CPE on desktop hardware:
+
+```{r cpe-bach}
+d1_maxn <- 5
+cum_maxn <- 10
+system.time({
+  calmod$
+    no_skip_esc(TRUE)$    # compare Braun's 'restrict = T'
+    no_skip_deesc(FALSE)$
+      stop_func(function(x) {
+        enrolled <- tabulate(x$level, nbins = length(x$prior))
+        x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
+        x
+      })$trace_paths(root_dose = 1,
+                     cohort_sizes = rep(2, 15), # ==> N=30
+                     impl = 'rusti') # fast Rust implementations of CRM integrands
+  
+  T <- calmod$path_array()
+})
+```
+
+The 3-dimensional array `T[j,c,d]` has the same structure and function as in @norris_what_2020:
+
+```{r inspect-T}
+dim(T)
+```
+
+A total of `r dim(T)[1]` paths have been enumerated, for which toxicities are tabulated separately for as many as `r dim(T)[2]` distinct cohorts per each of `r dim(T)[3]` doses.
+
+Again as in @norris_what_2020, we may ...
+
+
+## Compute $\mathbf{b} = \sum_c {n \choose T_{c,d}}$
+
+```{r b-via-T}
+b <- apply(log(choose(2, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+length(b)
+```
+
+## Compute $\mathrm{U}$ and $\mathrm{Y}$
+
+```{r Y-soeasy}
+Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+Z <- apply(2-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+U <- cbind(Y, Z)
+dim(U)
+```
+
+## Derive $\mathbf{\pi}$ from the CRM skeleton, checking that $\sum_j \pi^j \equiv 1$ 
+
+```{r pi-per-skeleton}
+log_p <- environment(calmod$initialize)$private$ln_skel # TODO: Provide an accessor!
+log_q <- log(1 - exp(log_p))
+log_pi <- b + U %*% c(log_p, log_q)
+sum(exp(log_pi)) # check probabilities sum to 1
+```
+
+enabling derivation of $\mathbf{b}$ and such that logically precedes any calibration procedure that searches the prior-parameter space for optimal values. After model calibration, Although multi-scenario performance characterization
 
 * Tune the CRM prior to optimize certain frequentist performance characteristics obtained via simulation under a single, fixed dose-toxicity scenario.
 * Given a fixed prior, obtain the operating characteristics of the model over a range of simulated dose-toxicity scenarios.
@@ -102,7 +160,7 @@ Remarkably, [@chevret_continual_1993] exhibits concern for *overall toxicities* 
 
 TODO: I may have reached a point with all this, such that I am no longer mounting a focused critique of Braun 2020, but rather using it as the basis for a more comprehensive review of prior calibrations approaches and entry-point into my own emphasis on comprehensive path enumeration as the way forward. The general approach might be to offer as coherent and general a framing of the CRM calibration problem as possible, but then use Braun 2020 as the 'challenge' w.r.t. efficiency and speed.
 
-@braun_simulation_2020 advanced a heuristic for fast, approximate analysis of certain 'performance characteristic' which have traditionally been of interest to the designers of 1-size-fits-all dose-finding trials. With version 0.2-2, package `precautionary` introduces a highly performant algorithm for complete path enumeration of such trials, which enables---by means of a matrix formalism outlined in @norris_what_2020---an exact computation of these same characteristics. The purpose of this vignette is to compare the performance of the latter technique with the former.
+@braun_simulationfree_2020 advanced a heuristic for fast, approximate analysis of certain 'performance characteristic' which have traditionally been of interest to the designers of 1-size-fits-all dose-finding trials. With version 0.2-2, package `precautionary` introduces a highly performant algorithm for complete path enumeration of such trials, which enables---by means of a matrix formalism outlined in @norris_what_2020---an exact computation of these same characteristics. The purpose of this vignette is to compare the performance of the latter technique with the former.
 
 # PLAN
 
@@ -130,9 +188,9 @@ I may gain more by an argument that emphasizes the practical irrelevance of such
 
 # The case study of Braun (2020)
 
-@braun_simulation_2020 reports 2 distinct simulation-based exercises corresponding to model optimization activities which are apparently typical. In the first, he fixes the CRM skeleton for a 6-dos trial, and examines the effect of the $\sigma$ parameter on *probability of correct selection* (PCS). Using the machinery of package `precautionary`, we might do the same as follows:
+@braun_simulationfree_2020 reports 2 distinct simulation-based exercises corresponding to model optimization activities which are apparently typical. In the first, he fixes the CRM skeleton for a 6-dos trial, and examines the effect of the $\sigma$ parameter on *probability of correct selection* (PCS). Using the machinery of package `precautionary`, we might do the same as follows:
 
-```{r sigma-effect}
+```{r sigma-effect, eval=FALSE}
 
 stop_func <- function(x) {
     y <- stop_for_excess_toxicity_empiric(x,
@@ -361,187 +419,6 @@ dimnames(T)[[2]] <- paste0("C",1:7) # best labeled as Cohorts
 dimnames(T)[[3]] <- paste0("X",1:7) # label as doses X1..X7
 dim(T)
 ```
-
-## Compute $\mathbf{b} = \sum_c {n \choose T_{c,d}}$
-
-```{r b-via-T}
-b <- apply(log(choose(3, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
-length(b)
-```
-
-## Compute $\mathrm{U}$ and $\mathrm{Y}$
-
-```{r Y-soeasy}
-Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-Z <- apply(3-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-U <- cbind(Y, Z)
-dim(U)
-```
-
-## Derive $\mathbf{\pi}$ from the CRM skeleton, to check that $\sum_j \pi^j \equiv 1$ 
-
-```{r pi-per-skeleton}
-log_p <- log(prior.DLT)
-log_q <- log(1 - prior.DLT)
-log_pi <- b + U %*% c(log_p, log_q)
-sum(exp(log_pi)) # check probabilities sum to 1
-```
-
-
-# Fitting a lognormal $\MTDi$ to VIOLA's CRM skeleton
-
-Whereas the analysis of @norris_what_2020 was carried forth under a thoroughly logarithmic scaling of *dose*, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling---at least for the nonzero doses:
-
-```{r VIOLA-dose-scaling}
-viola_dosing <-
-  data.frame(Label = -2:4 # VIOLA dose designations -2,...,4
-            ,Level =  1:7  # We use integer dose indexes here
-            ,Dose_mg = c(0, 2.5, 5, 10, 15, 25, 35)
-            ,skeleton = prior.DLT
-             )
-viola_dosing <- viola_dosing %>%
-  mutate(log_dose = log(Dose_mg)
-        ,sqrt_dose = sqrt(Dose_mg)
-        )
-
-plot(Level ~ sqrt_dose, data = viola_dosing, type = 'b'
-     , ylab = "Dose Level"
-     , xlab = expression(sqrt(Dose[mg]))
-     , las = 1
-     )
-```
-
-Indeed, the CRM skeleton looks quite close to a normal distribution under this scaling:
-
-```{r skeleton-as-expectation, fig.cap="CRM skeleton probabilities vs $\\sqrt{\\mathrm{Dose}}$, with superimposed normal distribution having median $\\sqrt{33}$ and standard deviation 3."}
-plot(skeleton ~ sqrt_dose, data = viola_dosing
-     , type = 'b'
-     , xlab = expression(sqrt(Dose[mg]))
-     , ylim = c(0, 0.55)
-     , las = 1)
-x <- seq(0, 6, 0.1)
-y <- pnorm(x, mean = sqrt(33), sd = 3)
-lines(y ~ x, lty = 2)
-```
-
-Nevertheless, the treatment of zero dose under this scaling is pharmacologically problematic, if not outright homeopathic, so we will proceed instead using a lognormal $\MTDi$ distribution fitted to the CRM skeleton.
-
-```{r skeleton-log-match, fig.cap=paste0("CRM skeleton probabilities vs $\\log \\mathrm{Dose}$, with superimposed lognormal distribution having median $\\mu = ", exp(mu_opt), "$mg and $\\sigma = ", sigma_opt, "$.")}
-plot(skeleton ~ log_dose, data = subset(viola_dosing, is.finite(log_dose))
-     , type = 'b'
-     , xlab = expression(log(Dose[mg]))
-     , xlim = c(0.5, 3.6)
-     , ylim = c(0, 0.55)
-     , las = 1)
-
-sse <- function(mu_sigma, dose = viola_dosing$Dose_mg){
-  mu <- mu_sigma[1]
-  sigma <- mu_sigma[2]
-  lnorm.DLT <- plnorm(dose, meanlog = mu, sdlog = sigma)
-  sse <- sum((lnorm.DLT - prior.DLT)[dose > 0]^2)
-}
-fit <- optim(par = c(mu=log(38), sigma=1.8), fn = sse)
-mu_opt <- log(round(exp(fit$par['mu']), 1))
-sigma_opt <- round(fit$par['sigma'], 1)
-x <- seq(0.5, 3.55, 0.05)
-y <- plnorm(exp(x), meanlog = mu_opt, sdlog = sigma_opt)
-lines(y ~ x, lty = 2)
-```
-
-# VIOLA safety
-
-Taking this CRM skeleton fit as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
-
-```{r fatalities-vs-kappa}
-f <- function(kappa, mu=mu_opt, sigma=sigma_opt, X=viola_dosing$Dose_mg) {
-  # For ease of use, this function is VECTORIZED over kappa,
-  # generally returning a length(X) x length(kappa) MATRIX
-  # which can validly right-multiply Y in t(pi) %*% Y %*% f.
-  # (In the special case length(kappa)==1, a vector is returned.)
-  gr5 <- plnorm(outer(X, exp(-2*kappa)), meanlog = mu, sdlog = sigma)
-  dlt <- plnorm(outer(X, exp( 0*kappa)), meanlog = mu, sdlog = sigma)
-  ff <- gr5/dlt
-  ff[is.nan(ff)] <- 0 # replace NaN caused by X[1]==0
-  dimnames(ff) <- list(
-    dose = paste0("X", seq_along(X)),
-    kappa = round(kappa, 3)
-  )
-  if (length(kappa)==1)
-    return(as.vector(ff))
-  ff
-}
-
-kappa <- seq(0.2, 1.2, 0.02)
-F <- f(kappa = kappa)
-Ef <- t(exp(log_pi)) %*% Y %*% F
-Ef <- t(Ef) # transpose to a column-vector
-plot(Ef ~ kappa, type = 'l'
-     , xlab = expression(kappa)
-     , ylab = "Expected Number of Fatal DLTs"
-     , las=1)
-```
-
-## Beyond the skeleton
-
-The development of CRM methods has left the status of the *skeleton* somewhat ambiguous. While evading its realistic interpretation as an $\MTDi$ distribution,^[For a related perspective on interpretational issues, see @norris_comment_2020.] CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. @braun_simulationfree_2020, for example, develops an approach which "hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton."
-
-Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in @norris_what_2020 provides one approach.
-
-To enable parameter departures from our lognormal skeleton fit, we require $\log \boldsymbol{\pi}$ as a *function* of $(\mu, \sigma)$:
-
-```{r log_pi}
-log_pi <- function(mu, sigma){
-  p <- plnorm(viola_dosing$Dose_mg, meanlog = mu, sdlog = sigma)
-  log_pq <- c(log(p), log(1-p))
-  log_pi = b + U %*% pmax(log_pq, -500) # clamping -Inf to -500 avoids NaN's  
-}
-```
-
-This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters $(\mu, \sigma, \kappa)$. But again as in @norris_what_2020 we employ a minimax framing of our safety question, to achieve a dimension reduction:
-
-```{r minimax}
-mu_minimax <- log(viola_dosing$Dose_mg)[3] # dose 3 is 2nd-highest *nonzero* dose
-```
-
-The irregularly spaced doses of VIOLA don't yield a unique delta, but the $2\times$ mulipliers either side of dose level 3 (our `mu_minimax`) allow us to select $\delta = \log 2$ as a local approximation:
-
-```{r delta}
-delta <- mean(diff(log(viola_dosing$Dose_mg)[2:4]))
-```
-
-We may now generate a grid of values, and plot contours:
-
-```{r kappa-delta-plane}
-focustab <- CJ(mu = mu_minimax
-              , K = seq(0.5, 1.65 , 0.01) # K = kappa / sigma
-              , sigma = delta/seq(0.4, 2.2, 0.01)
-              )
-focustab[, kappa := K * sigma]
-focustab[, value := t(exp(log_pi(mu,sigma))) %*%
-             Y %*% f(kappa=kappa, mu=mu, sigma=sigma)
-       , by = .(mu,sigma)]
-```
-
-```{r contourplot, echo=FALSE, fig.asp=1, fig.cap="Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-up of Figure 3 in @norris_what_2020. Therapeutic index $\\kappa/\\sigma$ gauges the target drug's aptness for safe-and-effective 1-size-fits-all dosing in the trial's combination regimen. Signal-to-noise index $\\delta/\\sigma$ governs the informativeness of the dose-escalation process. This analysis assumes a log-normally distributed $\\MTDi$, with median parameter set (on minimax grounds) at VIOLA dose level 3. Plotted values of $\\delta/\\sigma$ are based on $\\delta=\\log(2)$, selected according to the $2\\times$ VIOLA dose-level spacing around this dose level."}
-contourplot(value ~ K + (delta/sigma)
-          , data = focustab
-          , at = seq(0.0, 2.0, 0.1)
-          , par.strip.text = list(cex=0.7)
-          , xlab = list(expression(kappa / sigma), rot=0)
-          , ylab = list(expression(frac(delta, sigma)), rot=0)
-          , scale = list(cex=0.7, x=list(at=c(0.5, 1, 1.5)))
-          , label.style = "align"
-          , labels = list(cex=0.5)
-          , aspect = 1
-          , col.regions = hcl.colors(10)
-            )
-```
-
-# Conclusion
-
-Although initially put forward with different intent, the *dose transition pathways* of @yap_dose_2017 render the enumerative approach of @norris_what_2020 immediately applicable to the CRM. Importantly, the analysis is found to be computationally feasible in the setting of an actual trial. Indeed, with performance improvements debuted in version 0.2-2 of `precautionary`, the complete VIOLA enumeration becomes essentially trivial, taking just a few seconds on modern desktop hardware. This raises the prospect of scaling up our problems to meet the opportunities of massive parallelism [@gustafson_reevaluating_1988], expanding this mode of analysis to ever larger dose-finding trials.^[See also https://en.wikipedia.org/wiki/Gustafson%27s_law.]
-
-The approach taken here exemplifies a widely applicable scheme for the safety analysis of dose-escalation trials generally, rooted in the exhaustive enumeration of all possible trial paths.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN

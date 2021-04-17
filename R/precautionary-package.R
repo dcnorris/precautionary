@@ -103,7 +103,7 @@ NULL
 #'   - Ideally 100% sim-free via integration over the hyperprior!
 #' * Stop exposing the \code{impl} parameter
 #'
-#' @section Version 0.3-1
+#' @section Version 0.3-1:
 #' * Native Rust DTP
 #'
 #' @section Dependencies:
