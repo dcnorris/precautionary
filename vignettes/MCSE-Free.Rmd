@@ -59,7 +59,7 @@ local({
 
 # Background
 
-Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated utterly from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with [@goodman_practical_1995] unmistakably revealing the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions, abandoning any role for this prior curve in informing the trial starting dose.
+Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated utterly from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with @goodman_practical_1995 unmistakably revealing the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions, abandoning any role for this prior curve in informing the trial starting dose.
 
 By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, with computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011].^[This reframing of tuning as 'calibration' is itself notable, and will be discussed below.] Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulationfree_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
 
@@ -102,10 +102,9 @@ The 3-dimensional array `T[j,c,d]` has the same structure and function as in @no
 dim(T)
 ```
 
-A total of `r dim(T)[1]` paths have been enumerated, for which toxicities are tabulated separately for as many as `r dim(T)[2]` distinct cohorts per each of `r dim(T)[3]` doses.
+Along each of `r dim(T)[1]` the paths enumerated, toxicities have been tabulated separately for as many as `r dim(T)[2]` distinct cohorts enrolled at each of `r dim(T)[3]` doses.
 
 Again as in @norris_what_2020, we may ...
-
 
 ## Compute $\mathbf{b} = \sum_c {n \choose T_{c,d}}$
 
@@ -123,14 +122,48 @@ U <- cbind(Y, Z)
 dim(U)
 ```
 
-## Derive $\mathbf{\pi}$ from the CRM skeleton, checking that $\sum_j \pi^j \equiv 1$ 
+## Express $\mathbf{\pi}$ as a function of dose-wise DLT probabilities
 
-```{r pi-per-skeleton}
-log_p <- environment(calmod$initialize)$private$ln_skel # TODO: Provide an accessor!
-log_q <- log(1 - exp(log_p))
-log_pi <- b + U %*% c(log_p, log_q)
-sum(exp(log_pi)) # check probabilities sum to 1
+```{r pi-function}
+log_pi <- function(prob.DLT) {
+  log_p <- log(prob.DLT)
+  log_q <- log(1 - prob.DLT)
+  b + U %*% c(log_p, log_q)
+}
 ```
+
+Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, we exhibit the fact at a randomly chosen point:
+
+```{r pi-sum-check}
+p <- sort(runif(6)) # randomly select a DLT probability vector
+sum(exp(log_pi(p))) # check path probabilities sum to 1
+```
+
+Together with this ability to compute the path probabilities $\mathbf{\pi}(\mathbf{p})$ under any scenario $\mathbf{p}$, $T$'s complete frequentist characterization of the path outcomes enables us immediately to obtain any of the common performance characteristics of interest:^[I briefly suspend judgment as to whether we *should* do this, and indeed whether these performance characteristics make any sense at all. These questions are examined below.]
+
+## Probability of Correct Selection (PCS)
+
+Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollment, toxicities) along each path, the final dose recommendations are retained as the rightmost non-`NA` value in each row of `calmod`'s 'path matrix':^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)]
+
+```{r recs}
+pmx <- calmod$path_matrix()
+## Obtain path-wise index into final dose recs
+rxcol <- max.col(!is.na(pmx), ties.method="last")
+rxdose <- pmx[cbind(seq.int(nrow(pmx)),rxcol)]
+xtabs(~rxdose)
+```
+
+These dose recommendations must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
+
+```{r pcs}
+pi_skel <- exp(log_pi(prob.DLT = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71)))
+options(digits=4)
+xtabs(pi_skel ~ rxdose)
+```
+
+## Fraction Assigned to MTD
+
+## Number Overdosed
 
 enabling derivation of $\mathbf{b}$ and such that logically precedes any calibration procedure that searches the prior-parameter space for optimal values. After model calibration, Although multi-scenario performance characterization
 
@@ -399,25 +432,6 @@ Paths terminating at the 5th cohort would be listed 16 times, and those terminat
 ```{r degeneracy}
 viola_paths <- as.matrix(unique(viola_dtp))
 nrow(viola_paths)
-```
-
-To distinguish it from the degenerate DTP table returned by `dtpcrm::calculate_dtps`, we will refer to `viola_paths` as the DTP *matrix*.
-
-# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP matrix
-
-## Transform DTP table into $T_{c,d}^j$
-
-```{r T-constructed}
-I <- outer(viola_paths[,paste0("D",0:6)], 1:7, FUN = "==")
-I[I] <- 1
-I[!I] <- NA
-# Now I[j,c,d] is an indicator array that we may use
-# in the manner of a bitmask, to select the toxicities
-# into their proper positions within T[j,c,d]:
-T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
-dimnames(T)[[2]] <- paste0("C",1:7) # best labeled as Cohorts
-dimnames(T)[[3]] <- paste0("X",1:7) # label as doses X1..X7
-dim(T)
 ```
 
 ```{r echo=FALSE, results='hide'}
