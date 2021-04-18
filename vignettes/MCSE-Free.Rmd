@@ -143,7 +143,7 @@ Together with this ability to compute the path probabilities $\mathbf{\pi}(\math
 
 ## Probability of Correct Selection (PCS)
 
-Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollment, toxicities) along each path, the final dose recommendations are retained as the rightmost non-`NA` value in each row of `calmod`'s 'path matrix':^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)]
+Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollments, toxicities) along each path, the final dose *recommendations* are retained as the rightmost non-`NA` value in each row of `calmod`'s 'path matrix':^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)]
 
 ```{r recs}
 pmx <- calmod$path_matrix()
@@ -153,7 +153,7 @@ rxdose <- pmx[cbind(seq.int(nrow(pmx)),rxcol)]
 xtabs(~rxdose)
 ```
 
-These dose recommendations must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
+These dose recommendations of course must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
 
 ```{r pcs}
 pi_skel <- exp(log_pi(prob.DLT = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71)))
@@ -161,9 +161,27 @@ options(digits=4)
 xtabs(pi_skel ~ rxdose)
 ```
 
+According to our skeleton, dose 3 is 'the' MTD; so PCS is `r round(xtabs(pi_skel ~ rxdose)[3],2)` in this scenario.
+
 ## Fraction Assigned to MTD
 
-## Number Overdosed
+The array $T_{c,d}^j$ lets us count patients assigned to 'the' MTD:
+
+```{r fatm}
+path_cohorts <- apply(!is.na(T), MARGIN=1, FUN=sum, na.rm=TRUE)
+path_MTDcohs <- apply(!is.na(T[,,3]), MARGIN=1, FUN=sum, na.rm=TRUE)
+sum(pi_skel * path_MTDcohs / path_cohorts)
+```
+
+## Fraction 'Overdosed'
+
+A similar calculation enables us to calculate the fraction assigned to doses exceeding 'the' MTD:
+
+```{r fod}
+path_cohorts <- apply(!is.na(T), MARGIN=1, FUN=sum, na.rm=TRUE)
+path_ODcohs <- apply(!is.na(T[,,4:6]), MARGIN=1, FUN=sum, na.rm=TRUE)
+sum(pi_skel * path_ODcohs / path_cohorts)
+```
 
 enabling derivation of $\mathbf{b}$ and such that logically precedes any calibration procedure that searches the prior-parameter space for optimal values. After model calibration, Although multi-scenario performance characterization
 
