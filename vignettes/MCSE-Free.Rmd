@@ -156,7 +156,7 @@ xtabs(~rxdose)
 These dose recommendations of course must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
 
 ```{r pcs}
-pi_skel <- exp(log_pi(prob.DLT = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71)))
+pi_skel <- exp(log_pi(prob.DLT = calmod$skeleton()))
 options(digits=4)
 xtabs(pi_skel ~ rxdose)
 ```
@@ -177,11 +177,78 @@ sum(pi_skel * path_MTDcohs / path_cohorts)
 
 A similar calculation enables us to calculate the fraction assigned to doses exceeding 'the' MTD:
 
-```{r fod}
-path_cohorts <- apply(!is.na(T), MARGIN=1, FUN=sum, na.rm=TRUE)
+```{r supposedly-overdosed}
 path_ODcohs <- apply(!is.na(T[,,4:6]), MARGIN=1, FUN=sum, na.rm=TRUE)
 sum(pi_skel * path_ODcohs / path_cohorts)
 ```
+
+Furthermore, we can ask what fraction of thus-'overdosed' trial participants may be expected to exceed *their own* MTD$_i$'s:^[That is, to experience a DLT.]
+
+```{r actually-overdosed}
+path_DLTs4_6 <- apply(T[,,4:6], MARGIN=1, FUN=sum, na.rm=TRUE)
+sum(pi_skel * path_DLTs4_6) / sum(pi_skel * 2*path_ODcohs)
+```
+
+## Extensions to scenario ensembles
+
+As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. Extending single-scenario performance evaluations to ensemble-average evaluations is therefore straightforward and fast.
+
+## Extending to larger trials
+
+```{r scaly, eval=FALSE}
+skel <- calmod$skeleton()
+kraken <- data.frame(C = 11:25, J = NA_integer_, user = NA_real_, elapsed = NA_real_)
+for (i in 1:nrow(kraken)) {
+  C <- kraken$C[i]
+  calmod$skeleton(skel) # set skeleton to erase cache for honest timing
+  time <- system.time(
+    calmod$trace_paths(1, rep(2,C), impl='rusti'))
+  kraken$user[i] <- time['user.self'] + time['user.child']
+  kraken$elapsed[i] <- time['elapsed']
+  kraken$J[i] <- dim(calmod$path_matrix())[1]
+  print(kraken)
+}
+```
+
+```{r kraken, echo=FALSE}
+kraken <- eval(parse(text = "structure(list(C = 11:25, J = c(5001L, 7839L, 11571L, 16125L, 22041L, 28485L, 35589L, 43371L, 48255L, 50379L, 52011L, 53085L, 53205L, 53205L, 53205L), user = c(3.705, 6.42, 10.26, 15.89, 24.295, 34.552, 50.251, 69.854, 85.403, 93.245, 99.054, 103.047, 104.059, 104.409, 99.604), elapsed = c(3.76, 6.568, 10.595, 16.526, 25.434, 36.42, 53.137, 73.998, 90.52, 98.86, 105.1, 109.306, 110.345, 110.725, 105.684)), row.names = c(NA, -15L), class = \"data.frame\")"))
+
+kraken %>% kable(digits=2) %>% kable_styling(full_width=FALSE, position="left")
+```
+
+<!--
+    C     J    user elapsed
+1  11  5001   3.705   3.760
+2  12  7839   6.420   6.568
+3  13 11571  10.260  10.595
+4  14 16125  15.890  16.526
+5  15 22041  24.295  25.434
+6  16 28485  34.552  36.420
+7  17 35589  50.251  53.137
+8  18 43371  69.854  73.998
+9  19 48255  85.403  90.520
+10 20 50379  93.245  98.860
+11 21 52011  99.054 105.100
+12 22 53085 103.047 109.306
+13 23 53205 104.059 110.345
+14 24 53205 104.409 110.725
+15 25 53205  99.604 105.684
+-->
+
+```{r kraken-plot, fig.cap="Number of paths *J* vs enrollment for the CRM trial at hand. Note that all paths hit stopping criteria no later than at N = 46 (23 cohorts of 2), so that what begins as exponential growth (the linear trend for N < 30 in this semi-log plot) ultimately succumbs to this hard upper bound.", echo=FALSE}
+kraken$N <- 2L * kraken$C
+oldpar <- par(mar = c(5,6,1,1))
+plot(J ~ N, log="y", data=subset(kraken, C<=23), las=1, xlab="", ylab="")
+mtext("J", side=2, line=4.0, las=1)
+mtext("Enrollment", side=1, line=2.5, las=1)
+par(oldpar)
+```
+
+
+## Indifference Intervals
+
+Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so confines our skeleton search during calibration to a subset of the aforementioned simplex.
+
 
 enabling derivation of $\mathbf{b}$ and such that logically precedes any calibration procedure that searches the prior-parameter space for optimal values. After model calibration, Although multi-scenario performance characterization
 
