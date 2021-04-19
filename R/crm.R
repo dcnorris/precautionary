@@ -51,6 +51,21 @@ Crm <- R6Class("Crm",
                    private$x <- private$o <- integer(length(private$ln_skel))
                  },
                  ##' @details
+                 ##' Set or query CRM skeleton
+                 ##'
+                 ##' @param skeleton A numeric vector to set as the model skeleton.
+                 ##' @return Self (invisibly), unless \code{skeleton} is missing,
+                 ##' in which case the skeleton, a numeric vector, is returned.
+                 skeleton = function(skeleton) {
+                   if (missing(skeleton))
+                     return(exp(private$ln_skel))
+                   ## When *setting* the skeleton, we invalidate the cache:
+                   private$cache <- NULL
+                   private$skips <- NA
+                   private$ln_skel <- log(skeleton)
+                   invisible(self)
+                 },
+                 ##' @details
                  ##' Set private cache to NULL; useful for performance testing
                  ##'
                  ##' @return Self, invisibly
@@ -353,7 +368,7 @@ Crm <- R6Class("Crm",
                        x[d] <- x_d + ntox
                        rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
                        path_m["D", coh+1] <- as.integer(rec$mtd) # as.int corrects NA_logical_
-                       if (!rec$stop && coh < length(cohort_sizes))
+                       if ((is.null(rec$stop) || !rec$stop) && coh < length(cohort_sizes))
                          paths_(n, x, coh+1, d, path_m)
                        else
                          private$path_list[[length(private$path_list)+1]] <- as.vector(path_m)
