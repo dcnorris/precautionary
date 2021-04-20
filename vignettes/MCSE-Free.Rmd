@@ -213,7 +213,11 @@ for (i in 1:nrow(kraken)) {
 ```{r kraken, echo=FALSE}
 kraken <- eval(parse(text = "structure(list(C = 11:25, J = c(5001L, 7839L, 11571L, 16125L, 22041L, 28485L, 35589L, 43371L, 48255L, 50379L, 52011L, 53085L, 53205L, 53205L, 53205L), user = c(3.705, 6.42, 10.26, 15.89, 24.295, 34.552, 50.251, 69.854, 85.403, 93.245, 99.054, 103.047, 104.059, 104.409, 99.604), elapsed = c(3.76, 6.568, 10.595, 16.526, 25.434, 36.42, 53.137, 73.998, 90.52, 98.86, 105.1, 109.306, 110.345, 110.725, 105.684)), row.names = c(NA, -15L), class = \"data.frame\")"))
 
-kraken %>% kable(digits=2) %>% kable_styling(full_width=FALSE, position="left")
+kraken %>%
+  kable(
+    digits=2,
+    caption="Size of complete path enumeration (CPE) for the model, enrolling from 11 to 25 cohorts of 2. Note that all paths of the trial terminate by the 23rd cohort. Timings (in seconds) obtained running CPE single-threaded on on a 2.6 GHz Core i7 processor."
+  ) %>% kable_styling(full_width=FALSE, position="left")
 ```
 
 <!--
@@ -244,6 +248,21 @@ mtext("Enrollment", side=1, line=2.5, las=1)
 par(oldpar)
 ```
 
+Reassuringly, the (perhaps typical) stopping criteria in this trial impose a finite upper bound on CPE size stringent enough to keep the space and time complexity of CPE feasible. Even without such planned stopping rules, as a practical matter, once a dose-finding trial has enrolled more than 30 participants, it ought to have yielded enough information to warrant revisiting the original design. This limits the reasonable 'time between overhauls'^[See https://en.wikipedia.org/wiki/Time_between_overhauls.] for a fixed CRM trial design. Thus, CPE-based performance characterization may prove entirely feasible for most practical applications of the standard CRM model.^[This perhaps does *not* apply to applications such as TITE CRM, where participants are modeled non-exchangeably. CPE for TITE CRM remains an open problem.]
+
+
+# Calibration of CRM priors
+
+The foregoing analysis shows that single-threaded CPE-based performance characterization for a *given* CRM model of typical size may require on the order of 1 minute of single-threaded computation. To *calibrate* a CRM model via CPE, however, may incur this cost repeatedly, during what in general involves derivative-free optimization of a discontinuous objective function over the prior-parameter space. Whereas the computation of gradients and higher derivatives lends itself trivially to parallelization, the operations of the Nelder-Mead method are mainly sequential, and inherently parallel pattern-search^[https://en.wikipedia.org/wiki/Pattern_search_(optimization)] alternatives are not readily available in R. My sense of particle-swarm and simulated annealing methods is that they may trade away more in robustness than they could gain by parallelization in this application.
+
+such as PatternMore parallelizable Other derivative-free methods Intrinsically parallel methods such as  Intrinsically parallelizable methods The dimensionality of this space will typically be on par with the number of cores on modern CPUs,^[A standard 1-parameter CRM model with $D$ pre-specified doses will have a length-$D$ skeleton vector plus a prior variance parameter $\sigma$.] and typical optimization routines will perform a comparable number of objective evaluations per step. Suitably parallelized, the optimization itself may therefore require about 1 minute per step.
+
+
+For example, applying Within-step parallelization thus promises Thus these costs may be parallelized An optimization routine that performsIf the number of evaluations per optimizer step is comparable to this dimension, then This incurs the cost of CPE repeatedly, although multipl pr tp valuations may well be fully parallelizable across.
+
+For at each point sampled. Generally, however, these costs will be substantially parallelizable.
+
+Calibrating the skeleton of a CRM design with $D$ doses requires optimizing a non-differentiable function on a $D$-dimensional simplex. The Nelder-Mead method would run $D+1$ CPE computations per step, which for typical CRM trials could be run in parallel on the 8+ independent threads on a modern workstation CPU. Thus each Nelder-Mead step would take on the order of 1 minute, and a dozen steps could run an a quarter-hour. Furthermore, the possibility of running 'scout' calibrations on smaller trials could further economize on computation time.
 
 ## Indifference Intervals
 
