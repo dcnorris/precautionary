@@ -357,65 +357,57 @@ Crm <- R6Class("Crm",
                  ##' enabling passthru of its required \code{impl} parameter.
                  ##' @return Self, invisibly
                  ##' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
-                 ##' @importFrom parallel mcparallel mccollect
+                 ##' @importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ...){
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
-                   path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
-                   paths_ <- function(n, x, coh, path_m, cohort_sizes){
-                     ## This recursive accessory function manages PATH BRANCHING at the
-                     ## crucial point of INDETERMINACY, where toxicity counts are observed.
-                     ## It is called for its SIDE-EFFECT on statically scoped path_hash.
-                     d <- path_m["D",coh]
-                     ## Handle the terminal case upon entry, simplifying the code to follow.
-                     if (coh > length(cohort_sizes) || is.na(d)) {
-                       tox_c <- path_m["T",]
-                       key <- paste(tox_c[!is.na(tox_c)], collapse='.')
-                       assign(key, as.vector(path_m), envir = path_hash)
-                       return()
-                     }
-                     n[d] <- n[d] + cohort_sizes[coh]
-                     x_d <- x[d]
-                     for (ntox in 0L:cohort_sizes[coh]) {
-                       path_m["T", coh] <- ntox
-                       x[d] <- x_d + ntox
-                       rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
-                       path_m["D", coh+1] <- as.integer(rec$mtd) # as.int corrects NA_logical_
-                       if (rec$stop)
-                         paths_(n, x, coh+1, path_m, cohort_sizes[1:coh])
-                       else
-                         paths_(n, x, coh+1, path_m, cohort_sizes)
-                     }
-                   } #</paths_>
-                   paths_(n, x, coh, path_m, cohort_sizes)
-                   ## Regarding performant nature of the following as.list(env), see
-                   ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
-                   return(as.list(path_hash, sorted = FALSE))
-                   }
-                   ## With above 'lemma' defined, we just set up and go!
+                     path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
+                     paths_ <- function(n, x, coh, path_m, cohort_sizes){
+                       ## This recursive accessory function manages PATH BRANCHING at the
+                       ## crucial point of INDETERMINACY, where toxicity counts are observed.
+                       ## It is called for its SIDE-EFFECT on statically scoped path_hash.
+                       d <- path_m["D",coh]
+                       ## Handle the terminal case upon entry, simplifying the code to follow.
+                       if (coh > length(cohort_sizes) || is.na(d)) {
+                         tox_c <- path_m["T",]
+                         key <- paste(tox_c[!is.na(tox_c)], collapse='.')
+                         assign(key, as.vector(path_m), envir = path_hash)
+                         return()
+                       }
+                       n[d] <- n[d] + cohort_sizes[coh]
+                       x_d <- x[d]
+                       for (ntox in 0L:cohort_sizes[coh]) {
+                         path_m["T", coh] <- ntox
+                         x[d] <- x_d + ntox
+                         rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
+                         path_m["D", coh+1] <- as.integer(rec$mtd) # as.int corrects NA_logical_
+                         if (rec$stop)
+                           paths_(n, x, coh+1, path_m, cohort_sizes[1:coh])
+                         else
+                           paths_(n, x, coh+1, path_m, cohort_sizes)
+                       }
+                     } #</paths_>
+                     paths_(n, x, coh, path_m, cohort_sizes)
+                     ## Regarding performant nature of the following as.list(env), see
+                     ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
+                     return(as.list(path_hash, sorted = FALSE))
+                   } #</paths.>
+                   ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
                    n <- x <- integer(length(private$ln_skel))
                    path_m["D",1] <- as.integer(root_dose)
-                   ## 'Unroll' the first few levels of the tree recursion..
-                   ## TODO: Have I misused 'unrolling' here? Compare 'recursion unrolling'
-                   ##       as used in http://people.csail.mit.edu/rinard/paper/lcpc00.pdf.
                    unroll <- 2 # TODO: Don't hard-code depth; choose it smartly
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
-                   ## ..and invoke parallel jobs from the pending partial paths:
-                   ## TODO: Re-cast as mclapply(ppe, function() ...)
-                   cpe_jobs <- list()
-                   for (i in 1:length(ppe)) {
-                     path_m <- matrix(ppe[[i]], nrow=2, dimnames=list(c("D","T")))
+                   ## ..and parallelize over the pending partial paths:
+                   cpe <- do.call(c, mclapply(ppe, function(ppe_) {
+                     path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      level <- factor(path_m["D",1:unroll], levels=seq_along(private$ln_skel))
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
-                     cpe_jobs[[i]] <- mcparallel({
-                       paths.(n, x, unroll+1, path_m, cohort_sizes)
-                     })
-                   }
-                   cpe <- do.call(c, unname(mccollect(cpe_jobs)))
+                     paths.(n, x, unroll+1, path_m, cohort_sizes)
+                   }))
                    private$path_list <- cpe[order(names(cpe))]
                    invisible(self)
                  }, # </trace_paths>
