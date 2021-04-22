@@ -1,3 +1,10 @@
+# precautionary 0.2-3
+
+## Changes
+
+* Parallelized Crm$trace_paths method
+* Added 'MCSE-Free' calibration vignette
+
 # precautionary 0.2-2
 
 ## Changes

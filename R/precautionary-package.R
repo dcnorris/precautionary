@@ -75,9 +75,9 @@ NULL
 #'
 #' @section Version 0.2-3:
 #' * Complete MCSE-Free vignette
-#' * Restore Windows build
 #'
 #' @section Version 0.2-4:
+#' * Restore Windows build
 #' * Implement logistic model
 #' * Implement TITE CRM?
 #'   - Is TITE even amenable to path enumeration?
@@ -90,8 +90,6 @@ NULL
 #' @section Version 0.2-5:
 #' * Enumerate BOIN designs
 #' * Convert EscRisk to MCSE-free CPE
-#' * Consider implications of Gabor Csardi's performance tips
-#'   here \url{https://stackoverflow.com/a/29482211/3338147}.
 #'
 #' @section Version 0.2-6:
 #' * Progress bar for long runs
