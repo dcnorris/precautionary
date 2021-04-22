@@ -130,9 +130,10 @@ test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
   ## Consequently, to effect a test, we copy NA's over from viola_dtp to pmx:
   viola_paths <- unique(viola_dtp)
   expect_equal(dim(pmx), dim(viola_paths))
-  pmx[is.na(viola_paths)] <- NA_integer_
-
-  expect_equal(as.integer(pmx), as.integer(as.matrix(viola_paths)))
+  if (all(dim(pmx) == dim(viola_paths))) {
+    pmx[is.na(viola_paths)] <- NA_integer_
+    expect_equal(as.integer(pmx), as.integer(as.matrix(viola_paths)))
+  }
 })
 
 test_that("Crm-class path_matrix can be recovered from path_array", {
