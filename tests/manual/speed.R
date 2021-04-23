@@ -456,3 +456,36 @@ compare_dtp_functions <- function(cache=TRUE, impl='rusti', mc.cores=1) {
 ## > hmm$crmB$report()
 ##     pid  cached   evals   skips calc.ms us/calc
 ##   97689    3226    3226    3030       0       0
+
+## Investigate the now-instrumented parallel Crm$trace_paths()
+## vis-à-vis the example of Braun (2020).
+parallax <- function(unroll = 4) {
+  calmod <- crm_b2020()
+
+  kraken <- data.frame(C = 11:16, J = NA_integer_, elapsed = NA_real_)
+  for (i in 1:nrow(kraken)) {
+    C <- kraken$C[i]
+    calmod$skeleton(calmod$skeleton()) # reset skeleton to clear cache for honest timing
+    time <- system.time(
+      cpe.look <<- calmod$trace_paths(1, rep(2,C), impl='rusti', unroll = unroll))
+    kraken$elapsed[i] <- time['elapsed']
+    kraken$J[i] <- dim(calmod$path_matrix())[1]
+    print(kraken)
+  }
+  calmod$performance
+}
+
+crm_b2020 <- function() {
+  d1_maxn <- 5
+  cum_maxn <- 10
+  calmod <- Crm$new(skeleton = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71),
+                  scale = 0.85, # aka 'sigma'
+                  target = 0.25)$
+    no_skip_esc(TRUE)$    # compare Braun's 'restrict = T'
+    no_skip_deesc(FALSE)$
+      stop_func(function(x) {
+        enrolled <- tabulate(x$level, nbins = length(x$prior))
+        x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
+        x
+      })
+}

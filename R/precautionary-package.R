@@ -74,6 +74,10 @@ NULL
 #' Plan
 #'
 #' @section Version 0.2-3:
+#' * Efficient parallelization of Crm$trace_paths
+#'   - Start longest (usu., least toxic?) paths first
+#'   - Ensure adequate unrolling depth
+#'     * Could this be *adaptive*?
 #' * Complete MCSE-Free vignette
 #'
 #' @section Version 0.2-4:

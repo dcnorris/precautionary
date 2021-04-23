@@ -136,6 +136,59 @@ test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
   }
 })
 
+test_that("Crm$trace_paths() answer invariant to unroll depth", {
+  start.dose.level <- 3
+  target.DLT <- 0.2
+
+  prior.DLT <- c(0.03, 0.07, 0.12, 0.20, 0.30, 0.40, 0.52)
+  prior.var <- 0.75
+
+  stop_func <- function(x) {
+    y <- stop_for_excess_toxicity_empiric(x,
+                                          tox_lim = target.DLT + 0.1,
+                                          prob_cert = 0.72,
+                                          dose = 1)
+    if(y$stop){
+      x <- y
+    } else {
+      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    }
+  }
+
+  crm <- Crm$new(skeleton = prior.DLT,
+                 scale = sqrt(prior.var),
+                 target = target.DLT)$
+    stop_func(stop_func)$
+    no_skip_esc(TRUE)$
+    no_skip_deesc(FALSE)$
+    global_coherent_esc(TRUE)
+
+  pmx1 <- crm$trace_paths(root_dose = start.dose.level,
+                          cohort_sizes = rep(3, 7),
+                          impl = 'rusti', unroll = 1)$path_matrix()
+
+  pmx2 <- crm$trace_paths(root_dose = start.dose.level,
+                          cohort_sizes = rep(3, 7),
+                          impl = 'rusti', unroll = 2)$path_matrix()
+
+  pmx3 <- crm$trace_paths(root_dose = start.dose.level,
+                          cohort_sizes = rep(3, 7),
+                          impl = 'rusti', unroll = 3)$path_matrix()
+
+  pmx4 <- crm$trace_paths(root_dose = start.dose.level,
+                          cohort_sizes = rep(3, 7),
+                          impl = 'rusti', unroll = 4)$path_matrix()
+
+  pmx1.look <<- pmx1
+  pmx2.look <<- pmx2
+  pmx3.look <<- pmx3
+  pmx4.look <<- pmx4
+
+  expect_equal(dim(pmx2), dim(pmx1))
+  expect_equal(dim(pmx3), dim(pmx1))
+  expect_equal(dim(pmx4), dim(pmx1))
+})
+
 test_that("Crm-class path_matrix can be recovered from path_array", {
   ## VIOLA trial set-up
   start.dose.level <- 3

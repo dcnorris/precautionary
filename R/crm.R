@@ -338,12 +338,19 @@ Crm <- R6Class("Crm",
                      }
                    }
                    if (!is.null(private$.stop_func)) {
-                     est = private$.stop_func(est)
+                     est <- private$.stop_func(est)
                    }
+                   ## Whereas 'dtpcrm' stopping functions recommend dose=NA when stopping
+                   ## for excess toxicity, I find that a dose=0 rec in this case accords
+                   ## nicely with the idiom of signalling stops with negative dose recs.
+                   if(!is.na(est$stop) && est$stop && is.na(est$mtd))
+                     est$mtd <- 0L
                    if (!is.null(private$cache))
                      assign(key, est, envir = private$cache)
                    return(est)
                  }, #</applied>
+                 ##' @field performance A vector used for vetting performance
+                 performance = NULL,
                  ##' @details
                  ##' Compute trial paths forward from current tally
                  ##'
@@ -355,10 +362,11 @@ Crm <- R6Class("Crm",
                  ##' its length being the maximum number of cohorts to look ahead.
                  ##' @param ... Parameters passed ultimately to \code{Crm$esc()},
                  ##' enabling passthru of its required \code{impl} parameter.
+                 ##' @param unroll Integer; how deep to unroll path tree for parallelism
                  ##' @return Self, invisibly
                  ##' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
                  ##' @importFrom parallel mclapply
-                 trace_paths = function(root_dose, cohort_sizes, ...){
+                 trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
                      paths_ <- function(n, x, coh, path_m, cohort_sizes){
@@ -367,7 +375,7 @@ Crm <- R6Class("Crm",
                        ## It is called for its SIDE-EFFECT on statically scoped path_hash.
                        d <- path_m["D",coh]
                        ## Handle the terminal case upon entry, simplifying the code to follow.
-                       if (coh > length(cohort_sizes) || is.na(d)) {
+                       if (coh > length(cohort_sizes) || is.na(d) || d <= 0L) {
                          tox_c <- path_m["T",]
                          key <- paste(tox_c[!is.na(tox_c)], collapse='.')
                          assign(key, as.vector(path_m), envir = path_hash)
@@ -379,7 +387,8 @@ Crm <- R6Class("Crm",
                          path_m["T", coh] <- ntox
                          x[d] <- x_d + ntox
                          rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
-                         path_m["D", coh+1] <- as.integer(rec$mtd) # as.int corrects NA_logical_
+                         ## we recommend dose <= 0 to signal stopped path:
+                         path_m["D", coh+1] <- ifelse(rec$stop, -1L, 1L) * rec$mtd
                          if (rec$stop)
                            paths_(n, x, coh+1, path_m, cohort_sizes[1:coh])
                          else
@@ -389,26 +398,40 @@ Crm <- R6Class("Crm",
                      paths_(n, x, coh, path_m, cohort_sizes)
                      ## Regarding performant nature of the following as.list(env), see
                      ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
-                     return(as.list(path_hash, sorted = FALSE))
+                     path_list <- as.list(path_hash, sorted = FALSE)
+                     attr(path_list,'performance') <- self$report()
+                     return(path_list)
                    } #</paths.>
+                   ## TODO: In the unrolling scheme below, I must pay attention to the
+                   ## sequencing of partial paths, ensuring that the very first fork()
+                   ## receives the deepest (least toxic) path. Otherwise, I risk starting
+                   ## this longest task late, and waiting for it to finish single-threaded.
+                   ##
                    ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
                    n <- x <- integer(length(private$ln_skel))
                    path_m["D",1] <- as.integer(root_dose)
-                   unroll <- 2 # TODO: Don't hard-code depth; choose it smartly
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ## ..and parallelize over the pending partial paths:
-                   cpe <- do.call(c, mclapply(ppe, function(ppe_) {
+                   cpe_parts <- mclapply(ppe, function(ppe_) {
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
+                     ## Let's be sure to skip the stopped paths, tho!
+                     if (any(path_m["D",] <= 0, na.rm=TRUE))
+                       return(list(ppe_))
                      level <- factor(path_m["D",1:unroll], levels=seq_along(private$ln_skel))
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
                      paths.(n, x, unroll+1, path_m, cohort_sizes)
-                   }))
+                   }, mc.preschedule = TRUE)
+                   cpe <- do.call(c, cpe_parts)
+                   ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
+                   ##                                                  which='performance'))
                    private$path_list <- cpe[order(names(cpe))]
+                   self$performance <- do.call(rbind,
+                                               lapply(cpe_parts, attr, which='performance'))
                    invisible(self)
                  }, # </trace_paths>
                  ##' @details
