@@ -368,6 +368,7 @@ Crm <- R6Class("Crm",
                  ##' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
                  ##' @importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
+                   stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
                      paths_ <- function(n, x, coh, path_m, cohort_sizes){
