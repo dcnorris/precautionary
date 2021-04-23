@@ -403,11 +403,6 @@ Crm <- R6Class("Crm",
                      attr(path_list,'performance') <- self$report()
                      return(path_list)
                    } #</paths.>
-                   ## TODO: In the unrolling scheme below, I must pay attention to the
-                   ## sequencing of partial paths, ensuring that the very first fork()
-                   ## receives the deepest (least toxic) path. Otherwise, I risk starting
-                   ## this longest task late, and waiting for it to finish single-threaded.
-                   ##
                    ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
