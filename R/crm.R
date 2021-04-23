@@ -79,7 +79,8 @@ Crm <- R6Class("Crm",
                  ##'
                  ##' @return A named vector summarizing lifetime duty and performance
                  report = function() {
-                   c(pid = Sys.getpid(),
+                   data.table(
+                     pid = Sys.getpid(),
                      cached = if (!is.null(private$cache))
                                 sum(env.profile(private$cache)$counts)
                               else
@@ -209,7 +210,7 @@ Crm <- R6Class("Crm",
                  ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
                  est = function(impl, abbrev=TRUE){
                    private$evals <- private$evals + 1
-                   ###t0 <- proc.time()
+                   t0 <- proc.time()
                    scale <- private$scale
                    model <- "empiric"
                    method <- "bayes"
@@ -246,8 +247,8 @@ Crm <- R6Class("Crm",
                         }
                        ,stop("must specify impl in Crm$est()")
                         )
-                   ###private$user[impl] <- private$user[impl] +
-                   ###  sum((proc.time() - t0)[c('user.self','user.child')])
+                   private$user[impl] <- private$user[impl] +
+                     sum((proc.time() - t0)[c('user.self','user.child')])
                    estimate <- m1/m0
                    post.var <- m2/m0 - estimate^2
                    prior <- exp(private$ln_skel)
@@ -413,6 +414,7 @@ Crm <- R6Class("Crm",
                    n <- x <- integer(length(private$ln_skel))
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
+                   ppe <- ppe[order(names(ppe))]
                    ## ..and parallelize over the pending partial paths:
                    cpe_parts <- mclapply(ppe, function(ppe_) {
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
@@ -430,8 +432,7 @@ Crm <- R6Class("Crm",
                    ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
                    ##                                                  which='performance'))
                    private$path_list <- cpe[order(names(cpe))]
-                   self$performance <- do.call(rbind,
-                                               lapply(cpe_parts, attr, which='performance'))
+                   self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
                    invisible(self)
                  }, # </trace_paths>
                  ##' @details
