@@ -2,7 +2,7 @@ Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
 Version: 0.2-3
-Date: 2021-04-22
+Date: 2021-04-25
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -46,7 +46,6 @@ SystemRequirements: Cargo (>= 1.42.0) for installation from sources:
         see file INSTALL
 Encoding: UTF-8
 NeedsCompilation: yes
-OS_type: unix
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
