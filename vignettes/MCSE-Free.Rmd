@@ -1,7 +1,7 @@
 ---
 title: "MCSE-Free CRM Performance and Safety Assessment"
 author: "David C. Norris"
-date: "4/7/2021"
+date: "4/25/2021"
 output:
   bookdown::tufte_html2:
     highlight: pygments
@@ -28,9 +28,6 @@ knitr::opts_knit$set(eval.after = "fig.cap")
 library(precautionary)
 library(knitr)
 library(kableExtra)
-##library(dplyr)
-##library(dtpcrm)
-##library(latticeExtra)
 
 options(ordinalizer = NULL) # vignette presumes this is not already set
 
@@ -59,11 +56,11 @@ local({
 
 # Background
 
-Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated utterly from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with @goodman_practical_1995 unmistakably revealing the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions, abandoning any role for this prior curve in informing the trial starting dose.
+Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated fully from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with @goodman_practical_1995 giving voice to the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions. Indeed, a key "practical improvement" for which that paper is still cited, is its abandonment of any role for the  prior curve in informing the trial starting dose.
 
 By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, with computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011].^[This reframing of tuning as 'calibration' is itself notable, and will be discussed below.] Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulationfree_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
 
-Here I revisit Braun's application from the perspective of *complete path enumeration* (CPE), which package `precautionary` now implements for the CRM. Because CPE in order to place this emergent preoccupation with calibration in a fresh context.
+Here I revisit Braun's application from the perspective of *complete path enumeration* (CPE), which package `precautionary` now implements for the CRM.
 
 # Performance characterization for a given CRM model
 
@@ -103,7 +100,7 @@ The 3-dimensional array `T[j,c,d]` has the same structure and function as in @no
 dim(T)
 ```
 
-Along each of `r dim(T)[1]` the paths enumerated, toxicities have been tabulated separately for as many as `r dim(T)[2]` distinct cohorts enrolled at each of `r dim(T)[3]` doses.
+Along each of the `r dim(T)[1]` paths enumerated, toxicities have been tabulated separately for as many as `r dim(T)[2]` distinct cohorts enrolled at each of `r dim(T)[3]` doses.
 
 Again as in @norris_what_2020, we may ...
 
@@ -133,7 +130,7 @@ log_pi <- function(prob.DLT) {
 }
 ```
 
-Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, we might exhibit the fact at a randomly chosen point:^[But note this constraint holds identically, simply by the construction of $\mathrm{U}$ from complementary left and right halves, $\mathrm{Y}$ and $\mathrm{Z}$.]
+Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, let us check at a randomly chosen point:^[But note this constraint holds identically, simply by the construction of $\mathrm{U}$ from complementary left and right halves, $\mathrm{Y}$ and $\mathrm{Z}$.]
 
 ```{r pi-sum-check}
 p <- sort(runif(6)) # randomly select a DLT probability vector
@@ -144,7 +141,7 @@ Together with this ability to compute the path probabilities $\mathbf{\pi}(\math
 
 ## Probability of Correct Selection (PCS)
 
-Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollments, toxicities) along each path, the final dose *recommendations* are retained as the rightmost non-`NA` value in each row of `calmod`'s 'path matrix':^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)]
+Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollments, toxicities) along each path, the final dose *recommendations* are retained as the rightmost non-`NA` value in each row of `calmod`'s *path matrix*.^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)] The `path_rx()` method of the `Crm` class returns this:
 
 ```{r recs}
 xtabs(~calmod$path_rx())
@@ -179,7 +176,7 @@ path_ODcohs <- apply(!is.na(T[,,4:6]), MARGIN=1, FUN=sum, na.rm=TRUE)
 sum(pi_skel * path_ODcohs / path_cohorts)
 ```
 
-Furthermore, we can ask what fraction of thus-'overdosed' trial participants may be expected to exceed *their own* MTD$_i$'s:^[That is, to experience a DLT.]
+Furthermore, we can ask what fraction of thus-'overdosed' trial participants may be expected to exceed *their own* MTD$_i$'s:^[That is, to experience a DLT. Note that this latter fraction is a *patient-centered* notion of 'overdose', as opposed to the traditionally dose-centered notion.]
 
 ```{r actually-overdosed}
 path_DLTs4_6 <- apply(T[,,4:6], MARGIN=1, FUN=sum, na.rm=TRUE)
@@ -294,13 +291,13 @@ NULL
 
 ## Miscellaneous optimizations
 
-Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But, as will become apparent presently, I do not think this type of calibration exercise ought to be taken at all so seriously.
+Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But, as will become apparent presently, I do not think this type of calibration exercise ought to be taken so seriously.
 
 # On calibrating 'priors'
 
-It is interesting to see that the confessional term 'tuning' employed in [@chevret_continual_1993] becoming 'calibration' in later work. In everyday usage, *calibration* involves adjusting typically a measuring instrument so that it accords with some objective standard or criterion. @grieve_idle_2016 however discusses the calibration of Bayesian trial designs in much the same sense, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.
+In everyday usage, *calibration* suggests an exacting procedure, in which typically a measuring instrument is adjusted to accord with some objective standard or criterion. In statistics, however, the term may not carry quite this connotation. Certainly, @grieve_idle_2016 discusses the calibration of Bayesian trial designs generally in much the same sense as our 'CRM calibration' here, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.^[Interestingly, such activities in relation to the CRM were first discussed by @chevret_continual_1993 using the more prosaic term 'tuning'.]
 
-If we do call these modern tuning efforts 'calibration', then the very act of treating the CRM's prior dose-toxicity probabilities as free parameters undermines the interpretation originally claimed for them demonstrates that they no longer bear the relation to real probabilities originally claimed for them.
+Whatever we call CRM skeleton-tweaking, the very act of treating the CRM's prior dose-toxicity probabilities as *free parameters* remains problematic for the CRM. To a large degree, undermines the interpretation originally claimed for them demonstrates that they no longer bear the relation to real probabilities originally claimed for them.
 This transition in viewing the What then is the objective standard to which One generous way to interpret *calibration* is to reco
 
 TODO: Here, I need to offer as concisely as possible a swift overview of the model-calibration problem, and several prominent approaches to it.
