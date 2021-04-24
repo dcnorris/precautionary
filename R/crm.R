@@ -478,8 +478,7 @@ Crm <- R6Class("Crm",
                    pmx <- self$path_matrix()
                    C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
                    D <- length(private$ln_skel) # dose levels range 1:D
-                   ## I believe I'm using C wrongly to obtain dim(T)[3].
-                   ## Perhaps I correctly obtain dim(T)[2], but I should double-check this too!
+                   ## (Note how the stopping-rec dose<=0 idiom works smoothly here.)
                    I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
                    I[I] <- 1L
                    I[!I] <- NA_integer_
@@ -489,6 +488,11 @@ Crm <- R6Class("Crm",
                    T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
                    dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
                    dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
+                   ## We take a moment to save private b, Y and U calculated from T
+                   private$b <- apply(log(choose(2, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+                   private$Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                   Z <- apply(2-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                   private$U <- cbind(private$Y, Z)
                    if (!condense)
                      return(T)
                    ## T is at this point larger (sparser) than necessary for the
@@ -517,7 +521,37 @@ Crm <- R6Class("Crm",
                    dimnames(T_)[[3]] <- dimnames(T)[[3]]
                    dimnames(T_)[[2]] <- paste0("c", 1:dim(T_)[2]) # NB: little-c
                    T_
-                 }
+                 }, # </path_array>
+                 ##' @details
+                 ##' Path probabilities for given dose-wise DLT probs
+                 ##'
+                 ##' The design's paths must already have been completely enumerated by
+                 ##' \code{trace_paths}, and the associated array \code{T}, matrix \code{U}
+                 ##' and vector \code{b} computed by a call to \code{path_array}.
+                 ##' @param probs.DLT Numeric vector of DLT probabilities for the design's
+                 ##' pre-specified doses.
+                 ##' @return A vector of probabilities for the enumerated paths
+                 path_probs = function(probs.DLT) {
+                   if (is.na(private$b) || is.na(private$U))
+                     stop("Must invoke path_array() before log_pi()")
+                   log_p <- log(probs.DLT)
+                   log_q <- log(1 - probs.DLT)
+                   log_pi <- private$b + private$U %*% c(log_p, log_q)
+                   exp(log_pi)
+                 }, # </path_probs>
+                 ##' @details
+                 ##' Vector of path-wise final dose recommendations
+                 ##'
+                 ##' The design's paths must already have been completely enumerated by
+                 ##' \code{trace_paths}. This method is a temporizing measure, bridging
+                 ##' to a new format for the return value of \code{path_matrix}, possibly
+                 ##' a \code{data.table} where the dose recs would be a column.
+                 ##' @return Integer vector of final dose recs on the enumerated paths
+                 path_rx = function() {
+                   pmx <- self$path_matrix()
+                   rxcol <- max.col(!is.na(pmx), ties.method="last")
+                   rxdose <- abs(pmx[cbind(seq.int(nrow(pmx)),rxcol)])
+                 } # </path_recs>
                ), # </public>
                private = list(
                  ln_skel = NA
@@ -540,6 +574,11 @@ Crm <- R6Class("Crm",
                           ruste = 0.0)
                , conf.level = 0.90
                , path_list = list()
+                 ## See Norris2020c for definitions of T, b, U, Y
+               , T = NA # J*C*D array
+               , b = NA # J-vector
+               , U = NA # J*2D matrix
+               , Y = NA # left half of U
                )
                )
 

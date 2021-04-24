@@ -70,7 +70,8 @@ Here I revisit Braun's application from the perspective of *complete path enumer
 Prerequisite to any CRM prior calibration procedure aiming to optimize selected performance characteristics, is the ability to characterize performance for any given CRM model with fixed prior parameters.^[This is just the observation that we must be able to calculate an objective function in order to optimize it.] So we begin by repeating Braun's characterization of his calibrated model.^[This starts at the bottom of page 8 in @braun_simulationfree_2020.] The calibrated model is as follows:
 
 ```{r calibrated-model}
-calmod <- Crm$new(skeleton = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71),
+skel_0 <- c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71)
+calmod <- Crm$new(skeleton = skel_0,
                   scale = 0.85, # aka 'sigma'
                   target = 0.25)
 ```
@@ -132,7 +133,7 @@ log_pi <- function(prob.DLT) {
 }
 ```
 
-Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, we exhibit the fact at a randomly chosen point:
+Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, we might exhibit the fact at a randomly chosen point:^[But note this constraint holds identically, simply by the construction of $\mathrm{U}$ from complementary left and right halves, $\mathrm{Y}$ and $\mathrm{Z}$.]
 
 ```{r pi-sum-check}
 p <- sort(runif(6)) # randomly select a DLT probability vector
@@ -146,22 +147,18 @@ Together with this ability to compute the path probabilities $\mathbf{\pi}(\math
 Whereas the array $T_{c,d}^j$ contains clinical *events* (enrollments, toxicities) along each path, the final dose *recommendations* are retained as the rightmost non-`NA` value in each row of `calmod`'s 'path matrix':^[This matrix retains the columnar layout---although *not* the row degeneracy---of the *dose transition pathways* (DTP) tables of package [`dtpcrm`](https://CRAN.R-project.org/package=dtpcrm)]
 
 ```{r recs}
-pmx <- calmod$path_matrix()
-## Obtain path-wise index into final dose recs
-rxcol <- max.col(!is.na(pmx), ties.method="last")
-rxdose <- pmx[cbind(seq.int(nrow(pmx)),rxcol)]
-xtabs(~abs(rxdose)) # NB: Recs upon stopping are <= 0
+xtabs(~calmod$path_rx())
 ```
 
 These dose recommendations of course must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
 
 ```{r pcs}
-pi_skel <- exp(log_pi(prob.DLT = calmod$skeleton()))
 options(digits=4)
-xtabs(pi_skel ~ rxdose)
+pi_skel <- calmod$path_probs(calmod$skeleton())
+xtabs(pi_skel ~ calmod$path_rx())
 ```
 
-According to our skeleton, dose 3 is 'the' MTD; so PCS is `r round(xtabs(pi_skel ~ rxdose)[3],2)` in this scenario.
+According to our skeleton, dose 3 is 'the' MTD; so PCS is `r round(xtabs(calmod$path_probs(calmod$skeleton()) ~ calmod$path_rx())[3],2)` in this scenario.
 
 ## Fraction Assigned to MTD
 
@@ -191,7 +188,7 @@ sum(pi_skel * path_DLTs4_6) / sum(pi_skel * 2*path_ODcohs)
 
 ## Extensions to scenario ensembles
 
-As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. Extending single-scenario performance evaluations to ensemble-average evaluations is therefore straightforward and fast.
+As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. Extending single-scenario performance evaluations to ensemble-average evaluations ought to prove straightforward. A demonstration is not offered here.
 
 ## Extending to larger trials
 
@@ -239,7 +236,7 @@ kraken %>%
 15 25 53205  15.807
 -->
 
-```{r kraken-plot, fig.cap="Number of paths *J* vs enrollment for the CRM trial at hand. Note that all paths hit stopping criteria no later than at N = 46 (23 cohorts of 2), so that what begins as exponential growth (the linear trend for N < 30 in this semi-log plot) ultimately succumbs to this hard upper bound.", echo=FALSE}
+```{r kraken-plot, fig.cap="Number of paths *J* vs enrollment for the CRM trial at hand. Note that all paths hit stopping criteria no later than at N = 46 (23 cohorts of 2), so that what begins as exponential growth (the linear trend for N < 30 in this semi-log plot) rapidly succumbs to this hard upper bound.", echo=FALSE}
 kraken$N <- 2L * kraken$C
 oldpar <- par(mar = c(5,6,1,1))
 plot(J ~ N, log="y", data=subset(kraken, C<=23), las=1, xlab="", ylab="")
@@ -253,35 +250,55 @@ Reassuringly, the (perhaps typical) stopping criteria in this trial impose a fin
 
 # Calibration of CRM priors
 
-The foregoing analysis shows that single-threaded CPE-based performance characterization for a *given* CRM model of typical size may require on the order of 1 minute of single-threaded computation. To *calibrate* a CRM model via CPE, however, may incur this cost repeatedly, during what in general involves derivative-free optimization of a discontinuous objective function over the prior-parameter space. Whereas the computation of gradients and higher derivatives lends itself trivially to parallelization, the operations of the Nelder-Mead method are mainly sequential, and inherently parallel pattern-search^[https://en.wikipedia.org/wiki/Pattern_search_(optimization)] alternatives are not readily available in R. My sense of particle-swarm and simulated annealing methods is that they may trade away more in robustness than they could gain by parallelization in this application.
+The foregoing analysis shows that CPE-based performance characterization for a *given* CRM model of typical size may require on the order of 15 seconds on quite modest hardware. To *calibrate* a CRM model via CPE, however, may incur this cost repeatedly, during what will generally amount to the derivative-free optimization of a discontinuous objective function over the prior-parameter space. For the example at hand, the Nelder-Mead method finds a PCS-optimal skeleton in just 25 minutes:
 
-such as PatternMore parallelizable Other derivative-free methods Intrinsically parallel methods such as  Intrinsically parallelizable methods The dimensionality of this space will typically be on par with the number of cores on modern CPUs,^[A standard 1-parameter CRM model with $D$ pre-specified doses will have a length-$D$ skeleton vector plus a prior variance parameter $\sigma$.] and typical optimization routines will perform a comparable number of objective evaluations per step. Suitably parallelized, the optimization itself may therefore require about 1 minute per step.
+```{r pcs-fun}
+scenario <- skel_0 # for a demo scenario, we use our original skeleton
+pcs <- function(s, unroll=6) { # unroll=6 yields quickest PCS for C=15 case
+  if (any(diff(s) <= 0) || s[1] <= 0 || s[length(s)] >= 1)
+    return(NA) # out-of-bounds
+  calmod$skeleton(s)
+  calmod$trace_paths(1, rep(2,15), impl='rusti', unroll=unroll)
+  pi_0 <- calmod$path_probs(scenario)
+  correct <- calmod$path_rx() == 3
+  sum(pi_0[correct])
+}
+```
+
+```{r nelder-mead, eval=FALSE}
+optim(calmod$skeleton(), pcs, method="Nelder-Mead",
+      control = list(fnscale = -1, # NEGative ==> MAXimize PCS
+                     reltol = 0.001, trace = 2))
+```
+
+```
+Exiting from Nelder Mead minimizer
+    135 function evaluations used
+$par
+[1] 0.03040 0.08371 0.23867 0.43310 0.59292 0.72230
+
+$value
+[1] 0.5931
+
+$counts
+function gradient 
+     135       NA 
+
+$convergence
+[1] 0
+
+$message
+NULL
+```
 
 
-For example, applying Within-step parallelization thus promises Thus these costs may be parallelized An optimization routine that performsIf the number of evaluations per optimizer step is comparable to this dimension, then This incurs the cost of CPE repeatedly, although multipl pr tp valuations may well be fully parallelizable across.
+## Miscellaneous optimizations
 
-For at each point sampled. Generally, however, these costs will be substantially parallelizable.
-
-Calibrating the skeleton of a CRM design with $D$ doses requires optimizing a non-differentiable function on a $D$-dimensional simplex. The Nelder-Mead method would run $D+1$ CPE computations per step, which for typical CRM trials could be run in parallel on the 8+ independent threads on a modern workstation CPU. Thus each Nelder-Mead step would take on the order of 1 minute, and a dozen steps could run an a quarter-hour. Furthermore, the possibility of running 'scout' calibrations on smaller trials could further economize on computation time.
-
-## Indifference Intervals
-
-Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so confines our skeleton search during calibration to a subset of the aforementioned simplex.
-
-
-enabling derivation of $\mathbf{b}$ and such that logically precedes any calibration procedure that searches the prior-parameter space for optimal values. After model calibration, Although multi-scenario performance characterization
-
-* Tune the CRM prior to optimize certain frequentist performance characteristics obtained via simulation under a single, fixed dose-toxicity scenario.
-* Given a fixed prior, obtain the operating characteristics of the model over a range of simulated dose-toxicity scenarios.
-
-(what is nowadays called the CRM 'skeleton') prior probability
-Because the second of Braun's 2 calibrations proves to be so straightforward from the CPE point of view, we will deal with that one first.
-
-the second is extremely straightforward from 
+Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But, as will become apparent presently, I do not think this type of calibration exercise ought to be taken at all so seriously.
 
 # On calibrating 'priors'
 
-It is interesting to see that the confessional term 'tuning' employed in [@chevret_continual_1993] becomes 'calibration' in later work. In everyday usage, *calibration* involves adjusting typically a measuring instrument so that it accords with some objective standard or criterion. @grieve_idle_2016 however discusses the calibration of Bayesian trial designs in much the same sense, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.
+It is interesting to see that the confessional term 'tuning' employed in [@chevret_continual_1993] becoming 'calibration' in later work. In everyday usage, *calibration* involves adjusting typically a measuring instrument so that it accords with some objective standard or criterion. @grieve_idle_2016 however discusses the calibration of Bayesian trial designs in much the same sense, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.
 
 If we do call these modern tuning efforts 'calibration', then the very act of treating the CRM's prior dose-toxicity probabilities as free parameters undermines the interpretation originally claimed for them demonstrates that they no longer bear the relation to real probabilities originally claimed for them.
 This transition in viewing the What then is the objective standard to which One generous way to interpret *calibration* is to reco
