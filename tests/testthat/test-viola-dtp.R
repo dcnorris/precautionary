@@ -179,11 +179,6 @@ test_that("Crm$trace_paths() answer invariant to unroll depth", {
                           cohort_sizes = rep(3, 7),
                           impl = 'rusti', unroll = 4)$path_matrix()
 
-  pmx1.look <<- pmx1
-  pmx2.look <<- pmx2
-  pmx3.look <<- pmx3
-  pmx4.look <<- pmx4
-
   expect_equal(dim(pmx2), dim(pmx1))
   expect_equal(dim(pmx3), dim(pmx1))
   expect_equal(dim(pmx4), dim(pmx1))
