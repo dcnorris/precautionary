@@ -29,7 +29,7 @@ library(precautionary)
 library(knitr)
 library(kableExtra)
 
-options(ordinalizer = NULL) # vignette presumes this is not already set
+options(digits = 4)
 
 # Echo source focused on package functionality by redacting calls to kable()
 # see https://bookdown.org/yihui/rmarkdown-cookbook/hook-hide.html:
@@ -56,9 +56,9 @@ local({
 
 # Background
 
-Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated fully from the sincere Bayesianism of its original claim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of [@oquigley_continual_1990], titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet already by 1993, [@chevret_continual_1993] accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with @goodman_practical_1995 giving voice to the deep skepticism with which clinical investigators were already viewing a CRM that failed to capture important intutions. Indeed, a key "practical improvement" for which that paper is still cited, is its abandonment of any role for the  prior curve in informing the trial starting dose.
+Since its inception 3 decades ago [@oquigley_continual_1990], the CRM has retreated from the sincere Bayesianism of its original aim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of @oquigley_continual_1990, titled 'Establishing Dose Levels', suggested a substantal collaboration between modelers and clinical investigators. Yet within a few years, @chevret_continual_1993 already accepted "that $k$ distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise," and demoted the CRM's prior dose-toxicity curve to the status of a (multidimensional) *tuning parameter*. The retreat continued apace with @goodman_practical_1995 giving voice to the deep skepticism with which clinical investigators were already viewing the CRM. Indeed, a key "practical improvement" for which that paper is still cited, was its rejection of the prior curve's pretense to inform the trial starting dose.
 
-By twenty years later, biostatisticians' had completed their retreat to offices hermetically sealed against intrusion of clinical collaborations, with computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011].^[This reframing of tuning as 'calibration' is itself notable, and will be discussed below.] Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulationfree_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
+By twenty years later, biostatisticians had completed their retreat, with the prior toxicity curve being variously rebranded to avoid using the word 'prior',^[For example, @lee_model_2009 exploit a technicality of the CRM to identify this prior curve with "the selection of 'dose levels'", while @wages_dose-finding_2011 apparently introduce the now-popular 'skeleton'.] and computer-based model tuning activities having become "the main challenge when using the CRM" [@lee_calibration_2011]. Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun [-@braun_simulationfree_2020], who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260$\times$) and from 2 days to 2 minutes ($\approx 1400 \times$).
 
 Here I revisit Braun's application from the perspective of *complete path enumeration* (CPE), which package `precautionary` now implements for the CRM.
 
@@ -130,14 +130,14 @@ log_pi <- function(prob.DLT) {
 }
 ```
 
-Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, let us check at a randomly chosen point:^[But note this constraint holds identically, simply by the construction of $\mathrm{U}$ from complementary left and right halves, $\mathrm{Y}$ and $\mathrm{Z}$.]
+Note in particular that $\mathbf{\pi}(\mathbf{p})$ is a function of the DLT probabilities at the design's prespecified doses, and so is defined on the *simplex* $0 < p_1 < p_2 < ... < p_D < 1$. To demonstrate that the constraint $\sum_j \pi^j \equiv 1$ holds over this domain, let us check the identity at a randomly chosen point:^[But note this constraint holds trivially, simply by the construction of $\mathrm{U}$ from complementary left and right halves, $\mathrm{Y}$ and $\mathrm{Z}$.]
 
 ```{r pi-sum-check}
 p <- sort(runif(6)) # randomly select a DLT probability vector
 sum(exp(log_pi(p))) # check path probabilities sum to 1
 ```
 
-Together with this ability to compute the path probabilities $\mathbf{\pi}(\mathbf{p})$ under any scenario $\mathbf{p}$, $T$'s complete frequentist characterization of the path outcomes enables us immediately to obtain any of the common performance characteristics of interest:^[I briefly suspend judgment as to whether we *should* do this, and indeed whether these performance characteristics make any sense at all. These questions are examined below.]
+Together with this ability to compute the path probabilities $\mathbf{\pi}(\mathbf{p})$ under any scenario $\mathbf{p}$, the complete frequentist characterization by $\mathrm{T}$ of all path outcomes enables us immediately to obtain any of the common performance characteristics of interest:^[I suspend judgment as to whether we *should* do this, and indeed whether these performance characteristics make any sense at all.]
 
 ## Probability of Correct Selection (PCS)
 
@@ -150,13 +150,11 @@ xtabs(~calmod$path_rx())
 These dose recommendations of course must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let's take our scenario from the skeleton itself:
 
 ```{r pcs}
-options(digits=4)
 pi_skel <- calmod$path_probs(calmod$skeleton())
 xtabs(pi_skel ~ calmod$path_rx())
 ```
 
-According to our skeleton, dose 3 is 't
-  * he' MTD; so PCS is `r round(xtabs(calmod$path_probs(calmod$skeleton()) ~ calmod$path_rx())[3],2)` in this scenario.
+According to our skeleton, dose 3 is 'the' MTD; so PCS is `r round(xtabs(calmod$path_probs(calmod$skeleton()) ~ calmod$path_rx())[3],2)` in this scenario.
 
 ## Fraction Assigned to MTD
 
@@ -177,7 +175,7 @@ path_ODcohs <- apply(!is.na(T[,,4:6]), MARGIN=1, FUN=sum, na.rm=TRUE)
 sum(pi_skel * path_ODcohs / path_cohorts)
 ```
 
-Furthermore, we can ask what fraction of thus-'overdosed' trial participants may be expected to exceed *their own* MTD$_i$'s:^[That is, to experience a DLT. Note that this latter fraction is a *patient-centered* notion of 'overdose', as opposed to the traditionally dose-centered notion.]
+Furthermore, we can ask what fraction of thus-'overdosed' trial participants may be expected to exceed *their own* MTD$_i$'s:^[That is, to experience a DLT. Note that this latter fraction constitutes a *patient-centered* notion of 'overdose', in contrast to the traditionally dose-centered notion.]
 
 ```{r actually-overdosed}
 path_DLTs4_6 <- apply(T[,,4:6], MARGIN=1, FUN=sum, na.rm=TRUE)
@@ -186,7 +184,7 @@ sum(pi_skel * path_DLTs4_6) / sum(pi_skel * 2*path_ODcohs)
 
 ## Extensions to scenario ensembles
 
-As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. Extending single-scenario performance evaluations to ensemble-average evaluations ought to prove straightforward. A demonstration is not offered here.
+As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. The generalization of single-scenario performance evaluations to ensemble-average evaluations should prove straightforward.
 
 ## Extending to larger trials
 
@@ -248,7 +246,7 @@ Reassuringly, the (perhaps typical) stopping criteria in this trial impose a fin
 
 # Calibration of CRM priors
 
-The foregoing analysis shows that CPE-based performance characterization for a *given* CRM model of typical size may require on the order of 15 seconds on quite modest hardware. To *calibrate* a CRM model via CPE, however, may incur this cost repeatedly, during what will generally amount to the derivative-free optimization of a discontinuous objective function over the prior-parameter space. For the example at hand, the Nelder-Mead method finds a PCS-optimal skeleton in just 25 minutes:
+The foregoing analysis shows that CPE-based performance characterization for a *given* CRM model of typical size may require on the order of 15 seconds on quite modest hardware. To *calibrate* a CRM model via CPE, however, may incur this cost repeatedly---perhaps hundreds of times---during what will generally amount to the derivative-free optimization of a discontinuous objective function over the prior-parameter space. For the example at hand, the Nelder-Mead method finds a PCS-optimal skeleton in just 25 minutes:
 
 ```{r pcs-fun}
 scenario <- skel_0 # for a demo scenario, we use our original skeleton
@@ -290,51 +288,15 @@ NULL
 ```
 
 
-## Miscellaneous optimizations
+## Miscellaneous helps to optimization
 
-Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But, as will become apparent presently, I do not think this type of calibration exercise ought to be taken so seriously.
+Cheung and Chappell [-@cheung_simple_2002] develop an asymptotic assessment capable of rejecting certain skeletons as *intrinsically* unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But such exquisite efforts risk taking this type of calibration exercise too seriously.
 
 # On calibrating 'priors'
 
-In everyday usage, *calibration* suggests an exacting procedure, in which typically a measuring instrument is adjusted to accord with some objective standard or criterion. In statistics, however, the term may not carry quite this connotation. Certainly, @grieve_idle_2016 discusses the calibration of Bayesian trial designs generally in much the same sense as our 'CRM calibration' here, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.^[Interestingly, such activities in relation to the CRM were first discussed by @chevret_continual_1993 using the more prosaic term 'tuning'.]
+In everyday usage, *calibration* suggests an exacting procedure, in which typically a measuring instrument is adjusted to accord with some objective standard or criterion. In statistics, however, the term may not carry quite this connotation. Certainly, @grieve_idle_2016 discusses the calibration of Bayesian trial designs generally in much the same sense as our 'CRM calibration' here, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.
 
-Whatever we call CRM skeleton-tweaking, the very act of treating the CRM's prior dose-toxicity probabilities as *free parameters* remains problematic for the CRM. To a large degree, undermines the interpretation originally claimed for them demonstrates that they no longer bear the relation to real probabilities originally claimed for them.
-This transition in viewing the What then is the objective standard to which One generous way to interpret *calibration* is to reco
-
-TODO: Here, I need to offer as concisely as possible a swift overview of the model-calibration problem, and several prominent approaches to it.
-
-Perhaps start with [@yin_bayesian_2009], as the 'definitive' expression of a sincere Bayesian approach to the calibration problem. Then, introduce the L+S 2009,2011 papers as characteristic of the 'empirical' alternative which Braun has taken up and which shapes the approach I adopt *for purposes of criticism* in this vignette.
-
-However, I might be stuck with a historical approach that goes back to [@chevret_continual_1993]! (Why does this always happen to me?)
-Remarkably, [@chevret_continual_1993] exhibits concern for *overall toxicities* as a performance characteristic.
-
-# Aims
-
-@braun_simulationfree_2020 advanced a heuristic for fast, approximate analysis of certain 'performance characteristic' which have traditionally been of interest to the designers of 1-size-fits-all dose-finding trials. With version 0.2-2, package `precautionary` introduces a highly performant algorithm for complete path enumeration of such trials, which enables---by means of a matrix formalism outlined in @norris_what_2020---an exact computation of these same characteristics. The purpose of this vignette is to compare the performance of the latter technique with the former.
-
-# PLAN
-
-Having revisited the Braun 2020 sim-free paper on 4/12/21, with some serious CRM numerics programming under my belt, I now see a fuller shape for this paper. It might work best to deal with the two separate simulation modes of Braun in the opposite order in which he pursues them:
-
-1. Starting at the very bottom of p.8, Braun proceeds from a fixed skeleton and sigma, examining trials enrolling as many as N=100 participants, under 1000 different (random) true DLT probability settings. This (fixed-skeleton, fixed-sigma) mode of analysis is a point of special strength for my 'exact' approach. A single N=100 trial (if this were even feasible to trace all paths for) would yield a single (enormous!) T array which would enable PCS and other performance characteristics to be computed by fast matrix math.
-
-The N=100 of Braun's simulation is however quite challenging! Under the best of circumstances, might it turn out that allowing paths to 'merge' on tallies reduces the size of the matrix to something manageable? I doubt this really could work without some serious pruning of the exponentially-growing sheer *number* of paths, based e.g. on their not rising above some minimum probability threshold. But then again, there might be stopping criteria that quite effectively prune those paths. In any case, exploring that far out into the exponential explosion would require some kind of on-demand extensble computation not unlike my extensible sims.
-
-I may gain more by an argument that emphasizes the practical irrelevance of such large trials. (Why should I feel obliged to play a pointless game?) Plainly, the conceit of retaining the original calibration past the first N~40 or so patients lacks credibility: after 40 patients dosed, any decent dose-finding experiment will have generated enough understanding of the clin pharm to render all pre-trial design decisions obsolete. (But doesn't Bayesianism in theory offer an excellent defense against this complaint? Or does that defense depend on precisely the asymptotic behavior we are trying to characterize?)
-
-2. Braun's first exploration, with fixed 'truth' and flexible skeleton & sigma, is probably infeasible to 'take literally'. So my approach has to be about reducing the dimension of skeleton and sigma, so that fewer than Braun's 1000 (random) skeletons need to be assessed. To this end, I think I can appeal to the pharmacological rationality that CRM (and model-based methods generally) presume for themselves. My point must be that a random search for skeleton is itself a fictional undertaking that serves more to generate a performance benchmark than to solve a real problem in drug development. (These are perhaps the most important points I can make in this vignette!)
-
-3. I probably need a whole section on 'confessions' that the literature effectively makes. One in particular (see [@chevret_continual_1993, p.1100]) is the retention of the same fixed doses out to some large number of patients!
-
-4. It will also be very helpful to lean on [fractional factorial designs](https://en.wikipedia.org/wiki/Fractional_factorial_design), as a means to extend CPE-based trial analysis into the difficult territory Braun 2020 treks through.
-
-5. The whole question of how prior information is (not) used in CRM is fascinating. What does [@grieve_idle_2016] offer in regard to the connection between *calibration* and *prior information*? What does it tell us, that the CRM so rapidly lost its supposed connection with prior elicitation in the early 1990s? Already by 1995 we have [@goodman_practical_1995] starting from the lowest dose, insead of one selected on basis of the skeleton.
-
-## Misc. reading notes
-
-* As I plumb the 2 Lee + Cheung papers, and some of their refs, I appreciate the complexity (and confusion!) of the literature around this.
-
-* The Bayesian model averaging of Yin and Yuan [-@yin_bayesian_2009] can't be ignored in my overall effort to bring sense and coherence to the CRM calibration literature.
+Whatever we call this chiropractic of the CRM skeleton, the very act of treating the CRM's prior dose-toxicity probabilities as *free parameters* undermines the presumption that model-basedness *per se* necessarily confers special qualities upon dose-finding methods. But now that even the CRM---the very type specimen of model-based dose finding---yields to complete path enumeration, 'model-based' has become a distinction without a difference.
 
 ```{r echo=FALSE, results='hide'}
 options(old) # restore user's original options before finishing, per CRAN
