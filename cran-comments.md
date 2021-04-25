@@ -12,6 +12,10 @@ Per Uwe Ligges's emailed request of 24 Apr,
 I now submit v0.2-3 without any OS_type
 restriction.
 
+Of note, the rhub check listed above passed
+v0.2-2, but is today unavailable due to
+https://github.com/r-hub/rhub/issues/462.
+
 ## R CMD check --as-cran results
 There was 1 NOTE re sub-dir sizes:
 
