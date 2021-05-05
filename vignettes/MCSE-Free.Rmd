@@ -209,7 +209,7 @@ kraken <- eval(parse(text = "structure(list(C = c(11, 12, 13, 14, 15, 16, 17, 18
 kraken %>%
   kable(
     digits=2,
-    caption="Size of complete path enumeration (CPE) for the model, enrolling from 11 to 25 cohorts of 2. Note that all paths of the trial terminate by the 23rd cohort. Timings (in seconds) obtained running CPE single-threaded on on a 2.6 GHz Core i7 processor."
+    caption="Size of complete path enumeration (CPE) for the model, enrolling from 11 to 25 cohorts of 2. Note that all paths of the trial terminate by the 23rd cohort. Timings (in seconds) obtained running CPE on 6 threads of a 2.6 GHz Core i7 processor."
   ) %>% kable_styling(full_width=FALSE, position="left")
 ```
 
