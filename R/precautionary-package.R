@@ -73,16 +73,15 @@ NULL
 
 #' Plan
 #'
-#' @section Version 0.2-3:
-#' * Efficient parallelization of Crm$trace_paths
-#'   - Start longest (usu., least toxic?) paths first
-#'   - Ensure adequate unrolling depth
-#'     * Could this be *adaptive*?
-#' * Complete MCSE-Free vignette
-#'
 #' @section Version 0.2-4:
-#' * Restore Windows build
+#' * Enumerate BOIN designs
+#' * Buff up MCSE-Free vignette
+#'   - Cite Ivanova 2017
 #' * Implement logistic model
+#' * Demote \pkg{dtpcrm} to 'Suggests'
+#'
+#' @section Version 0.2-5:
+#' * Convert EscRisk to MCSE-free CPE
 #' * Implement TITE CRM?
 #'   - Is TITE even amenable to path enumeration?
 #'   - If not, there may be little sense in implementing it here!
@@ -91,13 +90,11 @@ NULL
 #'   - OTOH, implementing TITE would help place the numerics
 #'     for enumerable designs in context.
 #'
-#' @section Version 0.2-5:
-#' * Enumerate BOIN designs
-#' * Convert EscRisk to MCSE-free CPE
-#'
 #' @section Version 0.2-6:
-#' * Progress bar for long runs
-#' * Eliminate dependence on \pkg{dtpcrm}
+#' * Progress bar for long CPE runs
+#'   - Note that this is an opportunity/inducement to analyze the
+#'     parallelism of CPE, and find principles for anticipating
+#'     CPE problem size.
 #'
 #' @section Version 0.3:
 #' * Demote \pkg{escalation} to a 'Suggests'
