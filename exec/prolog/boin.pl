@@ -60,6 +60,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(pio)).
 :- use_module(library(lists)).
 :- use_module(library(dcgs)).
+:- use_module(library(lambda)).
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *).
@@ -235,6 +236,15 @@ noworse_than(T0/N0, T1/N1) :-
 	T0 + (N1 - N0) #=< T1 % extend T0/N0 under worst-case scenario
     ).
 
+%?- safer_than(T/N, 1/2).
+%@ caught: error(existence_error(procedure,between/3),between/3)
+%@ false.
+%@ false.
+
+%?- tally(0/3).
+%@ caught: error(existence_error(procedure,between/3),between/3)
+%@ caught: error(existence_error(procedure,between/3),between/3)
+
 :- op(900, xfx, &=<).
 &=<(Q1, Q2) :- noworse_than(Q1, Q2).
 %?- 1/3 &=< Q.
@@ -361,26 +371,85 @@ noworse_than([T/N | Tallies], T0/N0) :-
 %@ caught: error(syntax_error(incomplete_reduction),read_term/3:1)
 %@ caught: error(syntax_error(incomplete_reduction),read_term/3:1)
 
+% Define what a BOIN-type threshold is ...
+
+zip([], [], []).
+zip([X|Xs], [Y|Ys], [X/Y | XsYs]) :-
+    zip(Xs, Ys, XsYs).
+
+%?- zip([1,2,3], [4,5,6], Z).
+%@    Z = [1/4,2/5,3/6].
+
+%?- zip(T, N, [1/4,2/5,3/6]).
+%@    T = [1,2,3], N = [4,5,6]
+%@ ;  false.
+
+tox_boundary(Bdy) :-
+    zip(Ts, Ns, Bdy),
+    sort(Ns, Ns), % TODO: Do I gain anything by thus removing degeneracy?
+    maplist(\X^(X #> 0), Ns), % TODO: Is there a clpz idiom for this?
+    %% Note there are further constraints on what might be considered
+    %% reasonable tox boundaries. There shouldn't be duplicated Ns, e.g.,
+    %% and all the Ts should be non-negative. But perhaps these are best
+    %% postponed until some kind of *search* over the space of possible
+    %% tox boundaries becomes desirable.
+    maplist(#=<, Ts, Ns).
+
+%?- sort([5,4,3,2,1], S).
+%@    S = [1,2,3,4,5].
+
+%?- tox_boundary([0/2, 1/4]).
+%@    true
+%@ ;  false.
+
+%?- tox_boundary([0/5, 1/4]).
+%@ false.
+
+%% TODO: Why does sortedness of Ns not appear in constraints below?
+%?- tox_boundary(Bdy).
+%@    Bdy = []
+%@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in 1..sup)
+%@ ;  Bdy = [_B/_A,_D/_C], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_A in 1..sup), clpz:(_C in 1..sup)
+%@ ;  Bdy = [_B/_A,_D/_C,_F/_E], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_E#>=_F), clpz:(_A in 1..sup), clpz:(_C in 1..sup), clpz:(_E in 1..sup)
+%@ ;  ...
+
 /*
-I can see that the semantics may require delicate managment here!
-Unless I can get the comparison operators to READ very smoothly
-when overloaded, I should perhaps use entirely fresh functors,
-such as above_threshold/2 and below_threshold/2.
-
-WHAT ACTUALLY are the comparisons I need for the BOIN thresholds?
-I think 'staying' at the current dose might best be implemented as
-a final 'else' clause, with chances given for threshold-crossing
-(or *touching*) to pull the design toward up or down changes.
-Thus, I need to test (say) for T/N &< [upper thresholds] and
-T/N &> [lower thresholds] as the condition for staying.
-
-Could I get away with [lowers] &< T/N and [uppers] &> T/N instead?
-
-What is my 'excuse' for overloading to lists? I think it is because
-not every pair of tallies is comparable, and the list gives us more
-chances to achieve a comparison: "Do any of these comparisons work,
-and hold true?"
+The question about a cumulative-cohort tally vis-à-vis a given threshold,
+is whether it has touched or crossed the threshold toward 'extreme' values.
+The past participle 'hit' seems reasonable, since it covers both the case
+of touching and of having 'broken through'.
 */
+
+hit_floor(_/_, []) :- false.
+hit_floor(T/N, [Tb/Nb | Bdys]) :-
+    (	T/N &=< Tb/Nb
+    ;	hit_floor(T/N, Bdys)
+    ).
+    
+hit_ceiling(_/_, []) :- false.
+hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
+    (	Tb/Nb &=< T/N
+    ;	hit_ceiling(T/N, Bdys)
+    ).
+
+%?- hit_floor(0/3, [0/1, 0/2, 0/3, 0/4, 0/5, 0/6, 0/7, 1/8, 1/9, 1/10, 1/11, 1/12]).
+%@ false.
+
+%% TODO: Why isn't this true?!!
+%?- 0/3 &=< 0/2.
+%@ false.
+
+/*
+lambda_{1,j} 0/1  0/2  0/3  0/4  0/5  0/6  0/7  1/8  1/9  1/10  1/11  1/12
+lambda_{2,j} 1/1  2/2  2/3  2/4  3/5  3/6  4/7  4/8  5/9  5/10  5/11  6/12
+elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
+*/
+
+%% While the superficial 'elegance' of overloading &=< on tally lists
+%% initially had some appeal, I would worry about a defaulty predicate.
+%% Furthermore, the comparison against tox boundaries is the crucial
+%% decision point in trial conduct, deserving of a prominent predicate
+%% that calls attention to it.
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Pick up from here...
