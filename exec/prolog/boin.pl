@@ -61,6 +61,8 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(lists)).
 :- use_module(library(dcgs)).
 :- use_module(library(lambda)).
+:- use_module(library(time)).
+%@    true.
 
 % Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
 :- op(920, fy, *).
@@ -172,28 +174,10 @@ cohort_maxtally(C, T/N) :-
 %% A fair enumeration of tallies will be helpful for developing
 %% and testing comparison relations between tallies.
 
-tally(DLTs/Enrolled) :-
-    Enrolled in 0..6, % suffices for 3+3 and 'rolling 6' designs
-    indomain(Enrolled),
-    DLTs in 0..Enrolled,
-    %%0 #=< DLTs, DLTs #=< Enrolled, 
-    indomain(DLTs).
-
-%% Proof that tally/1 terminates!
-%?- tally(_), false.
-%@ false.
-
-%?- tally(T/N).
-%@    T = 0, N = 0
-%@ ;  T = 0, N = 1
-%% ... as expected ...
-%@ ;  T = 4, N = 6
-%@ ;  T = 5, N = 6
-%@ ;  T = 6, N = 6.
-
-%% In general, I'll require a max-enrollment *parameter*
+%% In general, I may require a max-enrollment *parameter*,
+%% however unsightly it may be tagging along like this ...
 tally_maxn(DLTs/Enrolled, MaxN) :-
-    ground(MaxN),
+    nonvar(MaxN),
     Enrolled in 0..MaxN,
     indomain(Enrolled),
     DLTs in 0..Enrolled,
@@ -208,42 +192,177 @@ tally_maxn(DLTs/Enrolled, MaxN) :-
 %@ ;  T = 5, N = 6
 %@ ;  T = 6, N = 6.
 
-%% How do tallies COMPARE?
-safer_than(T0/N0, T1/N1) :-
-    tally(T0/N0), N0 #> 0, % NB: These N>0 conditions are implicit in the #< below,
-    tally(T1/N1), N1 #> 0, %     but are stated explicitly here to expose the logic.
-    N0 #>= N1,
-    T0*N1 #< N0*T1. % 'cross-multiply'
+%% Having a 'default' max cohort size will make dev & test a bit easier:
+tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 
-:- op(900, xfx, &<).
-&<(Q1, Q2) :- safer_than(Q1, Q2).
-%?- Q &< 1/3.
-%@    Q = 0/3
+%% Proof that tally/1 terminates!
+%?- tally(_), false.
+%@ false.
+
+%?- tally(T/N).
+%@    T = 0, N = 0
+%@ ;  T = 0, N = 1
+%@ ;  T = 1, N = 1
+%@ ;  T = 0, N = 2
+%@ ;  T = 1, N = 2
+%% ... as expected ...
+%@ ;  T = 8, N = 12
+%@ ;  T = 9, N = 12
+%@ ;  T = 10, N = 12
+%@ ;  T = 11, N = 12
+%@ ;  T = 12, N = 12.
+
+%% How do tallies COMPARE?
+
+/*
+The essence of tally comparisons is one of REACHABILITY, i.e. EXISTENCE OF PATHS.
+Generally, in fact, it is NON-REACHABILITY that supports any definite statement.
+This might be stated correctly in terms of the DCG cohort//0. But this would not
+be efficient. (Still, I could use such a statement as a correctness check!)
+
+Strict inequalities like safer_than/2 mean that whichever argument is *earlier*
+(i.e., has the smaller denominator) cannot under any conceivable path cross over
+the other argument. Thus, the earlier is safer than the later if even a path of
+100% toxicity that brings its denominator to the later's leaves its numerator
+strictly less. Conversely, the later is safer if even a 100% non-toxic path from
+the earlier does not make it look better than the later.
+*/
+
+safer_than(T0/N0, T1/N1) :-
+    tally(T0/N0),
+    tally(T1/N1),
+    (	N0 #>= N1, T0 #< T1
+    ;	N0 #< N1,
+	MaxTox = N1 - N0,
+	T0 + MaxTox #< T1
+    ).
+
+%?- safer_than(Q, 2/3).
+%@    Q = 0/2
+%@ ;  Q = 0/3
+%@ ;  Q = 1/3
 %@ ;  Q = 0/4
 %@ ;  Q = 1/4
 %@ ;  Q = 0/5
 %@ ;  Q = 1/5
 %@ ;  Q = 0/6
 %@ ;  Q = 1/6
+%@ ;  Q = 0/7
+%@ ;  Q = 1/7
+%@ ;  Q = 0/8
+%@ ;  Q = 1/8
+%@ ;  Q = 0/9
+%@ ;  Q = 1/9
+%@ ;  Q = 0/10
+%@ ;  Q = 1/10
+%@ ;  Q = 0/11
+%@ ;  Q = 1/11
+%@ ;  Q = 0/12
+%@ ;  Q = 1/12
 %@ ;  false.
 
+%% Note e.g. that we cannot say safer_than(1/2, 2/3)
+%% because we might enroll 1 with 1/2 ~~> 2/3, which
+%% is not *strictly* less than 2/3.
+
+:- op(900, xfx, &<).
+&<(Q1, Q2) :- safer_than(Q1, Q2).
+%?- Q &< 1/3.
+%@    Q = 0/3
+%@ ;  Q = 0/4
+%@ ;  Q = 0/5
+%@ ;  Q = 0/6
+%@ ;  Q = 0/7
+%@ ;  Q = 0/8
+%@ ;  Q = 0/9
+%@ ;  Q = 0/10
+%@ ;  Q = 0/11
+%@ ;  Q = 0/12
+%@ ;  false.
+
+%% Note that, under the new REACHABILITY semantics of tally comparisons,
+%% we no longer make a claim such as 1/6 &< 1/3!
+%% TODO: It seems likely that reachability semantics are more stringent
+%%       than my previous formalism, so that we now can say fewer things.
+%%       I ought to prove this---or let Prolog prove it for me.
+%% TODO: What is the relationship (if any) between meta-interpretation
+%%       and this change of tally-comparison semantics? Does MI affect
+%%       only the IMPLEMENTATION---and not the meaning---of a program?
+%% TODO: Given how far this reachability semantics departs from normal
+%%       pharmacologic intuitions, perhaps even words like 'safer_than'
+%%       should be reconsidered. I may well have abandoned all hope of
+%%       capturing such intuitions in these predicates!
+
 noworse_than(T0/N0, T1/N1) :-
-    tally(T0/N0), N0 #> 0, % NB: By contrast with the N>0 conditions in safer_than/2,
-    tally(T1/N1), N1 #> 0, %     these are strictly necessary for correctness here.
-    (	N0 #>= N1,
-	T0*N1 #=< N0*T1 % 'cross-multiply'
+    tally(T0/N0),
+    tally(T1/N1),
+    (	N0 #>= N1, T0 #=< T1
     ;	N0 #< N1,
-	T0 + (N1 - N0) #=< T1 % extend T0/N0 under worst-case scenario
+	MaxTox = N1 - N0,
+	T0 + MaxTox #=< T1
     ).
 
-%?- safer_than(T/N, 1/2).
-%@ caught: error(existence_error(procedure,between/3),between/3)
-%@ false.
-%@ false.
+%?- safer_than(1/3, 2/3).
+%@    true
+%@ ;  false.
 
-%?- tally(0/3).
-%@ caught: error(existence_error(procedure,between/3),between/3)
-%@ caught: error(existence_error(procedure,between/3),between/3)
+%?- noworse_than(1/3, 2/3).
+%@    true
+%@ ;  false.
+
+%?- tally(1/3), tally(2/3), 3 #>= 3, 1 #=< 2.
+%@    true.
+
+
+%?- noworse_than(Q, 2/3).
+%@    Q = 0/1
+%@ ;  Q = 0/2
+%@ ;  Q = 1/2
+%@ ;  Q = 0/3
+%@ ;  Q = 1/3
+%@ ;  Q = 2/3
+%@ ;  Q = 0/4
+%@ ;  Q = 1/4
+%@ ;  Q = 2/4
+%@ ;  Q = 0/5
+%@ ;  Q = 1/5
+%@ ;  Q = 2/5
+%@ ;  Q = 0/6
+%@ ;  Q = 1/6
+%@ ;  Q = 2/6
+%@ ;  Q = 0/7
+%@ ;  Q = 1/7
+%@ ;  Q = 2/7
+%@ ;  Q = 0/8
+%@ ;  Q = 1/8
+%@ ;  Q = 2/8
+%@ ;  Q = 0/9
+%@ ;  Q = 1/9
+%@ ;  Q = 2/9
+%@ ;  Q = 0/10
+%@ ;  Q = 1/10
+%@ ;  Q = 2/10
+%@ ;  Q = 0/11
+%@ ;  Q = 1/11
+%@ ;  Q = 2/11
+%@ ;  Q = 0/12
+%@ ;  Q = 1/12
+%@ ;  Q = 2/12
+%@ ;  false.
+
+%?- safer_than(T/N, 1/2).
+%@    T = 0, N = 2
+%@ ;  T = 0, N = 3
+%@ ;  T = 0, N = 4
+%@ ;  T = 0, N = 5
+%@ ;  T = 0, N = 6
+%@ ;  T = 0, N = 7
+%@ ;  T = 0, N = 8
+%@ ;  T = 0, N = 9
+%@ ;  T = 0, N = 10
+%@ ;  T = 0, N = 11
+%@ ;  T = 0, N = 12
+%@ ;  false.
 
 :- op(900, xfx, &=<).
 &=<(Q1, Q2) :- noworse_than(Q1, Q2).
@@ -272,18 +391,53 @@ on_par(T0/N0, T1/N1) :-
 :- op(900, xfx, &=).
 &=(Q1, Q2) :- on_par(Q1, Q2).
 
+%?- Q &= R.
+%@    Q = 0/1, R = 0/1
+%@ ;  Q = 0/1, R = 0/2
+%@ ;  Q = 0/1, R = 0/3
+%@ ;  Q = 0/1, R = 0/4
+%@ ;  Q = 0/1, R = 0/5
+%@ ;  Q = 0/1, R = 0/6
+%@ ;  Q = 0/1, R = 0/7
+%@ ;  Q = 0/1, R = 0/8
+%@ ;  Q = 0/1, R = 0/9
+%@ ;  Q = 0/1, R = 0/10
+%@ ;  Q = 0/1, R = 0/11
+%@ ;  Q = 0/1, R = 0/12
+%@ ;  Q = 1/1, R = 1/1
+%@ ;  Q = 1/1, R = 2/2
+%@ ;  Q = 1/1, R = 3/3
+%@ ;  Q = 1/1, R = 4/4
+%@ ;  Q = 1/1, R = 5/5
+%@ ;  Q = 1/1, R = 6/6
+%@ ;  ...
+
+%?- Q &< R.
+%@    Q = 0/1, R = 1/1
+%@ ;  Q = 0/1, R = 2/2
+%@ ;  Q = 0/1, R = 3/3
+%@ ;  Q = 0/1, R = 4/4
+%@ ;  Q = 0/1, R = 5/5
+%@ ;  Q = 0/1, R = 6/6
+%@ ;  ...
+
 % Strict tally-safer (&<) excludes tally-equals (&=)
-%?- Q &< R, Q &= R.
+%?- time((Q &< R, Q &= R)).
+%@    % CPU time: 56.976 seconds
 %@ false.
 
 % (&=<) and '&>' are MUTUALLY EXCLUSIVE:
-%?- Q &=< R, R &< Q.
+%?- time((Q &< R, R &=< Q)).
+%@    % CPU time: 63.436 seconds
 %@ false.
+
 
 %% Here was my motivation for writing down on_par/2 in the first place:
 %?- Q &= 1/3. %% 1/3 is (roughly) the 3+3 design's 'target toxicity rate'
 %@    Q = 1/3
 %@ ;  Q = 2/6
+%@ ;  Q = 3/9
+%@ ;  Q = 4/12
 %@ ;  false.
 
 %% TODO: Consider deriving all tally comparisons from cross-product zcompare,
@@ -351,25 +505,6 @@ on_par(T0/N0, T1/N1) :-
 % T/N &>= [1/1, 2/4, 3/6, ...] or even T/N &>= [1, 4, 6, ...].
 %
 % Again, this complex comparison holds if ANY component comparison holds.
-
-%% Avoiding a defaulty representation requires me to put the lists
-%% in the first argument.
-noworse_than([], _/_) :- false.
-noworse_than([T/N | Tallies], T0/N0) :-
-    (	noworse_than(T/N, T0/N0)
-    ;	noworse_than(Tallies, T0/N0)
-    ).
-
-%?- noworse_than([1/1, 2/4, 3/6], 1/3).
-%@ false.
-
-%?- noworse_than([1/1, 2/4, 3/6], 3/3).
-%@ false.
-
-%?- 1/1 &=< 3/3.
-%@ false.
-%@ caught: error(syntax_error(incomplete_reduction),read_term/3:1)
-%@ caught: error(syntax_error(incomplete_reduction),read_term/3:1)
 
 % Define what a BOIN-type threshold is ...
 
