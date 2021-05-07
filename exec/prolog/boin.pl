@@ -530,9 +530,6 @@ tox_boundary(Bdy) :-
     %% tox boundaries becomes desirable.
     maplist(#=<, Ts, Ns).
 
-%?- sort([5,4,3,2,1], S).
-%@    S = [1,2,3,4,5].
-
 %?- tox_boundary([0/2, 1/4]).
 %@    true
 %@ ;  false.
@@ -555,36 +552,73 @@ The past participle 'hit' seems reasonable, since it covers both the case
 of touching and of having 'broken through'.
 */
 
-hit_floor(_/_, []) :- false.
-hit_floor(T/N, [Tb/Nb | Bdys]) :-
-    (	T/N &=< Tb/Nb
-    ;	hit_floor(T/N, Bdys)
-    ).
-    
-hit_ceiling(_/_, []) :- false.
-hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
-    (	Tb/Nb &=< T/N
-    ;	hit_ceiling(T/N, Bdys)
-    ).
-
-%?- hit_floor(0/3, [0/1, 0/2, 0/3, 0/4, 0/5, 0/6, 0/7, 1/8, 1/9, 1/10, 1/11, 1/12]).
-%@ false.
-
-%% TODO: Why isn't this true?!!
-%?- 0/3 &=< 0/2.
-%@ false.
+%% TODO: Consider not leaning on (&<)-type tally comparisons, but rather
+%%       going directly to CLP(Z) constraints. This will be faster, and
+%%       also enable me to avoid superfluous choice points, etc.
+%% OOH! Maybe I'm discovering that all the above efforts were unnecessary!
+%%      Could it be that this file can just about start HERE?
 
 /*
+If I do 'cut out the middleman' in this way, what is the right representation
+for the toxicity boundaries?
+
 lambda_{1,j} 0/1  0/2  0/3  0/4  0/5  0/6  0/7  1/8  1/9  1/10  1/11  1/12
 lambda_{2,j} 1/1  2/2  2/3  2/4  3/5  3/6  4/7  4/8  5/9  5/10  5/11  6/12
 elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
+
+RELATIVE to a maximum cohort size of 12, the above boundaries gain sufficient
+and minimal representation as the following lists:
+
+lambda_1 [0/1, 1/8]
+lambda_2 [1/1, 2/4, 3/6, 4/8, 5/10, 6/12]
+elim     [3/5, 4/8, 5/10, 6/12]
+
+This is because lambda_1 is a lower bounds, and so the removed limits were
+non-binding. Likewise, since lambda_2 and elim were upper bounds the removed
+limits were non-binding.
+
+In general, minimal representations of tox boundaries will consist of lists
+of tallies BdyRep satisfying:
+
+minimal_maxn(BdyRep, MaxN) :-
+    zip(Ts, Ns, BdyRep),
+    T1 #=< Tn,
+    Ts in T1..Tn,
+    sort(Ns, Ns),
+    maplist(\X^(X #=< MaxN), Ns).
+
+
 */
 
-%% While the superficial 'elegance' of overloading &=< on tally lists
-%% initially had some appeal, I would worry about a defaulty predicate.
-%% Furthermore, the comparison against tox boundaries is the crucial
-%% decision point in trial conduct, deserving of a prominent predicate
-%% that calls attention to it.
+%% I unapologetically assume that the Bdy list is a minimal representation.
+hit_floor(_/_, []) :- false.
+hit_floor(T/N, [Tb/Nb | Bdys]) :-
+    %minimal_maxn([Tb/Nb|Bdys], 12), %% TODO: Try activating this assertion
+    %% TODO: The correctness of this predicate may depend only on the
+    %%       sortedness of Ts and Ns. Work out the details!
+    (	T #= Tb, N #>= Nb
+    ;	T #> Tb, hit_floor(T/N, Bdys)
+    ).
+    
+%?- hit_floor(0/3, [0/1, 0/2, 0/3, 0/4, 0/5, 0/6, 0/7, 1/8, 1/9, 1/10, 1/11, 1/12]).
+%@    true
+%@ ;  false.
+
+%?- hit_floor(0/3, [0/1, 1/8]).
+%@    true
+%@ ;  false.
+
+hit_ceiling(_/_, []) :- false.
+hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
+    %minimal_maxn([Tb/Nb|Bdys], 12), %% TODO: Try activating this assertion
+    (	T #= Tb, N #=< Nb
+    ;	T #> Tb, hit_ceiling(T/N, Bdys)
+    ).
+
+%?- hit_ceiling(3/5, [1/1, 2/4, 3/6, 4/8, 5/10, 6/12]).
+%@    true
+%@ ;  false.
+
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Pick up from here...
