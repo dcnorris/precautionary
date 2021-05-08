@@ -98,86 +98,13 @@ left-right lists, except that the element of these lists are themselves lists!
 
 */
 
-%% A 'dose cohort' (or 'cohort' for short) is a list of toxicity assessments
-%% which are var upon enrollment, and become ground when completed.
-%% (The association with a dose will be effected through the L^R stack pair
-%% as previously implemented in the 'aliquots' design.)
-
-cohort --> [].
-cohort --> [T], { T in 0..1 }, cohort.
-
-%% We will judge a cohort according to its *tally*, a proper fraction:
-cohort_tally(C, T/N) :-
-    length(C, N),
-    C ins 0..1, % better than phrase(cohort, C)
-    sum(C, #=, T). % clpz:sum/3 avoids awful "maplist(indomain, C), sum_list(C, T)"!
-
-%?- phrase(cohort, C).
-%@    C = []
-%@ ;  C = [_A], clpz:(_A in 0..1)
-%@ ;  C = [_A,_B], clpz:(_A in 0..1), clpz:(_B in 0..1)
-%@ ;  C = [_A,_B,_C], clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(_C in 0..1)
-%@ ;  ...
-
-%?- cohort_tally(C, T/N).
-%@    C = [], T = 0, N = 0
-%@ ;  C = [T], N = 1, clpz:(T in 0..1)
-%@ ;  C = [_A,_B], N = 2, clpz:(_A+_B#=T), clpz:(T in 0..2), clpz:(_A in 0..1), clpz:(_B in 0..1)
-%@ ;  C = [_A,_B,_C], N = 3, clpz:(_A+_B+_C#=T), clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(_C in 0..1), clpz:(T in 0..3)
-%@ ;  C = [_A,_B,_C,_D], N = 4, clpz:(_A+_B+_C+_D#=T), clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(_C in 0..1), clpz:(_D in 0..1), clpz:(T in 0..4)
-%@ ;  ...
-
-%% Let's also be able to obtain best- and worst-case tallies
-%% from a partially complete cohort of DLT assessments.
-cohort_bestcase([], []).
-cohort_bestcase([T|Ts], [B|Bs]) :-
-    (	var(T),
-	B #= 0
-    ;	ground(T),
-	B = T
-    ),
-    cohort_bestcase(Ts, Bs).
-
-cohort_worstcase([], []).
-cohort_worstcase([T|Ts], [W|Ws]) :-
-    (	var(T),
-	W #= 1
-    ;	ground(T),
-	W = T
-    ),
-    cohort_worstcase(Ts, Ws).
-
-%?- cohort_bestcase([0,1,T], B).
-%@    B = [0,1,0]
-%@ ;  false.
-
-%?- cohort_worstcase([0,1,T], W).
-%@    W = [0,1,1]
-%@ ;  false.
-
-cohort_mintally(C, T/N) :-
-    cohort_bestcase(C, B),
-    cohort_tally(B, T/N).
-
-cohort_maxtally(C, T/N) :-
-    cohort_worstcase(C, W),
-    cohort_tally(W, T/N).
-
-%?- cohort_mintally([0,1,T], Q).
-%@    Q = 1/3
-%@ ;  false.
-
-%?- cohort_maxtally([0,1,T], Q).
-%@    Q = 2/3
-%@ ;  false.
-
 %% A fair enumeration of tallies will be helpful for developing
 %% and testing comparison relations between tallies.
 
 %% In general, I may require a max-enrollment *parameter*,
 %% however unsightly it may be tagging along like this ...
 tally_maxn(DLTs/Enrolled, MaxN) :-
-    nonvar(MaxN),
+    ground(MaxN),
     Enrolled in 0..MaxN,
     indomain(Enrolled),
     DLTs in 0..Enrolled,
@@ -195,7 +122,7 @@ tally_maxn(DLTs/Enrolled, MaxN) :-
 %% Having a 'default' max cohort size will make dev & test a bit easier:
 tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 
-%% Proof that tally/1 terminates!
+%% tally/1 terminates:
 %?- tally(_), false.
 %@ false.
 
@@ -281,7 +208,11 @@ safer_than(T0/N0, T1/N1) :-
 %@ ;  false.
 
 %% Note that, under the new REACHABILITY semantics of tally comparisons,
-%% we no longer make a claim such as 1/6 &< 1/3!
+%% we no longer make a claim such as 1/6 &< 1/3! What remains true is
+%% only that 1/6 &=< 1/3.
+%% NOTE: Reasoning about reachability amounts to reasoning about as-yet
+%%       uninstantiated toxicity assessments, and therefore accords
+%%       perfectly with this essential strength of Prolog.
 %% TODO: It seems likely that reachability semantics are more stringent
 %%       than my previous formalism, so that we now can say fewer things.
 %%       I ought to prove this---or let Prolog prove it for me.
@@ -440,42 +371,10 @@ on_par(T0/N0, T1/N1) :-
 %@ ;  Q = 4/12
 %@ ;  false.
 
-%% TODO: Consider deriving all tally comparisons from cross-product zcompare,
-%%       taking care to exclude 'incomparables' somehow.
-
 %?- cohort_tally([0,0,T], Q), safer_than(Q, 2/3).
 %@    Q = 0/3, T = 0
 %@ ;  Q = 1/3, T = 1
 %@ ;  false.
-
-%?- Vs = [A,B,C], Vs ins 0..1, sum(Vs, #=, Sum), indomain(Sum).
-%@    Vs = [0,A,A], A = 0, B = 0, Sum = 0, C = 0
-%@ ;  Vs = [A,B,C], Sum = 1, clpz:(A+B+C#=1), clpz:(A in 0..1), clpz:(B in 0..1), clpz:(C in 0..1)
-%@ ;  Vs = [A,B,C], Sum = 2, clpz:(A+B+C#=2), clpz:(A in 0..1), clpz:(B in 0..1), clpz:(C in 0..1)
-%@ ;  Vs = [1,A,A], A = 1, B = 1, Sum = 3, C = 1.
-
-%?- Vs = [A,B,C], Vs ins 0..1, sum(Vs, #=, Sum), labeling([], Vs).
-%@    Vs = [0,A,A], A = 0, B = 0, Sum = 0, C = 0
-%@ ;  Vs = [0,A,1], A = 0, B = 0, Sum = 1, C = 1
-%@ ;  Vs = [0,1,A], A = 0, B = 1, Sum = 1, C = 0
-%@ ;  Vs = [0,1,B], A = 0, B = 1, Sum = 2, C = 1
-%@ ;  Vs = [1,0,B], A = 1, B = 0, Sum = 1, C = 0
-%@ ;  Vs = [1,0,A], A = 1, B = 0, Sum = 2, C = 1
-%@ ;  Vs = [1,A,0], A = 1, B = 1, Sum = 2, C = 0
-%@ ;  Vs = [1,A,A], A = 1, B = 1, Sum = 3, C = 1.
-
-%?- X = a, nonvar(X).
-%@    X = a. 
-
-%?- nonvar(X).
-%@ false.
-
-%% Therefore var/nonvar makes no sense declaratively!
-%% var/1 and nonvar/1 are metalogical
-
-%% So instead we can do this:
-% Vs = [A,B,C], Vs ins 0..1, sum(Vs, #=, Sum), labeling([min(Sum)], Vs).
-%% NB: If I want the first minimum, wrap this in once/1.
 
 %% -----------------------------------------------------------------------------
 
@@ -493,7 +392,8 @@ on_par(T0/N0, T1/N1) :-
 % With &=< at least, perhaps we would like to write instead:
 %   T/N &=< [0/1, 1/8, 2/15],
 % or possibly even abbreviate this as:
-%   T/N &=< [1, 8, 15].
+%   T/N &=< [1, 8, 15],
+% although I am inclined to reject the latter as more 'cute' than *clear*.
 %
 % The comparison would then hold if ANY of the mapped comparisons holds.
 %
@@ -618,7 +518,6 @@ hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
 %?- hit_ceiling(3/5, [1/1, 2/4, 3/6, 4/8, 5/10, 6/12]).
 %@    true
 %@ ;  false.
-
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Pick up from here...
@@ -832,163 +731,3 @@ tallies([Q|Qs]) :-
  * ':' - Imagine: an ellipsis (or dripping faucet) where we enroll patients
  *       (who 'trickle in'), wait for & assess toxicities.
  */
-
-
-
-/****
-The following general queries seem to PROVE
-key properties of 3+3 have been attained.
- ****/
-%?- RP2D in 0..sup, state0_action_state(S0, stop, mtd_notfound(RP2D)).
-%@ RP2D = 0,
-%@ S0 = []:[] ;
-%@ RP2D = 1,
-%@ S0 = [_6146/6]:[],
-%@ _6146 in 0..1 ;
-%@ RP2D = 2,
-%@ S0 = [_7652/6, _7658]:[],
-%@ _7652 in 0..1 ;
-%@ RP2D = 3,
-%@ S0 = [_9170/6, _9176, _9182]:[],
-%@ _9170 in 0..1 ; ...
-
-%?- MTD in 0..sup, state0_action_state(S0, stop, declare_mtd(MTD)).
-%@ MTD = 0,
-%@ S0 = []^[_2400/3|_2396],
-%@ _2400 in 2..3 ;
-%@ MTD = 0,
-%@ S0 = []^[_4346/6|_4342],
-%@ _4346 in 2..6 ;
-%@ MTD = 1,
-%@ S0 = [_7710/6]^[_7722/3|_7718],
-%@ _7710 in 0..1,
-%@ _7722 in 2..3 ;
-%@ MTD = 2,
-%@ S0 = [_9476/6, _9482]^[_9494/3|_9490],
-%@ _9476 in 0..1,
-%@ _9494 in 2..3 ;
-%@ MTD = 3,
-%@ S0 = [_11254/6, _11260, _11266]^[_11278/3|_11274],
-%@ _11254 in 0..1,
-%@ _11278 in 2..3 ; ...
-
-%?- MTD in 0..3, indomain(MTD), state0_action_state(S0, stop, declare_mtd(MTD)).
-%@ MTD = 0,
-%@ S0 = []^[_2842/3|_2838],
-%@ _2842 in 2..3 ;
-%@ MTD = 0,
-%@ S0 = []^[_4762/6|_4758],
-%@ _4762 in 2..6 ;
-%@ MTD = 1,
-%@ S0 = [_8222/6]^[_8234/3|_8230],
-%@ _8222 in 0..1,
-%@ _8234 in 2..3 ;
-%@ MTD = 1,
-%@ S0 = [_10396/6]^[_10408/6|_10404],
-%@ _10396 in 0..1,
-%@ _10408 in 2..6 ;
-%@ MTD = 2,
-%@ S0 = [_14060/6, _14066]^[_14078/3|_14074],
-%@ _14060 in 0..1,
-%@ _14078 in 2..3 ;
-%@ MTD = 2,
-%@ S0 = [_16252/6, _16258]^[_16270/6|_16266],
-%@ _16252 in 0..1,
-%@ _16270 in 2..6 ;
-%@ MTD = 3,
-%@ S0 = [_19894/6, _19900, _19906]^[_19918/3|_19914],
-%@ _19894 in 0..1,
-%@ _19918 in 2..3 ;
-%@ MTD = 3,
-%@ S0 = [_22104/6, _22110, _22116]^[_22128/6|_22124],
-%@ _22104 in 0..1,
-%@ _22128 in 2..6.
-/* ---
- This makes a very nice characterization of the 'typical' or 'motivating'
- case of successful conclusion of the trial. In this variant of 3+3, the
- most desirable conclusion is to have observed {0,1}/6 toxities at the
- declared MTD, and excessive toxicity (2 or more) at the next-higher dose.
- */
-
-%?- state0_action_state(S0, stop, mtd_notfound(MTD)).
-%@ S0 = []:[],
-%@ MTD = 0 ;
-%@ S0 = [_1510]:[],
-%@ MTD = 1 ;
-%@ S0 = [_1510, _2558]:[],
-%@ MTD = 2 ;
-%@ S0 = [_1510, _2558, _3606]:[],
-%@ MTD = 3 .
-
-%% DISCUSS: Non-terminating. From a verification perspective,
-%% this is not so troubling, since it merely asks Prolog to
-%% confirm something we can already verify BY INSPECTION.
-%?- state0_action_state(_:[], A, _), dif(A, stop).
-%@ Action (h for help) ? abort
-%@ % Execution Aborted
-
-%?- state0_action_state(S0, deescalate, S).
-%@ S0 = [0/3|_9574]^[[_9596/3|_9592]|_9586],
-%@ S = _9574:[0/3],
-%@ _9596 in 2..3 ;
-%@ S0 = [0/3|_11542]^[[_11564/6|_11560]|_11554],
-%@ S = _11542:[0/3],
-%@ _11564 in 2..6.
-/* ---
- What does this show about de-escalation?
- 1. It only ever occurs back to a dose where tally is 0/3
- 2. It never occurs after any of {0,1}/3, {0,1}/6
- 3. Resulting state S is of 'pending' type ":"
- 4. This 0/3 tally is the 'focus dose' at head of right-hand list
- 5. The dose we de-escalated FROM looked like T/6 with T in 3..6
- 6. The dose we de-escalated FROM gets TRUNCATED from right-hand list
- */
-
-%?- state0_action_state(S0, escalate, S).
-%@ S0 = _504^[0/3|_512],
-%@ S = [0/3|_504]:_512 ;
-%@ S0 = _4778^[_4790/6|_4786],
-%@ S = [_4790/6|_4778]:_4786,
-%@ _4790 in 0..1 ;
-%@ false.
-/* ---
- What does this say about escalation?
- 1. It may occur ONLY after a 0/3, 0/6 or 1/6 observation
-    (NB: The 0/6 observation is not excluded BY THIS PREDICATE ALONE.)
- 2. Escalation leaves us in a ':' state
- 3. The RHS of the ':' state MAY be empty list [].
- */
-
-%?- state0_action_state(S0, stay, S).
-%@ S0 = _7196^[1/3|_7204],
-%@ S = _7196:[1/3|_7204] ;
-%@ false.
-/* ---
- That result speaks for itself!
- */
-
-
-%?- X is 4 rdiv 7.
-%@ X = 4r7.
-
-%?- X is log(3).
-%@ X = 1.0986122886681098.
-%@ ERROR: Syntax error: Operator expected
-%@ ERROR: X is log
-%@ ERROR: ** here **
-%@ ERROR:  3 . 
-
-%% About which (indeterminate) tallies do we presume nothing?
-%?- tally(I), \+ presumably_safe([I]), \+ presumably_toxic([I]).
-%@ I = 0/0 ;
-%@ I = 0/3 ;
-%@ I = 1/3 ;
-%@ false.
-%% NOTE: These are precisely the enrollable doses!
-
-%?- enrollable_tally(T).
-%@ T = 0/0 ;
-%@ T = _8562/3,
-%@ _8562 in 0..1 ;
-%@ false.
-
