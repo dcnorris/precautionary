@@ -321,10 +321,17 @@ self-verifying by proofs executed in Prolog itself.
 */
 
 %% NB: The left-hand list of Ls ^ Rs is sorted in descending order.
-%%     So heads L and R in [L|Ls] ^ [R|Rs] are *adjacent* doses.
+%%     So heads L and R in [L|Ls] ^ [R|Rs] are tallies belonging to
+%%     *adjacent* doses, notwithstanding their non-juxtaposition in
+%%     our left-right reading of the term.
 
 cohort_full(N, yes) :- N #>= 12.
-cohort_full(N, no) :- N in 0..11.
+%%%cohort_full(N, no) :- N in 0..11.
+%?- cohort_full(1, no).
+%@ caught: error(existence_error(procedure,between/3),between/3)
+%% TODO: Understand the above error.
+cohort_full(N, no) :- N #< 12,
+		      N #>= 0.
 cohort_full(_/N, YesNo) :- cohort_full(N, YesNo).
 
 enroll(T0/N0, T1/N1) :-
@@ -351,7 +358,7 @@ escalate(Ls ^ [T/N], State) :- % NB: this is a 'clamped' situation
 
 escalate(Ls ^ [Q, R | _], [Q | Ls] ^ [R1 | _]) :- enroll(R, R1).
 escalate(Ls ^ [Q, R | _], declare_mtd(MTD)) :- cohort_full(R, yes),
-						length_plus_1([Q|Ls], MTD).
+					       length_plus_1([Q|Ls], MTD).
 
 deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
@@ -380,5 +387,9 @@ state0_action_state(Ls ^ [R | Rs], stay, Ls ^ [R1 | Rs]) :-
 	enroll(R, R1)
     ).
 
+%% Note how this state-machine naturally starts up from a blank slate:
 %?- state0_action_state([] ^ [0/0, 0/0, 0/0], Action, State).
-%@ caught: error(existence_error(procedure,between/3),between/3)
+%@    Action = stay, State = []^[_A/1,0/0,0/0], clpz:(_A in 0..1)
+%@ ;  false.
+
+%% TODO: Embed state0_action_state/3 in a DCG, for easier testing.
