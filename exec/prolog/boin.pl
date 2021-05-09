@@ -110,15 +110,6 @@ tally_maxn(DLTs/Enrolled, MaxN) :-
     DLTs in 0..Enrolled,
     indomain(DLTs).
 
-%?- tally_maxn(T/N, 6).
-%@    T = 0, N = 0
-%@ ;  T = 0, N = 1
-%@ ;  T = 1, N = 1
-%% ... as expected ...
-%@ ;  T = 4, N = 6
-%@ ;  T = 5, N = 6
-%@ ;  T = 6, N = 6.
-
 %% Having a 'default' max cohort size will make dev & test a bit easier:
 tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 
@@ -126,33 +117,27 @@ tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 %?- tally(_), false.
 %@ false.
 
-%?- tally(T/N).
-%@    T = 0, N = 0
-%@ ;  T = 0, N = 1
-%@ ;  T = 1, N = 1
-%@ ;  T = 0, N = 2
-%@ ;  T = 1, N = 2
-%% ... as expected ...
-%@ ;  T = 8, N = 12
-%@ ;  T = 9, N = 12
-%@ ;  T = 10, N = 12
-%@ ;  T = 11, N = 12
-%@ ;  T = 12, N = 12.
-
 %% How do tallies COMPARE?
 
 /*
 The essence of tally comparisons is one of REACHABILITY, i.e. EXISTENCE OF PATHS.
 Generally, in fact, it is NON-REACHABILITY that supports any definite statement.
-This might be stated correctly in terms of the DCG cohort//0. But this would not
-be efficient. (Still, I could use such a statement as a correctness check!)
 
-Strict inequalities like safer_than/2 mean that whichever argument is *earlier*
-(i.e., has the smaller denominator) cannot under any conceivable path cross over
-the other argument. Thus, the earlier is safer than the later if even a path of
-100% toxicity that brings its denominator to the later's leaves its numerator
-strictly less. Conversely, the later is safer if even a 100% non-toxic path from
-the earlier does not make it look better than the later.
+Let's say two tallies are 'contemporaneous' if they have the same denominator N.
+The comparison of 'contemporaneous' tallies is straightforward, since it amounts
+simply to comparing the numerators as elements of ℕ.
+
+In comparing two non-contemporaneous tallies, the 'earlier' one is brought forward
+as a 'cloud' of reachable tallies contemporaneous with the 'later' one. Relations
+hold between the original 2 tallies iff they hold between all contemporaneous pairs
+thus formed.
+
+For certain relations between contemporaneous tallies, we do not need to generate
+the entire 'cloud', but rather know immediately how to construct the 'most extreme'
+point in the cloud for immediate comparison. Thus, the earlier is SAFER than the later
+if even a path of 100% toxicity that brings its denominator to the later's leaves its
+numerator strictly less. Conversely, them later is SAFER if even a 100% non-toxic path
+from the earlier does not make it better than the later.
 */
 
 safer_than(T0/N0, T1/N1) :-
@@ -164,65 +149,12 @@ safer_than(T0/N0, T1/N1) :-
 	T0 + MaxTox #< T1
     ).
 
-%?- safer_than(Q, 2/3).
-%@    Q = 0/2
-%@ ;  Q = 0/3
-%@ ;  Q = 1/3
-%@ ;  Q = 0/4
-%@ ;  Q = 1/4
-%@ ;  Q = 0/5
-%@ ;  Q = 1/5
-%@ ;  Q = 0/6
-%@ ;  Q = 1/6
-%@ ;  Q = 0/7
-%@ ;  Q = 1/7
-%@ ;  Q = 0/8
-%@ ;  Q = 1/8
-%@ ;  Q = 0/9
-%@ ;  Q = 1/9
-%@ ;  Q = 0/10
-%@ ;  Q = 1/10
-%@ ;  Q = 0/11
-%@ ;  Q = 1/11
-%@ ;  Q = 0/12
-%@ ;  Q = 1/12
-%@ ;  false.
-
 %% Note e.g. that we cannot say safer_than(1/2, 2/3)
 %% because we might enroll 1 with 1/2 ~~> 2/3, which
 %% is not *strictly* less than 2/3.
 
 :- op(900, xfx, &<).
 &<(Q1, Q2) :- safer_than(Q1, Q2).
-%?- Q &< 1/3.
-%@    Q = 0/3
-%@ ;  Q = 0/4
-%@ ;  Q = 0/5
-%@ ;  Q = 0/6
-%@ ;  Q = 0/7
-%@ ;  Q = 0/8
-%@ ;  Q = 0/9
-%@ ;  Q = 0/10
-%@ ;  Q = 0/11
-%@ ;  Q = 0/12
-%@ ;  false.
-
-%% Note that, under the new REACHABILITY semantics of tally comparisons,
-%% we no longer make a claim such as 1/6 &< 1/3! What remains true is
-%% only that 1/6 &=< 1/3.
-%% NOTE: Reasoning about reachability amounts to reasoning about as-yet
-%%       uninstantiated toxicity assessments, and therefore accords
-%%       perfectly with this essential strength of Prolog.
-%% TODO: It seems likely that reachability semantics are more stringent
-%%       than my previous formalism, so that we now can say fewer things.
-%%       I ought to prove this---or let Prolog prove it for me.
-%% TODO: What is the relationship (if any) between meta-interpretation
-%%       and this change of tally-comparison semantics? Does MI affect
-%%       only the IMPLEMENTATION---and not the meaning---of a program?
-%% TODO: Given how far this reachability semantics departs from normal
-%%       pharmacologic intuitions, perhaps even words like 'safer_than'
-%%       should be reconsidered. I may well have abandoned all hope of
-%%       capturing such intuitions in these predicates!
 
 noworse_than(T0/N0, T1/N1) :-
     tally(T0/N0),
@@ -244,75 +176,31 @@ noworse_than(T0/N0, T1/N1) :-
 %?- tally(1/3), tally(2/3), 3 #>= 3, 1 #=< 2.
 %@    true.
 
-
-%?- noworse_than(Q, 2/3).
-%@    Q = 0/1
-%@ ;  Q = 0/2
-%@ ;  Q = 1/2
-%@ ;  Q = 0/3
-%@ ;  Q = 1/3
-%@ ;  Q = 2/3
-%@ ;  Q = 0/4
-%@ ;  Q = 1/4
-%@ ;  Q = 2/4
-%@ ;  Q = 0/5
-%@ ;  Q = 1/5
-%@ ;  Q = 2/5
-%@ ;  Q = 0/6
-%@ ;  Q = 1/6
-%@ ;  Q = 2/6
-%@ ;  Q = 0/7
-%@ ;  Q = 1/7
-%@ ;  Q = 2/7
-%@ ;  Q = 0/8
-%@ ;  Q = 1/8
-%@ ;  Q = 2/8
-%@ ;  Q = 0/9
-%@ ;  Q = 1/9
-%@ ;  Q = 2/9
-%@ ;  Q = 0/10
-%@ ;  Q = 1/10
-%@ ;  Q = 2/10
-%@ ;  Q = 0/11
-%@ ;  Q = 1/11
-%@ ;  Q = 2/11
-%@ ;  Q = 0/12
-%@ ;  Q = 1/12
-%@ ;  Q = 2/12
-%@ ;  false.
-
-%?- safer_than(T/N, 1/2).
-%@    T = 0, N = 2
-%@ ;  T = 0, N = 3
-%@ ;  T = 0, N = 4
-%@ ;  T = 0, N = 5
-%@ ;  T = 0, N = 6
-%@ ;  T = 0, N = 7
-%@ ;  T = 0, N = 8
-%@ ;  T = 0, N = 9
-%@ ;  T = 0, N = 10
-%@ ;  T = 0, N = 11
-%@ ;  T = 0, N = 12
-%@ ;  false.
-
 :- op(900, xfx, &=<).
 &=<(Q1, Q2) :- noworse_than(Q1, Q2).
-%?- 1/3 &=< Q.
-%@    Q = 1/1
-%@ ;  Q = 1/2
-%@ ;  Q = 2/2
-%@ ;  Q = 1/3
-%@ ;  Q = 2/3
-%@ ;  Q = 3/3
-%@ ;  Q = 2/4
-%@ ;  Q = 3/4
-%@ ;  Q = 4/4
-%@ ;  Q = 3/5
-%@ ;  Q = 4/5
-%@ ;  Q = 5/5
-%@ ;  Q = 4/6
-%@ ;  Q = 5/6
-%@ ;  Q = 6/6.
+
+%% Note that, under the new REACHABILITY semantics of tally comparisons,
+%% we no longer make a claim such as 1/6 &< 1/3! What remains true is
+%% only that 1/6 &=< 1/3:
+%?- 1/6 &< 1/3.
+%@ false.
+%?- 1/6 &=< 1/3.
+%@    true
+%@ ;  false.
+
+%% NOTE: Reasoning about reachability amounts to reasoning about as-yet
+%%       uninstantiated toxicity assessments, and therefore accords
+%%       perfectly with this essential strength of Prolog.
+%% TODO: It seems likely that reachability semantics are more stringent
+%%       than my previous formalism, so that we now can say fewer things.
+%%       I ought to prove this---or let Prolog prove it for me.
+%% TODO: What is the relationship (if any) between meta-interpretation
+%%       and this change of tally-comparison semantics? Does MI affect
+%%       only the IMPLEMENTATION---and not the meaning---of a program?
+%% TODO: Given how far this reachability semantics departs from normal
+%%       pharmacologic intuitions, perhaps even words like 'safer_than'
+%%       should be reconsidered. I may well have abandoned all hope of
+%%       capturing such intuitions in these predicates!
 
 on_par(T0/N0, T1/N1) :-
     tally(T0/N0), N0 #> 0,
@@ -321,36 +209,6 @@ on_par(T0/N0, T1/N1) :-
 
 :- op(900, xfx, &=).
 &=(Q1, Q2) :- on_par(Q1, Q2).
-
-%?- Q &= R.
-%@    Q = 0/1, R = 0/1
-%@ ;  Q = 0/1, R = 0/2
-%@ ;  Q = 0/1, R = 0/3
-%@ ;  Q = 0/1, R = 0/4
-%@ ;  Q = 0/1, R = 0/5
-%@ ;  Q = 0/1, R = 0/6
-%@ ;  Q = 0/1, R = 0/7
-%@ ;  Q = 0/1, R = 0/8
-%@ ;  Q = 0/1, R = 0/9
-%@ ;  Q = 0/1, R = 0/10
-%@ ;  Q = 0/1, R = 0/11
-%@ ;  Q = 0/1, R = 0/12
-%@ ;  Q = 1/1, R = 1/1
-%@ ;  Q = 1/1, R = 2/2
-%@ ;  Q = 1/1, R = 3/3
-%@ ;  Q = 1/1, R = 4/4
-%@ ;  Q = 1/1, R = 5/5
-%@ ;  Q = 1/1, R = 6/6
-%@ ;  ...
-
-%?- Q &< R.
-%@    Q = 0/1, R = 1/1
-%@ ;  Q = 0/1, R = 2/2
-%@ ;  Q = 0/1, R = 3/3
-%@ ;  Q = 0/1, R = 4/4
-%@ ;  Q = 0/1, R = 5/5
-%@ ;  Q = 0/1, R = 6/6
-%@ ;  ...
 
 % Strict tally-safer (&<) excludes tally-equals (&=)
 %?- time((Q &< R, Q &= R)).
@@ -362,7 +220,6 @@ on_par(T0/N0, T1/N1) :-
 %@    % CPU time: 63.436 seconds
 %@ false.
 
-
 %% Here was my motivation for writing down on_par/2 in the first place:
 %?- Q &= 1/3. %% 1/3 is (roughly) the 3+3 design's 'target toxicity rate'
 %@    Q = 1/3
@@ -370,11 +227,7 @@ on_par(T0/N0, T1/N1) :-
 %@ ;  Q = 3/9
 %@ ;  Q = 4/12
 %@ ;  false.
-
-%?- cohort_tally([0,0,T], Q), safer_than(Q, 2/3).
-%@    Q = 0/3, T = 0
-%@ ;  Q = 1/3, T = 1
-%@ ;  false.
+%% TODO: If that motivation no longer applies, then on_par/2 should go.
 
 %% -----------------------------------------------------------------------------
 
@@ -438,6 +291,7 @@ tox_boundary(Bdy) :-
 %@ false.
 
 %% TODO: Why does sortedness of Ns not appear in constraints below?
+%%       (Do I need to assert sortedness in terms clpz that understands?)
 %?- tox_boundary(Bdy).
 %@    Bdy = []
 %@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in 1..sup)
@@ -455,8 +309,6 @@ of touching and of having 'broken through'.
 %% TODO: Consider not leaning on (&<)-type tally comparisons, but rather
 %%       going directly to CLP(Z) constraints. This will be faster, and
 %%       also enable me to avoid superfluous choice points, etc.
-%% OOH! Maybe I'm discovering that all the above efforts were unnecessary!
-%%      Could it be that this file can just about start HERE?
 
 /*
 If I do 'cut out the middleman' in this way, what is the right representation
