@@ -62,11 +62,10 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(dcgs)).
 :- use_module(library(lambda)).
 :- use_module(library(time)).
-%@    true.
+:- use_module(library(debug)).
+:- use_module(library(between)).
 
-% Prefix op * for 'generalizing away' goals (https://www.metalevel.at/prolog/debugging)
-:- op(920, fy, *).
-*_.  % *Goal always succeeds
+% TODO: Review library(debug); it includes * and other useful predicates
 
 %% -----------------------------------------------------------------------------
 
@@ -162,8 +161,8 @@ zip([X|Xs], [Y|Ys], [X/Y | XsYs]) :-
 
 tox_boundary(Bdy) :-
     zip(Ts, Ns, Bdy),
-    sort(Ns, Ns), % TODO: Do I gain anything by thus removing degeneracy?
-    maplist(\X^(X #> 0), Ns), % TODO: Is there a clpz idiom for this?
+    chain(#<, Ns),
+    maplist(#>(0), Ns),
     %% Note there are further constraints on what might be considered
     %% reasonable tox boundaries. There shouldn't be duplicated Ns, e.g.,
     %% and all the Ts should be non-negative. But perhaps these are best
@@ -171,16 +170,37 @@ tox_boundary(Bdy) :-
     %% tox boundaries becomes desirable.
     maplist(#=<, Ts, Ns).
 
+%?- sort([A,B,C], [3,1,2]).
+%@    A = 3, B = 1, C = 2.
+
+%?- sort([A,B,C], [3,1,2]), sort([A,B,C], [3,1,2]).
+%@ false.
+
 %?- tox_boundary([0/2, 1/4]).
+%@ false.
 %@    true
 %@ ;  false.
 
 %?- tox_boundary([0/5, 1/4]).
 %@ false.
+%@ false.
 
 %% TODO: Why does sortedness of Ns not appear in constraints below?
 %%       (Do I need to assert sortedness in terms clpz that understands?)
 %?- tox_boundary(Bdy).
+%@    Bdy = []
+%@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1)
+%@ ;  Bdy = [_C/_A,_D/_B], clpz:(_A#=<_B+ -1), clpz:(_A#>=_C), clpz:(_B#>=_D), clpz:(_A in inf.. -2), clpz:(_C in inf.. -2), clpz:(_B in inf.. -1), clpz:(_D in inf.. -1)
+%@ ;  ...
+%@    Bdy = []
+%@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1)
+%@ ;  Bdy = [_B/_A,_D/_C], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1), clpz:(_C in inf.. -1), clpz:(_D in inf.. -1)
+%@ ;  Bdy = [_B/_A,_D/_C,_F/_E], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_E#>=_F), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1), clpz:(_C in inf.. -1), clpz:(_D in inf.. -1), clpz:(_E in inf.. -1), clpz:(_F in inf.. -1)
+%@ ;  ...
+%@    Bdy = []
+%@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1)
+%@ ;  Bdy = [_B/_A,_D/_C], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_A in inf.. -1), clpz:(_B in inf.. -1), clpz:(_C in inf.. -1), clpz:(_D in inf.. -1)
+%@ ;  ...
 %@    Bdy = []
 %@ ;  Bdy = [_B/_A], clpz:(_A#>=_B), clpz:(_A in 1..sup)
 %@ ;  Bdy = [_B/_A,_D/_C], clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_A in 1..sup), clpz:(_C in 1..sup)
@@ -231,7 +251,6 @@ minimal_maxn(BdyRep, MaxN) :-
 */
 
 %% I unapologetically assume that the Bdy list is a minimal representation.
-hit_floor(_/_, []) :- false.
 hit_floor(T/N, [Tb/Nb | Bdys]) :-
     %minimal_maxn([Tb/Nb|Bdys], 12), %% TODO: Try activating this assertion
     %% TODO: The correctness of this predicate may depend only on the
@@ -248,7 +267,6 @@ hit_floor(T/N, [Tb/Nb | Bdys]) :-
 %@    true
 %@ ;  false.
 
-hit_ceiling(_/_, []) :- false.
 hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
     %minimal_maxn([Tb/Nb|Bdys], 12), %% TODO: Try activating this assertion
     (	T #= Tb, N #=< Nb
@@ -325,23 +343,17 @@ self-verifying by proofs executed in Prolog itself.
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
-cohort_full(N, yes) :- N #>= 12.
-%%%cohort_full(N, no) :- N in 0..11.
-%?- cohort_full(1, no).
-%@ caught: error(existence_error(procedure,between/3),between/3)
-%% TODO: Understand the above error.
-cohort_full(N, no) :- N #< 12,
-		      N #>= 0.
-cohort_full(_/N, YesNo) :- cohort_full(N, YesNo).
+cohort_full(N, true) :- N #>= 12.
+cohort_full(N, false) :- N in 0..11.
+cohort_full(_/N, TF) :- cohort_full(N, TF).
 
 enroll(T0/N0, T1/N1) :-
-    cohort_full(N0, no),
+    cohort_full(N0, false),
     N1 #= N0 + 1,
     T in 0..1, % T is the pending tox assessment of newly-enrolled patient
     T1 #= T0 + T.
 
 %% Overload enroll/2 on lists of tallies, enrolling head tally
-enroll([], _) :- false. % (**)
 enroll([T0/N0 | Qs], [T1/N1 | Qs]) :-
     enroll(T0/N0, T1/N1).
 
@@ -350,21 +362,21 @@ length_plus_1(Ls, MTD) :-
     MTD #= MTD_1 + 1.
 
 stay(Ls ^ [R | Rs], Ls ^ [R1 | Rs]) :- enroll(R, R1).
-stay(Ls ^ [_/N | _], declare_mtd(MTD)) :- cohort_full(N, yes),
+stay(Ls ^ [_/N | _], declare_mtd(MTD)) :- cohort_full(N, true),
 					  length_plus_1(Ls, MTD).
 
 escalate(Ls ^ [T/N], State) :- % NB: this is a 'clamped' situation
     stay(Ls ^ [T/N], State).
 
 escalate(Ls ^ [Q, R | _], [Q | Ls] ^ [R1 | _]) :- enroll(R, R1).
-escalate(Ls ^ [Q, R | _], declare_mtd(MTD)) :- cohort_full(R, yes),
+escalate(Ls ^ [Q, R | _], declare_mtd(MTD)) :- cohort_full(R, true),
 					       length_plus_1([Q|Ls], MTD).
 
 deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
 %% TODO: Use 'guard' to parse this into separate clauses.
 deescalate([L | Ls] ^ Rs, Ls ^ [L1 | Rs]) :- enroll(L, L1).
-deescalate([L | Ls] ^ _, declare_mtd(MTD)) :- cohort_full(L, yes),
+deescalate([L | Ls] ^ _, declare_mtd(MTD)) :- cohort_full(L, true),
 					      length(Ls, MTD).
 
 %% TODO: Note how TRIVIAL state0_action_state/3 has become.
@@ -380,6 +392,19 @@ state0_action_state(Ls ^ [R | Rs], deescalate, State) :-
     deescalate(Ls ^ [R | Rs], State).
 
 state0_action_state(Ls ^ [R | Rs], stay, Ls ^ [R1 | Rs]) :-
+    %% This is not sound if R is not ground!
+    %% zcompare/3 caters to all possible case, and never loses
+    %% any of them or incorrectly commits to them.
+    %% Always have all correct cases in mind.
+    %% You can see by looking at this code that it is incomplete!
+    %% Use clauses to enumerate the possible cases.
+    %% Unsafe to use extralogical constructs (e.g., sort/2).
+    %% TODO: Look at term rewriting video (where if-then-else used)
+    %% Consider if_ here also.
+    %% But no matter what, be able to state precisely what holds;
+    %% a linguistic task: formulate precisely what conditions
+    %% make this true.
+    %% TODO: Use the MGQ to find where this unsound clause fails!
     (	escalate(R) -> false
     ;	deescalate(R) -> false
     ;	%% Until I gain greater (e.g., zcompare/3-style) control over the
@@ -392,4 +417,47 @@ state0_action_state(Ls ^ [R | Rs], stay, Ls ^ [R1 | Rs]) :-
 %@    Action = stay, State = []^[_A/1,0/0,0/0], clpz:(_A in 0..1)
 %@ ;  false.
 
-%% TODO: Embed state0_action_state/3 in a DCG, for easier testing.
+%% TODO: Consider restoring an 'mtd_notfound' concept to the trial.
+%%       Even if this notion disappears 'WLOG' from a purely formal perspective,
+%%       it remains part of the lingo, and with good reason. There really IS a
+%%       difference between having found a moderate number of DLTs at the RP2D,
+%%       and having probed nowhere into the toxic dose region.
+%%actions(mtd_notfound(_)) --> [].
+actions(declare_mtd(_)) --> [].
+actions(S0) --> [(S0->A->S)],
+		{ state0_action_state(S0, A, S) },
+		actions(S).
+
+%% Examine the smallest possible trial -- a trial with just 1 dose!
+%?- phrase(actions([]^[0/0]), Trial).
+%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  ...
+%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  ...
+%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  ...
+
+%% TODO: If this base case has (as I suspect) a 'closed-form' solution,
+%%       then this opens up opportunities to try using Prolog to PROVE
+%%       properties of cumulative-cohort designs.
+%%       Might PROOFS BY INDUCTION be possible? Even if these proofs
+%%       were of high time-complexity, the finite domain of the truly
+%%       practical dose-escalation trials might even possess provable
+%%       properties 'for all practical purposes'. This is the kind of
+%%       result that invokes the spirit of Markus's exhaustive treatment
+%%       of SGP.
+
+%% TODO: Develop a 'condensed' format as done in 'aliquots.pl'
+%% NB: Achieving an application of the previous condensed form
+%%     (with any required extensions) will constitute progress
+%%     toward comprehending 3+3 together with CCDs -- and maybe
+%%     demonstrating their unification.
+%% TODO: Suppose I collapse 'stay' actions?
