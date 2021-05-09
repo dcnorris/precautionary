@@ -522,171 +522,6 @@ hit_ceiling(T/N, [Tb/Nb | Bdys]) :-
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Pick up from here...
 
-%% Opportunity to replace the hard-coding here with meta-interpretation.
-%% You might interpret 'more fairly', e.g.
-
-%% ENROLL new patient 'T' into the lowest right-hand dose
-state0_action_state(Ls ^ [R | Rs], enroll, Ls ^ [[T|R] | Rs]) :-
-    enrollable_cohort(R),
-    T in 0..1, % var T is pending tox assessment of the newly-enrolled patient
-    %% TODO: impose restriction on acceptable tally
-    true.
-
-enrollable_cohort(R) :-
-    length(R, N), N #< 6, % limit max cohort size
-    true.
-
-
-% Which tallies do not rule out further enrollment at a dose?
-enrollable_tally(T0/N0) :-
-    tally(T0/N0),
-    (	N0 #= 0
-    ;	N0 #= 3, T0 #=< 1
-    ).
-%?- enrollable_tally(Q).
-%@ Q = 0/0 ;
-%@ Q = _3234/3,
-%@ _3234 in 0..1 ;
-%@ false.
-
-% Which tallies RULE OUT further enrollment at a dose?
-unenrollable_tally(T/3) :- tally(T/3), T #> 1. % 'too toxic'
-unenrollable_tally(T/6) :- tally(T/6). % 'enough already'
-
-%?- state0_action_state(S0, enroll, S).
-%@ S0 = _7610:[0/0|_7618],        % We enroll a new dose 0/0,
-%@ S = _7610^[_7652/3|_7618],
-%@ _7652 in 0..3 ;
-%@ S0 = _11382:[_11394/3|_11390], % or an already-tried dose ..
-%@ S = _11382^[_11424/6|_11390],
-%@ _11394 in 0..1,                % of 0/3 or 1/3
-%@ _11394+_11474#=_11424,         % and add correctly!
-%@ _11474 in 0..3,                % This is # of new toxicities,
-%@ _11424 in 0..4 ;               % which can sum to 4/6 at most.
-%@ false.
-
-/*
-Instead of regarding merely TALLIES as presumably safe/toxic,
-we apply these JUDGMENTS rather (and more properly) to the DOSES
-themselves -- as represented through lists.
-*/
-presumably_safe([]). % [] corresponds to zero dose
-presumably_safe([Q|_]) :- % "no need to enroll further at this dose to say it's okay"
-    tally(Q),
-    Q = T/6,   % TODO: Might I obtain the no-deescalation variant of 3+3
-    T in 0..1. %       simply by modifying these 2 goals?
-
-presumably_toxic([]) :- false.
-presumably_toxic([Q|_]) :-
-    tally(Q),
-    Q = T/_,
-    T #> 1.
-
-%?- presumably_toxic([Q|_]).
-%@ Q = _5352/3,
-%@ _5352 in 2..3 ;
-%@ Q = _6862/6,
-%@ _6862 in 2..6.
-
-%% PROOF: Presumable tallies are NOT enrollable
-%?- (presumably_safe([T]); presumably_toxic([T])), enrollable_tally(T).
-%@ false.
-
-%% PROOF: Enrollable and unenrollable tallies are disjoint
-%?- enrollable_tally(Q), unenrollable_tally(Q).
-%@ false.
-
-%?- enrollable_tally(T/N).
-%@ T = N, N = 0 ;
-%@ N = 3,
-%@ T in 0..1 ;
-%@ false.
-
-% Handling the (exceptional) MTD-not-found case in the ENROLLMENT
-% phase is formally quite natural, even if it appears odd from a
-% perspective that ':' is the state upon which the 'routine' trial
-% operations act. (The literal interpretation of ':' as the phase
-% where trial administrative staff are at work is thus misleading.)
-%% AHA! This demands modification along with the 'conspicuous'
-%% clause below.
-%% state0_action_state(Ls : [], stop, mtd_notfound(D)) :-
-%%     presumably_safe(Ls),
-%%     length(Ls, D). % RP2D is highest prespecified dose, D.
-% This is by far the MOST CONSPICUOUS clause of state0_action_state/3,
-% since it clearly catches an edge case _:[] and changes the stacks.
-% There is a real sense in which this exceptional case is handled as
-% an 'oopsie' here, rather than straightforwardly.
-% Perhaps we see here a tension between 'elegance' and 'bluntness',
-% BOTH of which seem like attrbutes of good Prolog programming.
-% ---
-% Now that I find this clause causing problems during DCG translation
-% to the compact D{^,-,*}T notation, I believe a special term is
-% warranted to distinguish this case.
-%% state0_action_state([Q0|Ls] : [], enroll, Ls ^ [Q]) :-
-%%     tally0_cohort_tally(Q0, _, Q).
-
-
-%% JUDGE the toxicities, and WEIGH the dose-escalation decision.
-%% NB: We require a dose R that we can escalate TO!
-state0_action_state(Ls ^ [Q,R|Rs], escalate, [Q|Ls] : [R|Rs]) :-
-    Q &< 1/3.
-% In the case where we WOULD ESCALATE, BUT CAN'T, we record this
-% as a 'clamp' action, by analogy with voltage clamping.
-state0_action_state(Ls ^ [Q], clamp, Ls : [Q]) :-
-    Q &< 1/3,
-    enrollable_tally(Q).
-state0_action_state(Ls^[Q|Rs], stay, Ls:[Q|Rs]) :-
-    Q &= 1/3, % <-- Roughly a statement about meeting 'target toxicity rate'
-    enrollable_tally(Q).
-state0_action_state([L|Ls] ^ Rs, deescalate, Ls : [L]) :-
-    enrollable_tally(L),
-    presumably_toxic(Rs).
-state0_action_state(Ls ^ [R|Rs], stop, declare_mtd(MTD)) :-
-    presumably_safe(Ls),
-    presumably_toxic([R|Rs]),
-    length(Ls, MTD).
-% Here again we treat specially the case where 1st arg is Ls ^ [Q] ...
-state0_action_state(Ls ^ [Q], stop, declare_mtd(MTD)) :-
-    presumably_safe([Q|Ls]),
-    length([Q|Ls], MTD).
-
-
-% What does a  cohort look like?
-cohort(DLTs/N) :-
-    N #= 3, % initially, we permit only cohorts of 3
-    DLTs in 0..N,
-    *indomain(DLTs).
-%?- cohort(C).
-%@ C = _44170/3,
-%@ _44170 in 0..3.
-
-
-%?- unenrollable_tally(Q).
-%@ Q = _5464/3,
-%@ _5464 in 2..sup ;
-%@ Q = _6286/6.
-
-% How do cohorts ACCUMULATE into tallies?
-tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
-    enrollable_tally(T0/N0),
-    cohort(T_/N_),
-    tally(T/N),
-    T #= T0 + T_,
-    N #= N0 + N_.
-%?- tally0_cohort_tally(T0, C, T).
-%@ T0 = 0/0,
-%@ C = T, T = _10336/3,
-%@ _10336 in 0..3 ;
-%@ T0 = _14210/3,
-%@ C = _14228/3,
-%@ T = _14246/6,
-%@ _14210 in 0..1,
-%@ _14210+_14228#=_14246,
-%@ _14228 in 0..3,
-%@ _14246 in 0..4 ;
-%@ false.
-
-
 /* A truly ESSENTIAL core pharmacologic concept undergirding dose-finding
  * trials is the monotonicity of the dose-toxicity function. To manifest
  * this notion in our code, we model the DOSE as a DESCENDING LIST.
@@ -697,25 +532,6 @@ tally0_cohort_tally(T0/N0, T_/N_, T/N) :-
  * the list elements to maintain tallies of toxicities observed at the
  * several doses of the trial.
 */
-
-%% NB: You can do this instead, since tally/1 terminates:
-%% tallies(Qs) :- maplist(tally, Qs).
-
-% Describe a LIST of TALLIES for consecutive prespecified doses:
-tallies([]).
-tallies([Q|Qs]) :-
-    length(Qs, _), % enumerate solutions fairly
-    tally(Q),
-    tallies(Qs).
-%?- length(C, 1), tallies(C).
-%@ C = [0/0] ;
-%@ C = [_7170/3],
-%@ _7170 in 0..3 ;
-%@ C = [_8490/6],
-%@ _8490 in 0..6. % NB: Only 0..3 could occur in a 3+3 trial
-
-%?- length(C, 2), tallies(C), false. % Does it terminate?
-%@ false.                            % Yes.
 
 /* An assumption we make about the dose-escalation trials modeled here
  * is that AT ANY GIVEN MOMENT they always partition the available doses
@@ -731,3 +547,98 @@ tallies([Q|Qs]) :-
  * ':' - Imagine: an ellipsis (or dripping faucet) where we enroll patients
  *       (who 'trickle in'), wait for & assess toxicities.
  */
+
+/*
+Above text is included for comparison with current outlook.
+*/
+
+%% Instead of carrying the tox boundaries along as parameters,
+%% let's simply assert them into the database ...
+%% Note that this naturally invites consideration of a DSL
+%% in which such design rules could be expressed generally!
+
+escalate(Q) :- hit_floor(Q, [0/1, 1/8]).
+deescalate(Q) :- hit_ceiling(Q, [1/1, 2/4, 3/6, 4/8, 5/10, 6/12]).
+remove(Q) :- hit_ceiling(Q, [3/5, 4/8, 5/10, 6/12]).
+
+%% TODO: Note the duplication between remove/2 and deescalate/2.
+%%       Consider whether these should be refined to avoid this.
+%% TODO: Might a zcompare/3-like idiom further the cause of purity?
+
+/*
+Even as I set out to write the first lines of this predicate,
+I can see the value of having complementary &** predicates
+that enable me to state definitively whether a boundary has
+been breached, or not.
+In a way, what I need is a kind of zcompare/3 for tox boundaries!
+Let me not impose burdens on state-machine code, that more properly
+belong to basic comparison operators!
+I don't think I have yet fully worked out the MEANING of toxicity
+boundaries as used in BOIN.
+Keep in mind that I want the code ultimately to be verifiable
+on inspection by Ying Yuan and others -- at least where it is not
+self-verifying by proofs executed in Prolog itself.
+*/
+
+%% NB: The left-hand list of Ls ^ Rs is sorted in descending order.
+%%     So heads L and R in [L|Ls] ^ [R|Rs] are *adjacent* doses.
+
+cohort_full(N, yes) :- N #>= 12.
+cohort_full(N, no) :- N in 0..11.
+cohort_full(_/N, YesNo) :- cohort_full(N, YesNo).
+
+enroll(T0/N0, T1/N1) :-
+    cohort_full(N0, no),
+    N1 #= N0 + 1,
+    T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+    T1 #= T0 + T.
+
+%% Overload enroll/2 on lists of tallies, enrolling head tally
+enroll([], _) :- false. % (**)
+enroll([T0/N0 | Qs], [T1/N1 | Qs]) :-
+    enroll(T0/N0, T1/N1).
+
+length_plus_1(Ls, MTD) :-
+    length(Ls, MTD_1),
+    MTD #= MTD_1 + 1.
+
+stay(Ls ^ [R | Rs], Ls ^ [R1 | Rs]) :- enroll(R, R1).
+stay(Ls ^ [_/N | _], declare_mtd(MTD)) :- cohort_full(N, yes),
+					  length_plus_1(Ls, MTD).
+
+escalate(Ls ^ [T/N], State) :- % NB: this is a 'clamped' situation
+    stay(Ls ^ [T/N], State).
+
+escalate(Ls ^ [Q, R | _], [Q | Ls] ^ [R1 | _]) :- enroll(R, R1).
+escalate(Ls ^ [Q, R | _], declare_mtd(MTD)) :- cohort_full(R, yes),
+						length_plus_1([Q|Ls], MTD).
+
+deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
+
+%% TODO: Use 'guard' to parse this into separate clauses.
+deescalate([L | Ls] ^ Rs, Ls ^ [L1 | Rs]) :- enroll(L, L1).
+deescalate([L | Ls] ^ _, declare_mtd(MTD)) :- cohort_full(L, yes),
+					      length(Ls, MTD).
+
+%% TODO: Note how TRIVIAL state0_action_state/3 has become.
+%%       Does this demand refactoring, or does it represent other
+%%       types of opportunity -- even meta-interpretation?
+
+state0_action_state(Ls ^ [R | Rs], escalate, State) :-
+    escalate(R),
+    escalate(Ls ^ [R | Rs], State).
+
+state0_action_state(Ls ^ [R | Rs], deescalate, State) :-
+    deescalate(R),
+    deescalate(Ls ^ [R | Rs], State).
+
+state0_action_state(Ls ^ [R | Rs], stay, Ls ^ [R1 | Rs]) :-
+    (	escalate(R) -> false
+    ;	deescalate(R) -> false
+    ;	%% Until I gain greater (e.g., zcompare/3-style) control over the
+	%% boundary-hitting concept, I must treat 'stay' as a DEFAULT action:
+	enroll(R, R1)
+    ).
+
+%?- state0_action_state([] ^ [0/0, 0/0, 0/0], Action, State).
+%@ caught: error(existence_error(procedure,between/3),between/3)
