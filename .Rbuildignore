@@ -12,3 +12,6 @@
 ^Rprof.out
 ^doc$
 ^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

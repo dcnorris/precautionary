@@ -1,5 +1,11 @@
+*~
+.RData
+.Rhistory
 man/
 vignettes/*.html
+vignettes/packages.bib
 doc
 Meta
 R/sysdata.rda
+docs
+pkgdown/favicon
