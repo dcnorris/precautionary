@@ -30,6 +30,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -48,12 +50,6 @@
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -100,9 +96,9 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to package ‘precautionary’</h1>
-                        <h4 class="author">David C. Norris</h4>
+                        <h4 data-toc-skip class="author">David C. Norris</h4>
             
-            <h4 class="date">7/31/2020</h4>
+            <h4 data-toc-skip class="date">7/31/2020</h4>
       
       
       <div class="hidden name"><code>Intro.Rmd</code></div>
@@ -113,21 +109,21 @@
     
 <div id="basics" class="section level1">
 <h1 class="hasAnchor">
-<a href="#basics" class="anchor"></a>Basics</h1>
-<p>In package <a href="https://CRAN.R-project.org/package=escalation">escalation</a>, you can simulate a 3 + 3 design as follows:</p>
+<a href="#basics" class="anchor" aria-hidden="true"></a>Basics</h1>
+<p>In package <a href="https://CRAN.R-project.org/package=escalation" class="external-link">escalation</a>, you can simulate a 3 + 3 design as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">escalation</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">escalation</span><span class="op">)</span>
 <span class="co"># Design a 3 + 3 trial, with 5 pre-specified doses to escalate through</span>
-<span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html">get_three_plus_three</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>
+<span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html" class="external-link">get_three_plus_three</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>
 <span class="co"># Posit a scenario where these 5 doses cause dose-limiting toxicities</span>
 <span class="co"># (DLTs) in 12%, 27%, etc. of the population:</span>
-<span class="va">scenario</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.12</span>, <span class="fl">0.27</span>, <span class="fl">0.44</span>, <span class="fl">0.53</span>, <span class="fl">0.57</span><span class="op">)</span>
-<span class="va">design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span> <span class="co"># Feed the design to the simulator ...</span>
+<span class="va">scenario</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.12</span>, <span class="fl">0.27</span>, <span class="fl">0.44</span>, <span class="fl">0.53</span>, <span class="fl">0.57</span><span class="op">)</span>
+<span class="va">design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span> <span class="co"># Feed the design to the simulator ...</span>
   num_sims <span class="op">=</span> <span class="fl">100</span>            <span class="co"># run 100 simulated trials</span>
 , true_prob_tox <span class="op">=</span> <span class="va">scenario</span>  <span class="co"># under the chosen scenario,</span>
 <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">sims</span>                   <span class="co"># and store the results.</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span> <span class="co"># summarize simulation results</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span> <span class="co"># summarize simulation results</span></code></pre></div>
 <table class="table">
 <caption>
 Simulation summary as produced by package <code>escalation</code>.
@@ -167,7 +163,7 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.14
+0.13
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -178,19 +174,19 @@ NoDose
 1
 </td>
 <td style="text-align:right;">
-0.44
+0.52
 </td>
 <td style="text-align:right;">
-3.81
+3.96
 </td>
 <td style="text-align:right;">
 0.12
 </td>
 <td style="text-align:right;">
-0.45
+0.46
 </td>
 <td style="text-align:right;">
-0.3931889
+0.4049080
 </td>
 </tr>
 <tr>
@@ -198,19 +194,19 @@ NoDose
 2
 </td>
 <td style="text-align:right;">
-1.03
+1.14
 </td>
 <td style="text-align:right;">
-3.54
+3.69
 </td>
 <td style="text-align:right;">
 0.27
 </td>
 <td style="text-align:right;">
-0.29
+0.31
 </td>
 <td style="text-align:right;">
-0.3653251
+0.3773006
 </td>
 </tr>
 <tr>
@@ -218,19 +214,19 @@ NoDose
 3
 </td>
 <td style="text-align:right;">
-0.73
+0.80
 </td>
 <td style="text-align:right;">
-1.83
+1.71
 </td>
 <td style="text-align:right;">
 0.44
 </td>
 <td style="text-align:right;">
-0.10
+0.09
 </td>
 <td style="text-align:right;">
-0.1888545
+0.1748466
 </td>
 </tr>
 <tr>
@@ -238,19 +234,19 @@ NoDose
 4
 </td>
 <td style="text-align:right;">
-0.25
+0.24
 </td>
 <td style="text-align:right;">
-0.45
+0.39
 </td>
 <td style="text-align:right;">
 0.53
 </td>
 <td style="text-align:right;">
-0.02
+0.00
 </td>
 <td style="text-align:right;">
-0.0464396
+0.0398773
 </td>
 </tr>
 <tr>
@@ -258,46 +254,46 @@ NoDose
 5
 </td>
 <td style="text-align:right;">
-0.05
+0.00
 </td>
 <td style="text-align:right;">
-0.06
+0.03
 </td>
 <td style="text-align:right;">
 0.57
 </td>
 <td style="text-align:right;">
-0.00
+0.01
 </td>
 <td style="text-align:right;">
-0.0061920
+0.0030675
 </td>
 </tr>
 </tbody>
 </table>
-<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 9.69, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 9.78, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>But simulations such as these cannot answer crucial questions about <strong>trial safety</strong>, mainly because the simulation machinery recognizes no notion of <em>graded toxicity</em>. The binary (yes/no) toxicities in the simulation machinery of <code>escalation</code> regard Grade 5 (fatal) toxicities no differently from Grade 3.</p>
 <div id="introducing-realistic-pharmacologic-thinking" class="section level2">
 <h2 class="hasAnchor">
-<a href="#introducing-realistic-pharmacologic-thinking" class="anchor"></a>Introducing realistic pharmacologic thinking</h2>
+<a href="#introducing-realistic-pharmacologic-thinking" class="anchor" aria-hidden="true"></a>Introducing realistic pharmacologic thinking</h2>
 <p>The <code>precautionary</code> package solves this problem by pursuing a <em>realistic</em> approach to pharmacologic thinking. Rather than plucking a sequence of toxicity probabilities out of thin air, this approach <strong>derives</strong> such probabilities according to how a latent toxicity threshold is distributed in the population.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://precisionmethods.guru/">precautionary</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://precisionmethods.guru/" class="external-link">precautionary</a></span><span class="op">)</span>
 <span class="va">mtdi_dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mtdi_lognormal-class.html">mtdi_lognormal</a></span><span class="op">(</span>CV <span class="op">=</span> <span class="fl">2</span>          <span class="co"># coefficient of variation</span>
                            ,median <span class="op">=</span> <span class="fl">5</span>      <span class="co"># median DLT threshold</span>
                            ,units <span class="op">=</span> <span class="st">"mg/kg"</span> <span class="co"># real doses have units!</span>
                            <span class="op">)</span></code></pre></div>
 <p>Likewise, the pre-specified doses for our dose-escalation design must be specified as actual doses. With package <code>precautionary</code>, this is accomplished by setting a <code>dose_levels</code> option:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>dose_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span> <span class="co"># specify actual dosing</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>dose_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span> <span class="co"># specify actual dosing</span></code></pre></div>
 <p>A plot of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution makes clear the connection with toxicity probabilities:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">mtdi_dist</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mtdi_dist</span><span class="op">)</span></code></pre></div>
 <p><img src="Intro_files/figure-html/unnamed-chunk-3-1.png" width="576"></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">probs</span> <span class="op">&lt;-</span> <span class="va">mtdi_dist</span><span class="op">@</span><span class="va">dist</span><span class="op">$</span><span class="fu">cdf</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">'dose_levels'</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">probs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html">getOption</a></span><span class="op">(</span><span class="st">'dose_levels'</span><span class="op">)</span>, <span class="va">mtdi_dist</span><span class="op">@</span><span class="va">units</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">probs</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">kable</span><span class="op">(</span>digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">probs</span> <span class="op">&lt;-</span> <span class="va">mtdi_dist</span><span class="op">@</span><span class="va">dist</span><span class="op">$</span><span class="fu">cdf</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">'dose_levels'</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">probs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">'dose_levels'</span><span class="op">)</span>, <span class="va">mtdi_dist</span><span class="op">@</span><span class="va">units</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">probs</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">kable</span><span class="op">(</span>digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></code></pre></div>
 <table class="table">
 <thead><tr>
 <th style="text-align:right;">
@@ -337,15 +333,15 @@ NoDose
 </div>
 <div id="extending-escalation-to-support-the-mathrmmtd_i-concept" class="section level2">
 <h2 class="hasAnchor">
-<a href="#extending-escalation-to-support-the-mathrmmtd_i-concept" class="anchor"></a>Extending <code>escalation</code> to support the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept</h2>
+<a href="#extending-escalation-to-support-the-mathrmmtd_i-concept" class="anchor" aria-hidden="true"></a>Extending <code>escalation</code> to support the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept</h2>
 <p>Package <code>precautionary</code> provides additional methods for <code>escalation</code> functions, so that an <code>mtdi_distribution</code> may be used instead of out-of-thin-air probabilities:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
+<code class="sourceCode R"><span class="va">design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
   num_sims <span class="op">=</span> <span class="fl">100</span>
 , true_prob_tox <span class="op">=</span> <span class="va">mtdi_dist</span> <span class="co"># pull tox probs from a MODEL, not thin air</span>
 <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">SIMS</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SIMS</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">SIMS</span><span class="op">)</span></code></pre></div>
 <table class="table">
 <caption>
 A simulation summary under the MTD<span class="math inline">\(_i\)</span> regime of package <code>precautionary</code>.
@@ -391,7 +387,7 @@ NoDose
 0.0000000
 </td>
 <td style="text-align:right;">
-0.03
+0.02
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -408,16 +404,16 @@ NoDose
 0.08
 </td>
 <td style="text-align:right;">
-3.12
+3.18
 </td>
 <td style="text-align:right;">
 0.0347613
 </td>
 <td style="text-align:right;">
-0.06
+0.09
 </td>
 <td style="text-align:right;">
-0.2285714
+0.2431193
 </td>
 </tr>
 <tr>
@@ -428,7 +424,7 @@ NoDose
 1.0
 </td>
 <td style="text-align:right;">
-0.32
+0.37
 </td>
 <td style="text-align:right;">
 3.66
@@ -437,10 +433,10 @@ NoDose
 0.1022854
 </td>
 <td style="text-align:right;">
-0.34
+0.42
 </td>
 <td style="text-align:right;">
-0.2681319
+0.2798165
 </td>
 </tr>
 <tr>
@@ -451,19 +447,19 @@ NoDose
 2.0
 </td>
 <td style="text-align:right;">
-0.93
+1.01
 </td>
 <td style="text-align:right;">
-3.90
+3.93
 </td>
 <td style="text-align:right;">
 0.2350660
 </td>
 <td style="text-align:right;">
-0.41
+0.37
 </td>
 <td style="text-align:right;">
-0.2857143
+0.3004587
 </td>
 </tr>
 <tr>
@@ -474,19 +470,19 @@ NoDose
 4.0
 </td>
 <td style="text-align:right;">
-0.99
+0.88
 </td>
 <td style="text-align:right;">
-2.25
+1.98
 </td>
 <td style="text-align:right;">
 0.4301892
 </td>
 <td style="text-align:right;">
-0.14
+0.10
 </td>
 <td style="text-align:right;">
-0.1648352
+0.1513761
 </td>
 </tr>
 <tr>
@@ -497,19 +493,19 @@ NoDose
 6.0
 </td>
 <td style="text-align:right;">
-0.34
+0.26
 </td>
 <td style="text-align:right;">
-0.72
+0.33
 </td>
 <td style="text-align:right;">
 0.5571371
 </td>
 <td style="text-align:right;">
-0.02
+0.00
 </td>
 <td style="text-align:right;">
-0.0527473
+0.0252294
 </td>
 </tr>
 </tbody>
@@ -518,19 +514,19 @@ NoDose
 </div>
 <div id="introducing-graded-toxicities" class="section level2">
 <h2 class="hasAnchor">
-<a href="#introducing-graded-toxicities" class="anchor"></a>Introducing graded toxicities</h2>
+<a href="#introducing-graded-toxicities" class="anchor" aria-hidden="true"></a>Introducing graded toxicities</h2>
 <p>When its full implications are allowed to develop, the latent toxicity threshold <span class="math inline">\(\mathrm{MTD}_i\)</span> has far-reaching consequences for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-<em>titration</em> designs that abandon cohortwise dose-escalation altogether <span class="citation">(Norris 2017a, 2017b)</span>.</p>
 <p>For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of <span class="math inline">\(\mathrm{MTD}_i\)</span>, and relegates the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept <em>standing alone</em> to the status of a mere formalism. But in conjunction with <em>a dose scaling that links different toxicity grades at the individual level</em>, the <span class="math inline">\(\mathrm{MTD}_i\)</span> can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package <code>precautionary</code>, such scaling functions are called ‘ordinalizers,’ and may be applied at the time when simulations are summarized:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tox_threshold_scaling</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">MTDi</span>, <span class="va">r0</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
+  <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">SIMS</span>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">SIMS</span>
        ,ordinalizer <span class="op">=</span> <span class="va">tox_threshold_scaling</span>
        ,r0 <span class="op">=</span> <span class="fl">2</span>      <span class="co"># supply a value for ordinalizer's r0 parameter</span>
-       <span class="op">)</span><span class="op">$</span><span class="va">safety</span> <span class="op">%&gt;%</span> <span class="co"># select the 'safety' component of the summary</span>
+       <span class="op">)</span><span class="op">$</span><span class="va">safety</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># select the 'safety' component of the summary</span>
   <span class="fu"><a href="../reference/safety_kable.html">safety_kable</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<table class="table table">
+<table class="table table" style="width: auto !important; ">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="6">
@@ -567,25 +563,25 @@ Total
 </thead>
 <tbody><tr>
 <td style="text-align:right;">
-7
-</td>
-<td style="text-align:right;">
-3
+6
 </td>
 <td style="text-align:right;">
 2
 </td>
 <td style="text-align:right;">
-1.3
+2
 </td>
 <td style="text-align:right;">
-0.9
+1.4
 </td>
 <td style="text-align:right;">
-0.4
+0.7
 </td>
 <td style="text-align:right;">
-14
+0.5
+</td>
+<td style="text-align:right;">
+13
 </td>
 </tr></tbody>
 </table>
@@ -593,7 +589,7 @@ Total
 </div>
 <div id="a-closer-look-at-the-ordinalizer" class="section level2">
 <h2 class="hasAnchor">
-<a href="#a-closer-look-at-the-ordinalizer" class="anchor"></a>A closer look at the <em>ordinalizer</em>
+<a href="#a-closer-look-at-the-ordinalizer" class="anchor" aria-hidden="true"></a>A closer look at the <em>ordinalizer</em>
 </h2>
 <p>Let us unroll the ordinalizer above, to make it less cryptic:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -607,7 +603,7 @@ Total
     <span class="co"># Assuming the default value r0 = 2 provided in its definition,</span>
     <span class="co"># this ordinalizer says that an individual whose dose threshold</span>
     <span class="co"># for the binary toxicity is MTDi has thresholds ...</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>Gr1 <span class="op">=</span> <span class="va">MTDi</span> <span class="op">/</span> <span class="va">r0</span><span class="op">^</span><span class="fl">2</span> <span class="co"># at MTDi/4 for Gr1,</span>
+    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1 <span class="op">=</span> <span class="va">MTDi</span> <span class="op">/</span> <span class="va">r0</span><span class="op">^</span><span class="fl">2</span> <span class="co"># at MTDi/4 for Gr1,</span>
      ,Gr2 <span class="op">=</span> <span class="va">MTDi</span> <span class="op">/</span> <span class="va">r0</span>   <span class="co"># at MTDi/2 for Gr2,</span>
      ,Gr3 <span class="op">=</span> <span class="va">MTDi</span>        <span class="co"># at MTDi for Gr3 ('tox' is defined as Gr3+),</span>
      ,Gr4 <span class="op">=</span> <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span>   <span class="co"># at 2*MTDi for Gr4,</span>
@@ -622,11 +618,11 @@ Total
 </div>
 <div id="taking-stock-of-parameter-counts" class="section level2">
 <h2 class="hasAnchor">
-<a href="#taking-stock-of-parameter-counts" class="anchor"></a>Taking stock of parameter counts</h2>
+<a href="#taking-stock-of-parameter-counts" class="anchor" aria-hidden="true"></a>Taking stock of parameter counts</h2>
 <p>It might seem that the benefits of package <code>precautionary</code> come at the cost of having to pre-specify many additional parameters. <em>Au contraire!</em> In the example above, the <code>CV</code> and <code>median</code> parameters of <code>mtdi_dist</code> <strong>replaced</strong> the 5 ‘true toxicity probabilities’ that the package-<code>escalation</code> approach requires you to pluck out of thin air. Thus, immediately we have saved 3 parameters. From this savings, we then spent only 1 on the single parameter <code>r0</code> of our simple ordinalizer. Indeed, if we had wished to spend all of our ‘parameter savings,’ we could have specified an ordinalizer such as:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw">function</span><span class="op">(</span><span class="va">MTDi3</span>, <span class="va">r12</span>, <span class="va">r4</span>, <span class="va">r5</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>Gr1 <span class="op">=</span> <span class="va">MTDi3</span> <span class="op">/</span> <span class="va">r12</span><span class="op">^</span><span class="fl">2</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1 <span class="op">=</span> <span class="va">MTDi3</span> <span class="op">/</span> <span class="va">r12</span><span class="op">^</span><span class="fl">2</span>
    ,Gr2 <span class="op">=</span> <span class="va">MTDi3</span> <span class="op">/</span> <span class="va">r12</span>
    ,Gr3 <span class="op">=</span> <span class="va">MTDi3</span>
    ,Gr4 <span class="op">=</span> <span class="va">MTDi3</span> <span class="op">*</span> <span class="va">r4</span>
@@ -638,7 +634,7 @@ Total
 </div>
 <div id="modeling-uncertainty" class="section level1">
 <h1 class="hasAnchor">
-<a href="#modeling-uncertainty" class="anchor"></a>Modeling uncertainty</h1>
+<a href="#modeling-uncertainty" class="anchor" aria-hidden="true"></a>Modeling uncertainty</h1>
 <p>When you ask people to start thinking, sometimes they keep going. No sooner will you have elicited values for the <code>CV</code> and <code>median</code> parametrizing a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution</p>
 <p><span class="math display">\[
 \begin{align}
@@ -657,7 +653,7 @@ Total
 \mathrm{CV} &amp;\sim \mathscr{R}(\sigma_{\mathrm{CV}})
 \end{align}
 \]</span></p>
-<p>Here, <span class="math inline">\(\sigma_{\mathrm{med}}\)</span> expresses <em>in relative terms</em><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> our uncertainty about the median of <span class="math inline">\(\mathrm{MTD}_i\)</span>, while <span class="math inline">\(\sigma_{\mathrm{CV}}\)</span> is the parameter of the <a href="https://en.wikipedia.org/wiki/Rayleigh_distribution">Raleigh distribution</a>:</p>
+<p>Here, <span class="math inline">\(\sigma_{\mathrm{med}}\)</span> expresses <em>in relative terms</em><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> our uncertainty about the median of <span class="math inline">\(\mathrm{MTD}_i\)</span>, while <span class="math inline">\(\sigma_{\mathrm{CV}}\)</span> is the parameter of the <a href="https://en.wikipedia.org/wiki/Rayleigh_distribution" class="external-link">Raleigh distribution</a>:</p>
 <p><img src="Intro_files/figure-html/Raleigh-distribution-1.png" width="576"></p>
 <p>Happily, the Raleigh distribution’s <span class="math inline">\(\sigma\)</span> parameter coincides with its <em>mode</em> (likeliest value), and its standard deviation is about <span class="math inline">\(\frac{2}{3} \sigma\)</span>, which seems a reasonable degree of relative uncertainty about CV(<span class="math inline">\(\mathrm{MTD}_i\)</span>).<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> We take advantage of this when we implement these features in package <code>precautionary</code>, avoiding the need to ask users to specify a separate uncertainty parameter for CV:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -666,14 +662,14 @@ Total
                                 ,median_sdlog <span class="op">=</span> <span class="fl">0.5</span> <span class="co"># this is new</span>
                                 ,units<span class="op">=</span><span class="st">"mg/kg"</span>
                                 <span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">mtdi_gen</span>, n<span class="op">=</span><span class="fl">100</span>, col<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/grDevices/adjustcolor.html">adjustcolor</a></span><span class="op">(</span><span class="st">"red"</span>, alpha<span class="op">=</span><span class="fl">0.25</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mtdi_gen</span>, n<span class="op">=</span><span class="fl">100</span>, col<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/grDevices/adjustcolor.html" class="external-link">adjustcolor</a></span><span class="op">(</span><span class="st">"red"</span>, alpha<span class="op">=</span><span class="fl">0.25</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="figure">
 <img src="Intro_files/figure-html/hyperprior-1.png" alt="Multiple samples from a *hyperprior* over the distribution of MTD$_i$. Consider the implications for the customary practice of pulling 'true toxicity probabilities' out of thin air!" width="576"><p class="caption">
 Multiple samples from a <em>hyperprior</em> over the distribution of MTD<span class="math inline">\(_i\)</span>. Consider the implications for the customary practice of pulling ‘true toxicity probabilities’ out of thin air!
 </p>
 </div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
+<code class="sourceCode R"><span class="va">design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
   num_sims <span class="op">=</span> <span class="fl">400</span>
 , true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span> <span class="co"># pull tox probs from MANY models</span>
 <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">HYPERSIMS</span>
@@ -683,12 +679,12 @@ Multiple samples from a <em>hyperprior</em> over the distribution of MTD<span cl
 <span class="co"># specifying it as an argument to summary(). By providing a</span>
 <span class="co"># default setting for the r0 parameter in the ordinalizer</span>
 <span class="co"># definition, we avoid having to keep specifying that, too.</span>
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>ordinalizer <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">MTDi</span>, <span class="va">r0</span> <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ordinalizer <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">MTDi</span>, <span class="va">r0</span> <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
-<table class="table table">
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
+<table class="table table" style="width: auto !important; ">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="6">
@@ -731,16 +727,16 @@ Total
 1.7
 </td>
 <td style="text-align:right;">
-1.4
+1.5
 </td>
 <td style="text-align:right;">
-1.0
-</td>
-<td style="text-align:right;">
-0.7
+1.1
 </td>
 <td style="text-align:right;">
 0.7
+</td>
+<td style="text-align:right;">
+0.6
 </td>
 <td style="text-align:right;">
 14
@@ -749,17 +745,17 @@ Total
 </table>
 <div id="uncertainty-about-the-ordinalizer" class="section level2">
 <h2 class="hasAnchor">
-<a href="#uncertainty-about-the-ordinalizer" class="anchor"></a>Uncertainty about the ordinalizer</h2>
+<a href="#uncertainty-about-the-ordinalizer" class="anchor" aria-hidden="true"></a>Uncertainty about the ordinalizer</h2>
 <p>What about our uncertainty over the parameter <span class="math inline">\(r_0\)</span>? Here, it seems entirely reasonable simply to explore a range of values:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1.25</span>, <span class="fl">1.5</span>, <span class="fl">1.75</span>, <span class="fl">2.0</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
-     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
-     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
-     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
+<code class="sourceCode R"><span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.25</span>, <span class="fl">1.5</span>, <span class="fl">1.75</span>, <span class="fl">2.0</span><span class="op">)</span>
+<span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/rbindlist.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
+     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
+     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
+     ,<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">HYPERSIMS</span>, r0<span class="op">=</span><span class="va">r0</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>
      <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">safety</span>
-<span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="fu">data.table</span><span class="op">(</span>`$r_0$` <span class="op">=</span> <span class="va">r0</span><span class="op">)</span>, <span class="va">safety</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">kable</span><span class="op">(</span>digits<span class="op">=</span><span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">add_header_above</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">" "</span><span class="op">=</span><span class="fl">1</span>, <span class="st">"Expected counts by toxicity grade"</span><span class="op">=</span><span class="fl">6</span>, <span class="st">" "</span><span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>`$r_0$` <span class="op">=</span> <span class="va">r0</span><span class="op">)</span>, <span class="va">safety</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">kable</span><span class="op">(</span>digits<span class="op">=</span><span class="fl">2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+  <span class="fu">add_header_above</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">" "</span><span class="op">=</span><span class="fl">1</span>, <span class="st">"Expected counts by toxicity grade"</span><span class="op">=</span><span class="fl">6</span>, <span class="st">" "</span><span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <table class="table">
 <thead>
 <tr>
@@ -809,19 +805,19 @@ Total
 10.12
 </td>
 <td style="text-align:right;">
-0.88
+0.87
 </td>
 <td style="text-align:right;">
-0.70
+0.76
 </td>
 <td style="text-align:right;">
-0.60
+0.62
 </td>
 <td style="text-align:right;">
-0.53
+0.55
 </td>
 <td style="text-align:right;">
-1.29
+1.21
 </td>
 <td style="text-align:right;">
 14.13
@@ -832,22 +828,22 @@ Total
 1.50
 </td>
 <td style="text-align:right;">
-8.59
+8.58
 </td>
 <td style="text-align:right;">
-1.68
+1.69
 </td>
 <td style="text-align:right;">
-1.44
+1.49
 </td>
 <td style="text-align:right;">
-1.02
+1.07
 </td>
 <td style="text-align:right;">
-0.70
+0.69
 </td>
 <td style="text-align:right;">
-0.70
+0.62
 </td>
 <td style="text-align:right;">
 14.13
@@ -858,22 +854,22 @@ Total
 1.75
 </td>
 <td style="text-align:right;">
-7.23
+7.20
 </td>
 <td style="text-align:right;">
-2.44
+2.42
 </td>
 <td style="text-align:right;">
-2.04
+2.13
 </td>
 <td style="text-align:right;">
 1.37
 </td>
 <td style="text-align:right;">
-0.66
+0.68
 </td>
 <td style="text-align:right;">
-0.40
+0.33
 </td>
 <td style="text-align:right;">
 14.13
@@ -884,22 +880,22 @@ Total
 2.00
 </td>
 <td style="text-align:right;">
-6.11
+6.16
 </td>
 <td style="text-align:right;">
-2.98
+2.86
 </td>
 <td style="text-align:right;">
-2.62
+2.74
 </td>
 <td style="text-align:right;">
-1.59
+1.57
 </td>
 <td style="text-align:right;">
 0.60
 </td>
 <td style="text-align:right;">
-0.23
+0.21
 </td>
 <td style="text-align:right;">
 14.13
@@ -911,18 +907,18 @@ Total
 </div>
 <div id="beyond-3-3" class="section level1">
 <h1 class="hasAnchor">
-<a href="#beyond-3-3" class="anchor"></a>Beyond 3 + 3</h1>
+<a href="#beyond-3-3" class="anchor" aria-hidden="true"></a>Beyond 3 + 3</h1>
 <p>One reason that package <code>escalation</code> makes such a suitable basis for these developments is that it unifies several dose-escalation designs under one object-oriented design. Thus, we can repeat the above simulation exercise with a CRM design:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">crm_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dfcrm.html">get_dfcrm</a></span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">scenario</span>, target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/stop_at_n.html">stop_at_n</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">24</span><span class="op">)</span>
-<span class="va">crm_design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
+<code class="sourceCode R"><span class="va">crm_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dfcrm.html" class="external-link">get_dfcrm</a></span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">scenario</span>, target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+  <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/stop_at_n.html" class="external-link">stop_at_n</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">24</span><span class="op">)</span>
+<span class="va">crm_design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
   num_sims <span class="op">=</span> <span class="fl">200</span>
 , true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span>
 <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">CRM_HYPERSIMS</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">CRM_HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
-<table class="table table">
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">CRM_HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
+<table class="table table" style="width: auto !important; ">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="6">
@@ -962,7 +958,7 @@ Total
 12
 </td>
 <td style="text-align:right;">
-3
+4
 </td>
 <td style="text-align:right;">
 3
@@ -971,10 +967,10 @@ Total
 2.2
 </td>
 <td style="text-align:right;">
-1.4
+1.2
 </td>
 <td style="text-align:right;">
-2
+1
 </td>
 <td style="text-align:right;">
 24.0
@@ -983,15 +979,15 @@ Total
 </table>
 <p>The BOIN design of <span class="citation">(Liu and Yuan 2015)</span> is also supported:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">boin_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_boin.html">get_boin</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">5</span>, target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/stop_at_n.html">stop_at_n</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">24</span><span class="op">)</span>
-<span class="va">boin_design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
+<code class="sourceCode R"><span class="va">boin_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_boin.html" class="external-link">get_boin</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">5</span>, target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+  <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/stop_at_n.html" class="external-link">stop_at_n</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">24</span><span class="op">)</span>
+<span class="va">boin_design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
   num_sims <span class="op">=</span> <span class="fl">200</span>
 , true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span>
 <span class="op">)</span> <span class="op">-&gt;</span> <span class="va">BOIN_HYPERSIMS</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">BOIN_HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
-<table class="table table">
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">BOIN_HYPERSIMS</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></code></pre></div>
+<table class="table table" style="width: auto !important; ">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="6">
@@ -1037,13 +1033,13 @@ Total
 3
 </td>
 <td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-1.3
+1.8
 </td>
 <td style="text-align:right;">
 1.1
+</td>
+<td style="text-align:right;">
+1.3
 </td>
 <td style="text-align:right;">
 24.0
@@ -1053,28 +1049,28 @@ Total
 </div>
 <div id="implications-of-package-precautionary" class="section level1">
 <h1 class="hasAnchor">
-<a href="#implications-of-package-precautionary" class="anchor"></a>Implications of package <code>precautionary</code>
+<a href="#implications-of-package-precautionary" class="anchor" aria-hidden="true"></a>Implications of package <code>precautionary</code>
 </h1>
-<p>Package <code>precautionary</code> demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking during prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an ‘ordinalizer’ and the notion of <a href="https://en.wikipedia.org/wiki/Therapeutic_index">therapeutic index</a> (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI <span class="citation">(Muller and Milton 2012)</span>. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.</p>
+<p>Package <code>precautionary</code> demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking during prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an ‘ordinalizer’ and the notion of <a href="https://en.wikipedia.org/wiki/Therapeutic_index" class="external-link">therapeutic index</a> (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI <span class="citation">(Muller and Milton 2012)</span>. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h1>
+<a href="#references" class="anchor" aria-hidden="true"></a>References</h1>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-liu_bayesian_2015" class="csl-entry">
-Liu, Suyu, and Ying Yuan. 2015. <span>“Bayesian Optimal Interval Designs for Phase <span>I</span> Clinical Trials.”</span> <em>Journal of the Royal Statistical Society: Series C (Applied Statistics)</em> 64 (3): 507–23. <a href="https://doi.org/10.1111/rssc.12089">https://doi.org/10.1111/rssc.12089</a>.
+Liu, Suyu, and Ying Yuan. 2015. <span>“Bayesian Optimal Interval Designs for Phase <span>I</span> Clinical Trials.”</span> <em>Journal of the Royal Statistical Society: Series C (Applied Statistics)</em> 64 (3): 507–23. <a href="https://doi.org/10.1111/rssc.12089" class="external-link">https://doi.org/10.1111/rssc.12089</a>.
 </div>
 <div id="ref-muller_determination_2012" class="csl-entry">
-Muller, Patrick Y., and Mark N. Milton. 2012. <span>“The Determination and Interpretation of the Therapeutic Index in Drug Development.”</span> <em>Nature Reviews. Drug Discovery</em> 11 (10): 751–61. <a href="https://doi.org/10.1038/nrd3801">https://doi.org/10.1038/nrd3801</a>.
+Muller, Patrick Y., and Mark N. Milton. 2012. <span>“The Determination and Interpretation of the Therapeutic Index in Drug Development.”</span> <em>Nature Reviews. Drug Discovery</em> 11 (10): 751–61. <a href="https://doi.org/10.1038/nrd3801" class="external-link">https://doi.org/10.1038/nrd3801</a>.
 </div>
 <div id="ref-norris_dose_2017" class="csl-entry">
-Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</span> <span>Tuning</span> (<span>DTAT</span>) Should Supersede <span>‘the’</span> <span>Maximum</span> <span>Tolerated</span> <span>Dose</span> (<span>MTD</span>) in Oncology Dose-Finding Trials.”</span> <em>F1000Research</em> 6 (July): 112. <a href="https://doi.org/10.12688/f1000research.10624.3">https://doi.org/10.12688/f1000research.10624.3</a>.
+Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</span> <span>Tuning</span> (<span>DTAT</span>) Should Supersede <span>‘the’</span> <span>Maximum</span> <span>Tolerated</span> <span>Dose</span> (<span>MTD</span>) in Oncology Dose-Finding Trials.”</span> <em>F1000Research</em> 6 (July): 112. <a href="https://doi.org/10.12688/f1000research.10624.3" class="external-link">https://doi.org/10.12688/f1000research.10624.3</a>.
 </div>
 <div id="ref-norris_precautionary_2017" class="csl-entry">
-———. 2017b. <span>“Precautionary <span>Coherence</span> <span>Unravels</span> <span>Dose</span> <span>Escalation</span> <span>Designs</span>.”</span> <em>bioRxiv</em>, December. <a href="https://doi.org/10.1101/240846">https://doi.org/10.1101/240846</a>.
+———. 2017b. <span>“Precautionary <span>Coherence</span> <span>Unravels</span> <span>Dose</span> <span>Escalation</span> <span>Designs</span>.”</span> <em>bioRxiv</em>, December. <a href="https://doi.org/10.1101/240846" class="external-link">https://doi.org/10.1101/240846</a>.
 </div>
 <div id="ref-norris_retrospective_2020" class="csl-entry">
-———. 2020. <span>“Retrospective Analysis of a Fatal Dose-Finding Trial.”</span> <em>arXiv:2004.12755 [Stat.ME]</em>, April. <a href="https://arxiv.org/abs/2004.12755">https://arxiv.org/abs/2004.12755</a>.
+———. 2020. <span>“Retrospective Analysis of a Fatal Dose-Finding Trial.”</span> <em>arXiv:2004.12755 [Stat.ME]</em>, April. <a href="https://arxiv.org/abs/2004.12755" class="external-link">https://arxiv.org/abs/2004.12755</a>.
 </div>
 </div>
 </div>
@@ -1102,11 +1098,13 @@ Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</sp
 
 
       <footer><div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p></p>
+<p>Developed by David C. Norris.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
 </div>
 
       </footer>
@@ -1114,6 +1112,8 @@ Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</sp
 
   
 
+
+  
 
   </body>
 </html>

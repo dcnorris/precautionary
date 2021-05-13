@@ -1,10 +1,10 @@
 home:
-  title: Safety Diagnostics for Dose-Escalation Trial Designs
+  title: Safety Diagnostics for Dose-Escalation Trials
   description: >
-    Implements new layers of patient-centered safety analysis for phase 1
-    dose-escalation trials, adding diagnostics to examine the safety
-    characteristics of these designs in light of expected inter-individual
-    variation in pharmacokinetics and pharmacodynamics.
+    Patient-centered safety diagnostics for phase 1
+    dose-escalation trials in oncology, taking account
+    of inter-individual variation in pharmacokinetics
+    and pharmacodynamics.
 
 template:
   opengraph:

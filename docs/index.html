@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Safety Diagnostics for Dose-Escalation Trial Designs • precautionary</title>
+<title>Safety Diagnostics for Dose-Escalation Trials • precautionary</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
@@ -17,8 +17,8 @@
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Safety Diagnostics for Dose-Escalation Trial Designs">
-<meta property="og:description" content="Implements new layers of patient-centered safety analysis for phase 1 dose-escalation trials, adding diagnostics to examine the safety characteristics of these designs in light of expected inter-individual variation in pharmacokinetics and pharmacodynamics.
+<script src="pkgdown.js"></script><meta property="og:title" content="Safety Diagnostics for Dose-Escalation Trials">
+<meta property="og:description" content="Patient-centered safety diagnostics for phase 1 dose-escalation trials in oncology, taking account of inter-individual variation in pharmacokinetics and pharmacodynamics.
 ">
 <meta property="og:image" content="/reference/figures/card.png">
 <meta property="og:image:alt" content="Logo for precautionary package">
@@ -31,6 +31,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -49,12 +51,6 @@
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -100,73 +96,73 @@
   <div class="contents col-md-9">
 <div id="precautionary-" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#precautionary-" class="anchor"></a>precautionary <img src="reference/figures/logo.svg" align="right" alt="LOGO" width="120">
+<a href="#precautionary-" class="anchor" aria-hidden="true"></a>precautionary <img src="reference/figures/logo.svg" align="right" alt="LOGO" width="120">
 </h1></div>
 <!-- badges: start -->
 
-<p><code>precautionary</code> implements new layers of patient-centered safety analysis for phase 1 dose-escalation trials, adding diagnostics to examine the safety characteristics of these designs in light of expected inter-individual variation in pharmacokinetics and pharmacodynamics. See Norris (2020b), “Retrospective analysis of a fatal dose-finding trial” <a href="https://arxiv.org/abs/2004.12755">arXiv:2004.12755</a> and (2020c) “What Were They Thinking? Pharmacologic priors implicit in a choice of 3+3 dose-escalation design” <a href="https://arxiv.org/abs/2012.05301">arXiv:2012.05301</a>.</p>
+<p><code>precautionary</code> implements new layers of patient-centered safety analysis for phase 1 dose-escalation trials, adding diagnostics to examine the safety characteristics of these designs in light of expected inter-individual variation in pharmacokinetics and pharmacodynamics. See Norris (2020b), “Retrospective analysis of a fatal dose-finding trial” <a href="https://arxiv.org/abs/2004.12755" class="external-link">arXiv:2004.12755</a> and (2020c) “What Were They Thinking? Pharmacologic priors implicit in a choice of 3+3 dose-escalation design” <a href="https://arxiv.org/abs/2012.05301" class="external-link">arXiv:2012.05301</a>.</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
-<p>Releases starting with 0.2.3 incorporate fast numerics implemented in <a href="https://www.rust-lang.org">Rust</a>, a modern programming language that emphasizes performance and reliability—attributes crucial to applications such as the analysis of clinical trials.</p>
+<a href="#installation" class="anchor" aria-hidden="true"></a>Installation</h2>
+<p>Releases starting with 0.2.3 incorporate fast numerics implemented in <a href="https://www.rust-lang.org" class="external-link">Rust</a>, a modern programming language that emphasizes performance and reliability—attributes crucial to applications such as the analysis of clinical trials.</p>
 <p>Until CRAN maintainers have worked out suitable practices for deploying R packages containing Rust code, the newest features of <code>precautionary</code> will be available only here on GitHub.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Install release version from GitHub</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"dcnorris/precautionary"</span><span class="op">)</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"dcnorris/precautionary"</span><span class="op">)</span>
 
 <span class="co"># Install obsolete version from CRAN (where review of new Rust library remains pending)</span>
 <span class="fu">install.package</span><span class="op">(</span><span class="st">"precautionary"</span><span class="op">)</span></code></pre></div>
-<p>To date, those features of <code>precautionary</code> which depend on the Prolog code in <code>exec/prolog/</code> have been pre-built into the package, for example as the arrays <code>T[,,,]</code> written into <code>R/sysdata.rda</code> by <code>exec/make_sysdata_TUb.R</code>. Methodologists who wish to examine, recompute and verify these arrays are advised to install <a href="https://github.com/mthom/scryer-prolog">Scryer Prolog</a>.</p>
+<p>To date, those features of <code>precautionary</code> which depend on the Prolog code in <code>exec/prolog/</code> have been pre-built into the package, for example as the arrays <code>T[,,,]</code> written into <code>R/sysdata.rda</code> by <code>exec/make_sysdata_TUb.R</code>. Methodologists who wish to examine, recompute and verify these arrays are advised to install <a href="https://github.com/mthom/scryer-prolog" class="external-link">Scryer Prolog</a>.</p>
 <p>It is a near-term goal for <code>precautionary</code> to reveal more transparently Prolog’s special contributions to its analysis of dose-escalation designs.</p>
 </div>
 <div id="usage" class="section level2">
 <h2 class="hasAnchor">
-<a href="#usage" class="anchor"></a>Usage</h2>
+<a href="#usage" class="anchor" aria-hidden="true"></a>Usage</h2>
 <p>Please see the vignettes under the <a href="#">Articles</a> tab above.</p>
 </div>
 <div id="references" class="section level2">
 <h2 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h2>
+<a href="#references" class="anchor" aria-hidden="true"></a>References</h2>
 <p>The <code>precautionary</code> package is the pointy end of the spear in a larger <a href="https::/precisionmethods.guru">DTAT research programme</a>, of which the following are key outputs. Several of these citations have accompanying online resources such as web applications. For the key references, lay explanations are available.</p>
 <ol>
 <li>
-Norris DC. Dose Titration Algorithm Tuning (DTAT) should supersede ‘the’ Maximum Tolerated Dose (MTD) in oncology dose-finding trials. <i>F1000Research.</i> 2017;6:112. doi:<a href="https://f1000research.com/articles/6-112/v3">10.12688/f1000research.10624.3</a>. [<a href="https://precisionmethods.guru/2019/04/16/a-new-concept-may-help-us-at-last-abandon-one-size-fits-all-dosing-of-cancer-treatment-drugs/">lay explanation</a>]
+Norris DC. Dose Titration Algorithm Tuning (DTAT) should supersede ‘the’ Maximum Tolerated Dose (MTD) in oncology dose-finding trials. <i>F1000Research.</i> 2017;6:112. doi:<a href="https://f1000research.com/articles/6-112/v3" class="external-link">10.12688/f1000research.10624.3</a>. [<a href="https://precisionmethods.guru/2019/04/16/a-new-concept-may-help-us-at-last-abandon-one-size-fits-all-dosing-of-cancer-treatment-drugs/" class="external-link">lay explanation</a>]
 </li>
 <li>
-–––––. Dose Titration Algorithm Tuning (DTAT) should supplant ‘the’ MTD. May 2017. [podium presentation] Symposium on Dose Selection for Cancer Treatment Drugs, Stanford Center for Innovative Study Design (CISD) May 12, 2017. doi:<a href="https://f1000research.com/slides/6-854">10.7490/f1000research.1114209.1</a>.
+–––––. Dose Titration Algorithm Tuning (DTAT) should supplant ‘the’ MTD. May 2017. [podium presentation] Symposium on Dose Selection for Cancer Treatment Drugs, Stanford Center for Innovative Study Design (CISD) May 12, 2017. doi:<a href="https://f1000research.com/slides/6-854" class="external-link">10.7490/f1000research.1114209.1</a>.
 </li>
 <li>
-–––––. Costing ‘the’ MTD. <i>bioRxiv.</i> August 2017:150821. doi:<a href="https://www.biorxiv.org/content/early/2017/08/22/150821">10.1101/150821</a>. [<a href="https://precisionmethods.guru/2019/04/16/one-size-fits-all-dosing-of-cancer-treatment-drugs-how-much-does-it-cost-society/">lay explanation</a>]
+–––––. Costing ‘the’ MTD. <i>bioRxiv.</i> August 2017:150821. doi:<a href="https://www.biorxiv.org/content/early/2017/08/22/150821" class="external-link">10.1101/150821</a>. [<a href="https://precisionmethods.guru/2019/04/16/one-size-fits-all-dosing-of-cancer-treatment-drugs-how-much-does-it-cost-society/" class="external-link">lay explanation</a>]
 </li>
 <li>
-–––––. Costing ‘the’ MTD: What Is the Economic and Human Cost of 1-Size-Fits-All Dose Finding in Oncology? [poster] Presented at 8th American Conference on Pharmacometrics (ACoP8), October 16, 2017. doi:<a href="https://f1000research.com/posters/6-1861">10.7490/f1000research.1114988.1</a>.
+–––––. Costing ‘the’ MTD: What Is the Economic and Human Cost of 1-Size-Fits-All Dose Finding in Oncology? [poster] Presented at 8th American Conference on Pharmacometrics (ACoP8), October 16, 2017. doi:<a href="https://f1000research.com/posters/6-1861" class="external-link">10.7490/f1000research.1114988.1</a>.
 </li>
 <li>
-–––––. One-size-fits-all dosing in oncology wastes money, innovation and lives. <i>Drug Discovery Today.</i> 2018;23(1):4-6. doi:<a href="Norris%20(2018)%20One-size-fits-all%20dosing%20in%20oncology%20wastes%20money,%20innovation%20and%20lives.pdf">10.1016/j.drudis.2017.11.008</a>. [<a href="https://precision-methodologies.shinyapps.io/thecost/">Shiny app</a>]
+–––––. One-size-fits-all dosing in oncology wastes money, innovation and lives. <i>Drug Discovery Today.</i> 2018;23(1):4-6. doi:<a href="Norris%20(2018)%20One-size-fits-all%20dosing%20in%20oncology%20wastes%20money,%20innovation%20and%20lives.pdf">10.1016/j.drudis.2017.11.008</a>. [<a href="https://precision-methodologies.shinyapps.io/thecost/" class="external-link">Shiny app</a>]
 </li>
 <li>
-–––––. Precautionary Coherence Unravels Dose Escalation Designs. <i>bioRxiv.</i> December 2017:240846. doi:<a href="https://www.biorxiv.org/content/early/2017/12/29/240846">10.1101/240846</a>. [<a href="https://precisionmethods.guru/2019/04/14/the-conduct-of-most-first-in-human-oncology-drug-trials-is-conceptually-incoherent-and-unethical/">lay explanation</a>] [<a href="../3+3/PC/">D3 app</a>]
+–––––. Precautionary Coherence Unravels Dose Escalation Designs. <i>bioRxiv.</i> December 2017:240846. doi:<a href="https://www.biorxiv.org/content/early/2017/12/29/240846" class="external-link">10.1101/240846</a>. [<a href="https://precisionmethods.guru/2019/04/14/the-conduct-of-most-first-in-human-oncology-drug-trials-is-conceptually-incoherent-and-unethical/" class="external-link">lay explanation</a>] [<a href="../3+3/PC/">D3 app</a>]
 </li>
 <li>
-–––––. Costing ‘the’ MTD … in 2-D. <i>bioRxiv.</i> July 2018:370817. doi:<a href="https://www.biorxiv.org/content/early/2018/07/17/370817">10.1101/370817</a> [<a href="https://precisionmethods.guru/2019/04/16/clinicians-must-regain-control-over-phase-1-cancer-combination-therapy-trials/">lay explanation</a>]
+–––––. Costing ‘the’ MTD … in 2-D. <i>bioRxiv.</i> July 2018:370817. doi:<a href="https://www.biorxiv.org/content/early/2018/07/17/370817" class="external-link">10.1101/370817</a> [<a href="https://precisionmethods.guru/2019/04/16/clinicians-must-regain-control-over-phase-1-cancer-combination-therapy-trials/" class="external-link">lay explanation</a>]
 </li>
 <li>
-–––––. Ethical Review and Methodologic Innovation in Phase 1 Cancer Trials. <i>JAMA Pediatrics.</i> April 2019. doi:<a href="https://dx.doi.org/10.1001/jamapediatrics.2019.0811">10.1001/jamapediatrics.2019.0811</a> [<a href="https://precisionmethods.guru/2019/04/25/precautionary-coherence-for-irbs/">2-minute video</a>]
+–––––. Ethical Review and Methodologic Innovation in Phase 1 Cancer Trials. <i>JAMA Pediatrics.</i> April 2019. doi:<a href="https://dx.doi.org/10.1001/jamapediatrics.2019.0811" class="external-link">10.1001/jamapediatrics.2019.0811</a> [<a href="https://precisionmethods.guru/2019/04/25/precautionary-coherence-for-irbs/" class="external-link">2-minute video</a>]
 </li>
 <li>
-–––––. Impeachment of One-Size-Fits-All Dosing for Obstruction of Synergism. [working paper] December 4, 2019. doi:<a href="https://osf.io/3hcdb/">10.17605/OSF.IO/S7XDU</a>. [<a href="https://precisionmethods.guru/2020/01/13/therapeutic-synergism-and-the-statistician/">2-minute video</a>]
+–––––. Impeachment of One-Size-Fits-All Dosing for Obstruction of Synergism. [working paper] December 4, 2019. doi:<a href="https://osf.io/3hcdb/" class="external-link">10.17605/OSF.IO/S7XDU</a>. [<a href="https://precisionmethods.guru/2020/01/13/therapeutic-synergism-and-the-statistician/" class="external-link">2-minute video</a>]
 </li>
 <li>
-–––––. Comment on Wages et al., Coherence principles in interval-based dose finding. Pharmaceutical Statistics 2019, DOI: 10.1002/pst.1974. <i>Pharmaceutical Statistics.</i> March 2020. doi:<a href="https://onlinelibrary.wiley.com/doi/full/10.1002/pst.2016">10.1002/pst.2016</a> [<a href="https://precisionmethods.guru/2019/12/02/comment-on-wages-et-al-coherence-principles-in-interval-based-dose-finding/">additional background</a>]
+–––––. Comment on Wages et al., Coherence principles in interval-based dose finding. Pharmaceutical Statistics 2019, DOI: 10.1002/pst.1974. <i>Pharmaceutical Statistics.</i> March 2020. doi:<a href="https://onlinelibrary.wiley.com/doi/full/10.1002/pst.2016" class="external-link">10.1002/pst.2016</a> [<a href="https://precisionmethods.guru/2019/12/02/comment-on-wages-et-al-coherence-principles-in-interval-based-dose-finding/" class="external-link">additional background</a>]
 </li>
 <li>
-–––––. Retrospective analysis of a fatal dose-finding trial. <a href="https://arxiv.org/abs/2004.12755">arXiv:2004.12755 [stat, q-bio]</a>. April 2020. [<a href="https://threadreaderapp.com/thread/1255095770627428352.html">Tweetorial</a>]
+–––––. Retrospective analysis of a fatal dose-finding trial. <a href="https://arxiv.org/abs/2004.12755" class="external-link">arXiv:2004.12755 [stat, q-bio]</a>. April 2020. [<a href="https://threadreaderapp.com/thread/1255095770627428352.html" class="external-link">Tweetorial</a>]
 </li>
 <li>
-Norris DC, Sen S, Groisberg R, Subbiah V. Patient-Centered, Physician-Investigator Friendly Pragmatic Phase I/II Trial Designs—The 4P Model. <i>Mayo Clinic Proceedings.</i> 2020;95(11):2566-2568. doi:<a href="https://www.mayoclinicproceedings.org/article/S0025-6196(20)31039-9/fulltext">10.1016/j.mayocp.2020.09.009</a>
+Norris DC, Sen S, Groisberg R, Subbiah V. Patient-Centered, Physician-Investigator Friendly Pragmatic Phase I/II Trial Designs—The 4P Model. <i>Mayo Clinic Proceedings.</i> 2020;95(11):2566-2568. doi:<a href="https://www.mayoclinicproceedings.org/article/S0025-6196(20)31039-9/fulltext" class="external-link">10.1016/j.mayocp.2020.09.009</a>
 </li>
 <li>
-Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice of 3+3 dose-escalation design. <a href="https://arxiv.org/abs/2012.05301">arXiv:2012.05301 [stat, q-bio]</a>. December 9, 2020. [<a href="https://threadreaderapp.com/thread/1339219770730799106.html">Tweetorial</a>]
+Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice of 3+3 dose-escalation design. <a href="https://arxiv.org/abs/2012.05301" class="external-link">arXiv:2012.05301 [stat, q-bio]</a>. December 9, 2020. [<a href="https://threadreaderapp.com/thread/1339219770730799106.html" class="external-link">Tweetorial</a>]
 </li>
 </ol>
 </div>
@@ -175,44 +171,50 @@ Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice of
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=precautionary">https://​cloud.r-project.org/​package=precautionary</a>
 </li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
 <a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>David C. Norris <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0001-9593-6343" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More on authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.tidyverse.org/lifecycle/#experimental"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a></li>
+<li><a href="https://www.tidyverse.org/lifecycle/#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p></p>
+<p>Developed by David C. Norris.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 1.6.1.9001.</p>
 </div>
 
       </footer>
@@ -220,6 +222,8 @@ Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice of
 
   
 
+
+  
 
   </body>
 </html>

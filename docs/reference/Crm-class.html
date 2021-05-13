@@ -68,6 +68,8 @@ efficient Rust implementations of some numerical routines." />
 
 
 
+
+
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script>
@@ -79,9 +81,18 @@ efficient Rust implementations of some numerical routines." />
 
 
 
+<!-- dependencies from examples -->
+
+
+  
+
+  
+
   </head>
 
   <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -102,12 +113,6 @@ efficient Rust implementations of some numerical routines." />
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -202,7 +207,7 @@ if this method is to return a result.</p></div>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
-<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Public methods</h3>
+<h3 class='hasAnchor' id='public-methods'><a class='anchor' aria-hidden='true' href='#public-methods'></a>Public methods</h3>
 
 <ul>
 <li><p><a href='#method-new'><code>Crm$new()</code></a></p></li>
@@ -226,12 +231,12 @@ if this method is to return a result.</p></div>
 <li><p><a href='#method-clone'><code>Crm$clone()</code></a></p></li>
 </ul>
 <p><hr>
-<a id="method-new"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>new()</code></h3>
+<a id="method-new"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>new()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>skeleton</span>, scale <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>1.34</span><span class='op'>)</span>, <span class='va'>target</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>skeleton</code></dt><dd><p>CRM skeleton</p></dd>
 
@@ -240,12 +245,45 @@ if this method is to return a result.</p></div>
 <dt><code>target</code></dt><dd><p>Target toxicity rate</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Create a new <code>Crm</code> object.</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>A Crm object.</p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<h4 class='hasAnchor' id='examples'><a class='anchor' aria-hidden='true' href='#examples'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='co'># An example verbatim from dfcrm::crm()</span>
+<span class='va'>prior</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.05</span>, <span class='fl'>0.10</span>, <span class='fl'>0.20</span>, <span class='fl'>0.35</span>, <span class='fl'>0.50</span>, <span class='fl'>0.70</span><span class='op'>)</span>
+<span class='va'>target</span> <span class='op'>&lt;-</span> <span class='fl'>0.2</span>
+<span class='va'>level</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>y</span>     <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>
+<span class='va'>s</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>1.34</span><span class='op'>)</span>
+<span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'>dfcrm</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dfcrm/man/crm.html'>crm</a></span><span class='op'>(</span><span class='va'>prior</span>, <span class='va'>target</span>, <span class='va'>y</span>, <span class='va'>level</span><span class='op'>)</span>
+<span class='va'>new</span> <span class='op'>&lt;-</span> <span class='va'>Crm</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='va'>prior</span>, target <span class='op'>=</span> <span class='va'>target</span><span class='op'>)</span><span class='op'>$</span>
+         <span class='fu'>dontcache</span><span class='op'>(</span><span class='op'>)</span><span class='op'>$</span>
+         <span class='fu'>observe</span><span class='op'>(</span><span class='va'>level</span>, <span class='va'>y</span><span class='op'>)</span><span class='op'>$</span>
+         <span class='fu'>est</span><span class='op'>(</span>impl<span class='op'>=</span><span class='st'>"rusti"</span>, abbrev<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
+</pre><p></div></p>
+
+<h3 class='hasAnchor' id='list-new-'><a class='anchor' aria-hidden='true' href='#list-new-'></a>Method <code>new()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>skeleton</span>, scale <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>1.34</span><span class='op'>)</span>, <span class='va'>target</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>skeleton</code></dt><dd><p>CRM skeleton</p></dd>
+
+<dt><code>scale</code></dt><dd><p>Sigma parameter of prior on beta parameter</p></dd>
+
+<dt><code>target</code></dt><dd><p>Target toxicity rate</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Create a new <code>Crm</code> object.</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>A Crm object.</p>
+<h4 class='hasAnchor' id='examples'><a class='anchor' aria-hidden='true' href='#examples'></a>Examples</h4>
 <p><div class="r example copy"></p><pre><span class='co'># An example verbatim from dfcrm::crm()</span>
 <span class='va'>prior</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.05</span>, <span class='fl'>0.10</span>, <span class='fl'>0.20</span>, <span class='fl'>0.35</span>, <span class='fl'>0.50</span>, <span class='fl'>0.70</span><span class='op'>)</span>
 <span class='va'>target</span> <span class='op'>&lt;-</span> <span class='fl'>0.2</span>
@@ -260,168 +298,314 @@ if this method is to return a result.</p></div>
 </pre><p></div></p>
 
 <p><hr>
-<a id="method-skeleton"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>skeleton()</code></h3>
+<a id="method-skeleton"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>skeleton()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>skeleton</span><span class='op'>(</span><span class='va'>skeleton</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>skeleton</code></dt><dd><p>A numeric vector to set as the model skeleton.</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set or query CRM skeleton</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self (invisibly), unless <code>skeleton</code> is missing,
+in which case the skeleton, a numeric vector, is returned.</p>
+<h3 class='hasAnchor' id='list-skeleton-'><a class='anchor' aria-hidden='true' href='#list-skeleton-'></a>Method <code>skeleton()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>skeleton</span><span class='op'>(</span><span class='va'>skeleton</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>skeleton</code></dt><dd><p>A numeric vector to set as the model skeleton.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set or query CRM skeleton</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self (invisibly), unless <code>skeleton</code> is missing,
 in which case the skeleton, a numeric vector, is returned.</p>
 <p><hr>
-<a id="method-dontcache"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>dontcache()</code></h3>
+<a id="method-dontcache"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>dontcache()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>dontcache</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set private cache to NULL; useful for performance testing</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-dontcache-'><a class='anchor' aria-hidden='true' href='#list-dontcache-'></a>Method <code>dontcache()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>dontcache</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set private cache to NULL; useful for performance testing</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-report"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>report()</code></h3>
+<a id="method-report"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>report()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Report lifetime duty &amp; performance statistics</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>A named vector summarizing lifetime duty and performance</p>
+<h3 class='hasAnchor' id='list-report-'><a class='anchor' aria-hidden='true' href='#list-report-'></a>Method <code>report()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Report lifetime duty &amp; performance statistics</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>A named vector summarizing lifetime duty and performance</p>
 <p><hr>
-<a id="method-stop_func"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>stop_func()</code></h3>
+<a id="method-stop_func"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>stop_func()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>stop_func</span><span class='op'>(</span><span class='va'>sfunc</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>sfunc</code></dt><dd><p>A function taking <code>mtd</code> objects to <code>mtd</code> objects,
 attaching suitable stopping information</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set the stopping function</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-stop-func-'><a class='anchor' aria-hidden='true' href='#list-stop-func-'></a>Method <code>stop_func()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>stop_func</span><span class='op'>(</span><span class='va'>sfunc</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>sfunc</code></dt><dd><p>A function taking <code>mtd</code> objects to <code>mtd</code> objects,
+attaching suitable stopping information</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the stopping function</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-no_skip_esc"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>no_skip_esc()</code></h3>
+<a id="method-no_skip_esc"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>no_skip_esc()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set the <code>no_skip_esc</code> behavior</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-no-skip-esc-'><a class='anchor' aria-hidden='true' href='#list-no-skip-esc-'></a>Method <code>no_skip_esc()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the <code>no_skip_esc</code> behavior</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-no_skip_deesc"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>no_skip_deesc()</code></h3>
+<a id="method-no_skip_deesc"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>no_skip_deesc()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set the <code>no_skip_deesc</code> behavior</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
-<p><hr>
-<a id="method-global_coherent_esc"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>global_coherent_esc()</code></h3>
+<h3 class='hasAnchor' id='list-no-skip-deesc-'><a class='anchor' aria-hidden='true' href='#list-no-skip-deesc-'></a>Method <code>no_skip_deesc()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>global_coherent_esc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
-<p>Set the <code>global_coherent_esc</code> behavior</p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the <code>no_skip_deesc</code> behavior</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-conf_level"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>conf_level()</code></h3>
+<a id="method-global_coherent_esc"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>global_coherent_esc()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>global_coherent_esc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the <code>global_coherent_esc</code> behavior</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-global-coherent-esc-'><a class='anchor' aria-hidden='true' href='#list-global-coherent-esc-'></a>Method <code>global_coherent_esc()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>global_coherent_esc</span><span class='op'>(</span><span class='va'>tf</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>tf</code></dt><dd><p>An atomic logical value, TRUE or FALSE</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the <code>global_coherent_esc</code> behavior</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<p><hr>
+<a id="method-conf_level"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>conf_level()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>conf_level</span><span class='op'>(</span><span class='va'>conf</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>conf</code></dt><dd><p>A numeric confidence less than 1.0</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set the required confidence level for escalation decisions</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-conf-level-'><a class='anchor' aria-hidden='true' href='#list-conf-level-'></a>Method <code>conf_level()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>conf_level</span><span class='op'>(</span><span class='va'>conf</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>conf</code></dt><dd><p>A numeric confidence less than 1.0</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set the required confidence level for escalation decisions</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-observe"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>observe()</code></h3>
+<a id="method-observe"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>observe()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>observe</span><span class='op'>(</span><span class='va'>level</span>, <span class='va'>tox</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>level</code></dt><dd><p>A patient-wise vector of dose assignments</p></dd>
 
 <dt><code>tox</code></dt><dd><p>A patient-wise vector of 0/1 toxicity assessments</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set patient-wise toxicity observations</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-observe-'><a class='anchor' aria-hidden='true' href='#list-observe-'></a>Method <code>observe()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>observe</span><span class='op'>(</span><span class='va'>level</span>, <span class='va'>tox</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>level</code></dt><dd><p>A patient-wise vector of dose assignments</p></dd>
+
+<dt><code>tox</code></dt><dd><p>A patient-wise vector of 0/1 toxicity assessments</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set patient-wise toxicity observations</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-tally"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>tally()</code></h3>
+<a id="method-tally"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>tally()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>tally</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>x</code></dt><dd><p>A dose-wise vector of toxicity counts</p></dd>
 
 <dt><code>o</code></dt><dd><p>A dose-wise vector of non-toxicity counts</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set dose-wise toxicity observations</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-tally-'><a class='anchor' aria-hidden='true' href='#list-tally-'></a>Method <code>tally()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>tally</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>x</code></dt><dd><p>A dose-wise vector of toxicity counts</p></dd>
+
+<dt><code>o</code></dt><dd><p>A dose-wise vector of non-toxicity counts</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set dose-wise toxicity observations</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-est"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>est()</code></h3>
+<a id="method-est"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>est()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span><span class='va'>impl</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>impl</code></dt><dd><p>A string choosing the low-level implementation to use.
 Possible values include <code>"dfcrm"</code>, <code>"rusti"</code> and <code>"ruste"</code>.</p></dd>
@@ -431,18 +615,38 @@ object is returned to save execution time. If FALSE, a complete object is
 returned, suitable for regression testing against package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>.</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Set patient-wise toxicity observations</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>An object of class <code>mtd</code> as per package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a></p>
+<h3 class='hasAnchor' id='list-est-'><a class='anchor' aria-hidden='true' href='#list-est-'></a>Method <code>est()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span><span class='va'>impl</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>impl</code></dt><dd><p>A string choosing the low-level implementation to use.
+Possible values include <code>"dfcrm"</code>, <code>"rusti"</code> and <code>"ruste"</code>.</p></dd>
+
+<dt><code>abbrev</code></dt><dd><p>Logical; if TRUE (the default), an abbreviated <code>mtd</code>
+object is returned to save execution time. If FALSE, a complete object is
+returned, suitable for regression testing against package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Set patient-wise toxicity observations</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>An object of class <code>mtd</code> as per package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a></p>
 <p><hr>
-<a id="method-applied"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>applied()</code></h3>
+<a id="method-applied"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>applied()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>x</code></dt><dd><p>A dose-wise vector of toxicity counts</p></dd>
 
@@ -455,23 +659,51 @@ the <code>global_coherent_esc=TRUE</code> behavior</p></dd>
 of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Return dose recommendation for given tox/no-tox tallies.</p>
 <p>This function caches results, which greatly saves computation time
 in DTP calculations. (It yields approximately a 5x speedup for the
 VIOLA trial example!)</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>An object of class <code>mtd</code> as per package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>,
+or possibly an abbreviated version of such object as returned by
+method <code>Crm$est()</code>.</p>
+<h3 class='hasAnchor' id='list-applied-'><a class='anchor' aria-hidden='true' href='#list-applied-'></a>Method <code>applied()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>x</code></dt><dd><p>A dose-wise vector of toxicity counts</p></dd>
+
+<dt><code>o</code></dt><dd><p>A dose-wise vector of non-toxicity counts</p></dd>
+
+<dt><code>last_dose</code></dt><dd><p>The most recently given dose, as required to implement
+the <code>global_coherent_esc=TRUE</code> behavior</p></dd>
+
+<dt><code>...</code></dt><dd><p>Parameters passed to <code>Crm$esc()</code>, enabling passthru
+of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Return dose recommendation for given tox/no-tox tallies.</p>
+<p>This function caches results, which greatly saves computation time
+in DTP calculations. (It yields approximately a 5x speedup for the
+VIOLA trial example!)</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>An object of class <code>mtd</code> as per package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>,
 or possibly an abbreviated version of such object as returned by
 method <code>Crm$est()</code>.</p>
 <p><hr>
-<a id="method-trace_paths"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>trace_paths()</code></h3>
+<a id="method-trace_paths"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>trace_paths()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='va'>root_dose</span>, <span class='va'>cohort_sizes</span>, <span class='va'>...</span>, unroll <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>root_dose</code></dt><dd><p>The starting dose for tree of paths</p></dd>
 
@@ -484,23 +716,63 @@ enabling passthru of its required <code>impl</code> parameter.</p></dd>
 <dt><code>unroll</code></dt><dd><p>Integer; how deep to unroll path tree for parallelism</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Compute trial paths forward from current tally</p>
 <p>The computed paths are saved in a private field, from which variously
 formatted results may be obtained by accessor functions.</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Self, invisibly</p>
+<h3 class='hasAnchor' id='list-trace-paths-'><a class='anchor' aria-hidden='true' href='#list-trace-paths-'></a>Method <code>trace_paths()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='va'>root_dose</span>, <span class='va'>cohort_sizes</span>, <span class='va'>...</span>, unroll <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>root_dose</code></dt><dd><p>The starting dose for tree of paths</p></dd>
+
+<dt><code>cohort_sizes</code></dt><dd><p>Integer vector giving sizes of future cohorts,
+its length being the maximum number of cohorts to look ahead.</p></dd>
+
+<dt><code>...</code></dt><dd><p>Parameters passed ultimately to <code>Crm$esc()</code>,
+enabling passthru of its required <code>impl</code> parameter.</p></dd>
+
+<dt><code>unroll</code></dt><dd><p>Integer; how deep to unroll path tree for parallelism</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Compute trial paths forward from current tally</p>
+<p>The computed paths are saved in a private field, from which variously
+formatted results may be obtained by accessor functions.</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self, invisibly</p>
 <p><hr>
-<a id="method-path_matrix"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_matrix()</code></h3>
+<a id="method-path_matrix"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>path_matrix()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_matrix</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Return computed trial paths in matrix form</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>An integer matrix with the same column layout as the
+DTP tables of <a href='https://CRAN.R-project.org/package=dtpcrm'><span class="pkg">dtpcrm</span></a>. That is, there is a D0 column
+followed by paired Tc, Dc columns giving the toxicity count
+for cohort c and the resulting dose recommendation <em>yielded by</em>
+cohort c -- which is generally the recommendation <em>for</em> cohort
+c+1.</p>
+<h3 class='hasAnchor' id='list-path-matrix-'><a class='anchor' aria-hidden='true' href='#list-path-matrix-'></a>Method <code>path_matrix()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_matrix</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Return computed trial paths in matrix form</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>An integer matrix with the same column layout as the
 DTP tables of <a href='https://CRAN.R-project.org/package=dtpcrm'><span class="pkg">dtpcrm</span></a>. That is, there is a D0 column
 followed by paired Tc, Dc columns giving the toxicity count
@@ -508,12 +780,12 @@ for cohort c and the resulting dose recommendation <em>yielded by</em>
 cohort c -- which is generally the recommendation <em>for</em> cohort
 c+1.</p>
 <p><hr>
-<a id="method-path_array"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_array()</code></h3>
+<a id="method-path_array"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>path_array()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_array</span><span class='op'>(</span>condense <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>condense</code></dt><dd><p>Logical value; if FALSE, the returned array has its
 cohorts indexed trial-wise instead of dose-wise. This inflates the
@@ -524,54 +796,119 @@ to be read off directly if this is required e.g. for visualization or
 debugging. Default is TRUE.</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Return computed trial paths in a 3D array</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>For the <code>j</code>'th path, the C*D matrix <code>T[j,,]</code> gives
+the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>'th
+cohort for dose d. In case <code>condense=FALSE</code>, see above.</p>
+<h3 class='hasAnchor' id='list-path-array-'><a class='anchor' aria-hidden='true' href='#list-path-array-'></a>Method <code>path_array()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_array</span><span class='op'>(</span>condense <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>condense</code></dt><dd><p>Logical value; if FALSE, the returned array has its
+cohorts indexed trial-wise instead of dose-wise. This inflates the
+array more than needed for the matrix computations it must support
+(observe that in Norris2020c Eq. (4), the <code>c</code> index is eliminated
+already by summation), but enables the sequence of events along a path
+to be read off directly if this is required e.g. for visualization or
+debugging. Default is TRUE.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Return computed trial paths in a 3D array</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>For the <code>j</code>'th path, the C*D matrix <code>T[j,,]</code> gives
 the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>'th
 cohort for dose d. In case <code>condense=FALSE</code>, see above.</p>
 <p><hr>
-<a id="method-path_probs"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_probs()</code></h3>
+<a id="method-path_probs"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>path_probs()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_probs</span><span class='op'>(</span><span class='va'>probs.DLT</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>probs.DLT</code></dt><dd><p>Numeric vector of DLT probabilities for the design's
 pre-specified doses.</p></dd>
 
 </dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Path probabilities for given dose-wise DLT probs</p>
 <p>The design's paths must already have been completely enumerated by
 <code>trace_paths</code>, and the associated array <code>T</code>, matrix <code>U</code>
 and vector <code>b</code> computed by a call to <code>path_array</code>.</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>A vector of probabilities for the enumerated paths</p>
+<h3 class='hasAnchor' id='list-path-probs-'><a class='anchor' aria-hidden='true' href='#list-path-probs-'></a>Method <code>path_probs()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_probs</span><span class='op'>(</span><span class='va'>probs.DLT</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>probs.DLT</code></dt><dd><p>Numeric vector of DLT probabilities for the design's
+pre-specified doses.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Path probabilities for given dose-wise DLT probs</p>
+<p>The design's paths must already have been completely enumerated by
+<code>trace_paths</code>, and the associated array <code>T</code>, matrix <code>U</code>
+and vector <code>b</code> computed by a call to <code>path_array</code>.</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>A vector of probabilities for the enumerated paths</p>
 <p><hr>
-<a id="method-path_rx"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_rx()</code></h3>
+<a id="method-path_rx"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>path_rx()</code></h3>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_rx</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Vector of path-wise final dose recommendations</p>
 <p>The design's paths must already have been completely enumerated by
 <code>trace_paths</code>. This method is a temporizing measure, bridging
 to a new format for the return value of <code>path_matrix</code>, possibly
 a <code>data.table</code> where the dose recs would be a column.</p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Integer vector of final dose recs on the enumerated paths</p>
+<h3 class='hasAnchor' id='list-path-rx-'><a class='anchor' aria-hidden='true' href='#list-path-rx-'></a>Method <code>path_rx()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>path_rx</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Vector of path-wise final dose recommendations</p>
+<p>The design's paths must already have been completely enumerated by
+<code>trace_paths</code>. This method is a temporizing measure, bridging
+to a new format for the return value of <code>path_matrix</code>, possibly
+a <code>data.table</code> where the dose recs would be a column.</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Integer vector of final dose recs on the enumerated paths</p>
 <p><hr>
-<a id="method-clone"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>clone()</code></h3>
-<p>The objects of this class are cloneable with this method.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<a id="method-clone"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>clone()</code></h3>
+<p>The objects of this class are cloneable with this method.</p><h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>clone</span><span class='op'>(</span>deep <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
 
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>deep</code></dt><dd><p>Whether to make a deep clone.</p></dd>
+
+</dl><p></div></p>
+<h3 class='hasAnchor' id='list-clone-'><a class='anchor' aria-hidden='true' href='#list-clone-'></a>Method <code>clone()</code></h3>
+<p>The objects of this class are cloneable with this method.</p><h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>clone</span><span class='op'>(</span>deep <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>deep</code></dt><dd><p>Whether to make a deep clone.</p></dd>
 
@@ -580,23 +917,23 @@ a <code>data.table</code> where the dose recs would be a column.</p>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>
-<span class='co'>## ------------------------------------------------</span>
-<span class='co'>## Method `Crm$new`</span>
-<span class='co'>## ------------------------------------------------</span>
-
-<span class='co'># An example verbatim from dfcrm::crm()</span>
-<span class='va'>prior</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.05</span>, <span class='fl'>0.10</span>, <span class='fl'>0.20</span>, <span class='fl'>0.35</span>, <span class='fl'>0.50</span>, <span class='fl'>0.70</span><span class='op'>)</span>
-<span class='va'>target</span> <span class='op'>&lt;-</span> <span class='fl'>0.2</span>
-<span class='va'>level</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>)</span>
-<span class='va'>y</span>     <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>
-<span class='va'>s</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>1.34</span><span class='op'>)</span>
-<span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'>dfcrm</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dfcrm/man/crm.html'>crm</a></span><span class='op'>(</span><span class='va'>prior</span>, <span class='va'>target</span>, <span class='va'>y</span>, <span class='va'>level</span><span class='op'>)</span>
-<span class='va'>new</span> <span class='op'>&lt;-</span> <span class='va'>Crm</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='va'>prior</span>, target <span class='op'>=</span> <span class='va'>target</span><span class='op'>)</span><span class='op'>$</span>
-         <span class='fu'>dontcache</span><span class='op'>(</span><span class='op'>)</span><span class='op'>$</span>
-         <span class='fu'>observe</span><span class='op'>(</span><span class='va'>level</span>, <span class='va'>y</span><span class='op'>)</span><span class='op'>$</span>
-         <span class='fu'>est</span><span class='op'>(</span>impl<span class='op'>=</span><span class='st'>"rusti"</span>, abbrev<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'></span>
+<span class='r-in'><span class='co'>## ------------------------------------------------</span></span>
+<span class='r-in'><span class='co'>## Method `Crm$new`</span></span>
+<span class='r-in'><span class='co'>## ------------------------------------------------</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># An example verbatim from dfcrm::crm()</span></span>
+<span class='r-in'><span class='va'>prior</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.05</span>, <span class='fl'>0.10</span>, <span class='fl'>0.20</span>, <span class='fl'>0.35</span>, <span class='fl'>0.50</span>, <span class='fl'>0.70</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>target</span> <span class='op'>&lt;-</span> <span class='fl'>0.2</span></span>
+<span class='r-in'><span class='va'>level</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>y</span>     <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>s</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>1.34</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'>dfcrm</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dfcrm/man/crm.html'>crm</a></span><span class='op'>(</span><span class='va'>prior</span>, <span class='va'>target</span>, <span class='va'>y</span>, <span class='va'>level</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>new</span> <span class='op'>&lt;-</span> <span class='va'>Crm</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='va'>prior</span>, target <span class='op'>=</span> <span class='va'>target</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>         <span class='fu'>dontcache</span><span class='op'>(</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>         <span class='fu'>observe</span><span class='op'>(</span><span class='va'>level</span>, <span class='va'>y</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>         <span class='fu'>est</span><span class='op'>(</span>impl<span class='op'>=</span><span class='st'>"rusti"</span>, abbrev<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -608,11 +945,11 @@ a <code>data.table</code> where the dose recs would be a column.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p><p>Developed by David C. Norris.</p></p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 1.6.1.9001.</p></p>
 </div>
 
       </footer>
@@ -620,6 +957,8 @@ a <code>data.table</code> where the dose recs would be a column.</p>
 
   
 
+
+  
 
   </body>
 </html>

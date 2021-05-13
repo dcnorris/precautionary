@@ -60,6 +60,8 @@ latent toxicity tolerance u_i for each individual participant." />
 
 
 
+
+
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script>
@@ -71,9 +73,18 @@ latent toxicity tolerance u_i for each individual participant." />
 
 
 
+<!-- dependencies from examples -->
+
+
+  
+
+  
+
   </head>
 
   <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -94,12 +105,6 @@ latent toxicity tolerance u_i for each individual participant." />
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -184,22 +189,24 @@ and arrival-time increment for each trial participant.</p>
 minute changes in order to incorporate <code>u_i</code>.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>cohorts_of_n</span><span class='op'>(</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;          u_i time_delta
-#&gt; 1 0.08075014        1.6
-#&gt; 2 0.83433304        5.2
-#&gt; 3 0.60076089        0.9</div><div class='input'><span class='fu'>cohorts_of_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>10</span>, mean_time_delta <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;           u_i time_delta
-#&gt; 1  0.73288199        6.2
-#&gt; 2  0.77252151        1.0
-#&gt; 3  0.87460066        9.8
-#&gt; 4  0.17494063        0.2
-#&gt; 5  0.03424133        2.0
-#&gt; 6  0.32038573        1.9
-#&gt; 7  0.40232824       18.1
-#&gt; 8  0.19566983        2.1
-#&gt; 9  0.40353812        0.6
-#&gt; 10 0.06366146        1.8</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'>cohorts_of_n</span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>          u_i time_delta</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1 0.08075014        1.6</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2 0.83433304        5.2</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3 0.60076089        0.9</span>
+<span class='r-in'><span class='fu'>cohorts_of_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>10</span>, mean_time_delta <span class='op'>=</span> <span class='fl'>5</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>           u_i time_delta</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  0.73288199        6.2</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  0.77252151        1.0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  0.87460066        9.8</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  0.17494063        0.2</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  0.03424133        2.0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  0.32038573        1.9</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  0.40232824       18.1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  0.19566983        2.1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  0.40353812        0.6</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 0.06366146        1.8</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -211,11 +218,11 @@ minute changes in order to incorporate <code>u_i</code>.</p></div>
 
       <footer>
       <div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p><p>Developed by David C. Norris.</p></p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 1.6.1.9001.</p></p>
 </div>
 
       </footer>
@@ -223,6 +230,8 @@ minute changes in order to incorporate <code>u_i</code>.</p></div>
 
   
 
+
+  
 
   </body>
 </html>

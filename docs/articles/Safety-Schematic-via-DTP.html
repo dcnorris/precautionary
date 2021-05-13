@@ -30,6 +30,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -48,12 +50,6 @@
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -99,9 +95,9 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)</h1>
-                        <h4 class="author">David C. Norris</h4>
+                        <h4 data-toc-skip class="author">David C. Norris</h4>
             
-            <h4 class="date">1/12/2021; revised 4/02/2021</h4>
+            <h4 data-toc-skip class="date">1/12/2021; revised 4/02/2021</h4>
       
       
       <div class="hidden name"><code>Safety-Schematic-via-DTP.Rmd</code></div>
@@ -112,12 +108,12 @@
     
 <div id="aims" class="section level1">
 <h1 class="hasAnchor">
-<a href="#aims" class="anchor"></a>Aims</h1>
+<a href="#aims" class="anchor" aria-hidden="true"></a>Aims</h1>
 <p><span class="citation">Norris (2020b)</span> proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the <em>dose transition pathways</em> (DTP) of <span class="citation">Yap et al. (2017)</span> would enable a similar treatment of model-based designs. This vignette explores that conjecture in relation to the continual reassessment method (CRM), using the <code>dtpcrm</code> package <span class="citation">(Yap et al. 2019)</span>.</p>
 </div>
 <div id="generalized-exact-simulation-of-dose-escalation" class="section level1">
 <h1 class="hasAnchor">
-<a href="#generalized-exact-simulation-of-dose-escalation" class="anchor"></a>Generalized exact simulation of dose escalation</h1>
+<a href="#generalized-exact-simulation-of-dose-escalation" class="anchor" aria-hidden="true"></a>Generalized exact simulation of dose escalation</h1>
 <p>Dose-escalation trial designs commonly operate with a fixed set of <span class="math inline">\(D\)</span> prespecified doses, enrolling participants in small cohorts each of size <span class="math inline">\(n\)</span>, at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a <span class="math inline">\(C \times D\)</span> matrix of toxicity counts <span class="math inline">\(\{0, 1, ..., n, -\}\)</span>, with ‘<span class="math inline">\(-\)</span>’ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> For designs with upper bounds on enrollment, <span class="math inline">\(C\)</span> may be fixed <em>ex ante</em>, and all possible paths comprehensively enumerated.</p>
 <p>In <span class="citation">Norris (2020b)</span>, for example, paths through the 3+3 design could be represented as <span class="math inline">\(2 \times D\)</span> matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices <span class="math inline">\(T_{c,d}^j\)</span> was independent of the 3+3 rules, however, and carries forward generally:</p>
 <p>Denoting the prespecified doses by <span class="math inline">\((X_d)\)</span> and the cumulative distribution function of <span class="math inline">\(\mathrm{MTD}_i\)</span> by <span class="math inline">\(P\)</span>, we can write the vector <span class="math inline">\((\pi^j)\)</span> of path probabilities:<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
@@ -144,7 +140,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 </div>
 <div id="connection-with-dtp" class="section level1">
 <h1 class="hasAnchor">
-<a href="#connection-with-dtp" class="anchor"></a>Connection with DTP</h1>
+<a href="#connection-with-dtp" class="anchor" aria-hidden="true"></a>Connection with DTP</h1>
 <p>The DTP idea apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, <span class="citation">Yap et al. (2017)</span> cites 3 specific “perceived challenges” in making the transition from rule-based to model-based designs:</p>
 <ol style="list-style-type: decimal">
 <li>The “flexibility” of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.</li>
@@ -155,14 +151,14 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 </div>
 <div id="an-application" class="section level1">
 <h1 class="hasAnchor">
-<a href="#an-application" class="anchor"></a>An application</h1>
-<p>We will adopt the same parameters as in the <code>dtpcrm</code> <a href="https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html">package vignette</a>:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<a href="#an-application" class="anchor" aria-hidden="true"></a>An application</h1>
+<p>We will adopt the same parameters as in the <code>dtpcrm</code> <a href="https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html" class="external-link">package vignette</a>:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <div id="viola-set-up" class="section level2">
 <h2 class="hasAnchor">
-<a href="#viola-set-up" class="anchor"></a>VIOLA set-up</h2>
+<a href="#viola-set-up" class="anchor" aria-hidden="true"></a>VIOLA set-up</h2>
 <div id="clinical-parameters" class="section level3">
 <h3 class="hasAnchor">
-<a href="#clinical-parameters" class="anchor"></a>Clinical parameters</h3>
+<a href="#clinical-parameters" class="anchor" aria-hidden="true"></a>Clinical parameters</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">number.doses</span> <span class="op">&lt;-</span> <span class="fl">7</span>
 <span class="va">start.dose.level</span> <span class="op">&lt;-</span> <span class="fl">3</span>
@@ -173,14 +169,14 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 </div>
 <div id="model-specification-parameters" class="section level3">
 <h3 class="hasAnchor">
-<a href="#model-specification-parameters" class="anchor"></a>Model specification parameters</h3>
+<a href="#model-specification-parameters" class="anchor" aria-hidden="true"></a>Model specification parameters</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">prior.DLT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.03</span>, <span class="fl">0.07</span>, <span class="fl">0.12</span>, <span class="fl">0.20</span>, <span class="fl">0.30</span>, <span class="fl">0.40</span>, <span class="fl">0.52</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">prior.DLT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.03</span>, <span class="fl">0.07</span>, <span class="fl">0.12</span>, <span class="fl">0.20</span>, <span class="fl">0.30</span>, <span class="fl">0.40</span>, <span class="fl">0.52</span><span class="op">)</span>
 <span class="va">prior.var</span> <span class="op">&lt;-</span> <span class="fl">0.75</span></code></pre></div>
 </div>
 <div id="early-stopping" class="section level3">
 <h3 class="hasAnchor">
-<a href="#early-stopping" class="anchor"></a>Early stopping</h3>
+<a href="#early-stopping" class="anchor" aria-hidden="true"></a>Early stopping</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">stop_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stop_for_excess_toxicity_empiric.html">stop_for_excess_toxicity_empiric</a></span><span class="op">(</span><span class="va">x</span>,
@@ -190,18 +186,18 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
   <span class="kw">if</span><span class="op">(</span><span class="va">y</span><span class="op">$</span><span class="va">stop</span><span class="op">)</span><span class="op">{</span>
     <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">y</span>
   <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
-    <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">stop_for_consensus_reached</span><span class="op">(</span><span class="va">x</span>, req_at_mtd <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>
+    <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/dtpcrm/man/stop_for_consensus_reached.html" class="external-link">stop_for_consensus_reached</a></span><span class="op">(</span><span class="va">x</span>, req_at_mtd <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>
   <span class="op">}</span>
 <span class="op">}</span></code></pre></div>
 </div>
 </div>
 <div id="computing-dtps" class="section level2">
 <h2 class="hasAnchor">
-<a href="#computing-dtps" class="anchor"></a>Computing DTPs</h2>
+<a href="#computing-dtps" class="anchor" aria-hidden="true"></a>Computing DTPs</h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span>
 <span class="va">crm</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/Crm-class.html">Crm</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">prior.DLT</span>,
-               scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">prior.var</span><span class="op">)</span>,
+               scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">prior.var</span><span class="op">)</span>,
                target <span class="op">=</span> <span class="va">target.DLT</span><span class="op">)</span><span class="op">$</span>
   <span class="fu">stop_func</span><span class="op">(</span><span class="va">stop_func</span><span class="op">)</span><span class="op">$</span>
   <span class="fu">no_skip_esc</span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span>
@@ -210,16 +206,16 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 
 <span class="va">viola_dtp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_dtps.html">calculate_dtps</a></span><span class="op">(</span>
   next_dose <span class="op">=</span> <span class="va">start.dose.level</span>,
-  cohort_sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span>,
+  cohort_sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span>,
   dose_func <span class="op">=</span> <span class="va">crm</span><span class="op">$</span><span class="va">applied</span>,
   impl <span class="op">=</span> <span class="st">'rusti'</span><span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># used to take ~17 minutes on a 2.6GHz Quad Core i7</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># used to take ~17 minutes on a 2.6GHz Quad Core i7</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   5.285   0.278   3.328</code></pre>
+##   5.868   0.314   3.693</code></pre>
 <p>With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of <span class="math inline">\(4^7 = 16384\)</span> paths. These are not all distinct paths, however, since early stopping results in path degeneracy.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> For example, we can see that paths 1005–1008 all terminate at the 6th cohort, resulting in a <span class="math inline">\(4\times\)</span> degeneracy:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">[</span><span class="fl">1000</span><span class="op">:</span><span class="fl">1010</span>,<span class="op">]</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">[</span><span class="fl">1000</span><span class="op">:</span><span class="fl">1010</span>,<span class="op">]</span><span class="op">)</span></code></pre></div>
 <table class="table">
 <thead><tr>
 <th style="text-align:right;">
@@ -790,96 +786,96 @@ NA
 </table>
 <p>Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of <code>3.5</code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">viola_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">viola_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/as.matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/duplicated.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693</code></pre>
-<p>To distinguish it from the degenerate DTP table returned by <code><a href="https://rdrr.io/pkg/dtpcrm/man/calculate_dtps.html">dtpcrm::calculate_dtps</a></code>, we will refer to <code>viola_paths</code> as the DTP <em>matrix</em>.</p>
+<p>To distinguish it from the degenerate DTP table returned by <code><a href="https://rdrr.io/pkg/dtpcrm/man/calculate_dtps.html" class="external-link">dtpcrm::calculate_dtps</a></code>, we will refer to <code>viola_paths</code> as the DTP <em>matrix</em>.</p>
 </div>
 </div>
 <div id="computing-mathbfb-and-mathrmu-from-the-dtp-matrix" class="section level1">
 <h1 class="hasAnchor">
-<a href="#computing-mathbfb-and-mathrmu-from-the-dtp-matrix" class="anchor"></a>Computing <span class="math inline">\(\mathbf{b}\)</span> and <span class="math inline">\(\mathrm{U}\)</span> from the DTP matrix</h1>
+<a href="#computing-mathbfb-and-mathrmu-from-the-dtp-matrix" class="anchor" aria-hidden="true"></a>Computing <span class="math inline">\(\mathbf{b}\)</span> and <span class="math inline">\(\mathrm{U}\)</span> from the DTP matrix</h1>
 <div id="transform-dtp-table-into-t_cdj" class="section level2">
 <h2 class="hasAnchor">
-<a href="#transform-dtp-table-into-t_cdj" class="anchor"></a>Transform DTP table into <span class="math inline">\(T_{c,d}^j\)</span>
+<a href="#transform-dtp-table-into-t_cdj" class="anchor" aria-hidden="true"></a>Transform DTP table into <span class="math inline">\(T_{c,d}^j\)</span>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">I</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"D"</span>,<span class="fl">0</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">]</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">7</span>, FUN <span class="op">=</span> <span class="st">"=="</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">I</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"D"</span>,<span class="fl">0</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">]</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">7</span>, FUN <span class="op">=</span> <span class="st">"=="</span><span class="op">)</span>
 <span class="va">I</span><span class="op">[</span><span class="va">I</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">I</span><span class="op">[</span><span class="op">!</span><span class="va">I</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span>
 <span class="co"># Now I[j,c,d] is an indicator array that we may use</span>
 <span class="co"># in the manner of a bitmask, to select the toxicities</span>
 <span class="co"># into their proper positions within T[j,c,d]:</span>
-<span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">I</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"T"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">7</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/dimnames.html">dimnames</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"C"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span> <span class="co"># best labeled as Cohorts</span>
-<span class="fu"><a href="https://rdrr.io/r/base/dimnames.html">dimnames</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"X"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span> <span class="co"># label as doses X1..X7</span>
-<span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
+<span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">I</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"T"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">7</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"C"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span> <span class="co"># best labeled as Cohorts</span>
+<span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"X"</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span> <span class="co"># label as doses X1..X7</span>
+<span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693    7    7</code></pre>
 </div>
 <div id="compute-mathbfb-sum_c-n-choose-t_cd" class="section level2">
 <h2 class="hasAnchor">
-<a href="#compute-mathbfb-sum_c-n-choose-t_cd" class="anchor"></a>Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span>
+<a href="#compute-mathbfb-sum_c-n-choose-t_cd" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span>
 </h2>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Special.html">choose</a></span><span class="op">(</span><span class="fl">3</span>, <span class="cn">T</span><span class="op">)</span><span class="op">)</span>, MARGIN <span class="op">=</span> <span class="fl">1</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Special.html" class="external-link">choose</a></span><span class="op">(</span><span class="fl">3</span>, <span class="cn">T</span><span class="op">)</span><span class="op">)</span>, MARGIN <span class="op">=</span> <span class="fl">1</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693</code></pre>
 </div>
 <div id="compute-mathrmu-and-mathrmy" class="section level2">
 <h2 class="hasAnchor">
-<a href="#compute-mathrmu-and-mathrmy" class="anchor"></a>Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span>
+<a href="#compute-mathrmu-and-mathrmy" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span>
 </h2>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html">apply</a></span><span class="op">(</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html">apply</a></span><span class="op">(</span><span class="fl">3</span><span class="op">-</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">U</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="va">Y</span>, <span class="va">Z</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fl">3</span><span class="op">-</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">U</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Y</span>, <span class="va">Z</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693   14</code></pre>
 </div>
 <div id="derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1" class="anchor"></a>Derive <span class="math inline">\(\mathbf{\pi}\)</span> from the CRM skeleton, to check that <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span>
+<a href="#derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1" class="anchor" aria-hidden="true"></a>Derive <span class="math inline">\(\mathbf{\pi}\)</span> from the CRM skeleton, to check that <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span>
 </h2>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">prior.DLT</span><span class="op">)</span>
-<span class="va">log_q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span>
-<span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">log_p</span>, <span class="va">log_q</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">log_pi</span><span class="op">)</span><span class="op">)</span> <span class="co"># check probabilities sum to 1</span></code></pre></div>
+<code class="sourceCode R"><span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">prior.DLT</span><span class="op">)</span>
+<span class="va">log_q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span>
+<span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">log_p</span>, <span class="va">log_q</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">log_pi</span><span class="op">)</span><span class="op">)</span> <span class="co"># check probabilities sum to 1</span></code></pre></div>
 <pre><code>## [1] 1</code></pre>
 </div>
 </div>
 <div id="fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton" class="section level1">
 <h1 class="hasAnchor">
-<a href="#fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton" class="anchor"></a>Fitting a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> to VIOLA’s CRM skeleton</h1>
+<a href="#fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton" class="anchor" aria-hidden="true"></a>Fitting a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> to VIOLA’s CRM skeleton</h1>
 <p>Whereas the analysis of <span class="citation">Norris (2020b)</span> was carried forth under a thoroughly logarithmic scaling of <em>dose</em>, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling—at least for the nonzero doses:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">viola_dosing</span> <span class="op">&lt;-</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>Label <span class="op">=</span> <span class="op">-</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span> <span class="co"># VIOLA dose designations -2,...,4</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Label <span class="op">=</span> <span class="op">-</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span> <span class="co"># VIOLA dose designations -2,...,4</span>
             ,Level <span class="op">=</span>  <span class="fl">1</span><span class="op">:</span><span class="fl">7</span>  <span class="co"># We use integer dose indexes here</span>
-            ,Dose_mg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2.5</span>, <span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">25</span>, <span class="fl">35</span><span class="op">)</span>
+            ,Dose_mg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2.5</span>, <span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">25</span>, <span class="fl">35</span><span class="op">)</span>
             ,skeleton <span class="op">=</span> <span class="va">prior.DLT</span>
              <span class="op">)</span>
-<span class="va">viola_dosing</span> <span class="op">&lt;-</span> <span class="va">viola_dosing</span> <span class="op">%&gt;%</span>
-  <span class="fu">mutate</span><span class="op">(</span>log_dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">Dose_mg</span><span class="op">)</span>
-        ,sqrt_dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">Dose_mg</span><span class="op">)</span>
+<span class="va">viola_dosing</span> <span class="op">&lt;-</span> <span class="va">viola_dosing</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+  <span class="fu">mutate</span><span class="op">(</span>log_dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">Dose_mg</span><span class="op">)</span>
+        ,sqrt_dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">Dose_mg</span><span class="op">)</span>
         <span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">Level</span> <span class="op">~</span> <span class="va">sqrt_dose</span>, data <span class="op">=</span> <span class="va">viola_dosing</span>, type <span class="op">=</span> <span class="st">'b'</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">Level</span> <span class="op">~</span> <span class="va">sqrt_dose</span>, data <span class="op">=</span> <span class="va">viola_dosing</span>, type <span class="op">=</span> <span class="st">'b'</span>
      , ylab <span class="op">=</span> <span class="st">"Dose Level"</span>
-     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
+     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
      , las <span class="op">=</span> <span class="fl">1</span>
      <span class="op">)</span></code></pre></div>
 <p><img src="Safety-Schematic-via-DTP_files/figure-html/VIOLA-dose-scaling-1.png" width="576"></p>
 <p>Indeed, the CRM skeleton looks quite close to a normal distribution under this scaling:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">sqrt_dose</span>, data <span class="op">=</span> <span class="va">viola_dosing</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">sqrt_dose</span>, data <span class="op">=</span> <span class="va">viola_dosing</span>
      , type <span class="op">=</span> <span class="st">'b'</span>
-     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
-     , ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.55</span><span class="op">)</span>
+     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
+     , ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.55</span><span class="op">)</span>
      , las <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">6</span>, <span class="fl">0.1</span><span class="op">)</span>
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span><span class="op">(</span><span class="va">x</span>, mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="fl">33</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">6</span>, <span class="fl">0.1</span><span class="op">)</span>
+<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="va">x</span>, mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">33</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
 <div class="figure">
 <img src="Safety-Schematic-via-DTP_files/figure-html/skeleton-as-expectation-1.png" alt="CRM skeleton probabilities vs $\sqrt{\mathrm{Dose}}$, with superimposed normal distribution having median $\sqrt{33}$ and standard deviation 3." width="576"><p class="caption">
 CRM skeleton probabilities vs <span class="math inline">\(\sqrt{\mathrm{Dose}}\)</span>, with superimposed normal distribution having median <span class="math inline">\(\sqrt{33}\)</span> and standard deviation 3.
@@ -887,25 +883,25 @@ CRM skeleton probabilities vs <span class="math inline">\(\sqrt{\mathrm{Dose}}\)
 </div>
 <p>Nevertheless, the treatment of zero dose under this scaling is pharmacologically problematic, if not outright homeopathic, so we will proceed instead using a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution fitted to the CRM skeleton.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">log_dose</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">viola_dosing</span>, <span class="fu"><a href="https://rdrr.io/r/base/is.finite.html">is.finite</a></span><span class="op">(</span><span class="va">log_dose</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">log_dose</span>, data <span class="op">=</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/subset.data.table.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">viola_dosing</span>, <span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">log_dose</span><span class="op">)</span><span class="op">)</span>
      , type <span class="op">=</span> <span class="st">'b'</span>
-     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
-     , xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3.6</span><span class="op">)</span>
-     , ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.55</span><span class="op">)</span>
+     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
+     , xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3.6</span><span class="op">)</span>
+     , ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.55</span><span class="op">)</span>
      , las <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
 
 <span class="va">sse</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mu_sigma</span>, <span class="va">dose</span> <span class="op">=</span> <span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">{</span>
   <span class="va">mu</span> <span class="op">&lt;-</span> <span class="va">mu_sigma</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>
   <span class="va">sigma</span> <span class="op">&lt;-</span> <span class="va">mu_sigma</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>
-  <span class="va">lnorm.DLT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html">plnorm</a></span><span class="op">(</span><span class="va">dose</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
-  <span class="va">sse</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">lnorm.DLT</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span><span class="op">[</span><span class="va">dose</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>
+  <span class="va">lnorm.DLT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="va">dose</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
+  <span class="va">sse</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">lnorm.DLT</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span><span class="op">[</span><span class="va">dose</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>
 <span class="op">}</span>
-<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html">optim</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>mu<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">38</span><span class="op">)</span>, sigma<span class="op">=</span><span class="fl">1.8</span><span class="op">)</span>, fn <span class="op">=</span> <span class="va">sse</span><span class="op">)</span>
-<span class="va">mu_opt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="st">'mu'</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
-<span class="va">sigma_opt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="st">'sigma'</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3.55</span>, <span class="fl">0.05</span><span class="op">)</span>
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu_opt</span>, sdlog <span class="op">=</span> <span class="va">sigma_opt</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/optim.html" class="external-link">optim</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>mu<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">38</span><span class="op">)</span>, sigma<span class="op">=</span><span class="fl">1.8</span><span class="op">)</span>, fn <span class="op">=</span> <span class="va">sse</span><span class="op">)</span>
+<span class="va">mu_opt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="st">'mu'</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>
+<span class="va">sigma_opt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">par</span><span class="op">[</span><span class="st">'sigma'</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span>
+<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3.55</span>, <span class="fl">0.05</span><span class="op">)</span>
+<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu_opt</span>, sdlog <span class="op">=</span> <span class="va">sigma_opt</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
 <div class="figure">
 <img src="Safety-Schematic-via-DTP_files/figure-html/skeleton-log-match-1.png" alt="CRM skeleton probabilities vs $\log \mathrm{Dose}$, with superimposed lognormal distribution having median $\mu = 35$mg and $\sigma = 1.6$." width="576"><p class="caption">
 CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</span>, with superimposed lognormal distribution having median <span class="math inline">\(\mu = 35\)</span>mg and <span class="math inline">\(\sigma = 1.6\)</span>.
@@ -914,7 +910,7 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 </div>
 <div id="viola-safety" class="section level1">
 <h1 class="hasAnchor">
-<a href="#viola-safety" class="anchor"></a>VIOLA safety</h1>
+<a href="#viola-safety" class="anchor" aria-hidden="true"></a>VIOLA safety</h1>
 <p>Taking this CRM skeleton fit as a modal expectation of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution, we may employ Equations @ref(eq:fatalfraction)–@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of <span class="math inline">\(\kappa\)</span>:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">kappa</span>, <span class="va">mu</span><span class="op">=</span><span class="va">mu_opt</span>, <span class="va">sigma</span><span class="op">=</span><span class="va">sigma_opt</span>, <span class="va">X</span><span class="op">=</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span> <span class="op">{</span>
@@ -922,55 +918,55 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
   <span class="co"># generally returning a length(X) x length(kappa) MATRIX</span>
   <span class="co"># which can validly right-multiply Y in t(pi) %*% Y %*% f.</span>
   <span class="co"># (In the special case length(kappa)==1, a vector is returned.)</span>
-  <span class="va">gr5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span><span class="op">*</span><span class="va">kappa</span><span class="op">)</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
-  <span class="va">dlt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html">outer</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span> <span class="fl">0</span><span class="op">*</span><span class="va">kappa</span><span class="op">)</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
+  <span class="va">gr5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span><span class="op">*</span><span class="va">kappa</span><span class="op">)</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
+  <span class="va">dlt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="va">X</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span> <span class="fl">0</span><span class="op">*</span><span class="va">kappa</span><span class="op">)</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
   <span class="va">ff</span> <span class="op">&lt;-</span> <span class="va">gr5</span><span class="op">/</span><span class="va">dlt</span>
-  <span class="va">ff</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html">is.nan</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span> <span class="co"># replace NaN caused by X[1]==0</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/dimnames.html">dimnames</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_along</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>,
-    kappa <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="va">kappa</span>, <span class="fl">3</span><span class="op">)</span>
+  <span class="va">ff</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.nan</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span> <span class="co"># replace NaN caused by X[1]==0</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+    dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>,
+    kappa <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">kappa</span>, <span class="fl">3</span><span class="op">)</span>
   <span class="op">)</span>
-  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">kappa</span><span class="op">)</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span>
-    <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/vector.html">as.vector</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span><span class="op">)</span>
+  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">kappa</span><span class="op">)</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span>
+    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="va">ff</span><span class="op">)</span><span class="op">)</span>
   <span class="va">ff</span>
 <span class="op">}</span>
 
-<span class="va">kappa</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="fl">0.02</span><span class="op">)</span>
+<span class="va">kappa</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">1.2</span>, <span class="fl">0.02</span><span class="op">)</span>
 <span class="cn">F</span> <span class="op">&lt;-</span> <span class="fu">f</span><span class="op">(</span>kappa <span class="op">=</span> <span class="va">kappa</span><span class="op">)</span>
-<span class="va">Ef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">log_pi</span><span class="op">)</span><span class="op">)</span> <span class="op">%*%</span> <span class="va">Y</span> <span class="op">%*%</span> <span class="cn">F</span>
-<span class="va">Ef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">Ef</span><span class="op">)</span> <span class="co"># transpose to a column-vector</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">Ef</span> <span class="op">~</span> <span class="va">kappa</span>, type <span class="op">=</span> <span class="st">'l'</span>
-     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html">expression</a></span><span class="op">(</span><span class="va">kappa</span><span class="op">)</span>
+<span class="va">Ef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">log_pi</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">Y</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="cn">F</span>
+<span class="va">Ef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">Ef</span><span class="op">)</span> <span class="co"># transpose to a column-vector</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">Ef</span> <span class="op">~</span> <span class="va">kappa</span>, type <span class="op">=</span> <span class="st">'l'</span>
+     , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="va">kappa</span><span class="op">)</span>
      , ylab <span class="op">=</span> <span class="st">"Expected Number of Fatal DLTs"</span>
      , las<span class="op">=</span><span class="fl">1</span><span class="op">)</span></code></pre></div>
 <p><img src="Safety-Schematic-via-DTP_files/figure-html/fatalities-vs-kappa-1.png" width="576"></p>
 <div id="beyond-the-skeleton" class="section level2">
 <h2 class="hasAnchor">
-<a href="#beyond-the-skeleton" class="anchor"></a>Beyond the skeleton</h2>
+<a href="#beyond-the-skeleton" class="anchor" aria-hidden="true"></a>Beyond the skeleton</h2>
 <p>The development of CRM methods has left the status of the <em>skeleton</em> somewhat ambiguous. While evading its realistic interpretation as an <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution,<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. <span class="citation">Braun (2020)</span>, for example, develops an approach which “hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton.”</p>
 <p>Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in <span class="citation">Norris (2020b)</span> provides one approach.</p>
 <p>To enable parameter departures from our lognormal skeleton fit, we require <span class="math inline">\(\log \boldsymbol{\pi}\)</span> as a <em>function</em> of <span class="math inline">\((\mu, \sigma)\)</span>:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mu</span>, <span class="va">sigma</span><span class="op">)</span><span class="op">{</span>
-  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html">plnorm</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
-  <span class="va">log_pq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>
-  <span class="va">log_pi</span> <span class="op">=</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">pmax</a></span><span class="op">(</span><span class="va">log_pq</span>, <span class="op">-</span><span class="fl">500</span><span class="op">)</span> <span class="co"># clamping -Inf to -500 avoids NaN's  </span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
+  <span class="va">log_pq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>
+  <span class="va">log_pi</span> <span class="op">=</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">log_pq</span>, <span class="op">-</span><span class="fl">500</span><span class="op">)</span> <span class="co"># clamping -Inf to -500 avoids NaN's  </span>
 <span class="op">}</span></code></pre></div>
 <p>This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters <span class="math inline">\((\mu, \sigma, \kappa)\)</span>. But again as in <span class="citation">Norris (2020b)</span> we employ a minimax framing of our safety question, to achieve a dimension reduction:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mu_minimax</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># dose 3 is 2nd-highest *nonzero* dose</span></code></pre></div>
+<code class="sourceCode R"><span class="va">mu_minimax</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># dose 3 is 2nd-highest *nonzero* dose</span></code></pre></div>
 <p>The irregularly spaced doses of VIOLA don’t yield a unique delta, but the <span class="math inline">\(2\times\)</span> mulipliers either side of dose level 3 (our <code>mu_minimax</code>) allow us to select <span class="math inline">\(\delta = \log 2\)</span> as a local approximation:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>We may now generate a grid of values, and plot contours:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">focustab</span> <span class="op">&lt;-</span> <span class="fu">CJ</span><span class="op">(</span>mu <span class="op">=</span> <span class="va">mu_minimax</span>
-              , K <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.65</span> , <span class="fl">0.01</span><span class="op">)</span> <span class="co"># K = kappa / sigma</span>
-              , sigma <span class="op">=</span> <span class="va">delta</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">2.2</span>, <span class="fl">0.01</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">focustab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/J.html" class="external-link">CJ</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="va">mu_minimax</span>
+              , K <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.65</span> , <span class="fl">0.01</span><span class="op">)</span> <span class="co"># K = kappa / sigma</span>
+              , sigma <span class="op">=</span> <span class="va">delta</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">2.2</span>, <span class="fl">0.01</span><span class="op">)</span>
               <span class="op">)</span>
 <span class="va">focustab</span><span class="op">[</span>, <span class="va">kappa</span> <span class="op">:=</span> <span class="va">K</span> <span class="op">*</span> <span class="va">sigma</span><span class="op">]</span>
-<span class="va">focustab</span><span class="op">[</span>, <span class="va">value</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="fu">log_pi</span><span class="op">(</span><span class="va">mu</span>,<span class="va">sigma</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%*%</span>
-             <span class="va">Y</span> <span class="op">%*%</span> <span class="fu">f</span><span class="op">(</span>kappa<span class="op">=</span><span class="va">kappa</span>, mu<span class="op">=</span><span class="va">mu</span>, sigma<span class="op">=</span><span class="va">sigma</span><span class="op">)</span>
+<span class="va">focustab</span><span class="op">[</span>, <span class="va">value</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fu">log_pi</span><span class="op">(</span><span class="va">mu</span>,<span class="va">sigma</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span>
+             <span class="va">Y</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu">f</span><span class="op">(</span>kappa<span class="op">=</span><span class="va">kappa</span>, mu<span class="op">=</span><span class="va">mu</span>, sigma<span class="op">=</span><span class="va">sigma</span><span class="op">)</span>
        , by <span class="op">=</span> <span class="fu">.</span><span class="op">(</span><span class="va">mu</span>,<span class="va">sigma</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 <div class="figure">
 <img src="Safety-Schematic-via-DTP_files/figure-html/contourplot-1.png" alt="Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-up of Figure 3 in @norris_what_2020. Therapeutic index $\kappa/\sigma$ gauges the target drug's aptness for safe-and-effective 1-size-fits-all dosing in the trial's combination regimen. Signal-to-noise index $\delta/\sigma$ governs the informativeness of the dose-escalation process. This analysis assumes a log-normally distributed $\MTDi$, with median parameter set (on minimax grounds) at VIOLA dose level 3. Plotted values of $\delta/\sigma$ are based on $\delta=\log(2)$, selected according to the $2\times$ VIOLA dose-level spacing around this dose level." width="576"><p class="caption">
@@ -981,34 +977,34 @@ Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-u
 </div>
 <div id="conclusion" class="section level1">
 <h1 class="hasAnchor">
-<a href="#conclusion" class="anchor"></a>Conclusion</h1>
+<a href="#conclusion" class="anchor" aria-hidden="true"></a>Conclusion</h1>
 <p>Although initially put forward with different intent, the <em>dose transition pathways</em> of <span class="citation">Yap et al. (2017)</span> render the enumerative approach of <span class="citation">Norris (2020b)</span> immediately applicable to the CRM. Importantly, the analysis is found to be computationally feasible in the setting of an actual trial. Indeed, with performance improvements debuted in version 0.2-2 of <code>precautionary</code>, the complete VIOLA enumeration becomes essentially trivial, taking just a few seconds on modern desktop hardware. This raises the prospect of scaling up our problems to meet the opportunities of massive parallelism <span class="citation">(Gustafson 1988)</span>, expanding this mode of analysis to ever larger dose-finding trials.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 <p>The approach taken here exemplifies a widely applicable scheme for the safety analysis of dose-escalation trials generally, rooted in the exhaustive enumeration of all possible trial paths.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h1>
+<a href="#references" class="anchor" aria-hidden="true"></a>References</h1>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-braun_simulationfree_2020" class="csl-entry">
-Braun, Thomas M. 2020. <span>“A Simulation‐free Approach to Assessing the Performance of the Continual Reassessment Method.”</span> <em>Statistics in Medicine</em>, September, sim.8746. <a href="https://doi.org/10.1002/sim.8746">https://doi.org/10.1002/sim.8746</a>.
+Braun, Thomas M. 2020. <span>“A Simulation‐free Approach to Assessing the Performance of the Continual Reassessment Method.”</span> <em>Statistics in Medicine</em>, September, sim.8746. <a href="https://doi.org/10.1002/sim.8746" class="external-link">https://doi.org/10.1002/sim.8746</a>.
 </div>
 <div id="ref-craddock_combination_2019" class="csl-entry">
-Craddock, Charles, Daniel Slade, Carmela De Santo, Rachel Wheat, Paul Ferguson, Andrea Hodgkinson, Kristian Brock, et al. 2019. <span>“Combination <span>Lenalidomide</span> and <span>Azacitidine</span>: <span>A</span> <span>Novel</span> <span>Salvage</span> <span>Therapy</span> in <span>Patients</span> <span>Who</span> <span>Relapse</span> <span>After</span> <span>Allogeneic</span> <span>Stem</span>-<span>Cell</span> <span>Transplantation</span> for <span>Acute</span> <span>Myeloid</span> <span>Leukemia</span>.”</span> <em>Journal of Clinical Oncology: Official Journal of the American Society of Clinical Oncology</em>, January, JCO1800889. <a href="https://doi.org/10.1200/JCO.18.00889">https://doi.org/10.1200/JCO.18.00889</a>.
+Craddock, Charles, Daniel Slade, Carmela De Santo, Rachel Wheat, Paul Ferguson, Andrea Hodgkinson, Kristian Brock, et al. 2019. <span>“Combination <span>Lenalidomide</span> and <span>Azacitidine</span>: <span>A</span> <span>Novel</span> <span>Salvage</span> <span>Therapy</span> in <span>Patients</span> <span>Who</span> <span>Relapse</span> <span>After</span> <span>Allogeneic</span> <span>Stem</span>-<span>Cell</span> <span>Transplantation</span> for <span>Acute</span> <span>Myeloid</span> <span>Leukemia</span>.”</span> <em>Journal of Clinical Oncology: Official Journal of the American Society of Clinical Oncology</em>, January, JCO1800889. <a href="https://doi.org/10.1200/JCO.18.00889" class="external-link">https://doi.org/10.1200/JCO.18.00889</a>.
 </div>
 <div id="ref-gustafson_reevaluating_1988" class="csl-entry">
 Gustafson, John L. 1988. <span>“Reevaluating <span>Amdahl</span>’s <span>Law</span>.”</span> <em>Communications of the ACM</em> 31: 532–33.
 </div>
 <div id="ref-norris_comment_2020" class="csl-entry">
-Norris, David C. 2020a. <span>“Comment on <span>Wages</span> Et Al, <span>Coherence</span> Principles in Interval-Based Dose Finding. <span>Pharmaceutical</span> <span>Statistics</span> 2019, Doi:10.1002/Pst.1974.”</span> <em>Pharmaceutical Statistics</em>, March. <a href="https://doi.org/10.1002/pst.2016">https://doi.org/10.1002/pst.2016</a>.
+Norris, David C. 2020a. <span>“Comment on <span>Wages</span> Et Al, <span>Coherence</span> Principles in Interval-Based Dose Finding. <span>Pharmaceutical</span> <span>Statistics</span> 2019, Doi:10.1002/Pst.1974.”</span> <em>Pharmaceutical Statistics</em>, March. <a href="https://doi.org/10.1002/pst.2016" class="external-link">https://doi.org/10.1002/pst.2016</a>.
 </div>
 <div id="ref-norris_what_2020" class="csl-entry">
-———. 2020b. <span>“What <span>Were</span> <span>They</span> <span>Thinking</span>? <span>Pharmacologic</span> Priors Implicit in a Choice of 3+3 Dose-Escalation Design.”</span> <em>arXiv:2012.05301 [Stat.ME]</em>, December. <a href="https://arxiv.org/abs/2012.05301">https://arxiv.org/abs/2012.05301</a>.
+———. 2020b. <span>“What <span>Were</span> <span>They</span> <span>Thinking</span>? <span>Pharmacologic</span> Priors Implicit in a Choice of 3+3 Dose-Escalation Design.”</span> <em>arXiv:2012.05301 [Stat.ME]</em>, December. <a href="https://arxiv.org/abs/2012.05301" class="external-link">https://arxiv.org/abs/2012.05301</a>.
 </div>
 <div id="ref-yap_dose_2017" class="csl-entry">
-Yap, Christina, Lucinda J. Billingham, Ying Kuen Cheung, Charlie Craddock, and John O’Quigley. 2017. <span>“Dose <span>Transition</span> <span>Pathways</span>: <span>The</span> <span>Missing</span> <span>Link</span> <span>Between</span> <span>Complex</span> <span>Dose</span>-<span>Finding</span> <span>Designs</span> and <span>Simple</span> <span>Decision</span>-<span>Making</span>.”</span> <em>Clinical Cancer Research: An Official Journal of the American Association for Cancer Research</em> 23 (24): 7440–47. <a href="https://doi.org/10.1158/1078-0432.CCR-17-0582">https://doi.org/10.1158/1078-0432.CCR-17-0582</a>.
+Yap, Christina, Lucinda J. Billingham, Ying Kuen Cheung, Charlie Craddock, and John O’Quigley. 2017. <span>“Dose <span>Transition</span> <span>Pathways</span>: <span>The</span> <span>Missing</span> <span>Link</span> <span>Between</span> <span>Complex</span> <span>Dose</span>-<span>Finding</span> <span>Designs</span> and <span>Simple</span> <span>Decision</span>-<span>Making</span>.”</span> <em>Clinical Cancer Research: An Official Journal of the American Association for Cancer Research</em> 23 (24): 7440–47. <a href="https://doi.org/10.1158/1078-0432.CCR-17-0582" class="external-link">https://doi.org/10.1158/1078-0432.CCR-17-0582</a>.
 </div>
 <div id="ref-R-dtpcrm" class="csl-entry">
-Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose Transition Pathways for Continual Reassessment Method</em>. <a href="https://CRAN.R-project.org/package=dtpcrm">https://CRAN.R-project.org/package=dtpcrm</a>.
+Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose Transition Pathways for Continual Reassessment Method</em>. <a href="https://CRAN.R-project.org/package=dtpcrm" class="external-link">https://CRAN.R-project.org/package=dtpcrm</a>.
 </div>
 </div>
 </div>
@@ -1020,7 +1016,7 @@ Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose
 <li id="fn3"><p>See Table 1 in <span class="citation">Craddock et al. (2019)</span>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Indeed, the underlying calculations exhbit an even more re remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class <code>Crm</code> introduced in version 0.2-2 of <code>precautionary</code>.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 <li id="fn5"><p>For a related perspective on interpretational issues, see <span class="citation">Norris (2020a)</span>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
-<li id="fn6"><p>See also <a href="https://en.wikipedia.org/wiki/Gustafson%27s_law" class="uri">https://en.wikipedia.org/wiki/Gustafson%27s_law</a>.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>See also <a href="https://en.wikipedia.org/wiki/Gustafson%27s_law" class="external-link uri">https://en.wikipedia.org/wiki/Gustafson%27s_law</a>.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
   </div>
@@ -1036,11 +1032,13 @@ Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose
 
 
       <footer><div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p></p>
+<p>Developed by David C. Norris.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
 </div>
 
       </footer>
@@ -1048,6 +1046,8 @@ Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose
 
   
 
+
+  
 
   </body>
 </html>

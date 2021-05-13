@@ -59,6 +59,8 @@ comprehensive enumeration of all paths of a trial." />
 
 
 
+
+
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script>
@@ -70,9 +72,18 @@ comprehensive enumeration of all paths of a trial." />
 
 
 
+<!-- dependencies from examples -->
+
+
+  
+
+  
+
   </head>
 
   <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -93,12 +104,6 @@ comprehensive enumeration of all paths of a trial." />
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -173,7 +178,7 @@ comprehensive enumeration of all paths of a trial.</p>
     <tr>
       <th>cohort_sizes</th>
       <td><p>An integer vector of cohort sizes, with length equal to
-the maximum number of cohorts that may be enrolled. (Thus, <code><a href='https://rdrr.io/r/base/sum.html'>sum(cohort_sizes)</a></code>
+the maximum number of cohorts that may be enrolled. (Thus, <code>sum(cohort_sizes)</code>
 is the trial's maximum enrollment.)</p></td>
     </tr>
     <tr>
@@ -232,39 +237,39 @@ yields $(3+1)^2=16$ chunks.)</p>
     <p>Adapted by David C. Norris from original <code><a href='https://rdrr.io/pkg/dtpcrm/man/calculate_dtps.html'>dtpcrm::calculate_dtps</a></code></p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>## VIOLA trial</span>
-<span class='va'>prior.DLT</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.03</span>, <span class='fl'>0.07</span>, <span class='fl'>0.12</span>, <span class='fl'>0.20</span>, <span class='fl'>0.30</span>, <span class='fl'>0.40</span>, <span class='fl'>0.52</span><span class='op'>)</span>
-<span class='va'>prior.var</span> <span class='op'>&lt;-</span> <span class='fl'>0.75</span>
-
-<span class='va'>stop_func</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span>
-  <span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'><a href='stop_for_excess_toxicity_empiric.html'>stop_for_excess_toxicity_empiric</a></span><span class='op'>(</span><span class='va'>x</span>,
-                                        tox_lim <span class='op'>=</span> <span class='fl'>0.3</span>,
-                                        prob_cert <span class='op'>=</span> <span class='fl'>0.72</span>,
-                                        dose <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
-  <span class='kw'>if</span><span class='op'>(</span><span class='va'>y</span><span class='op'>$</span><span class='va'>stop</span><span class='op'>)</span><span class='op'>{</span>
-    <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='va'>y</span>
-  <span class='op'>}</span> <span class='kw'>else</span> <span class='op'>{</span>
-    <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'>stop_for_consensus_reached</span><span class='op'>(</span><span class='va'>x</span>, req_at_mtd <span class='op'>=</span> <span class='fl'>12</span><span class='op'>)</span>
-  <span class='op'>}</span>
-<span class='op'>}</span>
-
-<span class='va'>crm</span> <span class='op'>&lt;-</span> <span class='va'><a href='Crm-class.html'>Crm</a></span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='va'>prior.DLT</span>,
-               scale <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='va'>prior.var</span><span class='op'>)</span>,
-               target <span class='op'>=</span> <span class='fl'>0.2</span><span class='op'>)</span><span class='op'>$</span>
-  <span class='fu'>stop_func</span><span class='op'>(</span><span class='va'>stop_func</span><span class='op'>)</span><span class='op'>$</span>
-  <span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>$</span>
-  <span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span>
-  <span class='fu'>global_coherent_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span>
-
-<span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='co'># don't overtax CRAN servers</span>
-<span class='va'>restore</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>mc.cores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='co'># you can reasonably set as high as detectCores()</span>
-<span class='va'>dtps</span> <span class='op'>&lt;-</span> <span class='fu'>calculate_dtps</span><span class='op'>(</span>next_dose <span class='op'>=</span> <span class='fl'>3</span>,
-                       cohort_sizes <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>7</span><span class='op'>)</span>,
-                       dose_func <span class='op'>=</span> <span class='va'>crm</span><span class='op'>$</span><span class='va'>applied</span>,
-                       impl <span class='op'>=</span> <span class='st'>"rusti"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>mc.cores <span class='op'>=</span> <span class='va'>restore</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='co'>## VIOLA trial</span></span>
+<span class='r-in'><span class='va'>prior.DLT</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.03</span>, <span class='fl'>0.07</span>, <span class='fl'>0.12</span>, <span class='fl'>0.20</span>, <span class='fl'>0.30</span>, <span class='fl'>0.40</span>, <span class='fl'>0.52</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>prior.var</span> <span class='op'>&lt;-</span> <span class='fl'>0.75</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>stop_func</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>  <span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'><a href='stop_for_excess_toxicity_empiric.html'>stop_for_excess_toxicity_empiric</a></span><span class='op'>(</span><span class='va'>x</span>,</span>
+<span class='r-in'>                                        tox_lim <span class='op'>=</span> <span class='fl'>0.3</span>,</span>
+<span class='r-in'>                                        prob_cert <span class='op'>=</span> <span class='fl'>0.72</span>,</span>
+<span class='r-in'>                                        dose <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='kw'>if</span><span class='op'>(</span><span class='va'>y</span><span class='op'>$</span><span class='va'>stop</span><span class='op'>)</span><span class='op'>{</span></span>
+<span class='r-in'>    <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='va'>y</span></span>
+<span class='r-in'>  <span class='op'>}</span> <span class='kw'>else</span> <span class='op'>{</span></span>
+<span class='r-in'>    <span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'>stop_for_consensus_reached</span><span class='op'>(</span><span class='va'>x</span>, req_at_mtd <span class='op'>=</span> <span class='fl'>12</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='op'>}</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>crm</span> <span class='op'>&lt;-</span> <span class='va'><a href='Crm-class.html'>Crm</a></span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='va'>prior.DLT</span>,</span>
+<span class='r-in'>               scale <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='va'>prior.var</span><span class='op'>)</span>,</span>
+<span class='r-in'>               target <span class='op'>=</span> <span class='fl'>0.2</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>  <span class='fu'>stop_func</span><span class='op'>(</span><span class='va'>stop_func</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>  <span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>  <span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>  <span class='fu'>global_coherent_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='co'># don't overtax CRAN servers</span></span>
+<span class='r-in'><span class='va'>restore</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>mc.cores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='co'># you can reasonably set as high as detectCores()</span></span>
+<span class='r-in'><span class='va'>dtps</span> <span class='op'>&lt;-</span> <span class='fu'>calculate_dtps</span><span class='op'>(</span>next_dose <span class='op'>=</span> <span class='fl'>3</span>,</span>
+<span class='r-in'>                       cohort_sizes <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>7</span><span class='op'>)</span>,</span>
+<span class='r-in'>                       dose_func <span class='op'>=</span> <span class='va'>crm</span><span class='op'>$</span><span class='va'>applied</span>,</span>
+<span class='r-in'>                       impl <span class='op'>=</span> <span class='st'>"rusti"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>mc.cores <span class='op'>=</span> <span class='va'>restore</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -276,11 +281,11 @@ yields $(3+1)^2=16$ chunks.)</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p><p>Developed by David C. Norris.</p></p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 1.6.1.9001.</p></p>
 </div>
 
       </footer>
@@ -288,6 +293,8 @@ yields $(3+1)^2=16$ chunks.)</p>
 
   
 
+
+  
 
   </body>
 </html>
