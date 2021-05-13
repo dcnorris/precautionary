@@ -9,7 +9,7 @@ home:
 template:
   opengraph:
     image:
-      src: man/figures/card.png
+      src: man/figures/logo.svg
       alt: "Logo for precautionary package"
     twitter:
       creator: "@davidcnorrismd"
