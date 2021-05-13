@@ -19,7 +19,7 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)">
 <meta property="og:description" content="precautionary">
-<meta property="og:image" content="/reference/figures/card.png">
+<meta property="og:image" content="https://github.com/dcnorris/precautionary/raw/main/docs/card.png">
 <meta property="og:image:alt" content="Logo for precautionary package">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:creator" content="@davidcnorrismd">
@@ -212,7 +212,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 
 <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># used to take ~17 minutes on a 2.6GHz Quad Core i7</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   5.868   0.314   3.693</code></pre>
+##   5.496   0.295   3.475</code></pre>
 <p>With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of <span class="math inline">\(4^7 = 16384\)</span> paths. These are not all distinct paths, however, since early stopping results in path degeneracy.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> For example, we can see that paths 1005–1008 all terminate at the 6th cohort, resulting in a <span class="math inline">\(4\times\)</span> degeneracy:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">[</span><span class="fl">1000</span><span class="op">:</span><span class="fl">1010</span>,<span class="op">]</span><span class="op">)</span></code></pre></div>
