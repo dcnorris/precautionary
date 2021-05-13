@@ -1,9 +1,9 @@
 home:
-  title: Safety Diagnostics for Dose-Escalation Trials
+  title: Safety Diagnostics for Dose Escalation
   description: >
-    Patient-centered safety diagnostics for oncology
-    dose-escalation trials, taking inter-individual
-    PKPD variation into account.
+    Patient-centered safety diagnostics for
+    oncology dose-escalation trials, accounting
+    for inter-individual variation in PKPD.
 
 template:
   opengraph:
