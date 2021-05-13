@@ -1,15 +1,14 @@
 home:
   title: Safety Diagnostics for Dose-Escalation Trials
   description: >
-    Patient-centered safety diagnostics for phase 1
-    dose-escalation trials in oncology, taking account
-    of inter-individual variation in pharmacokinetics
-    and pharmacodynamics.
+    Patient-centered safety diagnostics for oncology
+    dose-escalation trials, taking inter-individual
+    PKPD variation into account.
 
 template:
   opengraph:
     image:
-      src: man/figures/card.png
+      src: https://github.com/dcnorris/precautionary/raw/main/docs/card.png
       alt: "Logo for precautionary package"
     twitter:
       creator: "@davidcnorrismd"
