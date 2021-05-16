@@ -206,67 +206,6 @@ qcompare(>, T1/N1, T2/N2) :-
 
 /*
 
-WHERE SENSIBLE, extend the above comparisons to LISTS of arg 3 ...
-
-What is the right semantics for qcompare(C, Q, [Q1, Q2])?
-Obvious candidates are:
-
-- "and": (qcompare(C, Q, Q1), qcompare(C, Q, Q2))
-
-- "or" : (qcompare(C, Q, Q1); qcompare(C, Q, Q2)).
-
-Certainly, the "or" case is more 'efficient' (because *lazy*).
-
-But what do the BOIN tox boundaries require, 'as written'?
-
-Ahh, suppose I wanted to allow the tox boundary to be 'staked out'
-with one tally T/N per N ∊ ℕ. In that case, it would suffice to demonstrate
-the inequality for just the matching element. This naturally points toward
-the "or" connectivity. In this case, the implementation is straightforward
-as well, in terms of lists.
-
-But might the strict and non-strict inequalities naturally require opposite
-semantics? If 'hitting a boundary' is something that happens if it happens
-at any point along the boundary, then NOT hitting the boundary seems to
-require a logical CONJUNCTION.
-
-*/
-
-%% Extend this relation to a list arg #3. Note that the strict inequalities
-%% demand a logical CONJUNCTION, consistent with 'not hitting the boundary'
-%% demanding that we miss EVERY point 'staked out' along the boundary.
-%% Conversely, 'hitting the boundary' means hitting ANY point.
-qcompare(<, Q1, []) :- tally(Q1).
-qcompare(<, Q1, [Q | Qs]) :-
-    qcompare(<, Q1, Q),
-    qcompare(Q1, Qs).
-
-qcompare(>, Q1, []) :- tally(Q1).
-qcompare(>, Q1, [Q | Qs]) :-
-    qcompare(>, Q1, Q),
-    qcompare(Q1, Qs).
-
-%% TODO: Here is where (apparently) I would use if_/3.
-%%       It seems this would require reifying the truth-value
-%%       of qcompare/3 in a new, 4th argument. But why wouldn't
-%%       this amount to the same work as =/3 in reif.pl, which
-%%       itself uses (->) twice?
-%% TODO: Does reif:tmember/3 aim to solve this problem?
-%%       Is that what I should be using here?
-qcompare(=<, Q1, [Q]) :- qcompare(=<, Q1, Q).
-qcompare(=<, Q1, [Q | Qs]) :-
-    (	qcompare(=<, Q1, Q) -> true
-    ;	qcompare(=<, Q1, Qs)
-    ).
-
-qcompare(>=, Q1, [Q]) :- qcompare(>=, Q1, Q).
-qcompare(>=, Q1, [Q | Qs]) :-
-    (	qcompare(>=, Q1, Q) -> true
-    ;	qcompare(>=, Q1, Qs)
-    ).
-
-/*
-
 Interestingly, the analysis via qcompare/3 (and the proofs it enables)
 assist greatly in the *analysis* of the problem, but probably do not
 enter into the final *representation*.
