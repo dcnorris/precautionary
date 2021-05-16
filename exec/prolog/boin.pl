@@ -59,11 +59,14 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(clpz)).
 :- use_module(library(pio)).
 :- use_module(library(lists)).
+:- use_module(library(pairs)).
 :- use_module(library(dcgs)).
 :- use_module(library(lambda)).
 :- use_module(library(time)).
 :- use_module(library(debug)).
 :- use_module(library(between)).
+:- use_module(library(dif)).
+:- use_module(library(reif)).
 
 % TODO: Review library(debug); it includes * and other useful predicates
 
@@ -72,33 +75,9 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 % My initial emphasis is on generating all possible paths (CPE) for the BOIN
 % design set forth in the table above. Although the BOIN design of [1] lacks
 % any terminating principle except elimination of all doses, we do need such
-% a rule here. The most natural formtype of rule, in view of the Table above,
+% a rule here. The most natural type of rule, in view of the Table above,
 % might be a 'stop-for-consensus' type of rule as found in package 'dtpcrm'.
 % This is specified as a maximum number of patients to enroll at any 1 dose.
-
-/*
-
-Under a scheme of rolling enrollment, we no longer have the alternating sequence
-of enrollment and assessment 'coroutines'. Rather, the GENERAL state is one where
-EITHER further enrollment or resolution of pending DLT assessments may occur.
-
-What if I plunged in, and explicitly used Prolog's distinction between ground and
-uninstantiated variables? The sequence of enrolled patients is then a list of vars,
-each in domain 0..1. The state transitions consist of either the instantiation of
-non-ground vars, or else the extension of the list with new enrollment. One happy
-consequence of this design is that it looks open to generalization to ordinal tox.
-
-*/
-
-/*
-
-That looks promising! So the state representation now becomes the previous
-left-right lists, except that the element of these lists are themselves lists!
-
-*/
-
-%% A fair enumeration of tallies will be helpful for developing
-%% and testing comparison relations between tallies.
 
 %% In general, I may require a max-enrollment *parameter*,
 %% however unsightly it may be tagging along like this ...
@@ -117,6 +96,323 @@ tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 %@ false.
 
 %% -----------------------------------------------------------------------------
+
+/*
+
+I must define the comparison between a tally and a boundary, so that all
+possible true cases are taken into account. Mathematically, this means
+a complete mapping from {tallies} x {boundaries} --> {<,=,>}, much like
+the one achieved by zcompare/3.
+
+Logically, defining the set B = {boundaries} is a prerequisite to this!
+
+Perhaps I even need to examine B as a *group* with binary operations
+including min() and max(). Suitable definitions here might enable me to
+describe 'minimal' representations and equivalence of b1, b2 ϵ B.
+
+FIRSTLY, the 'or' compositionality of the boundary lists needs to be
+explored. Perhaps these boundary comparisons are just natural extensions
+of the earlier comparisons between individual tallies. (OTOH, maybe this
+extension is not simple, if it yields a more complete comparison relation.)
+
+SECONDLY, I should distinguish between the full representation of a tox
+boundary, and various *abbreviations*. Perhaps the boundaries *formally*
+are infinite lists of numerators over ℕ, and perhaps any such abbreviation
+ought to be (until we worry about performance) expanded to this CANONICAL
+form before any computations are done.
+
+*/
+
+%% 1. TODO: Define the CANONICAL FORM of tox boundaries
+/*
+
+Ideally, a tox boundary will be comparable with ANY given tally.
+Thus, tox boundaries eliminate the incomparabilities that in general
+confound comparisons (on the reachability principle) between individual
+tallies having different denominators.
+
+This is done by eliminating 'gaps in the fenceposts' of the boundaries.
+
+OOH! Maybe a boundary is (at least in the *abstract*) best understood
+as a function that yields a tally numerator for any denominator.
+That is, the boundary provides a 'common-denominator' operation.
+
+Not every list of the form [_/0, _/1, _/2, _/3, ...] will necessarily
+be a *useful* one, but perhaps they are all 'valid' boundaries, under
+the most elegant description. The list just becomes a compendium of all
+possible comparisons, generating a complete function {tallies} --> {<,=,>}.
+
+A crucial question of SEMANTICS (i.e., the *meaning* of 'boundary') can
+be dealt with by asking which such lists are sensible/useful.
+
+It doesn't hurt to _begin_ thinking about the abbreviation, even at this
+early stage. What would the singleton list [0/2] generate by way of an
+infinite list of the form [_/0, _/1, _/2, _/3, ...]? Might it generate
+different lists, depending on the comparison (</=/>) being attempted?
+
+Let me think SPATIALLY about this! How does a single tally, plotted in
+the (T,N) plane, divide that plane up?
+
+*/
+
+qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
+    tally(T1/N1), tally(T2/N2),
+    (	N1 #= N2,
+	T1 #= T2
+    ;	N1 #< N2,
+	T1 #=< T2, T2 #=< T1 + (N2 - N1)
+    ;	N1 #> N2,
+	T1 #>= T2, T2 #>= T1 + (N2 - N1)
+    ).
+
+qcompare(=<, T1/N1, T2/N2) :-
+    tally(T1/N1), tally(T2/N2),
+    (	N1 #>= N2, T1 #=< T2
+    ;	N1 #< N2, N1 - T1 #>= N2 - T2
+    ).
+	
+qcompare(<, T1/N1, T2/N2) :-
+    tally(T1/N1), tally(T2/N2),
+    (	N1 #>= N2, T1 #< T2
+    ;	N1 #< N2, N1 - T1 #> N2 - T2
+    ).
+	
+qcompare(>=, T1/N1, T2/N2) :-
+    tally(T1/N1), tally(T2/N2),
+    (	N1 #=< N2, T1 #>= T2
+    ;	N1 #> N2, N1 - T1 #=< N2 - T2
+    ).
+	
+qcompare(>, T1/N1, T2/N2) :-
+    tally(T1/N1), tally(T2/N2),
+    (	N1 #=< N2, T1 #> T2
+    ;	N1 #> N2, N1 - T1 #< N2 - T2
+    ).
+
+%% Demonstrate that strict inequalities are exclusive of ~~
+%?- time((qcompare(~~, Q1, Q2), qcompare(<, Q1, Q2))).
+%@    % CPU time: 37.759 seconds
+%@ false.
+%?- time((qcompare(~~, Q1, Q2), qcompare(>, Q1, Q2))).
+%@    % CPU time: 37.625 seconds
+%@ false.
+
+%% Show that =< and >= hold simultaneously only in case of equivalence:
+%?- time((tally(Q2), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2))).
+%@    % CPU time: 56.061 seconds
+%@ false.
+
+/*
+
+WHERE SENSIBLE, extend the above comparisons to LISTS of arg 2 ...
+
+What is the right semantics for qcompare(C, Q, [Q1, Q2])?
+Obvious candidates are (qcompare(C, Q, Q1), qcompare(C, Q, Q2)) ("and")
+and (qcompare(C, Q, Q1); qcompare(C, Q, Q2)) -- ("or").
+
+Certainly, the "or" case is more 'efficient' (because *lazy*).
+
+But what do the BOIN tox boundaries require, 'as written'?
+
+Ahh, suppose I wanted to allow the tox boundary to be 'staked out'
+with one tally T/N per N ∊ ℕ. In that case, it would suffice to demonstrate
+the inequality for just the matching element. This naturally points toward
+the "or" connectivity. In this case, the implementation is straightforward
+as well, in terms of lists.
+
+But might the strict and non-strict inequalities naturally require opposite
+semantics? If 'hitting a boundary' is something that happens if it happens
+at any point along the boundary, then NOT hitting the boundary seems to
+require a logical CONJUNCTION.
+
+*/
+
+%% Extend this relation to a list arg #3. Note that the strict inequalities
+%% demand a logical CONJUNCTION, consistent with 'not hitting the boundary'
+%% demanding that we miss EVERY point 'staked out' along the boundary.
+%% Conversely, 'hitting the boundary' means hitting ANY point.
+qcompare(<, Q1, []) :- tally(Q1).
+qcompare(<, Q1, [Q | Qs]) :-
+    qcompare(<, Q1, Q),
+    qcompare(Q1, Qs).
+
+qcompare(>, Q1, []) :- tally(Q1).
+qcompare(>, Q1, [Q | Qs]) :-
+    qcompare(>, Q1, Q),
+    qcompare(Q1, Qs).
+
+%?- if_(=(1, 1), A = 1, A = 0).
+%@    A = 1.
+%?- if_(1 = 0, A=1, A=0).
+%@    A = 0. % Dang!
+
+%% TODO: Here is where (apparently) I would use if_/3.
+%%       It seems this would require reifying the truth-value
+%%       of qcompare/3 in a new, 4th argument. But why wouldn't
+%%       this amount to the same work as =/3 in reif.pl, which
+%%       itself uses (->) twice?
+qcompare(=<, Q1, [Q]) :- qcompare(=<, Q1, Q).
+qcompare(=<, Q1, [Q | Qs]) :-
+    (	qcompare(=<, Q1, Q) -> true
+    ;	qcompare(=<, Q1, Qs)
+    ).
+
+qcompare(>=, Q1, [Q]) :- qcompare(>=, Q1, Q).
+qcompare(>=, Q1, [Q | Qs]) :-
+    (	qcompare(>=, Q1, Q) -> true
+    ;	qcompare(>=, Q1, Qs)
+    ).
+
+/*
+
+Interestingly, the analysis via qcompare/3 (and the proofs it enables)
+assist greatly in the *analysi* of the problem, but probably do not
+enter into the final *representation*.
+
+Rather, the representation ought to exploit the understanding emerging
+from the analysis that led up to qcompare/3, and exploit it in such a
+way that it 'factors out', becoming invisible.
+
+This 'disappearing act' happens because the new understanding supports
+the implicit (thus, invisible) claim that the representation is sufficient.
+
+I will claim that all reasonable decision boundaries (whether floors or
+ceilings) look like ascending stairs with step heights of 1. This permits
+me to represent any [reasonable] boundary by a list giving the positions
+of the steps. The semantics of floors and ceilings are even mirror images:
+
+A FLOOR represented as [1, 8] expands to 'canonical form' as follows:
+
+[1, 8] => [0/1, 1/8] => [0/1, ..., 0/7, 1/8, 1/9, ..., 1/Cmax].
+
+Using the analysis embodied in qcompare/3, we could demonstrate that
+
+Q =< [0/1, 1/8] iff Q =< [0/1,...,0/7,1/8,...].
+
+This is simply by transitivity:
+
+Q =< 0/1 ==> Q =< 0/N =< 0/1 for N > 1;
+Q =< 1/8 ==> Q =< 1/N =< 1/8 for N > 8.
+
+A CEILING represented as [3, 6, 9, 11] expands to canonical form like so:
+
+[3, 6, 9, 11] => [3/3, 4/6, 5/9, 6/11]
+              => [3/3, 3/4, 3/5,
+                  4/6, 4/7, 4/8,
+                  5/9, 5/10,
+                  6/11, ..., 6/Cmax].
+
+The more direct expression of this logic is that the first entry T/N
+in a ceiling list is WLOG on the worst-case diagonal T==N. Thus, the
+first entry in the list is both T and N to start. As with a tox floor,
+the T's ascend in steps of 1.
+
+T = [3, 4, 5, 6]
+N = [3, 6, 9, 11]
+
+=> [3/3, 4/6, 5/9, 6/11] => ...
+
+If it were desired to obtain a comparator list suitable for use as arg 3
+in qcompare/3, then this could be done by a further step:
+
+=> [3/5, 4/8, 5/10, 6/Cmax].
+
+But this is probably not helpful. Under a "state-what-holds" approach
+to the programming, we want instead simple CLP(ℤ) constraints to define
+the dose-escalation decisions.
+
+... UNLESS(!!) if_/3 comes to the rescue...
+
+(If this turns out to work well, then in this very practical application
+of Prolog, we have a case where using the if_/3 predicate preserves a
+certain type of 'thoroughbass' of formality. TODO: Revisit this intuition
+at some later point.)
+
+*/
+
+hit_ceiling_t(Q, [], false).
+hit_ceiling_t(Q, [C|Cs], Truth) :-
+    (	qcompare(>=, Q, C) -> Truth = true
+    ;	hit_ceiling_t(Q, Cs, Truth)
+    ).
+
+hit_floor_t(Q, [], false).
+hit_floor_t(Q, [F|Fs], Truth) :-
+    (	qcompare(=<, Q, F) -> Truth = true
+    ;	hit_floor_t(Q, Fs, Truth)
+    ).
+
+
+tally_decision(Q, Decision) :-
+    RemovalBdy = [3/5, 4/8, 5/10, 6/12],   % To begin, we hard-code the
+    DeescBdy = [1/1, 2/4, 3/6, 4/8, 5/11], % trial definition, according
+    EscBdy = [0/1, 1/8],                   % to Table 1 abstracted above.
+    tally(Q),
+    if_(hit_ceiling_t(Q, RemovalBdy)
+	, Decision = remove
+	, if_(hit_ceiling_t(Q, DeescBdy)
+	      , Decision = deescalate
+	      , if_(hit_floor_t(Q, EscBdy)
+		    , Decision = escalate
+		    , Decision = stay
+		   )
+	     )
+       ).
+
+
+%?- tally_decision(2/5, Decision).
+%@    Decision = stay.
+
+%?- tally_decision(3/5, Decision).
+%@    Decision = remove.
+
+%?- tally_decision(1/5, Decision).
+%@    Decision = stay.
+
+%?- tally_decision(0/5, Decision).
+%@    Decision = escalate.
+
+%?- tally_decision(T/5, Decision).
+%@    Decision = escalate, T = 0
+%@ ;  Decision = stay, T = 1
+%@ ;  Decision = stay, T = 2
+%@ ;  Decision = remove, T = 3
+%@ ;  Decision = remove, T = 4
+%@ ;  Decision = remove, T = 5.
+
+%% Find concise expressions of floor and ceiling tally lists
+/*
+In a floor-type boundary list, if there are 2 elements Q1 =< Q2,
+then Q1 is superfluous, since it is 'under the floor', and the
+transitivity of (=<) [this follows from the CONVEXITY of the
+sub-lattices it generates] means that Q2 'has Q1 covered'.
+*/
+concise_floor(Concise, Floor) :-
+    zip(_, Ns, Floor), % Ns are denominators of Floor
+    tallies_sorted(Floor, FloorSorted),
+    concise_floor_(Concise, FloorSorted).
+
+%% TODO: Actually implement the reduction!
+%%       What's needed is some kind of reduction at the head,
+%%       which because of the sort ought to be possible in a
+%%       single linear pass.
+concise_floor_([_], [_]).
+%concise_floor_([Q1|Qs], [Q1,Q2|Qs]) :- ... % TODO
+
+tallies_sorted(Qs, Sorted) :-
+    zip(_, Ns, Qs),
+    %% TODO: Could use map_list_to_pairs/3 here instead,
+    %%       provided I defined a den/2 predicate or that
+    %%       2nd-arg-of-functor / is already available.
+    pairs_keys_values(NQs, Ns, Qs),
+    sort(NQs, NSorted),
+    pairs_keys_values(NSorted, _, Sorted).
+
+%?- tallies_sorted([0/7, 0/4, 0/5, 0/1, 0/3, 0/6, 0/2, 1/10, 1/9, 1/8, 1/12, 1/11], S).
+%@    S = [0/1,0/2,0/3,0/4,0/5,0/6,0/7,1/8,1/9,... / ...|...]
+%@ ;  false.
+
+%% 2. TODO: Define ABBREVIATIONS of tox boundaries via abbrev_boundary/2
 
 % The BOIN rules suggest that comparisons of tallies might be generalized to
 % comparisons between a tally and a *list* of tallies. Thus, e.g. the rule:
