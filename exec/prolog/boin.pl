@@ -54,9 +54,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(clpz)).
 :- use_module(library(pio)).
 :- use_module(library(lists)).
-:- use_module(library(pairs)).
 :- use_module(library(dcgs)).
-:- use_module(library(lambda)).
 :- use_module(library(time)).
 :- use_module(library(debug)).
 :- use_module(library(dif)).
@@ -78,9 +76,18 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 %@    var(A),
 %% ...
 
-%?- %?- clpz:make_parse_reified(Clauses).
-%@ <hangs>
-%@ 
+%?- clpz:make_parse_reified(Clauses), maplist(portray_clause, Clauses).
+%@ parse_reified_clpz(A,B,C,D,E) :-
+%@    cyclic_term(A),
+%@    D=F,
+%@    !,
+%@    F=G,
+%@    domain_error(clpz_expression,A),
+%@    G=H,
+%@    a(C,H,E).
+%@ parse_reified_clpz(A,B,C,D,E) :-
+%@    var(A),
+%% ...
 
 % TODO: Look at the term_expansion stuff at the bottom of clpz.pl
 
@@ -111,20 +118,53 @@ tally(DLTs/Enrolled) :- tally(DLTs/Enrolled, 12).
 
 %% -----------------------------------------------------------------------------
 
+%% A helper for a little query below, introduced at this point
+%% merely to preserve contiguity of qcompare/3.
+earlier(_/N1, _/N2) :- N1 #< N2.
+
+%% Is discontiuous directive not working?
+%% :- discontiguous qcompare/3. % [this is line 144 reference below]
+%% caught: error(syntax_error(incomplete_reduction),read_term/3:144)
+%% false.
+
 %% The most fundamental relation between tallies is REACHABILITY,
 %% the question of whether a possible path exists connecting them.
-%% TODO: Improve this predicate, increasing its generality and
-%%       readability. Can't I use clpz:max & min to good effect?
-%% TODO: Does MGQ fairly enumerate all possible reachable pairs?
 qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
-    0 #=< T1, T1 #=< N1, N1 #=< 12,
-    0 #=< T2, T2 #=< N2, N2 #=< 12,
-    (	N1 #= N2 #/\ T1 #= T2
-	#\/
-	N1 #< N2 #/\ T1 #=< T2 #/\ T2 #=< T1 + (N2 - N1)
-	#\/
-	N1 #> N2 #/\ T1 #>= T2 #/\ T2 #>= T1 + (N2 - N1)
-    ).
+    %% The following conditions translate as follows, under 3 scenarios:
+    %% (=) If N1==N2, then we get T2 =< T1 =< T2 which holds iff T1==T2.
+    %% (<) If N1 < N2, these conds translate to T1 =< T2 =< T1 + MaxTox.
+    %% (>) If N1 > N2, these conds translate to T2 =< T1 =< T2 + MaxTox.
+    T2 #=< T1 + max(0, N2 - N1),
+    T1 #=< T2 + max(0, N1 - N2).
+
+%% A 'general-enough' query, if not the MGQ:
+%?- tally(Q1, 3), tally(Q2, 3), earlier(Q1, Q2), qcompare(~~, Q1, Q2).
+%@    Q1 = 0/0, Q2 = 0/1
+%@ ;  Q1 = 0/0, Q2 = 1/1
+%@ ;  Q1 = 0/0, Q2 = 0/2
+%@ ;  Q1 = 0/0, Q2 = 1/2
+%@ ;  Q1 = 0/0, Q2 = 2/2
+%@ ;  Q1 = 0/0, Q2 = 0/3
+%@ ;  Q1 = 0/0, Q2 = 1/3
+%@ ;  Q1 = 0/0, Q2 = 2/3
+%@ ;  Q1 = 0/0, Q2 = 3/3
+%@ ;  Q1 = 0/1, Q2 = 0/2
+%@ ;  Q1 = 0/1, Q2 = 1/2
+%@ ;  Q1 = 0/1, Q2 = 0/3
+%@ ;  Q1 = 0/1, Q2 = 1/3
+%@ ;  Q1 = 0/1, Q2 = 2/3
+%@ ;  Q1 = 1/1, Q2 = 1/2
+%@ ;  Q1 = 1/1, Q2 = 2/2
+%@ ;  Q1 = 1/1, Q2 = 1/3
+%@ ;  Q1 = 1/1, Q2 = 2/3
+%@ ;  Q1 = 1/1, Q2 = 3/3
+%@ ;  Q1 = 0/2, Q2 = 0/3
+%@ ;  Q1 = 0/2, Q2 = 1/3
+%@ ;  Q1 = 1/2, Q2 = 1/3
+%@ ;  Q1 = 1/2, Q2 = 2/3
+%@ ;  Q1 = 2/2, Q2 = 2/3
+%@ ;  Q1 = 2/2, Q2 = 3/3
+%@ ;  false.
 
 /*
 
@@ -246,38 +286,37 @@ zo_t(1, true).
 
 
 %% Demonstrate that strict inequalities are exclusive of ~~
-%?- time((MaxN=12, tally(Q1, MaxN), tally(Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2))).
-%@    % CPU time: 348.555 seconds % MaxN = 12
+%?- inconceivable((tally(Q1, MaxN), tally(Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 6..12).
+%@  % MaxN = 6 ...   % CPU time: 2.435 seconds
+%@  % MaxN = 7 ...   % CPU time: 3.814 seconds
+%@  % MaxN = 8 ...   % CPU time: 5.734 seconds
+%@  % MaxN = 9 ...   % CPU time: 8.357 seconds
+%@  % MaxN = 10 ...   % CPU time: 11.836 seconds
+%@  % MaxN = 11 ...   % CPU time: 16.735 seconds
+%@  % MaxN = 12 ...   % CPU time: 23.156 seconds
 %@ false.
 
-%?- time((MaxN=12, tally(Q1, MaxN), tally(Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2))).
-%@    % CPU time: 346.419 seconds % MaxN = 12
-%@ false.
-%@    % CPU time: 257.162 seconds % MaxN = 11
-%@ false.
-%@    % CPU time: 177.091 seconds % MaxN = 10
-%@ false.
-%@    % CPU time: 125.171 seconds % MaxN = 9
-%@ false.
-%@    % CPU time: 78.554 seconds % MaxN = 8
-%@ false.
-%@    % CPU time: 49.056 seconds % MaxN = 7
-%@ false.
-%@    % CPU time: 30.364 seconds % MaxN = 6
-%@ false.
-%@    % CPU time: 15.580 seconds % MaxN = 5
-%@ false.
-%@    % CPU time: 7.625 seconds $ MaxN = 4
-%@ false.
-%@    % CPU time: 3.079 seconds % MaxN = 3
+%?- inconceivable((tally(Q1, MaxN), tally(Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.069 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.174 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.392 seconds
+%@  % MaxN = 4 ...   % CPU time: 0.783 seconds
+%@  % MaxN = 5 ...   % CPU time: 1.418 seconds
+%@  % MaxN = 6 ...   % CPU time: 2.413 seconds
+%@  % MaxN = 7 ...   % CPU time: 3.822 seconds
+%@  % MaxN = 8 ...   % CPU time: 5.781 seconds
+%@  % MaxN = 9 ...   % CPU time: 8.410 seconds
+%@  % MaxN = 10 ...   % CPU time: 11.865 seconds
+%@  % MaxN = 11 ...   % CPU time: 16.358 seconds
+%@  % MaxN = 12 ...   % CPU time: 21.935 seconds
 %@ false.
 
 %% Show that =< and >= hold simultaneously only in case of equivalence:
 %?- time((tally(Q1), tally(Q2), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2))).
-%@    % CPU time: 21.847 seconds
+%@    % CPU time: 22.008 seconds
 %@ false.
 %?- time((Q1 &>= Q2, Q1 &=< Q2, dif(Q1, Q2))).
-%@    % CPU time: 35.773 seconds % TODO: Slower because tally/1 constraints posted twice?
+%@    % CPU time: 35.625 seconds % TODO: Slower because (&=<) re-posts tally/1 constraints?
 %@ false.
 
 %% TODO: Refine the console output from inconceivable/3, with an understanding
@@ -286,7 +325,7 @@ zo_t(1, true).
 %%       by abstracting it automatically from the Query itself, recognized
 %%       perhaps as the only unbound named variable.
 inconceivable(Query, Var, Range) :-
-    call(Var in Range),
+    Var in Range,
     indomain(Var),
     format(" % MaxN = ~d ...", [Var]),
     time(call(Query)).
