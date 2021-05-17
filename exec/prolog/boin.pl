@@ -118,12 +118,8 @@ tally(DLTs/Enrolled) :- tally(DLTs/Enrolled, 12).
 
 %% -----------------------------------------------------------------------------
 
-%% A helper for a little query below, introduced at this point
-%% merely to preserve contiguity of qcompare/3.
-earlier(_/N1, _/N2) :- N1 #< N2.
-
 %% Is discontiuous directive not working?
-%% :- discontiguous qcompare/3. % [this is line 144 reference below]
+:- discontiguous(qcompare/3). % [this is line 144 reference below]
 %% caught: error(syntax_error(incomplete_reduction),read_term/3:144)
 %% false.
 
@@ -136,6 +132,9 @@ qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
     %% (>) If N1 > N2, these conds translate to T2 =< T1 =< T2 + MaxTox.
     T2 #=< T1 + max(0, N2 - N1),
     T1 #=< T2 + max(0, N1 - N2).
+
+%% A helper to halve the results from the little query below...
+earlier(_/N1, _/N2) :- N1 #< N2.
 
 %% A 'general-enough' query, if not the MGQ:
 %?- tally(Q1, 3), tally(Q2, 3), earlier(Q1, Q2), qcompare(~~, Q1, Q2).
