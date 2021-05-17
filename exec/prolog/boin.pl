@@ -61,8 +61,28 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(debug)).
 :- use_module(library(dif)).
 :- use_module(library(reif)).
+:- use_module(library(format)).
 
 % TODO: Review library(debug); it includes * and other useful predicates
+% TODO: Look at clpz:automaton/_ predicates
+% TODO: Look at clpz:parse_clpz, with its one-line-per-thing-that-can-occur.
+%       Is there a similar language for cumulative-cohort designs?
+%       Try invoking clpz:make_parse... clauses.
+
+%?- clpz:make_parse_clpz(Clauses), maplist(portray_clause, Clauses).
+%@ parse_clpz(A,B) :-
+%@    cyclic_term(A),
+%@    !,
+%@    domain_error(clpz_expression,A).
+%@ parse_clpz(A,B) :-
+%@    var(A),
+%% ...
+
+%?- %?- clpz:make_parse_reified(Clauses).
+%@ <hangs>
+%@ 
+
+% TODO: Look at the term_expansion stuff at the bottom of clpz.pl
 
 %% -----------------------------------------------------------------------------
 
@@ -75,7 +95,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 
 %% In general, I may require a max-enrollment *parameter*,
 %% however unsightly it may be tagging along like this ...
-tally_maxn(DLTs/Enrolled, MaxN) :-
+tally(DLTs/Enrolled, MaxN) :-
     ground(MaxN),
     Enrolled in 0..MaxN,
     indomain(Enrolled),
@@ -83,7 +103,7 @@ tally_maxn(DLTs/Enrolled, MaxN) :-
     indomain(DLTs).
 
 %% Having a 'default' max cohort size will make dev & test a bit easier:
-tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
+tally(DLTs/Enrolled) :- tally(DLTs/Enrolled, 12).
 
 %% tally/1 terminates:
 %?- tally(_), false.
@@ -93,14 +113,17 @@ tally(DLTs/Enrolled) :- tally_maxn(DLTs/Enrolled, 12).
 
 %% The most fundamental relation between tallies is REACHABILITY,
 %% the question of whether a possible path exists connecting them.
+%% TODO: Improve this predicate, increasing its generality and
+%%       readability. Can't I use clpz:max & min to good effect?
+%% TODO: Does MGQ fairly enumerate all possible reachable pairs?
 qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
-    tally(T1/N1), tally(T2/N2),
-    (	N1 #= N2,
-	T1 #= T2
-    ;	N1 #< N2,
-	T1 #=< T2, T2 #=< T1 + (N2 - N1)
-    ;	N1 #> N2,
-	T1 #>= T2, T2 #>= T1 + (N2 - N1)
+    0 #=< T1, T1 #=< N1, N1 #=< 12,
+    0 #=< T2, T2 #=< N2, N2 #=< 12,
+    (	N1 #= N2 #/\ T1 #= T2
+	#\/
+	N1 #< N2 #/\ T1 #=< T2 #/\ T2 #=< T1 + (N2 - N1)
+	#\/
+	N1 #> N2 #/\ T1 #>= T2 #/\ T2 #>= T1 + (N2 - N1)
     ).
 
 /*
@@ -142,7 +165,7 @@ depicted as a grid:
 Note that nonexistent tallies (T/N with T>N) are included in the
 relation, in order to emphasize the geometry, especially in the
 'northwest' part of the figure, where imposing T≯N would wipe out
-the lovely 135-degree angle subtended by the (≥). Note how an (=)
+the ramp function formed by the (≥). Note how an (=)
 is of course generated at 3/5, and how paired rays of (≤) and (≥)
 emanate from 3/5, defining boundaries with interiors where the
 corresponding *strict* relations hold. Note also that there are
@@ -167,121 +190,207 @@ properties of these relations, such as their transitivity.
 %% the reachable sets.
 %% TODO: Nevertheless, Prolog-based PROOFS via such representations
 %%       might well have intrinsic interest.
+%% Note also that we implement these comparisons on all of ℕ × ℕ, so that
+%% queries about tallies must assert the simplex constraint themselves.
 qcompare(=<, T1/N1, T2/N2) :-
-    tally(T1/N1), tally(T2/N2),
-    (	N1 #>= N2, T1 #=< T2
-    ;	N1 #< N2, N1 - T1 #>= N2 - T2
-    ).
+    T1 + max(0, N2 - N1) #=< T2.
 	
 qcompare(<, T1/N1, T2/N2) :-
-    tally(T1/N1), tally(T2/N2),
-    (	N1 #>= N2, T1 #< T2
-    ;	N1 #< N2, N1 - T1 #> N2 - T2
-    ).
+    T1 + max(0, N2 - N1) #< T2.
 	
 qcompare(>=, T1/N1, T2/N2) :-
-    tally(T1/N1), tally(T2/N2),
-    (	N1 #=< N2, T1 #>= T2
-    ;	N1 #> N2, N1 - T1 #=< N2 - T2
-    ).
-	
+    T1 #>= T2 + max(0, N1 - N2).
+
 qcompare(>, T1/N1, T2/N2) :-
-    tally(T1/N1), tally(T2/N2),
-    (	N1 #=< N2, T1 #> T2
-    ;	N1 #> N2, N1 - T1 #< N2 - T2
-    ).
+    T1 #> T2 + max(0, N1 - N2).
+
+%% Reified versions of the above, as done at bottom of clpz.pl
+qcompare(=<, T1/N1, T2/N2, Truth) :-
+    T1 + max(0, N2 - N1) #=< T2 #<==> B,
+    zo_t(B, Truth).
+	
+qcompare(<, T1/N1, T2/N2, Truth) :-
+    T1 + max(0, N2 - N1) #< T2 #<==> B,
+    zo_t(B, Truth).
+	
+qcompare(>=, T1/N1, T2/N2, Truth) :-
+    T1 #>= T2 + max(0, N1 - N2) #<==> B,
+    zo_t(B, Truth).
+
+qcompare(>, T1/N1, T2/N2, Truth) :-
+    T1 #> T2 + max(0, N1 - N2) #<==> B,
+    zo_t(B, Truth).
+
+zo_t(0, false).
+zo_t(1, true).
+
+%% Operators for the truly useful comparisons of BOIN, restricted to
+%% the simplex of valid tallies:
+:- op(900, xfx, &=<).
+&=<(Q1, Q2) :-
+    tally(Q1), tally(Q2),
+    qcompare(=<, Q1, Q2).
+
+&=<(Q1, Q2, Truth) :- % reified
+    tally(Q1), tally(Q2),
+    qcompare(=<, Q1, Q2, Truth).
+
+:- op(900, xfx, &>=).
+&>=(Q1, Q2) :-
+    tally(Q1), tally(Q2),
+    qcompare(>=, Q1, Q2).
+
+&>=(Q1, Q2, Truth) :- % reified
+    tally(Q1), tally(Q2),
+    qcompare(>=, Q1, Q2, Truth).
+
 
 %% Demonstrate that strict inequalities are exclusive of ~~
-%?- time((qcompare(~~, Q1, Q2), qcompare(<, Q1, Q2))).
-%@    % CPU time: 37.759 seconds
+%?- time((MaxN=12, tally(Q1, MaxN), tally(Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2))).
+%@    % CPU time: 348.555 seconds % MaxN = 12
 %@ false.
-%?- time((qcompare(~~, Q1, Q2), qcompare(>, Q1, Q2))).
-%@    % CPU time: 37.625 seconds
+
+%?- time((MaxN=12, tally(Q1, MaxN), tally(Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2))).
+%@    % CPU time: 346.419 seconds % MaxN = 12
+%@ false.
+%@    % CPU time: 257.162 seconds % MaxN = 11
+%@ false.
+%@    % CPU time: 177.091 seconds % MaxN = 10
+%@ false.
+%@    % CPU time: 125.171 seconds % MaxN = 9
+%@ false.
+%@    % CPU time: 78.554 seconds % MaxN = 8
+%@ false.
+%@    % CPU time: 49.056 seconds % MaxN = 7
+%@ false.
+%@    % CPU time: 30.364 seconds % MaxN = 6
+%@ false.
+%@    % CPU time: 15.580 seconds % MaxN = 5
+%@ false.
+%@    % CPU time: 7.625 seconds $ MaxN = 4
+%@ false.
+%@    % CPU time: 3.079 seconds % MaxN = 3
 %@ false.
 
 %% Show that =< and >= hold simultaneously only in case of equivalence:
-%?- time((tally(Q2), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2))).
-%@    % CPU time: 56.061 seconds
+%?- time((tally(Q1), tally(Q2), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2))).
+%@    % CPU time: 21.847 seconds
+%@ false.
+%?- time((Q1 &>= Q2, Q1 &=< Q2, dif(Q1, Q2))).
+%@    % CPU time: 35.773 seconds % TODO: Slower because tally/1 constraints posted twice?
+%@ false.
+
+%% TODO: Refine the console output from inconceivable/3, with an understanding
+%%       that it will generally be called on a Query that MUST FAIL.
+%%       There may even be scope for omitting the separate Var argument
+%%       by abstracting it automatically from the Query itself, recognized
+%%       perhaps as the only unbound named variable.
+inconceivable(Query, Var, Range) :-
+    call(Var in Range),
+    indomain(Var),
+    format(" % MaxN = ~d ...", [Var]),
+    time(call(Query)).
+
+%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, MaxN), MaxN, 3..5).
+%@  % MaxN = 3 ...   % CPU time: 6.012 seconds
+%@  % MaxN = 4 ...   % CPU time: 16.696 seconds
+%@  % MaxN = 5 ...   % CPU time: 41.477 seconds
+%@ false.
+
+%% Demonstrate the TRANSITIVITY of (&=<) and (&>=)
+violate_transitivity(C, Q1, Q2, Q3, MaxN) :-
+    tally(Q1, MaxN),
+    tally(Q2, MaxN),
+    qcompare(C, Q1, Q2),
+    tally(Q3, MaxN),
+    qcompare(C, Q2, Q3),
+    %% At this point Q1 (C) Q2 (C) Q3 holds, and now we
+    %% ask whether it's possible that Q1 (C) Q3 DOESN'T:
+    qcompare(C, Q1, Q3, false). % reification to the rescue!
+
+%?- time((MaxN=5, violate_transitivity(>=, Q1, Q2, Q3, MaxN))).
+%@    % CPU time: 39.723 seconds
+%@ false.
+
+%?- time((MaxN=7, violate_transitivity(=<, Q1, Q2, Q3, MaxN))).
+%@    % CPU time: 168.062 seconds % MaxN = 7
+%@ false.
+%@    % CPU time: 85.197 seconds % MaxN = 6
+%@ false.
+%@    % CPU time: 39.804 seconds % MaxN = 5
 %@ false.
 
 /*
 
-Interestingly, the analysis via qcompare/3 (and the proofs it enables)
-assist greatly in the *analysis* of the problem, but probably do not
-enter into the final *representation*.
+In BOIN (and perhaps CCDs generally?), dose-escalation decisions can be
+driven solely from BOUNDARY-HITTING EVENTS captured by =< and >= relations.
+The boundaries are of 2 types: FLOORS that (when hit) indicate escalation,
+and CEILINGS that indicate de-escalation or even dose removal when hit.
 
-Rather, the representation ought to exploit the understanding emerging
-from the analysis that led up to qcompare/3, and exploit it in such a
-way that it 'factors out', becoming invisible.
+(I will prefer the terms FLOOR and CEILING because 'boundary' may suggest
+a too-narrow 'topological' interpretation. We consider the boundary to
+have been 'hit' (past participle!) even if the current tally lies INSIDE
+the territory it bounds. If an accident at home results in a projectile
+being embedded 1" into the ceiling or floor, rather than stuck at the
+very surface, we still say the surface was hit.)
 
-This 'disappearing act' happens because the new understanding supports
-the implicit (thus, invisible) claim that the representation is sufficient.
+Arguably, all sensible toxicity boundaries dose-finding will take the form
+of 'stairs' ascending from left to right in the T-N lattice depicted above.
+Furthermore, adherence to 'reachability logic' effectively excludes step
+heights greater than 1. (TODO: Prove this.)
 
-I will claim that all reasonable decision boundaries (whether floors or
-ceilings) look like ascending stairs with step heights of 1. This permits
-me to represent any [reasonable] boundary by a list giving the positions
-of the steps. The semantics of floors and ceilings are even mirror images:
+Thus all reasonable toxicity floors/ceilings can be constructed by a union
+of 135-degree sectors generated by relations (_ &=< Q) and (_ &>= Q).
+These unions are naturally represented as lists of the 'vertex tallies' Q.
 
-A FLOOR represented as [1, 8] expands to 'canonical form' as follows:
+Whereas step *heights* are always 1, the step *lengths* will generally be
+longer---on the order of the reciprocal of the target toxicity rate (TTR).
+Thus, we need not list a vertex tally for every denominator to define our
+toxicity floors and ceilings.
 
-[1, 8] => [0/1, 1/8] => [0/1, ..., 0/7, 1/8, 1/9, ..., 1/Cmax].
+For example, the decision boundaries from Liu & Yuan (2015) Table 1 ...
 
-Using the analysis embodied in qcompare/3, we could demonstrate that
+             cumulative patients treated at current dose (n_j):
+              1    2    3    4    5    6    7    8    9    10    11    12
 
-Q =< [0/1, 1/8] iff Q =< [0/1,...,0/7,1/8,...].
+lambda_{1,j} 0/1  0/2  0/3  0/4  0/5  0/6  0/7  1/8  1/9  1/10  1/11  1/12
 
-This is simply by transitivity:
+lambda_{2,j} 1/1  2/2  2/3  2/4  3/5  3/6  4/7  4/8  5/9  5/10  5/11  6/12
 
-Q =< 0/1 ==> Q =< 0/N =< 0/1 for N > 1;
-Q =< 1/8 ==> Q =< 1/N =< 1/8 for N > 8.
+elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 
-A CEILING represented as [3, 6, 9, 11] expands to canonical form like so:
+... may easily be represented by short lists:
 
-[3, 6, 9, 11] => [3/3, 4/6, 5/9, 6/11]
-              => [3/3, 3/4, 3/5,
-                  4/6, 4/7, 4/8,
-                  5/9, 5/10,
-                  6/11, ..., 6/Cmax].
+  Lambda_1 = [0/1, 1/8]
 
-The more direct expression of this logic is that the first entry T/N
-in a ceiling list is WLOG on the worst-case diagonal T==N. Thus, the
-first entry in the list is both T and N to start. As with a tox floor,
-the T's ascend in steps of 1.
+  Lambda_2 = [1/1, 2/4, 3/6, 4/8, 5/11, 6/12]
 
-T = [3, 4, 5, 6]
-N = [3, 6, 9, 11]
+  Eliminate = [3/5, 4/8, 5/10, 6/12]
 
-=> [3/3, 4/6, 5/9, 6/11] => ...
+This is because, e.g.,
 
-If it were desired to obtain a comparator list suitable for use as arg 3
-in qcompare/3, then this could be done by a further step:
+  maplist((Q &=<), [0/1, 1/8]) <==> maplist((Q &=<), [0/1,...,0/7,1/8,...]),
 
-=> [3/5, 4/8, 5/10, 6/Cmax].
+which is a consequence of the TRANSITIVITY of (&=<):
 
-But this is probably not helpful. Under a "state-what-holds" approach
-to the programming, we want instead simple CLP(ℤ) constraints to define
-the dose-escalation decisions.
-
-... UNLESS(!!) if_/3 comes to the rescue...
-
-(If this turns out to work well, then in this very practical application
-of Prolog, we have a case where using the if_/3 predicate preserves a
-certain type of 'thoroughbass' of formality. TODO: Revisit this intuition
-at some later point.)
+  Q =< 0/1 ==> Q =< 0/N =< 0/1 for N > 1;
+  Q =< 1/8 ==> Q =< 1/N =< 1/8 for N > 8.
 
 */
 
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
-    (	qcompare(>=, Q, C) -> Truth = true
-    ;	hit_ceiling_t(Q, Cs, Truth)
-    ).
+    if_(Q &>= C
+	, Truth = true
+	, hit_ceiling_t(Q, Cs, Truth)
+       ).
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
-    (	qcompare(=<, Q, F) -> Truth = true
-    ;	hit_floor_t(Q, Fs, Truth)
-    ).
+    if_(Q &=< F
+	, Truth = true
+	, hit_floor_t(Q, Fs, Truth)
+       ).
 
 
 tally_decision(Q, Decision) :-
@@ -299,7 +408,6 @@ tally_decision(Q, Decision) :-
 		   )
 	     )
        ).
-
 
 %?- tally_decision(2/5, Decision).
 %@    Decision = stay.
