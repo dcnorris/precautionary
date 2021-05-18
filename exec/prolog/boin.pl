@@ -562,12 +562,6 @@ enroll(T0/N0, T1/N1, true) :-
 enroll(Q0, _, false) :-
     cohort_full(Q0, true).
 
-enroll(Q1, Q1) :- enroll(Q0, Q1, true).
-
-%% Overload enroll/2 on lists of tallies, enrolling head tally
-enroll([T0/N0 | Qs], [T1/N1 | Qs]) :-
-    enroll(T0/N0, T1/N1).
-
 length_plus_1(Ls, MTD) :-
     length(Ls, MTD_1),
     MTD #= MTD_1 + 1.
@@ -593,9 +587,13 @@ escalate(Ls ^ [Q, R | Rs], State) :-
 
 deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-deescalate([L | Ls] ^ Rs, Ls ^ [L1 | Rs]) :- enroll(L, L1).
-deescalate([L | Ls] ^ _, declare_mtd(MTD)) :- cohort_full(L, true),
-					      length_plus_1(Ls, MTD).
+deescalate([L | Ls] ^ Rs, State) :-
+    if_(enroll(L, L1)
+	, State = Ls ^ [L1 | Rs]
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
 
 remove(Ls ^ [R | Rs], State) :- deescalate(Ls ^ [], State).
 
