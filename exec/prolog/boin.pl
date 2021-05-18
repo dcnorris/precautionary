@@ -60,6 +60,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(dif)).
 :- use_module(library(reif)).
 :- use_module(library(format)).
+:- use_module(library(between)).
 
 % TODO: Review library(debug); it includes * and other useful predicates
 % TODO: Look at clpz:automaton/_ predicates
@@ -346,16 +347,21 @@ violate_transitivity(C, Q1, Q2, Q3, MaxN) :-
     %% ask whether it's possible that Q1 (C) Q3 DOESN'T:
     qcompare(C, Q1, Q3, false). % reification to the rescue!
 
-%?- time((MaxN=5, violate_transitivity(>=, Q1, Q2, Q3, MaxN))).
-%@    % CPU time: 39.723 seconds
+%?- inconceivable(violate_transitivity(>=, Q1, Q2, Q3, MaxN), MaxN, 5..12).
+%@  % MaxN = 5 ...   % CPU time: 40.463 seconds
+%@  % MaxN = 6 ...   % CPU time: 87.731 seconds
+%@  % MaxN = 7 ...   % CPU time: 171.186 seconds
+%@  % MaxN = 8 ...   % CPU time: 321.167 seconds
+%@  % MaxN = 9 ...   % CPU time: 553.290 seconds
+%@  % MaxN = 10 ...   % CPU time: 919.145 seconds
+%@  % MaxN = 11 ...   % CPU time: 1459.348 seconds
+%@  % MaxN = 12 ...   % CPU time: 2246.696 seconds
 %@ false.
 
-%?- time((MaxN=7, violate_transitivity(=<, Q1, Q2, Q3, MaxN))).
-%@    % CPU time: 168.062 seconds % MaxN = 7
-%@ false.
-%@    % CPU time: 85.197 seconds % MaxN = 6
-%@ false.
-%@    % CPU time: 39.804 seconds % MaxN = 5
+%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, MaxN), MaxN, 3..5).
+%@  % MaxN = 3 ...   % CPU time: 6.333 seconds
+%@  % MaxN = 4 ...   % CPU time: 18.381 seconds
+%@  % MaxN = 5 ...   % CPU time: 42.346 seconds
 %@ false.
 
 /*
@@ -526,43 +532,37 @@ Above text is included for comparison with current outlook.
 %% Note that this naturally invites consideration of a DSL
 %% in which such design rules could be expressed generally!
 
-escalate(Q) :- hit_floor(Q, [0/1, 1/8]).
-deescalate(Q) :- hit_ceiling(Q, [1/1, 2/4, 3/6, 4/8, 5/10, 6/12]).
-remove(Q) :- hit_ceiling(Q, [3/5, 4/8, 5/10, 6/12]).
-
-%% TODO: Note the duplication between remove/2 and deescalate/2.
-%%       Consider whether these should be refined to avoid this.
-%% TODO: Might a zcompare/3-like idiom further the cause of purity?
-
-/*
-Even as I set out to write the first lines of this predicate,
-I can see the value of having complementary &** predicates
-that enable me to state definitively whether a boundary has
-been breached, or not.
-In a way, what I need is a kind of zcompare/3 for tox boundaries!
-Let me not impose burdens on state-machine code, that more properly
-belong to basic comparison operators!
-I don't think I have yet fully worked out the MEANING of toxicity
-boundaries as used in BOIN.
-Keep in mind that I want the code ultimately to be verifiable
-on inspection by Ying Yuan and others -- at least where it is not
-self-verifying by proofs executed in Prolog itself.
-*/
+escalate(Q) :- tally_decision(Q, escalate).
+deescalate(Q) :- tally_decision(Q, deescalate).
+remove(Q) :- tally_decision(Q, remove).
+stay(Q) :- tally_decision(Q, stay).
 
 %% NB: The left-hand list of Ls ^ Rs is sorted in descending order.
 %%     So heads L and R in [L|Ls] ^ [R|Rs] are tallies belonging to
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
+%% The generic stopping condition obtains when an attempt is made
+%% to enroll a 'full' cohort, at which time the trial stops with
+%% that dose recommended as RP2D. (Even the seemingly 'special' case
+%% of attempted deescalation from the lowest dose fits this pattern,
+%% provided that we treat the zero dose as 'already full' -- which
+%% in a pharmacologic sense it really is, since we know everything
+%% about its effects already.)
+cohort_full(_/N, TF) :- cohort_full(N, TF).
 cohort_full(N, true) :- N #>= 12.
 cohort_full(N, false) :- N in 0..11.
-cohort_full(_/N, TF) :- cohort_full(N, TF).
 
-enroll(T0/N0, T1/N1) :-
+enroll(T0/N0, T1/N1, true) :-
     cohort_full(N0, false),
     N1 #= N0 + 1,
     T in 0..1, % T is the pending tox assessment of newly-enrolled patient
     T1 #= T0 + T.
+
+enroll(Q0, _, false) :-
+    cohort_full(Q0, true).
+
+enroll(Q1, Q1) :- enroll(Q0, Q1, true).
 
 %% Overload enroll/2 on lists of tallies, enrolling head tally
 enroll([T0/N0 | Qs], [T1/N1 | Qs]) :-
@@ -572,23 +572,32 @@ length_plus_1(Ls, MTD) :-
     length(Ls, MTD_1),
     MTD #= MTD_1 + 1.
 
-stay(Ls ^ [R | Rs], Ls ^ [R1 | Rs]) :- enroll(R, R1).
-stay(Ls ^ [_/N | _], declare_mtd(MTD)) :- cohort_full(N, true),
-					  length_plus_1(Ls, MTD).
+stay(Ls ^ [R | Rs], State) :-
+    if_(enroll(R, R1)
+	, State = Ls ^ [R1 | Rs]
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+	).
+		
+escalate(Ls ^ [R], State) :- % NB: this is a 'clamped' situation
+    stay(Ls ^ [R], State).
 
-escalate(Ls ^ [T/N], State) :- % NB: this is a 'clamped' situation
-    stay(Ls ^ [T/N], State).
-
-escalate(Ls ^ [Q, R | _], [Q | Ls] ^ [R1 | _]) :- enroll(R, R1).
-escalate(Ls ^ [Q, R | _], declare_mtd(MTD)) :- cohort_full(R, true),
-					       length_plus_1([Q|Ls], MTD).
+escalate(Ls ^ [Q, R | Rs], State) :-
+    if_(enroll(R, R1)
+	, State = [Q | Ls] ^ [R1 | Rs]
+	, ( length([R,Q|Ls], MTD),
+	    declare_mtd(MTD)
+	  )
+       ).
 
 deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-%% TODO: Use 'guard' to parse this into separate clauses.
 deescalate([L | Ls] ^ Rs, Ls ^ [L1 | Rs]) :- enroll(L, L1).
 deescalate([L | Ls] ^ _, declare_mtd(MTD)) :- cohort_full(L, true),
-					      length(Ls, MTD).
+					      length_plus_1(Ls, MTD).
+
+remove(Ls ^ [R | Rs], State) :- deescalate(Ls ^ [], State).
 
 %% TODO: Note how TRIVIAL state0_action_state/3 has become.
 %%       Does this demand refactoring, or does it represent other
@@ -602,31 +611,20 @@ state0_action_state(Ls ^ [R | Rs], deescalate, State) :-
     deescalate(R),
     deescalate(Ls ^ [R | Rs], State).
 
-state0_action_state(Ls ^ [R | Rs], stay, Ls ^ [R1 | Rs]) :-
-    %% This is not sound if R is not ground!
-    %% zcompare/3 caters to all possible case, and never loses
-    %% any of them or incorrectly commits to them.
-    %% Always have all correct cases in mind.
-    %% You can see by looking at this code that it is incomplete!
-    %% Use clauses to enumerate the possible cases.
-    %% Unsafe to use extralogical constructs (e.g., sort/2).
-    %% TODO: Look at term rewriting video (where if-then-else used)
-    %% Consider if_ here also.
-    %% But no matter what, be able to state precisely what holds;
-    %% a linguistic task: formulate precisely what conditions
-    %% make this true.
-    %% TODO: Use the MGQ to find where this unsound clause fails!
-    (	escalate(R) -> false
-    ;	deescalate(R) -> false
-    ;	%% Until I gain greater (e.g., zcompare/3-style) control over the
-	%% boundary-hitting concept, I must treat 'stay' as a DEFAULT action:
-	enroll(R, R1)
-    ).
+state0_action_state(Ls ^ [R | Rs], stay, State) :-
+    stay(R),
+    stay(Ls ^ [R | Rs], State).
+
+state0_action_state(Ls ^ [R | Rs], remove, State) :-
+    remove(R),
+    remove(Ls ^ [R | Rs], State).
 
 %% Note how this state-machine naturally starts up from a blank slate:
 %?- state0_action_state([] ^ [0/0, 0/0, 0/0], Action, State).
 %@    Action = stay, State = []^[_A/1,0/0,0/0], clpz:(_A in 0..1)
 %@ ;  false.
+%% NB: Without loading library(between), I obtain the following error:
+%@ caught: error(existence_error(procedure,between/3),between/3)
 
 %% TODO: Consider restoring an 'mtd_notfound' concept to the trial.
 %%       Even if this notion disappears 'WLOG' from a purely formal perspective,
@@ -639,21 +637,17 @@ actions(S0) --> [(S0->A->S)],
 		{ state0_action_state(S0, A, S) },
 		actions(S).
 
+%% TODO: Try portray_clause/1 to visualize Trial below,
+%%       in advance of a suitable condensed reformatting.
+
 %% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- phrase(actions([]^[0/0]), Trial).
+%?- phrase(actions([]^[0/0]), Trial), portray_clause(Trial).
+%@ [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[0/11]),([]^[0/11]->escalate->[]^[0/12]),([]^[0/12]->escalate->declare_mtd(1))].
 %@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  ...
-%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  ...
-%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[0/11]),([]^[0/11]->escalate->[]^[1/12]),([]^[1/12]->escalate->declare_mtd(1))].
+%@ Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[1/11]),([]^[1/11]->escalate->[]^[1/12]),([]^[1/12]->escalate->declare_mtd(1))].
+%@ Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
