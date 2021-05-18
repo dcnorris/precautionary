@@ -674,3 +674,115 @@ actions(S0) --> [(S0->A->S)],
 %%     toward comprehending 3+3 together with CCDs -- and maybe
 %%     demonstrating their unification.
 %% TODO: Suppose I collapse 'stay' actions?
+
+/*
+state0_cohort_state_dose(L:[Q0|R], T/N, L^[Q1|R], D) :-
+    tally0_cohort_tally(Q0, T/N, Q1),
+    length([Q1|L], D),
+    indomain(T), indomain(N),
+    *indomain(D).
+*/
+
+/*
+
+I wonder if CCDs have their own natural condensed representations.
+
+First, consider how a pretty graphical layout would look.
+
+For a trial that starts at dose 2:
+
+0/0 0/1 0/0 0/0
+     |
+0/0 1/2 0/0 0/0
+   /
+0/1 1/2 0/0 0/0
+ |
+0/2 1/2 0/0 0/0
+ |
+0/3 1/2 0/0 0/0
+   \
+0/3 1/3 0/0 0/0
+
+etc.
+
+The diagram is clearer if we carry non-current tallies forward implicitly:
+
+0/0 0/1 0/0 0/0
+     |
+    1/2
+   /
+0/1
+ |
+0/2
+ |
+0/3
+   \
+    1/3
+
+Finally, the right or left margin could detail the binding constraint(s)
+according to which each dose-escalation decision ( |, / or \) was made.
+An attempt to escalate past top dose could be depicted with > in place of |.
+
+-----
+
+These visualizations also immediately suggest equivalent condensed string
+expressions. Indeed, this can be done almost trivially by swapping / => :,
+\ => ^, and | => -, in the implicit-LOCF form of the visualization.
+
+For example, the above diagram immediately becomes:
+
+(2) 0/1 - 1/2 : 0/1 - 0/2 - 0/3 ^ 1/3  
+
+where the (2) indicates starting from dose-level 2. Alternatively, the
+fully initial state of the trial could be specified instead, in an even
+more direct transposition from the visualization format:
+
+[0/0, 0/1, 0/0, 0/0] - 1/2 : 0/1 - 0/2 - 0/3 ^ 1/3.
+
+-----
+
+Other formats also suggest themselves as possibly more readable. Consider:
+
+0/1@2 - 1/2@2 : 0/1@1 - 0/2@1 - 0/3@1 ^ 1/3@2,
+
+or even
+
+0/1@2 -' 1/2@2 :, 0/1@1 -, 0/2@1 -, 0/3@1 ^' 1/3@2,
+
+which incorporates annotations for toxicity (, => 0, ' => 1).
+
+*/
+
+%% Here's some code from aliquots.pl, to work from ...
+
+state0_event_state_dose(L^[Q0|R], T, L^[Q1|R], D) :-
+    tally0_event_tally(Q0, T/N, Q1),
+    length([Q1|L], D),
+    indomain(T), indomain(N),
+    *indomain(D).
+
+condensed, [D^T] -->
+    [ _->escalate->_, S0->enroll->S ],
+    { state0_event_state_dose(S0, T/_, S, D) },
+    condensed.
+condensed, [D^T] --> % handle special case of *start* of trial
+    [ S0->enroll->S ],
+    { state0_event_state_dose(S0, T/_, S, D) },
+    condensed.
+condensed, [D-T] -->
+    [ _->stay->_, S0->enroll->S ],
+    { state0_event_state_dose(S0, T/_, S, D) },
+    condensed.
+condensed, [D:T] -->
+    [ _->deescalate->_, S0->enroll->S ],
+    { state0_event_state_dose(S0, T/_, S, D) },
+    condensed.
+condensed, [D*T] -->
+    [ _->clamp->_, S0->enroll->S ],
+    { state0_event_state_dose(S0, T/_, S, D) },
+    condensed.
+condensed, [declare_mtd(MTD)] --> [ _->stop->declare_mtd(MTD) ].
+condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
+%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
+
+%?- phrase(actions([]^[0/0,0/0]), Trial), phrase(), phrase(condensed, Trial, Translation).
