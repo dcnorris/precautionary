@@ -545,14 +545,14 @@ stay(Q) :- tally_decision(Q, stay).
 %% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
 %% Presently, we are simply checking whether cohort N0 is already 'full'.
 enroll(T0/N0, T1/N1, Truth) :-
-    N0 #>= 12 #<==> CohortFull, % suggestive of a line from a trial 'config file'
-    if_(zo_t(CohortFull) % do this pending resolution to scryer #967
+    N0 #>= 12 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
+    if_(zo_t(CohortFull) % do this pending resolution of scryer #967
+	, Truth = false
 	, ( N1 #= N0 + 1,
 	    T in 0..1, % T is the pending tox assessment of newly-enrolled patient
 	    T1 #= T0 + T,
 	    Truth = true
 	  )
-	, Truth = false       
        ).
 
 %?- enroll(3/6, Q, Success).
@@ -631,6 +631,10 @@ state0_action_state(Ls ^ [R | Rs], remove, State) :-
 %%       it remains part of the lingo, and with good reason. There really IS a
 %%       difference between having found a moderate number of DLTs at the RP2D,
 %%       and having probed nowhere into the toxic dose region.
+%% TODO: But consider whether this type of linguistic expansion trespasses into a
+%%       strictly *pharmacologic* realm which a formal analysis might best avoid.
+%%       A good test may be to demonstrate that mtd_notfound truly adds something
+%%       essential that can't be 'tacked on' in a post-processing step.
 %%actions(mtd_notfound(_)) --> [].
 actions(declare_mtd(_)) --> [].
 actions(S0) --> [(S0->A->S)],
@@ -747,42 +751,56 @@ Other formats also suggest themselves as possibly more readable. Consider:
 
 or even
 
-0/1@2 -' 1/2@2 :, 0/1@1 -, 0/2@1 -, 0/3@1 ^' 1/3@2,
+0/1@2 -x 1/2@2 :, 0/1@1 -o 0/2@1 -o 0/3@1 ^x 1/3@2,
 
-which incorporates annotations for toxicity (, => 0, ' => 1).
+which incorporates annotations for toxicity { o => 0, x => 1 }.
 
 */
 
 %% Here's some code from aliquots.pl, to work from ...
 
-state0_event_state_dose(L^[Q0|R], T, L^[Q1|R], D) :-
-    tally0_event_tally(Q0, T/N, Q1),
-    length([Q1|L], D),
-    indomain(T), indomain(N),
-    *indomain(D).
+%% Initially, I dispense with the toxicity indicators o & x,
+%% since these add the complication of having to carry forward
+%% the full set of tallies (at all doses) for differencing.
 
-condensed, [D^T] -->
-    [ _->escalate->_, S0->enroll->S ],
-    { state0_event_state_dose(S0, T/_, S, D) },
-    condensed.
-condensed, [D^T] --> % handle special case of *start* of trial
-    [ S0->enroll->S ],
-    { state0_event_state_dose(S0, T/_, S, D) },
-    condensed.
-condensed, [D-T] -->
-    [ _->stay->_, S0->enroll->S ],
-    { state0_event_state_dose(S0, T/_, S, D) },
-    condensed.
-condensed, [D:T] -->
-    [ _->deescalate->_, S0->enroll->S ],
-    { state0_event_state_dose(S0, T/_, S, D) },
-    condensed.
-condensed, [D*T] -->
-    [ _->clamp->_, S0->enroll->S ],
-    { state0_event_state_dose(S0, T/_, S, D) },
-    condensed.
-condensed, [declare_mtd(MTD)] --> [ _->stop->declare_mtd(MTD) ].
-condensed, [mtd_notfound(MTD)] --> [ _->stop->mtd_notfound(MTD) ].
-%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
+:- op(900, xfx, @).
 
-%?- phrase(actions([]^[0/0,0/0]), Trial), phrase(), phrase(condensed, Trial, Translation).
+condensed, [-, T/N@D] -->
+    [ (_^_->stay->Ls^[(T/N)|_]) ],
+    { length_plus_1(Ls, D) },
+    condensed.
+condensed, [^, T/N@D] -->
+    [ (_^_->escalate->Ls^[(T/N)|_]) ],
+    { length_plus_1(Ls, D) },
+    condensed.
+condensed, [:, T/N@D] -->
+    [ (_^_->deescalate->Ls^[(T/N)|_]) ],
+    { length_plus_1(Ls, D) },
+    condensed.
+
+condensed, [-, declare_mtd(MTD)] --> [ (_->stay->declare_mtd(MTD)) ].
+condensed, [^, declare_mtd(MTD)] --> [ (_->escalate->declare_mtd(MTD)) ].
+condensed, [:, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
+%%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
+
+%% All the better to see you with ...
+boin(Ls^Rs) :- % BOIN trial starting from arbitrary state
+    phrase(actions(Ls^Rs), Trial),
+    phrase(condensed, Trial, Translation),
+    portray_clause(Translation).
+
+boin(D) :- % BOIN trial with D doses, starting at dose 1 by default
+    length(Tallies, D),
+    maplist(=(0/0), Tallies),
+    boin([]^Tallies).
+
+
+%?- boin(1).
+%@ [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,0/11@1,^,0/12@1,^,declare_mtd(1)].
+%@    true
+%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,0/11@1,^,1/12@1,^,declare_mtd(1)].
+%@ true
+%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,1/11@1,^,1/12@1,^,declare_mtd(1)].
+%@ true
+%@ ;  ...
+
