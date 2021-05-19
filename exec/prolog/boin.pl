@@ -514,12 +514,10 @@ tally_decision(Q, Decision) :-
  * 'R' - An ascending list of doses of which the head looks Right to enroll.
  * We can imagine these lists as 2 stacks, on the 'left' and 'right'.
  * 
- * Since it proves useful to describe the trial in two alternating phases,
- * we designate the state of the trial via L and R lists conjoined with
- * alternating infix functors:
- * '^' - Imagine: 'scales of Justice' where we make judgements about tallies
- * ':' - Imagine: an ellipsis (or dripping faucet) where we enroll patients
- *       (who 'trickle in'), wait for & assess toxicities.
+ * I abandon the earlier 'bipartite' trial in alternating phases, in favor
+ * of an all-in-one enroll/assess/decide cycle.
+ *
+ * it also appears necessary to append a 3rd, topmost list of excluded doses.
  */
 
 /*
@@ -563,9 +561,9 @@ length_plus_1(Ls, MTD) :-
     length(Ls, MTD_1),
     MTD #= MTD_1 + 1.
 
-stay(Ls ^ [R | Rs], State) :-
+stay(Ls ^ [R | Rs] ^ Xs, State) :-
     if_(enroll(R, R1)
-	, State = Ls ^ [R1 | Rs]
+	, State = Ls ^ [R1 | Rs] ^ Xs
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
@@ -578,52 +576,57 @@ stay(Ls ^ [R | Rs], State) :-
 %%       is it not the case that we would wish to impose a special
 %%       escape clause so we don't have to run the top dose to 0/12
 %%       (say) before declaring it as RP2D?
-escalate(Ls ^ [R], State) :- % NB: this is a 'clamped' situation
-    stay(Ls ^ [R], State).
+escalate(Ls ^ [R] ^ Xs, State) :- % NB: this is a 'clamped' situation
+    stay(Ls ^ [R] ^ Xs, State).
 
-escalate(Ls ^ [Q, R | Rs], State) :-
+escalate(Ls ^ [Q, R | Rs] ^ Xs, State) :-
     if_(enroll(R, R1)
-	, State = [Q | Ls] ^ [R1 | Rs]
+	, State = [Q | Ls] ^ [R1 | Rs] ^ Xs
 	, ( length([R,Q|Ls], MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
 
-deescalate([] ^ _, declare_mtd(0)). % deescalate from already-lowest dose
+deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-deescalate([L | Ls] ^ Rs, State) :-
+deescalate([L | Ls] ^ Rs ^ Xs, State) :-
     if_(enroll(L, L1)
-	, State = Ls ^ [L1 | Rs]
+	, State = Ls ^ [L1 | Rs] ^ Xs
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
 
-remove(Ls ^ [_ | _], State) :- deescalate(Ls ^ [], State).
+remove(Ls ^ Rs ^ Xs, State) :-
+    append(Rs, Xs, RsXs),
+    deescalate(Ls ^ [] ^ RsXs, State).
 
 %% TODO: Note how TRIVIAL state0_action_state/3 has become.
 %%       Does this demand refactoring, or does it represent other
 %%       types of opportunity -- even meta-interpretation?
 
-state0_action_state(Ls ^ [R | Rs], escalate, State) :-
+%% TODO: How might I re-write state0_action_state/3 to render the
+%%       determinism of BOIN designs evident on inspection?
+
+state0_action_state(Ls ^ [R | Rs] ^ Xs, escalate, State) :-
     escalate(R),
-    escalate(Ls ^ [R | Rs], State).
+    escalate(Ls ^ [R | Rs] ^ Xs, State).
 
-state0_action_state(Ls ^ [R | Rs], deescalate, State) :-
+state0_action_state(Ls ^ [R | Rs] ^ Xs, deescalate, State) :-
     deescalate(R),
-    deescalate(Ls ^ [R | Rs], State).
+    deescalate(Ls ^ [R | Rs] ^ Xs, State).
 
-state0_action_state(Ls ^ [R | Rs], stay, State) :-
+state0_action_state(Ls ^ [R | Rs] ^ Xs, stay, State) :-
     stay(R),
-    stay(Ls ^ [R | Rs], State).
+    stay(Ls ^ [R | Rs] ^ Xs, State).
 
-state0_action_state(Ls ^ [R | Rs], remove, State) :-
+state0_action_state(Ls ^ [R | Rs] ^ Xs, remove, State) :-
     remove(R),
-    remove(Ls ^ [R | Rs], State).
+    remove(Ls ^ [R | Rs] ^ Xs, State).
 
 %% Note how this state-machine naturally starts up from a blank slate:
-%?- state0_action_state([] ^ [0/0, 0/0, 0/0], Action, State).
-%@    Action = stay, State = []^[_A/1,0/0,0/0], clpz:(_A in 0..1)
+%?- state0_action_state([] ^ [0/0, 0/0, 0/0] ^ [], Action, State).
+%@    Action = stay, State = []^[_A/1,0/0,0/0]^[], clpz:(_A in 0..1)
 %@ ;  false.
 
 %% TODO: Consider restoring an 'mtd_notfound' concept to the trial.
@@ -641,25 +644,13 @@ actions(S0) --> [(S0->A->S)],
 		{ state0_action_state(S0, A, S) },
 		actions(S).
 
-%% TODO: Try portray_clause/1 to visualize Trial below,
-%%       in advance of a suitable condensed reformatting.
-
 %% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- phrase(actions([]^[0/0]), Trial).
-%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  ...
-
-%?- phrase(actions([]^[0/0]), Trial), portray_clause(Trial).
-%@ [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[0/11]),([]^[0/11]->escalate->[]^[0/12]),([]^[0/12]->escalate->declare_mtd(1))].
-%@    Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[0/11]),([]^[0/11]->escalate->[]^[1/12]),([]^[1/12]->escalate->declare_mtd(1))].
-%@ Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[0/7]->escalate->[]^[0/8]),([]^[0/8]->escalate->[]^[0/9]),([]^[0/9]->escalate->[]^[0/10]),([]^[0/10]->escalate->[]^[1/11]),([]^[1/11]->escalate->[]^[1/12]),([]^[1/12]->escalate->declare_mtd(1))].
-%@ Trial = [([]^[0/0]->stay->[]^[0/1]),([]^[0/1]->escalate->[]^[0/2]),([]^[0/2]->escalate->[]^[0/3]),([]^[0/3]->escalate->[]^[0/4]),([]^[0/4]->escalate->[]^[0/5]),([]^[0/5]->escalate->[]^[0/6]),([]^[0/6]->escalate->[]^[0/7]),([]^[... / ...]->escalate->[]^[...]),([]^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%?- phrase(actions([]^[0/0]^[]), Trial).
+%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
@@ -678,14 +669,6 @@ actions(S0) --> [(S0->A->S)],
 %%     toward comprehending 3+3 together with CCDs -- and maybe
 %%     demonstrating their unification.
 %% TODO: Suppose I collapse 'stay' actions?
-
-/*
-state0_cohort_state_dose(L:[Q0|R], T/N, L^[Q1|R], D) :-
-    tally0_cohort_tally(Q0, T/N, Q1),
-    length([Q1|L], D),
-    indomain(T), indomain(N),
-    *indomain(D).
-*/
 
 /*
 
@@ -766,33 +749,33 @@ which incorporates annotations for toxicity { o => 0, x => 1 }.
 :- op(900, xfx, @).
 
 condensed, [-, T/N@D] -->
-    [ (_^_->stay->Ls^[(T/N)|_]) ],
+    [ (_^_->stay->Ls^[(T/N)|_]^_) ],
     { length_plus_1(Ls, D) },
     condensed.
 condensed, [^, T/N@D] -->
-    [ (_^_->escalate->Ls^[(T/N)|_]) ],
+    [ (_^_->escalate->Ls^[(T/N)|_]^_) ],
     { length_plus_1(Ls, D) },
     condensed.
 condensed, [:, T/N@D] -->
-    [ (_^_->deescalate->Ls^[(T/N)|_]) ],
+    [ (_^_->deescalate->Ls^[(T/N)|_]^_) ],
     { length_plus_1(Ls, D) },
     condensed.
 
 condensed, [-, declare_mtd(MTD)] --> [ (_->stay->declare_mtd(MTD)) ].
 condensed, [^, declare_mtd(MTD)] --> [ (_->escalate->declare_mtd(MTD)) ].
-condensed, [:, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
+condensed, [v, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
 %%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
 %% All the better to see you with ...
-boin(Ls^Rs) :- % BOIN trial starting from arbitrary state
-    phrase(actions(Ls^Rs), Trial),
+boin(Ls^Rs^Xs) :- % BOIN trial starting from arbitrary state
+    phrase(actions(Ls^Rs^Xs), Trial),
     phrase(condensed, Trial, Translation),
     portray_clause(Translation).
 
 boin(D) :- % BOIN trial with D doses, starting at dose 1 by default
     length(Tallies, D),
     maplist(=(0/0), Tallies),
-    boin([]^Tallies).
+    boin([]^Tallies^[]).
 
 
 %?- boin(1).
@@ -802,5 +785,192 @@ boin(D) :- % BOIN trial with D doses, starting at dose 1 by default
 %@ true
 %@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,1/11@1,^,1/12@1,^,declare_mtd(1)].
 %@ true
+%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,1/11@1,^,2/12@1,-,declare_mtd(1)].
+%@ true
+%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,1/10@1,^,1/11@1,^,1/12@1,^,declare_mtd(1)].
+%@ true
 %@ ;  ...
 
+%?- boin(2).
+%@ [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,0/11@2,^,0/12@2,^,declare_mtd(2)].
+%@    true
+%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,0/11@2,^,1/12@2,^,declare_mtd(2)].
+%@ true
+%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,1/11@2,^,1/12@2,^,declare_mtd(2)].
+%@ true
+%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,1/11@2,^,2/12@2,-,declare_mtd(2)].
+%@ true
+%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,1/10@2,^,1/11@2,^,1/12@2,^,declare_mtd(2)].
+%@ true
+%@ ;  ...
+
+%% I'd like to complete the translation to the T[,,] arrays
+%% that support the formalism of WWTT <arXiv:2012.05301>.
+/*
+
+How did I do this for 3+3, and what (if anything) has to change?
+
+
+The indexing of cohorts on a per-dose basis nicely carries over into CCDs.
+So the individual matrices T[,,j], j in 1..J retain the same form and semantics.
+Furthermore, with a deterministic trial design, the path could be 'read out'
+from these matrices quite straightforwardly.
+
+But our plan for a more intimate involvement of Prolog in package 'precautionary'
+happily liberates us from the supposed need to explicitly represent every step of
+trial operation to R. When we need to determine properties of the trial paths at
+such levels of detail, clearly the appropriate setting for the investigations is
+Prolog itself. Thus, we need not even preserve all of the path information in the
+cached arrays T[,,].
+
+For CCDs with cohorts of 1, all R really needs to obtain from these arrays are
+dose-wise tallies of x's and o's. This information suffices for computing path
+probabilities and ordinalized toxicity rates, and indeed even for extracting the
+dose recommendations provided that the stopping rule is CC-adapted and known via
+context such as indexes into the data structure storing the designs' T[,,] arrays.
+
+Thus, all we really need to extract for T[,,] output of each design is the final
+state of actions/1.
+
+*/
+
+:- op(900, xfx, ~>).
+
+%% First, extract the path matrix:
+path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
+path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
+
+boin_matrix(D) :-
+    length(Tallies, D), maplist(=(0/0), Tallies),
+    phrase(actions([]^Tallies^[]), Trial),
+    phrase(path_matrix, Trial, Matrix),
+    portray_clause(Matrix).
+
+%?- boin_matrix(2).
+%@ [[0/1]^[0/12]^[]~>2].
+%@    true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[5/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[1/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[5/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[2/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[5/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[3/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[4/12]^[]~>2].
+%@ true
+%@ ;  [[0/1]^[5/12]^[]~>2].
+%@ true
+%@ ;  [[0/2]^[5/12]^[]~>2].
+%@ true
+%@ ;  [[]^[0/12]^[6/12]~>1].
+%@ true
+%@ ;  [[]^[1/12]^[6/12]~>1].
+%@ true
+%@ ;  [[]^[1/12]^[6/12]~>1].
