@@ -435,7 +435,7 @@ hit_floor_t(Q, [F|Fs], Truth) :-
 	, hit_floor_t(Q, Fs, Truth)
        ).
 
-
+%% TODO: Doesn't if_/3 prove the determinism of tally_decision/2?
 tally_decision(Q, Decision) :-
     RemovalBdy = [3/5, 4/8, 5/10, 6/12],   % To begin, we hard-code the
     DeescBdy = [1/1, 2/4, 3/6, 4/8, 5/11], % trial definition, according
@@ -529,11 +529,6 @@ Above text is included for comparison with current outlook.
 %% Note that this naturally invites consideration of a DSL
 %% in which such design rules could be expressed generally!
 
-escalate(Q) :- tally_decision(Q, escalate).
-deescalate(Q) :- tally_decision(Q, deescalate).
-remove(Q) :- tally_decision(Q, remove).
-stay(Q) :- tally_decision(Q, stay).
-
 %% NB: The left-hand list of Ls ^ Rs is sorted in descending order.
 %%     So heads L and R in [L|Ls] ^ [R|Rs] are tallies belonging to
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
@@ -554,7 +549,6 @@ enroll(T0/N0, T1/N1, Truth) :-
        ).
 
 %?- enroll(3/6, Q, Success).
-%@ caught: error(existence_error(procedure,(->)/3),(->)/3)
 %@    Q = _B/7, Success = true, clpz:(3+_A#=_B), clpz:(_A in 0..1), clpz:(_B in 3..4).
 
 length_plus_1(Ls, MTD) :-
@@ -601,31 +595,13 @@ remove(Ls ^ Rs ^ Xs, State) :-
     append(Rs, Xs, RsXs),
     deescalate(Ls ^ [] ^ RsXs, State).
 
-%% TODO: Note how TRIVIAL state0_action_state/3 has become.
-%%       Does this demand refactoring, or does it represent other
-%%       types of opportunity -- even meta-interpretation?
-
-%% TODO: How might I re-write state0_action_state/3 to render the
-%%       determinism of BOIN designs evident on inspection?
-
-state0_action_state(Ls ^ [R | Rs] ^ Xs, escalate, State) :-
-    escalate(R),
-    escalate(Ls ^ [R | Rs] ^ Xs, State).
-
-state0_action_state(Ls ^ [R | Rs] ^ Xs, deescalate, State) :-
-    deescalate(R),
-    deescalate(Ls ^ [R | Rs] ^ Xs, State).
-
-state0_action_state(Ls ^ [R | Rs] ^ Xs, stay, State) :-
-    stay(R),
-    stay(Ls ^ [R | Rs] ^ Xs, State).
-
-state0_action_state(Ls ^ [R | Rs] ^ Xs, remove, State) :-
-    remove(R),
-    remove(Ls ^ [R | Rs] ^ Xs, State).
+state0_action_state(Ls ^ [R | Rs] ^ Xs, Action, State) :-
+    tally_decision(R, Action), % NB: tally_decision/2 confers its determinism on the trial
+    call(Action, Ls ^ [R | Rs] ^ Xs, State).
 
 %% Note how this state-machine naturally starts up from a blank slate:
 %?- state0_action_state([] ^ [0/0, 0/0, 0/0] ^ [], Action, State).
+%@    Action = stay, State = []^[_A/1,0/0,0/0]^[], clpz:(_A in 0..1). % now det! (vs below)
 %@    Action = stay, State = []^[_A/1,0/0,0/0]^[], clpz:(_A in 0..1)
 %@ ;  false.
 
