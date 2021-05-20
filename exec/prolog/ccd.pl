@@ -1,12 +1,48 @@
-% Implementing BOIN within a larger class of designs.
+% Abstracting the cumulative-cohort design (CCD) principle for dose escalation
 
 /*
 
-Having at last read [1] with an eye toward implementation, I see that BOIN
-lends a formal status to a whole class of dose-escalation designs which may
-prove extremely easy to implement and explore using Prolog.
+The 'cumulative-cohort design' (CCD) concept in [1] establishes a class of
+dose-escalation designs in which escalation decisions are a function strictly
+of the cumulative toxicity rate AT THE CURRENT DOSE. These designs are thus
+positioned midway between what [1] calls 'group designs' (in which escalation
+depends only on the rate observed in the current COHORT), and general designs
+where these decisions depend on the observed rates AT ALL DOSES. (Note that,
+in the dose-escalation context where patients are treated as *exchangeable*,
+the list of dose-wise tallies [T1/N1, T2/N2, ..., Td/Nd] indeed a sufficient
+statistic for the full history of the trial.)
 
-Table 2 in the paper is especially helpful, suggesting that a general class
+With its 'middling' size, this CCD class seems likely to be amenable to modes
+of analysis that Prolog and CLP(ℤ) can bring to bear. But also apparently CCD
+is general enough to encompass BOIN [2] and other interval-based methods such
+as mTPI [3].
+
+Indeed, even the analytical approach pursued in [1] invites comparison with
+what we may attempt here by quite different---and, I think, more powerful &
+suitable---methods. Whereas Ivanova, Flournoy & Chung attempt to reduce CCDs
+to locally equivalent group designs, we might aim toward a similar analysis
+of CRM and other such designs via their local approximation as CCDs!
+
+Moreover, the effort in [1] towards gaining sharp control over the cardinality
+of the design space also anticipates some of the challenges we will face here.
+
+1. Ivanova A, Flournoy N, Chung Y. Cumulative cohort design for dose-finding.
+   Journal of Statistical Planning and Inference. 2007;137(7):2316-2327.
+   doi:10.1016/j.jspi.2006.07.009
+
+2. Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
+   J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089
+
+3. Ji Y, Liu P, Li Y, Bekele BN. A modified toxicity probability interval method
+   for dose-finding trials. Clinical Trials. 2010;7(6):653-663. doi:10.1177/1740774510382799
+
+--------------------------------------------------------------------------------
+
+While it seems appropriate to retain the apt term "cumulative cohort design",
+we can go beyond the limited terms in which CCDs were defined and optimized
+in [1]. The implementation of [2] actually points the way here.
+
+Table 2 in Liu & Yuan is especially helpful, suggesting that a general class
 of transition rules may be relatively easy to specify in CLP terms, without
 recourse to whatever Real-analytic computations might be used as heuristics
 for *finding* them:
@@ -40,13 +76,6 @@ decisions are made solely on the tally *at the current dose*, without regard to
 the tallies at other doses. This is the basic pattern to be implemented here,
 albeit with elimination of overly-toxic doses which departs from strict CCD form.
 
-
-1. Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
-   J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089
-
-2. Ivanova A, Flournoy N, Chung Y. Cumulative cohort design for dose-finding.
-   Journal of Statistical Planning and Inference. 2007;137(7):2316-2327.
-   doi:10.1016/j.jspi.2006.07.009
 
 --------------------------------------------------------------------------------
 
@@ -555,9 +584,9 @@ length_plus_1(Ls, MTD) :-
     length(Ls, MTD_1),
     MTD #= MTD_1 + 1.
 
-stay(Ls ^ [R | Rs] ^ Xs, State) :-
+stay(Ls ^ [R | Rs] ^ Es, State) :-
     if_(enroll(R, R1)
-	, State = Ls ^ [R1 | Rs] ^ Xs
+	, State = Ls ^ [R1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
@@ -570,12 +599,12 @@ stay(Ls ^ [R | Rs] ^ Xs, State) :-
 %%       is it not the case that we would wish to impose a special
 %%       escape clause so we don't have to run the top dose to 0/12
 %%       (say) before declaring it as RP2D?
-escalate(Ls ^ [R] ^ Xs, State) :- % NB: this is a 'clamped' situation
-    stay(Ls ^ [R] ^ Xs, State).
+escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
+    stay(Ls ^ [R] ^ Es, State).
 
-escalate(Ls ^ [Q, R | Rs] ^ Xs, State) :-
+escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
     if_(enroll(R, R1)
-	, State = [Q | Ls] ^ [R1 | Rs] ^ Xs
+	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
 	, ( length([R,Q|Ls], MTD),
 	    State = declare_mtd(MTD)
 	  )
@@ -583,21 +612,21 @@ escalate(Ls ^ [Q, R | Rs] ^ Xs, State) :-
 
 deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-deescalate([L | Ls] ^ Rs ^ Xs, State) :-
+deescalate([L | Ls] ^ Rs ^ Es, State) :-
     if_(enroll(L, L1)
-	, State = Ls ^ [L1 | Rs] ^ Xs
+	, State = Ls ^ [L1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
 
-remove(Ls ^ Rs ^ Xs, State) :-
-    append(Rs, Xs, RsXs),
-    deescalate(Ls ^ [] ^ RsXs, State).
+remove(Ls ^ Rs ^ Es, State) :-
+    append(Rs, Es, RsEs),
+    deescalate(Ls ^ [] ^ RsEs, State).
 
-state0_action_state(Ls ^ [R | Rs] ^ Xs, Action, State) :-
+state0_action_state(Ls ^ [R | Rs] ^ Es, Action, State) :-
     tally_decision(R, Action), % NB: tally_decision/2 confers its determinism on the trial
-    call(Action, Ls ^ [R | Rs] ^ Xs, State).
+    call(Action, Ls ^ [R | Rs] ^ Es, State).
 
 %% Note how this state-machine naturally starts up from a blank slate:
 %?- state0_action_state([] ^ [0/0, 0/0, 0/0] ^ [], Action, State).
@@ -743,8 +772,8 @@ condensed, [v, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
 %%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
 %% All the better to see you with ...
-boin(Ls^Rs^Xs) :- % BOIN trial starting from arbitrary state
-    phrase(actions(Ls^Rs^Xs), Trial),
+boin(Ls^Rs^Es) :- % BOIN trial starting from arbitrary state
+    phrase(actions(Ls^Rs^Es), Trial),
     phrase(condensed, Trial, Translation),
     portray_clause(Translation).
 
