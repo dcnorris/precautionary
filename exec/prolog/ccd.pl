@@ -122,36 +122,6 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 
 %% -----------------------------------------------------------------------------
 
-% My initial emphasis is on generating all possible paths (CPE) for the BOIN
-% design set forth in the table above. Although the BOIN design of [1] lacks
-% any terminating principle except elimination of all doses, we do need such
-% a rule here. The most natural type of rule, in view of the Table above,
-% might be a 'stop-for-consensus' type of rule as found in package 'dtpcrm'.
-% This is specified as a maximum number of patients to enroll at any 1 dose.
-
-%% In general, I may require a max-enrollment *parameter*,
-%% however unsightly it may be tagging along like this ...
-tally(DLTs/Enrolled, MaxN) :-
-    ground(MaxN),
-    Enrolled in 0..MaxN,
-    indomain(Enrolled),
-    DLTs in 0..Enrolled,
-    indomain(DLTs).
-
-%% Having a 'default' max cohort size will make dev & test a bit easier:
-tally(DLTs/Enrolled) :- tally(DLTs/Enrolled, 12).
-
-%% tally/1 terminates:
-%?- tally(_), false.
-%@ false.
-
-%% -----------------------------------------------------------------------------
-
-%% Is discontiuous directive not working?
-:- discontiguous(qcompare/3). % [this is line 144 reference below]
-%% caught: error(syntax_error(incomplete_reduction),read_term/3:144)
-%% false.
-
 %% The most fundamental relation between tallies is REACHABILITY,
 %% the question of whether a possible path exists connecting them.
 qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
@@ -161,38 +131,6 @@ qcompare(~~, T1/N1, T2/N2) :- % REACHABILITY
     %% (>) If N1 > N2, these conds translate to T2 =< T1 =< T2 + MaxTox.
     T2 #=< T1 + max(0, N2 - N1),
     T1 #=< T2 + max(0, N1 - N2).
-
-%% A helper to halve the results from the little query below...
-earlier(_/N1, _/N2) :- N1 #< N2.
-
-%% A 'general-enough' query, if not the MGQ:
-%?- tally(Q1, 3), tally(Q2, 3), earlier(Q1, Q2), qcompare(~~, Q1, Q2).
-%@    Q1 = 0/0, Q2 = 0/1
-%@ ;  Q1 = 0/0, Q2 = 1/1
-%@ ;  Q1 = 0/0, Q2 = 0/2
-%@ ;  Q1 = 0/0, Q2 = 1/2
-%@ ;  Q1 = 0/0, Q2 = 2/2
-%@ ;  Q1 = 0/0, Q2 = 0/3
-%@ ;  Q1 = 0/0, Q2 = 1/3
-%@ ;  Q1 = 0/0, Q2 = 2/3
-%@ ;  Q1 = 0/0, Q2 = 3/3
-%@ ;  Q1 = 0/1, Q2 = 0/2
-%@ ;  Q1 = 0/1, Q2 = 1/2
-%@ ;  Q1 = 0/1, Q2 = 0/3
-%@ ;  Q1 = 0/1, Q2 = 1/3
-%@ ;  Q1 = 0/1, Q2 = 2/3
-%@ ;  Q1 = 1/1, Q2 = 1/2
-%@ ;  Q1 = 1/1, Q2 = 2/2
-%@ ;  Q1 = 1/1, Q2 = 1/3
-%@ ;  Q1 = 1/1, Q2 = 2/3
-%@ ;  Q1 = 1/1, Q2 = 3/3
-%@ ;  Q1 = 0/2, Q2 = 0/3
-%@ ;  Q1 = 0/2, Q2 = 1/3
-%@ ;  Q1 = 1/2, Q2 = 1/3
-%@ ;  Q1 = 1/2, Q2 = 2/3
-%@ ;  Q1 = 2/2, Q2 = 2/3
-%@ ;  Q1 = 2/2, Q2 = 3/3
-%@ ;  false.
 
 /*
 
@@ -292,59 +230,99 @@ qcompare(>, T1/N1, T2/N2, Truth) :-
 zo_t(0, false).
 zo_t(1, true).
 
-%% Operators for the truly useful comparisons of BOIN, restricted to
-%% the simplex of valid tallies:
+%% Operators for the truly useful comparisons of BOIN:
 :- op(900, xfx, &=<).
 &=<(Q1, Q2) :-
-    tally(Q1), tally(Q2),
     qcompare(=<, Q1, Q2).
 
 &=<(Q1, Q2, Truth) :- % reified
-    tally(Q1), tally(Q2),
     qcompare(=<, Q1, Q2, Truth).
 
 :- op(900, xfx, &>=).
 &>=(Q1, Q2) :-
-    tally(Q1), tally(Q2),
     qcompare(>=, Q1, Q2).
 
 &>=(Q1, Q2, Truth) :- % reified
-    tally(Q1), tally(Q2),
     qcompare(>=, Q1, Q2, Truth).
 
 
+%% Fairly enumerate tally pairs (Q1, Q2) pairs JOINTLY to avoid
+%% repeating tests while 'sweeping' the space of cases to exclude
+%% the 'inconceivable' systematically on increasing subsets of
+%% the domain.
+%% This is intended to be invoked with (Size in Min..Max), as e.g.
+%% by inconceivable/3.
+tally_pair(T1/N1, T2/N2, Size) :-
+    Size #> 0,
+    N1 #= Size, % NB: naive (N1 in 1..Size) would duplicate pairs
+    N2 in 1..N1, indomain(N2),
+    T1 in 0..N1,
+    T2 in 0..N2.
+    %%*indomain(T1), indomain(T2). % TODO: Find slicker way to toggle labeling
+
+%?- Size in 1..3, indomain(Size), tally_pair(Q1, Q2, Size).
+%@    Size = 1, Q1 = _A/1, Q2 = 0/1, clpz:(_A in 0..1)
+%@ ;  Size = 1, Q1 = _A/1, Q2 = 1/Size, clpz:(_A in 0..1)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = 0/1, clpz:(_A in 0..2)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = 1/1, clpz:(_A in 0..2)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = 0/2, clpz:(_A in 0..2)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = 1/2, clpz:(_A in 0..2)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = 2/Size, clpz:(_A in 0..2)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 0/1, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 1/1, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 0/2, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 1/2, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 2/2, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 0/3, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 1/3, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 2/3, clpz:(_A in 0..3)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = 3/Size, clpz:(_A in 0..3).
+
 %% Demonstrate that strict inequalities are exclusive of ~~
-%?- inconceivable((tally(Q1, MaxN), tally(Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 6..12).
-%@  % MaxN = 6 ...   % CPU time: 2.435 seconds
-%@  % MaxN = 7 ...   % CPU time: 3.814 seconds
-%@  % MaxN = 8 ...   % CPU time: 5.734 seconds
-%@  % MaxN = 9 ...   % CPU time: 8.357 seconds
-%@  % MaxN = 10 ...   % CPU time: 11.836 seconds
-%@  % MaxN = 11 ...   % CPU time: 16.735 seconds
-%@  % MaxN = 12 ...   % CPU time: 23.156 seconds
+%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.020 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.062 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.126 seconds
+%@  % MaxN = 4 ...   % CPU time: 0.214 seconds
+%@  % MaxN = 5 ...   % CPU time: 0.331 seconds
+%@  % MaxN = 6 ...   % CPU time: 0.455 seconds
+%@  % MaxN = 7 ...   % CPU time: 0.634 seconds
+%@  % MaxN = 8 ...   % CPU time: 0.808 seconds
+%@  % MaxN = 9 ...   % CPU time: 1.009 seconds
+%@  % MaxN = 10 ...   % CPU time: 1.268 seconds
+%@  % MaxN = 11 ...   % CPU time: 1.514 seconds
+%@  % MaxN = 12 ...   % CPU time: 1.818 seconds
 %@ false.
 
-%?- inconceivable((tally(Q1, MaxN), tally(Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
-%@  % MaxN = 1 ...   % CPU time: 0.069 seconds
-%@  % MaxN = 2 ...   % CPU time: 0.174 seconds
-%@  % MaxN = 3 ...   % CPU time: 0.392 seconds
-%@  % MaxN = 4 ...   % CPU time: 0.783 seconds
-%@  % MaxN = 5 ...   % CPU time: 1.418 seconds
-%@  % MaxN = 6 ...   % CPU time: 2.413 seconds
-%@  % MaxN = 7 ...   % CPU time: 3.822 seconds
-%@  % MaxN = 8 ...   % CPU time: 5.781 seconds
-%@  % MaxN = 9 ...   % CPU time: 8.410 seconds
-%@  % MaxN = 10 ...   % CPU time: 11.865 seconds
-%@  % MaxN = 11 ...   % CPU time: 16.358 seconds
-%@  % MaxN = 12 ...   % CPU time: 21.935 seconds
+%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.026 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.067 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.135 seconds
+%@  % MaxN = 4 ...   % CPU time: 0.251 seconds
+%@  % MaxN = 5 ...   % CPU time: 0.381 seconds
+%@  % MaxN = 6 ...   % CPU time: 0.572 seconds
+%@  % MaxN = 7 ...   % CPU time: 0.847 seconds
+%@  % MaxN = 8 ...   % CPU time: 1.125 seconds
+%@  % MaxN = 9 ...   % CPU time: 1.555 seconds
+%@  % MaxN = 10 ...   % CPU time: 1.992 seconds
+%@  % MaxN = 11 ...   % CPU time: 2.539 seconds
+%@  % MaxN = 12 ...   % CPU time: 3.055 seconds
 %@ false.
 
 %% Show that =< and >= hold simultaneously only in case of equivalence:
-%?- time((tally(Q1), tally(Q2), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2))).
-%@    % CPU time: 22.008 seconds
-%@ false.
-%?- time((Q1 &>= Q2, Q1 &=< Q2, dif(Q1, Q2))).
-%@    % CPU time: 35.625 seconds % TODO: Slower because (&=<) re-posts tally/1 constraints?
+%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2)), MaxN, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.044 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.106 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.187 seconds
+%@  % MaxN = 4 ...   % CPU time: 0.296 seconds
+%@  % MaxN = 5 ...   % CPU time: 0.424 seconds
+%@  % MaxN = 6 ...   % CPU time: 0.571 seconds
+%@  % MaxN = 7 ...   % CPU time: 0.753 seconds
+%@  % MaxN = 8 ...   % CPU time: 0.954 seconds
+%@  % MaxN = 9 ...   % CPU time: 1.178 seconds
+%@  % MaxN = 10 ...   % CPU time: 1.424 seconds
+%@  % MaxN = 11 ...   % CPU time: 1.700 seconds
+%@  % MaxN = 12 ...   % CPU time: 1.997 seconds
 %@ false.
 
 %% TODO: Refine the console output from inconceivable/3, with an understanding
@@ -364,37 +342,67 @@ inconceivable(Query, Var, Range) :-
 %@  % MaxN = 5 ...   % CPU time: 41.477 seconds
 %@ false.
 
+%% TODO: Generalize tally_pair/3, tally_triple/4 to LISTS of tallies?
+tally_triple(T1/N1, T2/N2, T3/N3, Size) :-
+    tally_pair(T1/N1, T2/N2, Size),
+    N3 in 1..N2, indomain(N3),
+    T3 in 0..N3.
+
+%?- Size in 1..3, indomain(Size), tally_triple(Q1, Q2, Q3, Size).
+%@    Size = 1, Q1 = _A/1, Q2 = _B/1, Q3 = _C/1, clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(_C in 0..1)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = _B/1, Q3 = _C/1, clpz:(_A in 0..2), clpz:(_B in 0..1), clpz:(_C in 0..1)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = _B/2, Q3 = _C/1, clpz:(_A in 0..2), clpz:(_B in 0..2), clpz:(_C in 0..1)
+%@ ;  Size = 2, Q1 = _A/2, Q2 = _B/2, Q3 = _C/2, clpz:(_A in 0..2), clpz:(_B in 0..2), clpz:(_C in 0..2)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/1, Q3 = _C/1, clpz:(_A in 0..3), clpz:(_B in 0..1), clpz:(_C in 0..1)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/2, Q3 = _C/1, clpz:(_A in 0..3), clpz:(_B in 0..2), clpz:(_C in 0..1)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/2, Q3 = _C/2, clpz:(_A in 0..3), clpz:(_B in 0..2), clpz:(_C in 0..2)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/3, Q3 = _C/1, clpz:(_A in 0..3), clpz:(_B in 0..3), clpz:(_C in 0..1)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/3, Q3 = _C/2, clpz:(_A in 0..3), clpz:(_B in 0..3), clpz:(_C in 0..2)
+%@ ;  Size = 3, Q1 = _A/3, Q2 = _B/3, Q3 = _C/3, clpz:(_A in 0..3), clpz:(_B in 0..3), clpz:(_C in 0..3).
+
 %% Demonstrate the TRANSITIVITY of (&=<) and (&>=)
-violate_transitivity(C, Q1, Q2, Q3, MaxN) :-
-    tally(Q1, MaxN),
-    tally(Q2, MaxN),
+violate_transitivity(C, Q1, Q2, Q3, Size) :-
+    tally_triple(Q1, Q2, Q3, Size),
     qcompare(C, Q1, Q2),
-    tally(Q3, MaxN),
     qcompare(C, Q2, Q3),
     %% At this point Q1 (C) Q2 (C) Q3 holds, and now we
     %% ask whether it's possible that Q1 (C) Q3 DOESN'T:
     qcompare(C, Q1, Q3, false). % reification to the rescue!
 
-%?- inconceivable(violate_transitivity(>=, Q1, Q2, Q3, MaxN), MaxN, 5..12).
-%@  % MaxN = 5 ...   % CPU time: 40.463 seconds
-%@  % MaxN = 6 ...   % CPU time: 87.731 seconds
-%@  % MaxN = 7 ...   % CPU time: 171.186 seconds
-%@  % MaxN = 8 ...   % CPU time: 321.167 seconds
-%@  % MaxN = 9 ...   % CPU time: 553.290 seconds
-%@  % MaxN = 10 ...   % CPU time: 919.145 seconds
-%@  % MaxN = 11 ...   % CPU time: 1459.348 seconds
-%@  % MaxN = 12 ...   % CPU time: 2246.696 seconds
+%?- inconceivable(violate_transitivity(>=, Q1, Q2, Q3, Size), Size, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.125 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.347 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.691 seconds
+%@  % MaxN = 4 ...   % CPU time: 1.156 seconds
+%@  % MaxN = 5 ...   % CPU time: 1.715 seconds
+%@  % MaxN = 6 ...   % CPU time: 2.449 seconds
+%@  % MaxN = 7 ...   % CPU time: 3.286 seconds
+%@  % MaxN = 8 ...   % CPU time: 4.258 seconds
+%@  % MaxN = 9 ...   % CPU time: 5.540 seconds
+%@  % MaxN = 10 ...   % CPU time: 7.315 seconds
+%@  % MaxN = 11 ...   % CPU time: 8.463 seconds
+%@  % MaxN = 12 ...   % CPU time: 9.648 seconds
 %@ false.
 
-%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, MaxN), MaxN, 3..5).
-%@  % MaxN = 3 ...   % CPU time: 6.333 seconds
-%@  % MaxN = 4 ...   % CPU time: 18.381 seconds
-%@  % MaxN = 5 ...   % CPU time: 42.346 seconds
+%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, Size), Size, 1..12).
+%@  % MaxN = 1 ...   % CPU time: 0.123 seconds
+%@  % MaxN = 2 ...   % CPU time: 0.365 seconds
+%@  % MaxN = 3 ...   % CPU time: 0.728 seconds
+%@  % MaxN = 4 ...   % CPU time: 1.201 seconds
+%@  % MaxN = 5 ...   % CPU time: 1.776 seconds
+%@  % MaxN = 6 ...   % CPU time: 2.522 seconds
+%@  % MaxN = 7 ...   % CPU time: 3.458 seconds
+%@  % MaxN = 8 ...   % CPU time: 4.297 seconds
+%@  % MaxN = 9 ...   % CPU time: 5.410 seconds
+%@  % MaxN = 10 ...   % CPU time: 6.631 seconds
+%@  % MaxN = 11 ...   % CPU time: 8.037 seconds
+%@  % MaxN = 12 ...   % CPU time: 9.447 seconds
 %@ false.
 
 /*
 
-In BOIN (and perhaps CCDs generally?), dose-escalation decisions can be
+Drawing inspiration from BOIN [2] as a specific example of cumulative-cohort
+designs, we posit that in CCDs in general, dose-escalation decisions are
 driven solely from BOUNDARY-HITTING EVENTS captured by =< and >= relations.
 The boundaries are of 2 types: FLOORS that (when hit) indicate escalation,
 and CEILINGS that indicate de-escalation or even dose removal when hit.
@@ -406,7 +414,7 @@ the territory it bounds. If an accident at home results in a projectile
 being embedded 1" into the ceiling or floor, rather than stuck at the
 very surface, we still say the surface was hit.)
 
-Arguably, all sensible toxicity boundaries dose-finding will take the form
+Arguably, sensible toxicity boundaries in dose-finding must take the form
 of 'stairs' ascending from left to right in the T-N lattice depicted above.
 Furthermore, adherence to 'reachability logic' effectively excludes step
 heights greater than 1. (TODO: Prove this.)
@@ -452,24 +460,30 @@ which is a consequence of the TRANSITIVITY of (&=<):
 
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
-    if_(Q &>= C
+    if_(Q &>= C % this goal is deterministic for Q, C ∊ ℚ
 	, Truth = true
 	, hit_ceiling_t(Q, Cs, Truth)
        ).
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
-    if_(Q &=< F
+    if_(Q &=< F % this goal is deterministic for Q, C ∊ ℚ
 	, Truth = true
 	, hit_floor_t(Q, Fs, Truth)
        ).
 
-%% TODO: Doesn't if_/3 prove the determinism of tally_decision/2?
+%% TODO: I believe the if_/3 cascade, with its default final 'escape clause',
+%%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
+%%       proves the determinism of tally_decision/2 so long as the defining
+%%       boundaries are lists from ℚ.
 tally_decision(Q, Decision) :-
     RemovalBdy = [3/5, 4/8, 5/10, 6/12],   % To begin, we hard-code the
     DeescBdy = [1/1, 2/4, 3/6, 4/8, 5/11], % trial definition, according
     EscBdy = [0/1, 1/8],                   % to Table 1 abstracted above.
-    tally(Q),
+    Q = T/N,
+    MaxN #= 12,
+    N in 0..MaxN, indomain(N),
+    T in 0..N,
     if_(hit_ceiling_t(Q, RemovalBdy)
 	, Decision = remove
 	, if_(hit_ceiling_t(Q, DeescBdy)
@@ -481,44 +495,23 @@ tally_decision(Q, Decision) :-
 	     )
        ).
 
-%?- tally_decision(2/5, Decision).
-%@    Decision = stay.
-
-%?- tally_decision(3/5, Decision).
-%@    Decision = remove.
-
-%?- tally_decision(1/5, Decision).
-%@    Decision = stay.
-
-%?- tally_decision(0/5, Decision).
-%@    Decision = escalate.
-
 %?- tally_decision(T/5, Decision).
-%@    Decision = escalate, T = 0
-%@ ;  Decision = stay, T = 1
-%@ ;  Decision = stay, T = 2
-%@ ;  Decision = remove, T = 3
-%@ ;  Decision = remove, T = 4
-%@ ;  Decision = remove, T = 5.
+%@    Decision = stay, clpz:(T in 1..2)
+%@ ;  Decision = escalate, T = 0
+%@ ;  Decision = remove, clpz:(T in 3..5).
 
 %?- tally_decision(Q, Decision).
 %@    Q = 0/0, Decision = stay % <-- this one is interesting! TODO: consider
 %@ ;  Q = 0/1, Decision = escalate
 %@ ;  Q = 1/1, Decision = deescalate
-%@ ;  Q = 0/2, Decision = escalate
 %@ ;  Q = 1/2, Decision = stay
+%@ ;  Q = 0/2, Decision = escalate
 %@ ;  Q = 2/2, Decision = deescalate
-%@ ;  Q = 0/3, Decision = escalate
 %@ ;  Q = 1/3, Decision = stay
+%@ ;  Q = 0/3, Decision = escalate
 %@ ;  Q = 2/3, Decision = deescalate
 %@ ;  Q = 3/3, Decision = remove
-%@ ;  Q = 0/4, Decision = escalate
 %@ ;  Q = 1/4, Decision = stay
-%@ ;  Q = 2/4, Decision = deescalate
-%@ ;  Q = 3/4, Decision = remove
-%@ ;  Q = 4/4, Decision = remove
-%@ ;  Q = 0/5, Decision = escalate
-%@ ;  Q = 1/5, Decision = stay
 %@ ;  ...
 
 
@@ -599,6 +592,12 @@ stay(Ls ^ [R | Rs] ^ Es, State) :-
 %%       is it not the case that we would wish to impose a special
 %%       escape clause so we don't have to run the top dose to 0/12
 %%       (say) before declaring it as RP2D?
+%% TODO: OTOH, does an analogy with Prolog program slicing hold lessons
+%%       for us, about how to analyze the introduction of additional
+%%       termination rules? Is there some sense in which such extra
+%%       rules 'slice' a trial, where the paths are 'solutions'?
+%%       Does this analogy advise AGAINST introducing an complicating
+%%       logic like abovementioned "special escape clause"?
 escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
     stay(Ls ^ [R] ^ Es, State).
 
@@ -651,11 +650,10 @@ actions(S0) --> [(S0->A->S)],
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
 %?- phrase(actions([]^[0/0]^[]), Trial).
-%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(1+_K#=_A), clpz:(_K in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4)
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=3), clpz:(1+_G#=_A), clpz:(_G in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_F in 0..1), clpz:(_E in 2..3)
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(2+_F#=_A), clpz:(_F in 0..1), clpz:(_A in 2..3), clpz:(_B in 0..1), clpz:(_C in 2..4), clpz:(_D in 0..1), clpz:(_E in 2..5)
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
@@ -772,41 +770,28 @@ condensed, [v, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
 %%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
 %% All the better to see you with ...
-boin(Ls^Rs^Es) :- % BOIN trial starting from arbitrary state
+boin(Ls^Rs^Es, Translation) :- % BOIN trial starting from arbitrary state
     phrase(actions(Ls^Rs^Es), Trial),
-    phrase(condensed, Trial, Translation),
-    portray_clause(Translation).
+    phrase(condensed, Trial, Translation).
 
-boin(D) :- % BOIN trial with D doses, starting at dose 1 by default
+boin(D, Path) :- % BOIN trial with D doses, starting at dose 1 by default
     length(Tallies, D),
     maplist(=(0/0), Tallies),
-    boin([]^Tallies^[]).
+    boin([]^Tallies^[], Path).
 
 
-%?- boin(1).
-%@ [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,0/11@1,^,0/12@1,^,declare_mtd(1)].
-%@    true
-%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,0/11@1,^,1/12@1,^,declare_mtd(1)].
-%@ true
-%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,1/11@1,^,1/12@1,^,declare_mtd(1)].
-%@ true
-%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,0/10@1,^,1/11@1,^,2/12@1,-,declare_mtd(1)].
-%@ true
-%@ ;  [-,0/1@1,^,0/2@1,^,0/3@1,^,0/4@1,^,0/5@1,^,0/6@1,^,0/7@1,^,0/8@1,^,0/9@1,^,1/10@1,^,1/11@1,^,1/12@1,^,declare_mtd(1)].
-%@ true
+%?- boin(1, Path), portray_clause(Path).
+%@ [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,A/5@1,-,B/6@1,-,C/7@1,-,D/8@1,-,E/9@1,-,F/10@1,-,G/11@1,-,H/12@1,-,declare_mtd(1)].
+%@    Path = [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,_A/5@1,-,_C/6@1,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
+%@ ;  [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,A/5@1,-,B/6@1,-,C/7@1,-,D/8@1,-,E/9@1,-,4/10@1,-,5/11@1,v,declare_mtd(0)].
+%@ Path = [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,_A/5@1,-,_C/6@1,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(1+_K#=_A), clpz:(_K in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4)
 %@ ;  ...
 
-%?- boin(2).
-%@ [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,0/11@2,^,0/12@2,^,declare_mtd(2)].
-%@    true
-%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,0/11@2,^,1/12@2,^,declare_mtd(2)].
-%@ true
-%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,1/11@2,^,1/12@2,^,declare_mtd(2)].
-%@ true
-%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,0/10@2,^,1/11@2,^,2/12@2,-,declare_mtd(2)].
-%@ true
-%@ ;  [-,0/1@1,^,0/1@2,^,0/2@2,^,0/3@2,^,0/4@2,^,0/5@2,^,0/6@2,^,0/7@2,^,0/8@2,^,0/9@2,^,1/10@2,^,1/11@2,^,1/12@2,^,declare_mtd(2)].
-%@ true
+%?- boin(2, Path), portray_clause(Path).
+%@ [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,A/5@2,-,B/6@2,-,C/7@2,-,D/8@2,-,E/9@2,-,F/10@2,-,G/11@2,-,H/12@2,-,declare_mtd(2)].
+%@    Path = [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,_A/5@2,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
+%@ ;  [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,A/5@2,-,B/6@2,-,C/7@2,-,D/8@2,-,E/9@2,-,4/10@2,-,5/11@2,:,1/2@1,-,1/3@1,-,1/4@1,-,F/5@1,-,G/6@1,-,H/7@1,-,I/8@1,-,J/9@1,-,K/10@1,-,L/11@1,-,M/12@1,-,declare_mtd(1)].
+%@ Path = [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,_A/5@2,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(_O+_P#=_Q), clpz:(_Q+_R#=_S), clpz:(_S+_T#=_U), clpz:(_U+_V#=_W), clpz:(_W+_X#=_Y), clpz:(1+_Z#=_A), clpz:(1+_A1#=_K), clpz:(_Z in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4), clpz:(_A1 in 0..1), clpz:(_K in 1..2), clpz:(_L in 0..1), clpz:(_M in 1..2), clpz:(_N in 0..1), clpz:(_O in 1..3), clpz:(_P in 0..1), clpz:(_Q in 2..3), clpz:(_R in 0..1), clpz:(_S in 2..4), clpz:(_T in 0..1), clpz:(_U in 2..4), clpz:(_V in 0..1), clpz:(_W in 2..4), clpz:(_X in 0..1), clpz:(_Y in 2..5)
 %@ ;  ...
 
 %% I'd like to complete the translation to the T[,,] arrays
@@ -845,137 +830,15 @@ state of actions/1.
 path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
 path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
-boin_matrix(D) :-
+ccd_matrix(D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     phrase(actions([]^Tallies^[]), Trial),
-    phrase(path_matrix, Trial, Matrix),
-    portray_clause(Matrix).
+    phrase(path_matrix, Trial, Matrix).
 
-%?- boin_matrix(2).
-%@ [[0/1]^[0/12]^[]~>2].
-%@    true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[5/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[1/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[5/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[2/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[5/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[3/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[4/12]^[]~>2].
-%@ true
-%@ ;  [[0/1]^[5/12]^[]~>2].
-%@ true
-%@ ;  [[0/2]^[5/12]^[]~>2].
-%@ true
-%@ ;  [[]^[0/12]^[6/12]~>1].
-%@ true
-%@ ;  [[]^[1/12]^[6/12]~>1].
-%@ true
-%@ ;  [[]^[1/12]^[6/12]~>1].
+%% TODO: Can I label 'on demand', e.g. so that it happens right before portray_clause/2?
+%?- ccd_matrix(2, Matrix), portray_clause(Matrix).
+%@ [[0/1]^[A/12]^[]~>2].
+%@    Matrix = [[0/1]^[_O/12]^[]~>2], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
+%@ ;  [[]^[A/12,5/11]^[]~>1].
+%@ Matrix = [[]^[_O/12,5/11]^[]~>1], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
+%@ ;  ...
