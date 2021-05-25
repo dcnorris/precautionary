@@ -724,6 +724,14 @@ escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
 	  )
        ).
 
+%% TODO: Suppose trial starts at lowest dose, and first patient has
+%%       a DLT. If Deesc = [1/1,...] then the following rule would
+%%       stop the trial right there! On the one hand, this does seem
+%%       fully consistent with preference for safety, since initial
+%%       dose has 'surprised' us. (So, we must rethink design, etc.)
+%%       But OTOH this effectively turns an initial toxicity into a
+%%       dose-removing event, blurring what otherwise ought to be a
+%%       clear distinction between de-escalation and removal.
 deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
 deescalate([L | Ls] ^ Rs ^ Es, State) :-
