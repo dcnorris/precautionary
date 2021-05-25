@@ -26,22 +26,6 @@ elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 % might be a 'stop-for-consensus' type of rule as found in package 'dtpcrm'.
 % This is specified as a maximum number of patients to enroll at any 1 dose.
 
-%% In general, I may require a max-enrollment *parameter*,
-%% however unsightly it may be tagging along like this ...
-tally(DLTs/Enrolled, MaxN) :-
-    ground(MaxN),
-    Enrolled in 0..MaxN,
-    indomain(Enrolled),
-    DLTs in 0..Enrolled,
-    indomain(DLTs).
-
-%% Having a 'default' max cohort size will make dev & test a bit easier:
-tally(DLTs/Enrolled) :- tally(DLTs/Enrolled, 12).
-
-%% tally/1 terminates:
-%?- tally(_), false.
-%@ false.
-
 /*
 
 A crucial task for this module is to generate the defining boundaries
@@ -67,6 +51,19 @@ adopt the recommended values 𝜙1 = 0.6𝜙, and 𝜙2 = 1.4𝜙.
 
 */
 
+boin_targetpct(ccd(Elim, Deesc, Esc), TargetPct) :-
+    phipct_lambda1_lambda2(TargetPct, Lambda1, Lambda2),
+    findall(E, slope_floor(Lambda1, E), Esc_),
+    findall(D, slope_ceiling(Lambda2, D), Deesc_),
+    findall(R, elim_boundary(R, TargetPct), Elim_),
+    ceiling_canonical(Elim_, Elim),
+    ceiling_canonical(Deesc_, Deesc),
+    floor_canonical(Esc_, Esc).
+
+%?- boin_targetpct(ccd(ElimBdy, DeescBdy, EscBdy), 25).
+%@    ElimBdy = [3/5,4/8,5/10,6/12], DeescBdy = [1/3,2/6,3/10,4/12], EscBdy = [0/1,1/6,2/11]
+%@ ;  false.
+
 %% These are very close rational approximations to Eqs (2) & (3) in [1],
 %% obtained using R MASS function 'fractions':
 
@@ -78,17 +75,33 @@ phipct_lambda1_lambda2(25, 9043/45950, 33795/113257).
 
 phipct_lambda1_lambda2(30, 18648/78853, 1172/3269).
 
+%% From these 'slopes', I need to obtain floors & ceilings.
+slope_floor(Y/X, T/N) :-
+    N in 1..12, indomain(N),
+    T #= (N * Y) // X.
+
+slope_ceiling(Y/X, T/N) :-
+    N in 1..12, indomain(N),
+    T #= 1 + (N * Y) // X.
+
+%?- slope_floor(1/3, T/6).
+%@    T = 2.
+
+%?- slope_ceiling(1/3, T/6).
+%@    T = 3.
+
+%?- findall(Q, slope_floor(1/3, Q), Floor), portray_clause(Floor).
+%@ [0/1,0/2,1/3,1/4,1/5,2/6,2/7,2/8,3/9,3/10,3/11,4/12].
+%@    Floor = [0/1,0/2,1/3,1/4,1/5,2/6,2/7,2/8,3/9,... / ...|...].
+
 %% We also need to tabulate the 5% quantiles of the Beta distribution,
 %% from which we will compute the elimination thresholds of [1,p515].
 
-%% Ooh! An interesting question is whether it is logically sound to
-%% tabulate a function on an infinite (uncountable!) domain.
-%% Perhaps I'm asking, how do I obtain a sound predicate based on
-%% the incomplete tabulation of a transcendental function?
-%% TODO: Write the elimination-boundary function FIRST, to see what
-%%       it tells us it requires in the way of qbeta tabulation.
+%% TODO: What are the implications for soundness of such a predicate,
+%%       based like this on tabulation of a transcendental function?
 elim_boundary(T/N, PhiPct) :-
-    N in 1..12, indomain(N),
+    N in 3..12, % NB: Liu & Yuan (2015) eliminate only for N ≥ 3
+    indomain(N),
     T in 1..N,
     post05_tally(Qupper, T/N),
     ratless(PhiPct/100, Qupper),
@@ -97,8 +110,7 @@ elim_boundary(T/N, PhiPct) :-
     ratless(Qlower, PhiPct/100).
 
 %?- elim_boundary(T/N, 25).
-%@    T = 2, N = 2
-%@ ;  T = 3, N = 3
+%@    T = 3, N = 3
 %@ ;  T = 3, N = 4
 %@ ;  T = 3, N = 5
 %@ ;  T = 4, N = 6
@@ -113,6 +125,13 @@ elim_boundary(T/N, PhiPct) :-
 %% Less-than relation on rationals
 ratless(X1/Y1, X2/Y2) :-
     X1 * Y2 #< X2 * Y1. % 'cross-multiply'
+
+%% Greater-than relation on rationals
+ratmore(X1/Y1, X2/Y2) :- ratless(X2/Y2, X1/Y1).
+
+%?- findall(T/N, elim_boundary(T/N, 25), Bdy), portray_clause(Bdy).
+%@ [3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12].
+%@    Bdy = [3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,... / ...].
 
 %% The 5% quantile of posterior probability of toxicity,
 %% after observing toxicity tally T/N
