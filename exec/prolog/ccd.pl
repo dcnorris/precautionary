@@ -719,7 +719,11 @@ escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
 escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
     if_(enroll(R, R1)
 	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
-	, ( length([R,Q|Ls], MTD),
+	%% If the next dose up (R) cannot be enrolled, that's because
+	%% it's already full. What's more, it must have recommended
+	%% de-escalation---which is how we got to the current dose Q!
+	%% Accordingly, we declare the current dose to be MTD:
+	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
