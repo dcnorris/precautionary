@@ -93,7 +93,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(dif)).
 :- use_module(library(reif)).
 :- use_module(library(format)).
-:- use_module(library(between)).
+:- use_module(library(lambda)).
 
 % TODO: Review library(debug); it includes * and other useful predicates
 % TODO: Look at clpz:automaton/_ predicates
@@ -575,15 +575,14 @@ floor_canonical(Qs, Ks) :-
 
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
-%% of a triplet
+%% of a triplet of boundaries, followed by max enrollment per cohort.
 %% TODO: I believe the if_/3 cascade, with its default final 'escape clause',
 %%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
 %%       proves the determinism of tally_decision/2 so long as the defining
 %%       boundaries are lists from ℚ.
-tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy)) :-
+tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
-    MaxN #= 12,
-    N in 0..MaxN, indomain(N),
+    N in 0..FullCoh, indomain(N),
     T in 0..N,
     if_(hit_ceiling_t(Q, RemovalBdy)
 	, Decision = remove
@@ -600,7 +599,8 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy)) :-
 tally_decision(Q, Decision) :-
     tally_decision_ccd(Q, Decision, ccd([3/5, 4/8, 5/10, 6/12],
 					[1/1, 2/4, 3/6, 4/8, 5/11],
-					[0/1, 1/8])).
+					[0/1, 1/8],
+					12)).
 
 %?- tally_decision(T/5, Decision).
 %@    Decision = stay, clpz:(T in 1..2)
@@ -624,9 +624,6 @@ tally_decision(Q, Decision) :-
 %@ ;  Q = _A/4, Decision = remove, clpz:(_A in 3..4)
 %@ ;  Q = _A/5, Decision = stay, clpz:(_A in 1..2)
 %@ ;  Q = 0/5, Decision = escalate
-%@ ;  Q = _A/5, Decision = remove, clpz:(_A in 3..5)
-%@ ;  Q = _A/6, Decision = stay, clpz:(_A in 1..2)
-%@ ;  Q = 0/6, Decision = escalate
 %@ ;  ...
 
 
@@ -675,11 +672,12 @@ Above text is included for comparison with current outlook.
 %% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
 %% Presently, we are simply checking whether cohort N0 is already 'full'.
 enroll(T0/N0, T1/N1, Truth) :-
-    N0 #>= 12 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
-    if_(zo_t(CohortFull) % do this pending resolution of scryer #967
+    N0 #>= 6 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
+    if_(CohortFull #= 1
 	, Truth = false
 	, ( N1 #= N0 + 1,
 	    T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+	    indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
 	    T1 #= T0 + T,
 	    Truth = true
 	  )
@@ -750,7 +748,14 @@ remove(Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
     deescalate(Ls ^ [] ^ RsEs, State).
 
+%% TODO: As a purely practical matter, it may be necessary to implement
+%%       STOPPING RULES that depend on TOTAL ENROLLMENT, and not merely
+%%       upon CURRENT-COHORT enrollment. Otherwise, CPE may get bogged
+%%       down in listing enormous numbers of highly unlikely paths.
+%%       To preserve the pure CC-dependence of most of the predicates,
+%        such a branch may have to be introduced here.
 state0_action_state(Ls ^ [R | Rs] ^ Es, Action, State) :-
+    %% TODO: Check whether total enrollment has been reached, and stop?
     tally_decision(R, Action), % NB: tally_decision/2 confers its determinism on the trial
     call(Action, Ls ^ [R | Rs] ^ Es, State).
 
@@ -959,13 +964,244 @@ path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
 ccd_matrix(D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
-    phrase(actions([]^Tallies^[]), Trial),
-    phrase(path_matrix, Trial, Matrix).
+    phrase(actions([]^Tallies^[]), Path),
+    phrase(path_matrix, Path, Matrix).
 
 %% TODO: Can I label 'on demand', e.g. so that it happens right before portray_clause/2?
-%?- ccd_matrix(2, Matrix), portray_clause(Matrix).
-%@ [[0/1]^[A/12]^[]~>2].
-%@    Matrix = [[0/1]^[_O/12]^[]~>2], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
-%@ ;  [[]^[A/12,5/11]^[]~>1].
-%@ Matrix = [[]^[_O/12,5/11]^[]~>1], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
-%@ ;  ...
+%%       Perhaps my solution is to redefine enroll/3 for each new design? If it turns out
+%%       that everything variable in CCDs is inside enroll/3, that's a splendid finding,
+%%       since it focuses attention for development of a CCD DSL.
+%?- ccd_matrix(2, Matrix).
+%@    Matrix = [[0/1]^[0/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
+%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
+%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[2/4]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,2/4]^[]~>0]
+%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
+%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[2/4]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,2/4]^[]~>0]
+%@ ;  Matrix = [[0/3]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/4,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
+%@ ;  Matrix = [[]^[2/4]^[3/4]~>0]
+%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/3]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,2/3]^[]~>0]
+%@ ;  Matrix = [[0/2]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
+%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
+%@ ;  Matrix = [[0/3]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/4,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
+%@ ;  Matrix = [[0/4]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/5,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
+%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/3]^[]~>0]
+%@ ;  Matrix = [[0/5]^[2/6]^[]~>2]
+%@ ;  Matrix = [[]^[0/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
+%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
+%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
+%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
+%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
+%@ ;  Matrix = [[]^[0/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
+%@ ;  Matrix = [[]^[3/6]^[3/3]~>0]
+%@ ;  Matrix = [[]^[1/6,2/2]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/2]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,2/2]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,2/2]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,2/2]^[]~>0]
+%@ ;  Matrix = [[]^[1/6,1/1]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,1/1]^[]~>1]
+%@ ;  Matrix = [[]^[2/6,1/1]^[]~>1]
+%@ ;  Matrix = [[]^[3/6,1/1]^[]~>0]
+%@ ;  Matrix = [[]^[2/4,1/1]^[]~>0]
+%@ ;  Matrix = [[]^[2/3,1/1]^[]~>0]
+%@ ;  Matrix = [[]^[1/1,0/0]^[]~>0]
+%@ ;  false.
+
+%?- findall(Matrix, ccd_matrix(2, Matrix), Paths), length(Paths, J).
+%@    Paths = [[[0/1]^[0/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[... / ...]^[...]^[]~>2],[[]^ ... ^ ... ~>1],[... ~> ...],...|...], J = 212.
+
+%?- use_module(library(lambda)).
+%@    true.
+%?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 114.852 seconds
+%@    % CPU time: 114.856 seconds
+%@    J = 212.
+
+%?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 629.949 seconds
+%@    % CPU time: 629.953 seconds
+%@    J = 1151.
+
+%?- J+\(time(findall(Matrix, ccd_matrix(4, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 3509.381 seconds
+%@    % CPU time: 3509.385 seconds
+%@    J = 6718.
