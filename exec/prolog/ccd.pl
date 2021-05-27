@@ -952,7 +952,7 @@ dose recommendations provided that the stopping rule is CC-adapted and known via
 context such as indexes into the data structure storing the designs' T[,,] arrays.
 
 Thus, all we really need to extract for T[,,] output of each design is the final
-state of actions/1.
+state of actions//1.
 
 */
 
@@ -1189,8 +1189,6 @@ ccd_matrix(D, Matrix) :-
 %?- findall(Matrix, ccd_matrix(2, Matrix), Paths), length(Paths, J).
 %@    Paths = [[[0/1]^[0/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[... / ...]^[...]^[]~>2],[[]^ ... ^ ... ~>1],[... ~> ...],...|...], J = 212.
 
-%?- use_module(library(lambda)).
-%@    true.
 %?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
 %@    % CPU time: 114.852 seconds
 %@    % CPU time: 114.856 seconds
@@ -1205,3 +1203,32 @@ ccd_matrix(D, Matrix) :-
 %@    % CPU time: 3509.381 seconds
 %@    % CPU time: 3509.385 seconds
 %@    J = 6718.
+
+%% Interestingly, construction of the actions//1 output list contributes NOTHING
+%% to the total run-time here! A nice lesson about DCGs and elegance...
+
+fastforward(S0) --> { state0_action_state(S0, A, S) },
+		    (	{ S = declare_mtd(_) } -> [(S0->A->S)]
+		    ;	fastforward(S)
+		    ).
+
+%% actions//1 from above, for comparison
+%% actions(declare_mtd(_)) --> [].
+%% actions(S0) --> [(S0->A->S)],
+%% 		{ state0_action_state(S0, A, S) },
+%% 		actions(S).
+
+ccd_fastmatrix(D, Matrix) :-
+    length(Tallies, D), maplist(=(0/0), Tallies),
+    phrase(fastforward([]^Tallies^[]), Path),
+    phrase(path_matrix, Path, Matrix).
+
+%?- J+\(time(findall(Matrix, ccd_fastmatrix(2, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 106.116 seconds
+%@    % CPU time: 106.120 seconds
+%@    J = 212.
+
+%?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 106.192 seconds
+%@    % CPU time: 106.196 seconds
+%@    J = 212.
