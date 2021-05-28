@@ -481,7 +481,8 @@ listing only their (outer) vertices.
 */
 
 ceiling_vertex_t(Qs, T/N, Truth) :-
-    member(T/N, Qs),
+    % member(T/N, Qs),
+    memberd_t(T/N, Qs, true),
     N1 #= N + 1,
     if_(hit_ceiling_t(T/N1, Qs)
 	, Truth = false
@@ -494,12 +495,27 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
 	  )
        ).
 
-%?- ceiling_vertex_t([3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12], V, true).
+%?- time(ceiling_vertex_t([3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12], V, true)).
+%@    % CPU time: 0.017 seconds
 %@    V = 3/5
-%@ ;  V = 4/8
-%@ ;  V = 5/10
-%@ ;  V = 6/12
-%@ ;  false.
+%@ ;  % CPU time: 0.061 seconds
+%@    V = 4/8
+%@ ;  % CPU time: 0.105 seconds
+%@    V = 5/10
+%@ ;  % CPU time: 0.154 seconds
+%@    V = 6/12
+%@ ;  % CPU time: 0.174 seconds
+%@    false. %    ^^^^^ using memberd_t(T/N, Qs, true)
+%@    % CPU time: 0.011 seconds
+%@    V = 3/5
+%@ ;  % CPU time: 0.031 seconds
+%@    V = 4/8
+%@ ;  % CPU time: 0.052 seconds
+%@    V = 5/10
+%@ ;  % CPU time: 0.074 seconds
+%@    V = 6/12
+%@ ;  % CPU time: 0.086 seconds
+%@    false. %    ^^^^^ using member(T/N, Qs)
 
 %?- ceiling_vertex_t([3/3,3/4,3/5,4/6,5/7,6/8,6/11,6/12], V, true).
 %@    V = 3/5
@@ -507,7 +523,8 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
 %@ ;  false.
 
 floor_vertex_t(Qs, T/N, Truth) :-
-    member(T/N, Qs),
+    % member(T/N, Qs),
+    memberd_t(T/N, Qs, true),
     N_1 #= N - 1,
     if_(hit_floor_t(T/N_1, Qs)
 	, Truth = false
