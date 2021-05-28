@@ -341,12 +341,6 @@ inconceivable(Query, Var, Range) :-
     format(" % MaxN = ~d ...", [Var]),
     time(call(Query)).
 
-%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, MaxN), MaxN, 3..5).
-%@  % MaxN = 3 ...   % CPU time: 6.012 seconds
-%@  % MaxN = 4 ...   % CPU time: 16.696 seconds
-%@  % MaxN = 5 ...   % CPU time: 41.477 seconds
-%@ false.
-
 %% TODO: Generalize tally_pair/3, tally_triple/4 to LISTS of tallies?
 tally_triple(T1/N1, T2/N2, T3/N3, Size) :-
     tally_pair(T1/N1, T2/N2, Size),
@@ -467,17 +461,15 @@ which is a consequence of the TRANSITIVITY of (&=<):
 
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
-    if_(Q &>= C % this goal is deterministic for Q, C ∊ ℚ
-	, Truth = true
-	, hit_ceiling_t(Q, Cs, Truth)
-       ).
+    (	Q &>= C -> Truth = true
+    ;	hit_ceiling_t(Q, Cs, Truth)
+    ).
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
-    if_(Q &=< F % this goal is deterministic for Q, F ∊ ℚ
-	, Truth = true
-	, hit_floor_t(Q, Fs, Truth)
-       ).
+    (	Q &=< F -> Truth = true
+    ;	hit_floor_t(Q, Fs, Truth)
+    ).
 
 
 /*
@@ -576,7 +568,7 @@ floor_canonical(Qs, Ks) :-
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
 %% of a triplet of boundaries, followed by max enrollment per cohort.
-%% TODO: I believe the if_/3 cascade, with its default final 'escape clause',
+%% TODO: I believe the if-then cascade, with its default final 'escape clause',
 %%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
 %%       proves the determinism of tally_decision/2 so long as the defining
 %%       boundaries are lists from ℚ.
@@ -584,16 +576,11 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
     T in 0..N,
-    if_(hit_ceiling_t(Q, RemovalBdy)
-	, Decision = remove
-	, if_(hit_ceiling_t(Q, DeescBdy)
-	      , Decision = deescalate
-	      , if_(hit_floor_t(Q, EscBdy)
-		    , Decision = escalate
-		    , Decision = stay
-		   )
-	     )
-       ).
+    (	hit_ceiling_t(Q, RemovalBdy, true) -> Decision = remove
+    ;	hit_ceiling_t(Q, DeescBdy, true) -> Decision = deescalate
+    ;	hit_floor_t(Q, EscBdy, true) -> Decision = escalate
+    ;	Decision = stay
+    ).
 
 %% For testing purposes, we hard-code the CCD to obtain tally_decision/2
 tally_decision(Q, Decision) :-
@@ -672,31 +659,24 @@ Above text is included for comparison with current outlook.
 %% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
 %% Presently, we are simply checking whether cohort N0 is already 'full'.
 enroll(T0/N0, T1/N1, Truth) :-
-    N0 #>= 6 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
-    if_(CohortFull #= 1
-	, Truth = false
-	, ( N1 #= N0 + 1,
-	    T in 0..1, % T is the pending tox assessment of newly-enrolled patient
-	    indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
-	    T1 #= T0 + T,
-	    Truth = true
-	  )
-       ).
-
-%?- enroll(3/6, Q, Success).
-%@    Q = _B/7, Success = true, clpz:(3+_A#=_B), clpz:(_A in 0..1), clpz:(_B in 3..4).
+    (	N0 #>= 6 -> Truth = false
+    ;	N1 #= N0 + 1,
+	T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+	indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
+	T1 #= T0 + T,
+	Truth = true
+    ).
 
 length_plus_1(Ls, MTD) :-
     length(Ls, MTD_1),
     MTD #= MTD_1 + 1.
 
 stay(Ls ^ [R | Rs] ^ Es, State) :-
-    if_(enroll(R, R1)
-	, State = Ls ^ [R1 | Rs] ^ Es
-	, ( length_plus_1(Ls, MTD),
-	    State = declare_mtd(MTD)
-	  )
-	).
+    enroll(R, R1, Truth),
+    (	Truth == true -> State = Ls ^ [R1 | Rs] ^ Es
+    ;	length_plus_1(Ls, MTD),
+	State = declare_mtd(MTD)
+    ).
 
 %% TODO: Simply deferring to the 'stay' case discards the information
 %%       contained in having *desired* an escalation. Even if this
@@ -715,16 +695,16 @@ escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
     stay(Ls ^ [R] ^ Es, State).
 
 escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
-    if_(enroll(R, R1)
-	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
-	%% If the next dose up (R) cannot be enrolled, that's because
+    enroll(R, R1, Truth),
+    (	Truth == true -> State = [Q | Ls] ^ [R1 | Rs] ^ Es
+    ;	%% If the next dose up (R) cannot be enrolled, that's because
 	%% it's already full. What's more, it must have recommended
 	%% de-escalation---which is how we got to the current dose Q!
 	%% Accordingly, we declare the current dose to be MTD:
-	, ( length_plus_1(Ls, MTD),
-	    State = declare_mtd(MTD)
-	  )
-       ).
+	( length_plus_1(Ls, MTD),
+	  State = declare_mtd(MTD)
+	)
+    ).
 
 %% TODO: Suppose trial starts at lowest dose, and first patient has
 %%       a DLT. If Deesc = [1/1,...] then the following rule would
@@ -737,12 +717,12 @@ escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
 deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
 deescalate([L | Ls] ^ Rs ^ Es, State) :-
-    if_(enroll(L, L1)
-	, State = Ls ^ [L1 | Rs] ^ Es
-	, ( length_plus_1(Ls, MTD),
-	    State = declare_mtd(MTD)
-	  )
-       ).
+    enroll(L, L1, Truth),
+    (	Truth == true -> State = Ls ^ [L1 | Rs] ^ Es
+    ;	( length_plus_1(Ls, MTD),
+	  State = declare_mtd(MTD)
+	)
+    ).
 
 remove(Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
@@ -1186,49 +1166,54 @@ ccd_matrix(D, Matrix) :-
 %@ ;  Matrix = [[]^[1/1,0/0]^[]~>0]
 %@ ;  false.
 
-%?- findall(Matrix, ccd_matrix(2, Matrix), Paths), length(Paths, J).
-%@    Paths = [[[0/1]^[0/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[0/1]^[1/6]^[]~>2],[[0/1]^[2/6]^[]~>2],[[... / ...]^[...]^[]~>2],[[]^ ... ^ ... ~>1],[... ~> ...],...|...], J = 212.
 
 %?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 1.984 seconds
+%@    % CPU time: 1.988 seconds
+%@    J = 212. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2
+%@    % CPU time: 2.215 seconds
+%@    % CPU time: 2.219 seconds
+%@    J = 212. % ^ now after inlining if_/3 in enroll/3
+%@    % CPU time: 11.778 seconds
+%@    % CPU time: 11.782 seconds
+%@    J = 212. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
+%@    % CPU time: 12.125 seconds
+%@    % CPU time: 12.131 seconds
+%@    J = 212. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
 %@    % CPU time: 114.852 seconds
 %@    % CPU time: 114.856 seconds
 %@    J = 212.
 
 %?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 10.453 seconds
+%@    % CPU time: 10.457 seconds
+%@    J = 1151. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2
+%@    % CPU time: 11.604 seconds
+%@    % CPU time: 11.608 seconds
+%@    J = 1151. % ^ now after inlining if_/3 in enroll/3
+%@    % CPU time: 60.693 seconds
+%@    % CPU time: 60.697 seconds
+%@    J = 1151. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
+%@    % CPU time: 65.159 seconds
+%@    % CPU time: 65.163 seconds
+%@    J = 1151. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
 %@    % CPU time: 629.949 seconds
 %@    % CPU time: 629.953 seconds
 %@    J = 1151.
 
 %?- J+\(time(findall(Matrix, ccd_matrix(4, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 61.417 seconds
+%@    % CPU time: 61.421 seconds
+%@    J = 6718. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2 (57x)
+%@    % CPU time: 68.173 seconds
+%@    % CPU time: 68.177 seconds
+%@    J = 6718. % ^ now after inlining if_/3 in enroll/3 (50x speedup thus far)
+%@    % CPU time: 360.429 seconds
+%@    % CPU time: 360.433 seconds
+%@    J = 6718. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
+%@    % CPU time: 383.882 seconds
+%@    % CPU time: 383.886 seconds
+%@    J = 6718. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
 %@    % CPU time: 3509.381 seconds
 %@    % CPU time: 3509.385 seconds
 %@    J = 6718.
-
-%% Interestingly, construction of the actions//1 output list contributes NOTHING
-%% to the total run-time here! A nice lesson about DCGs and elegance...
-
-fastforward(S0) --> { state0_action_state(S0, A, S) },
-		    (	{ S = declare_mtd(_) } -> [(S0->A->S)]
-		    ;	fastforward(S)
-		    ).
-
-%% actions//1 from above, for comparison
-%% actions(declare_mtd(_)) --> [].
-%% actions(S0) --> [(S0->A->S)],
-%% 		{ state0_action_state(S0, A, S) },
-%% 		actions(S).
-
-ccd_fastmatrix(D, Matrix) :-
-    length(Tallies, D), maplist(=(0/0), Tallies),
-    phrase(fastforward([]^Tallies^[]), Path),
-    phrase(path_matrix, Path, Matrix).
-
-%?- J+\(time(findall(Matrix, ccd_fastmatrix(2, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 106.116 seconds
-%@    % CPU time: 106.120 seconds
-%@    J = 212.
-
-%?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 106.192 seconds
-%@    % CPU time: 106.196 seconds
-%@    J = 212.
