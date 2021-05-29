@@ -486,9 +486,9 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
     N1 #= N + 1,
     if_(hit_ceiling_t(T/N1, Qs)
 	, Truth = false
-	, ( T_1 #= T - 1,
-	    N_1 #= N - 1,
-	    if_(hit_ceiling_t(T_1/N_1, Qs)
+	, ( Tminus1 #= T - 1,
+	    Nminus1 #= N - 1,
+	    if_(hit_ceiling_t(Tminus1/Nminus1, Qs)
 		, Truth = false
 		, Truth = true
 	       )
@@ -525,8 +525,8 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
 floor_vertex_t(Qs, T/N, Truth) :-
     % member(T/N, Qs),
     memberd_t(T/N, Qs, true),
-    N_1 #= N - 1,
-    if_(hit_floor_t(T/N_1, Qs)
+    Nminus1 #= N - 1,
+    if_(hit_floor_t(T/Nminus1, Qs)
 	, Truth = false
 	, ( T1 #= T + 1,
 	    N1 #= N + 1,
@@ -685,8 +685,8 @@ enroll(T0/N0, T1/N1, Truth) :-
     ).
 
 length_plus_1(Ls, MTD) :-
-    length(Ls, MTD_1),
-    MTD #= MTD_1 + 1.
+    length(Ls, MTDminus1),
+    MTD #= MTDminus1 + 1.
 
 stay(Ls ^ [R | Rs] ^ Es, State) :-
     enroll(R, R1, Truth),
