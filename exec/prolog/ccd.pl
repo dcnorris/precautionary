@@ -217,16 +217,48 @@ qcompare(>, T1/N1, T2/N2) :-
 
 %% Reified versions of the above, as done at bottom of clpz.pl
 qcompare(=<, T1/N1, T2/N2, Truth) :-
-    T1 + max(0, N2 - N1) #=< T2 #<==> B,
-    zo_t(B, Truth).
-	
+    %% Let's try using fast arithmetic, when possible
+    (	ground(T1/N1 - T2/N2) ->
+	(   DN is N2 - N1,
+	    (	DN >= 0 ->
+		(   T1plusDN is T1 + DN,
+		    T1plusDN =< T2 -> Truth = true
+		;   Truth = false
+		)
+	    ;	% DN < 0, so a simpler condition applies
+		(   T1 =< T2 -> Truth = true
+		;   Truth = false
+		)
+	    )
+	)
+    ;	% general case (non-ground args 2 or 3) is handled by CLP(Z) ...
+	T1 + max(0, N2 - N1) #=< T2 #<==> B,
+	zo_t(B, Truth)
+    ).
+
 qcompare(<, T1/N1, T2/N2, Truth) :-
     T1 + max(0, N2 - N1) #< T2 #<==> B,
     zo_t(B, Truth).
 	
 qcompare(>=, T1/N1, T2/N2, Truth) :-
-    T1 #>= T2 + max(0, N1 - N2) #<==> B,
-    zo_t(B, Truth).
+    %% Let's try using fast arithmetic, when possible
+    (	ground(T1/N1 - T2/N2) ->
+	(   DN is N1 - N2,
+	    (	DN >= 0 ->
+		(   T2plusDN is T2 + DN,
+		    T2plusDN =< T1 -> Truth = true
+		;   Truth = false
+		)
+	    ;	% DN < 0, so a simpler condition applies
+		(   T1 >= T2 -> Truth = true
+		;   Truth = false
+		)
+	    )
+	)
+    ;	% general case (non-ground args 2 or 3) is handled by CLP(Z) ...
+	T1 #>= T2 + max(0, N1 - N2) #<==> B,
+	zo_t(B, Truth)
+    ).
 
 qcompare(>, T1/N1, T2/N2, Truth) :-
     T1 #> T2 + max(0, N1 - N2) #<==> B,
@@ -481,7 +513,6 @@ listing only their (outer) vertices.
 */
 
 ceiling_vertex_t(Qs, T/N, Truth) :-
-    % member(T/N, Qs),
     memberd_t(T/N, Qs, true),
     N1 #= N + 1,
     if_(hit_ceiling_t(T/N1, Qs)
@@ -523,7 +554,6 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
 %@ ;  false.
 
 floor_vertex_t(Qs, T/N, Truth) :-
-    % member(T/N, Qs),
     memberd_t(T/N, Qs, true),
     Nminus1 #= N - 1,
     if_(hit_floor_t(T/Nminus1, Qs)
@@ -1202,6 +1232,15 @@ ccd_matrix(D, Matrix) :-
 %@    J = 212.
 
 %?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 10.675 seconds
+%@    % CPU time: 10.679 seconds
+%@    J = 1151. % ^ fast-arithmetic branch in qcompare/4 for both (>=) and (=<)
+%@    % CPU time: 10.676 seconds
+%@    % CPU time: 10.680 seconds
+%@    J = 1151. % ^ fast-arithmetic branch in qcompare/4 for (=<)
+%@    % CPU time: 10.786 seconds
+%@    % CPU time: 10.792 seconds
+%@    J = 1151. % ^ benchmark before another round of performance experiments
 %@    % CPU time: 10.453 seconds
 %@    % CPU time: 10.457 seconds
 %@    J = 1151. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2
