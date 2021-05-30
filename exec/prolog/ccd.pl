@@ -1,5 +1,14 @@
 % Abstracting the cumulative-cohort design (CCD) principle for dose escalation
 
+/* Hoping to make this a module ...
+:- module(ccd, [
+	      ceiling_canonical/2,
+	      floor_canonical/2,
+	      tally_decision_ccd/3,
+	      ccd_d_matrix/3
+	  ]).
+*/
+
 /*
 
 The 'cumulative-cohort design' (CCD) concept in [1] establishes a class of
@@ -9,7 +18,7 @@ positioned midway between what [1] calls 'group designs' (in which escalation
 depends only on the rate observed in the current COHORT), and general designs
 where these decisions depend on the observed rates AT ALL DOSES. (Note that,
 in the dose-escalation context where patients are treated as *exchangeable*,
-the list of dose-wise tallies [T1/N1, T2/N2, ..., Td/Nd] indeed a sufficient
+the list of dose-wise tallies [T1/N1, T2/N2, ..., Td/Nd] is a sufficient
 statistic for the full history of the trial.)
 
 With its 'middling' size, this CCD class seems likely to be amenable to modes
@@ -780,17 +789,17 @@ remove(Ls ^ Rs ^ Es, State) :-
 %%       upon CURRENT-COHORT enrollment. Otherwise, CPE may get bogged
 %%       down in listing enormous numbers of highly unlikely paths.
 %%       To preserve the pure CC-dependence of most of the predicates,
-%        such a branch may have to be introduced here.
-state0_action_state(Ls ^ [R | Rs] ^ Es, Action, State) :-
+%%       such a branch may have to be introduced here, perhaps renaming
+%%       to ccd_state0_action_state_enrollmax/5.
+ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
     %% TODO: Check whether total enrollment has been reached, and stop?
-    tally_decision(R, Action), % NB: tally_decision/2 confers its determinism on the trial
+    tally_decision_ccd(R, Action, CCD),
     call(Action, Ls ^ [R | Rs] ^ Es, State).
 
 %% Note how this state-machine naturally starts up from a blank slate:
-%?- state0_action_state([] ^ [0/0, 0/0, 0/0] ^ [], Action, State).
-%@    Action = stay, State = []^[_A/1,0/0,0/0]^[], clpz:(_A in 0..1). % now det! (vs below)
-%@    Action = stay, State = []^[_A/1,0/0,0/0]^[], clpz:(_A in 0..1)
-%@ ;  false.
+%?- (Action-State)+\(default_ccd(CCD), ccd_state0_action_state(CCD, [] ^ [0/0, 0/0, 0/0] ^ [], Action, State)).
+%@    Action = stay, State = []^[0/1,0/0,0/0]^[]
+%@ ;  Action = stay, State = []^[1/1,0/0,0/0]^[].
 
 %% TODO: Consider restoring an 'mtd_notfound' concept to the trial.
 %%       Even if this notion disappears 'WLOG' from a purely formal perspective,
@@ -801,18 +810,17 @@ state0_action_state(Ls ^ [R | Rs] ^ Es, Action, State) :-
 %%       strictly *pharmacologic* realm which a formal analysis might best avoid.
 %%       A good test may be to demonstrate that mtd_notfound truly adds something
 %%       essential that can't be 'tacked on' in a post-processing step.
-%%actions(mtd_notfound(_)) --> [].
-actions(declare_mtd(_)) --> [].
-actions(S0) --> [(S0->A->S)],
-		{ state0_action_state(S0, A, S) },
-		actions(S).
+%%ccd_actions(mtd_notfound(_)) --> [].
+ccd_actions(_, declare_mtd(_)) --> [].
+ccd_actions(CCD, S0) --> [(S0->A->S)],
+			 { ccd_state0_action_state(CCD, S0, A, S) },
+			 ccd_actions(CCD, S).
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- phrase(actions([]^[0/0]^[]), Trial).
-%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(1+_K#=_A), clpz:(_K in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4)
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[_A/5]^[]),([]^[_A/5]^[]->stay->[]^[_C/6]^[]),([]^[_C/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->stay-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=3), clpz:(1+_G#=_A), clpz:(_G in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_F in 0..1), clpz:(_E in 2..3)
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[1/2]^[]),([]^[1/2]^[]->stay->[]^[1/3]^[]),([]^[1/3]^[]->stay->[]^[1/4]^[]),([]^[1/4]^[]->stay->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->[]^[... / ...]^[]),([]^[...]^[]->stay->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(2+_F#=_A), clpz:(_F in 0..1), clpz:(_A in 2..3), clpz:(_B in 0..1), clpz:(_C in 2..4), clpz:(_D in 0..1), clpz:(_E in 2..5)
+%?- Trial+\(default_ccd(CCD), phrase(ccd_actions(CCD, []^[0/0]^[]), Trial)).
+%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->declare_mtd(1))]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
@@ -928,30 +936,6 @@ condensed, [^, declare_mtd(MTD)] --> [ (_->escalate->declare_mtd(MTD)) ].
 condensed, [v, declare_mtd(MTD)] --> [ (_->deescalate->declare_mtd(MTD)) ].
 %%condensed --> []. %% Uncomment this for 'catch-all' permitting partial translations.
 
-%% All the better to see you with ...
-boin(Ls^Rs^Es, Translation) :- % BOIN trial starting from arbitrary state
-    phrase(actions(Ls^Rs^Es), Trial),
-    phrase(condensed, Trial, Translation).
-
-boin(D, Path) :- % BOIN trial with D doses, starting at dose 1 by default
-    length(Tallies, D),
-    maplist(=(0/0), Tallies),
-    boin([]^Tallies^[], Path).
-
-
-%?- boin(1, Path), portray_clause(Path).
-%@ [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,A/5@1,-,B/6@1,-,C/7@1,-,D/8@1,-,E/9@1,-,F/10@1,-,G/11@1,-,H/12@1,-,declare_mtd(1)].
-%@    Path = [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,_A/5@1,-,_C/6@1,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
-%@ ;  [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,A/5@1,-,B/6@1,-,C/7@1,-,D/8@1,-,E/9@1,-,4/10@1,-,5/11@1,v,declare_mtd(0)].
-%@ Path = [-,0/1@1,^,1/2@1,-,1/3@1,-,1/4@1,-,_A/5@1,-,_C/6@1,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(1+_K#=_A), clpz:(_K in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4)
-%@ ;  ...
-
-%?- boin(2, Path), portray_clause(Path).
-%@ [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,A/5@2,-,B/6@2,-,C/7@2,-,D/8@2,-,E/9@2,-,F/10@2,-,G/11@2,-,H/12@2,-,declare_mtd(2)].
-%@    Path = [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,_A/5@2,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=_K), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(1+_P#=_A), clpz:(_P in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_I in 2..4), clpz:(_J in 0..1), clpz:(_K in 2..4), clpz:(_L in 0..1), clpz:(_M in 2..4), clpz:(_N in 0..1), clpz:(_O in 2..5)
-%@ ;  [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,A/5@2,-,B/6@2,-,C/7@2,-,D/8@2,-,E/9@2,-,4/10@2,-,5/11@2,:,1/2@1,-,1/3@1,-,1/4@1,-,F/5@1,-,G/6@1,-,H/7@1,-,I/8@1,-,J/9@1,-,K/10@1,-,L/11@1,-,M/12@1,-,declare_mtd(1)].
-%@ Path = [-,0/1@1,^,0/1@2,^,1/2@2,-,1/3@2,-,1/4@2,-,_A/5@2,-,...], clpz:(_A+_B#=_C), clpz:(_C+_D#=_E), clpz:(_E+_F#=_G), clpz:(_G+_H#=_I), clpz:(_I+_J#=4), clpz:(_K+_L#=_M), clpz:(_M+_N#=_O), clpz:(_O+_P#=_Q), clpz:(_Q+_R#=_S), clpz:(_S+_T#=_U), clpz:(_U+_V#=_W), clpz:(_W+_X#=_Y), clpz:(1+_Z#=_A), clpz:(1+_A1#=_K), clpz:(_Z in 0..1), clpz:(_A in 1..2), clpz:(_B in 0..1), clpz:(_C in 1..2), clpz:(_D in 0..1), clpz:(_E in 1..3), clpz:(_F in 0..1), clpz:(_G in 2..3), clpz:(_H in 0..1), clpz:(_J in 0..1), clpz:(_I in 3..4), clpz:(_A1 in 0..1), clpz:(_K in 1..2), clpz:(_L in 0..1), clpz:(_M in 1..2), clpz:(_N in 0..1), clpz:(_O in 1..3), clpz:(_P in 0..1), clpz:(_Q in 2..3), clpz:(_R in 0..1), clpz:(_S in 2..4), clpz:(_T in 0..1), clpz:(_U in 2..4), clpz:(_V in 0..1), clpz:(_W in 2..4), clpz:(_X in 0..1), clpz:(_Y in 2..5)
-%@ ;  ...
 
 %% I'd like to complete the translation to the T[,,] arrays
 %% that support the formalism of WWTT <arXiv:2012.05301>.
@@ -979,7 +963,7 @@ dose recommendations provided that the stopping rule is CC-adapted and known via
 context such as indexes into the data structure storing the designs' T[,,] arrays.
 
 Thus, all we really need to extract for T[,,] output of each design is the final
-state of actions//1.
+state of ccd_actions//1.
 
 */
 
@@ -989,287 +973,54 @@ state of actions//1.
 path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
 path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
-ccd_matrix(D, Matrix) :-
-    length(Tallies, D), maplist(=(0/0), Tallies),
-    phrase(actions([]^Tallies^[]), Path),
+default_ccd(ccd([3/5, 4/8, 5/10, 6/12],		
+		[1/1, 2/4, 3/6, 4/8, 5/11],
+		[0/1, 1/8],
+		12)).
+
+%% I've implemented this predicate to more clearly exhibit the
+%% sharing of arguments with ccd_state0_action_state/4.
+ccd_state0_matrix(CCD, State0, Matrix) :-
+    phrase(ccd_actions(CCD, State0), Path),
     phrase(path_matrix, Path, Matrix).
+
+%% This predicate implements the common special case
+%% where a CCD trial starts from the lowest dose.
+ccd_d_matrix(CCD, D, Matrix) :-
+    length(Tallies, D), maplist(=(0/0), Tallies),
+    ccd_state0_matrix(CCD, []^Tallies^[], Matrix).
 
 %% TODO: Can I label 'on demand', e.g. so that it happens right before portray_clause/2?
 %%       Perhaps my solution is to redefine enroll/3 for each new design? If it turns out
 %%       that everything variable in CCDs is inside enroll/3, that's a splendid finding,
 %%       since it focuses attention for development of a CCD DSL.
-%?- ccd_matrix(2, Matrix).
+%?- Matrix+\(default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
 %@    Matrix = [[0/1]^[0/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
-%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
-%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[2/4]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,2/4]^[]~>0]
-%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/2,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,3/6]^[]~>0]
-%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[2/4]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,2/4]^[]~>0]
-%@ ;  Matrix = [[0/3]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/4,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
-%@ ;  Matrix = [[]^[2/4]^[3/4]~>0]
-%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/3]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,2/3]^[]~>0]
-%@ ;  Matrix = [[0/2]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
-%@ ;  Matrix = [[0/2]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/3,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,3/6]^[]~>0]
-%@ ;  Matrix = [[0/3]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/4,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,3/6]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/5]~>0]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/4]^[]~>0]
-%@ ;  Matrix = [[0/4]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/5,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/4]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/4]~>0]
-%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/3]^[]~>0]
-%@ ;  Matrix = [[0/5]^[2/6]^[]~>2]
-%@ ;  Matrix = [[]^[0/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[1/6,3/6]^[]~>1]
-%@ ;  Matrix = [[]^[0/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/5]~>1]
-%@ ;  Matrix = [[]^[1/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/4]^[]~>1]
-%@ ;  Matrix = [[]^[0/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/4]~>1]
-%@ ;  Matrix = [[]^[1/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/3]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/3]^[]~>0]
-%@ ;  Matrix = [[]^[0/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[1/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[2/6]^[3/3]~>1]
-%@ ;  Matrix = [[]^[3/6]^[3/3]~>0]
-%@ ;  Matrix = [[]^[1/6,2/2]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/2]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,2/2]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,2/2]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,2/2]^[]~>0]
-%@ ;  Matrix = [[]^[1/6,1/1]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,1/1]^[]~>1]
-%@ ;  Matrix = [[]^[2/6,1/1]^[]~>1]
-%@ ;  Matrix = [[]^[3/6,1/1]^[]~>0]
-%@ ;  Matrix = [[]^[2/4,1/1]^[]~>0]
-%@ ;  Matrix = [[]^[2/3,1/1]^[]~>0]
-%@ ;  Matrix = [[]^[1/1,0/0]^[]~>0]
-%@ ;  false.
+%@ ;  ...
 
+%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.187 seconds
+%@    % CPU time: 0.191 seconds
+%@    J = 20.
 
-%?- J+\(time(findall(Matrix, ccd_matrix(2, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 1.984 seconds
-%@    % CPU time: 1.988 seconds
-%@    J = 212. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2
-%@    % CPU time: 2.215 seconds
-%@    % CPU time: 2.219 seconds
-%@    J = 212. % ^ now after inlining if_/3 in enroll/3
-%@    % CPU time: 11.778 seconds
-%@    % CPU time: 11.782 seconds
-%@    J = 212. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
-%@    % CPU time: 12.125 seconds
-%@    % CPU time: 12.131 seconds
-%@    J = 212. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
-%@    % CPU time: 114.852 seconds
-%@    % CPU time: 114.856 seconds
+%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 1.972 seconds
+%@    % CPU time: 1.976 seconds
 %@    J = 212.
 
-%?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 10.675 seconds
-%@    % CPU time: 10.679 seconds
-%@    J = 1151. % ^ fast-arithmetic branch in qcompare/4 for both (>=) and (=<)
-%@    % CPU time: 10.676 seconds
-%@    % CPU time: 10.680 seconds
-%@    J = 1151. % ^ fast-arithmetic branch in qcompare/4 for (=<)
-%@    % CPU time: 10.786 seconds
-%@    % CPU time: 10.792 seconds
-%@    J = 1151. % ^ benchmark before another round of performance experiments
-%@    % CPU time: 10.453 seconds
-%@    % CPU time: 10.457 seconds
-%@    J = 1151. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2
-%@    % CPU time: 11.604 seconds
-%@    % CPU time: 11.608 seconds
-%@    J = 1151. % ^ now after inlining if_/3 in enroll/3
-%@    % CPU time: 60.693 seconds
-%@    % CPU time: 60.697 seconds
-%@    J = 1151. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
-%@    % CPU time: 65.159 seconds
-%@    % CPU time: 65.163 seconds
-%@    J = 1151. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
-%@    % CPU time: 629.949 seconds
-%@    % CPU time: 629.953 seconds
+%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 10.686 seconds
+%@    % CPU time: 10.690 seconds
 %@    J = 1151.
 
-%?- J+\(time(findall(Matrix, ccd_matrix(4, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 61.417 seconds
-%@    % CPU time: 61.421 seconds
-%@    J = 6718. % ^ after inlining if_/3 from stay/2, escalate/2 & deescalate/2 (57x)
-%@    % CPU time: 68.173 seconds
-%@    % CPU time: 68.177 seconds
-%@    J = 6718. % ^ now after inlining if_/3 in enroll/3 (50x speedup thus far)
-%@    % CPU time: 360.429 seconds
-%@    % CPU time: 360.433 seconds
-%@    J = 6718. % ^ a bit more speedup from inlining if/3 in tally_decision_ccd/3
-%@    % CPU time: 383.882 seconds
-%@    % CPU time: 383.886 seconds
-%@    J = 6718. % ^ after 'inlining' if_/3 in hit_(ceiling|floor)_t
-%@    % CPU time: 3509.381 seconds
-%@    % CPU time: 3509.385 seconds
+%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 62.763 seconds
+%@    % CPU time: 62.767 seconds
 %@    J = 6718.
+
+%?- J+\(default_ccd(CCD), D=5, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 370.651 seconds
+%@    % CPU time: 370.655 seconds
+%@    J = 39289.
