@@ -1,13 +1,13 @@
 % Abstracting the cumulative-cohort design (CCD) principle for dose escalation
 
-/* Hoping to make this a module ...
 :- module(ccd, [
 	      ceiling_canonical/2,
 	      floor_canonical/2,
 	      tally_decision_ccd/3,
+	      %% This infix op is used by path_matrix//0 to represent final rec:
+              op(900, xfx, ~>),
 	      ccd_d_matrix/3
 	  ]).
-*/
 
 /*
 

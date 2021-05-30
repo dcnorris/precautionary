@@ -1,7 +1,8 @@
 %% Implement BOIN designs using CCD machinery
 :- use_module(library(clpz)).
-:- use_module(library(between)).
-:- use_module(library(qbeta)).
+:- use_module(library(lambda)).
+:- use_module(library(precautionary/qbeta)).
+:- use_module(library(precautionary/ccd)).
 
 /*
 
@@ -52,7 +53,7 @@ adopt the recommended values 𝜙1 = 0.6𝜙, and 𝜙2 = 1.4𝜙.
 
 */
 
-boin_targetpct(ccd(Elim, Deesc, Esc), TargetPct) :-
+boin_targetpct_nmax(ccd(Elim, Deesc, Esc, Nmax), TargetPct, Nmax) :-
     phipct_lambda1_lambda2(TargetPct, Lambda1, Lambda2),
     findall(E, slope_floor(Lambda1, E), Esc_),
     findall(D, slope_ceiling(Lambda2, D), Deesc_),
@@ -61,12 +62,49 @@ boin_targetpct(ccd(Elim, Deesc, Esc), TargetPct) :-
     ceiling_canonical(Deesc_, Deesc),
     floor_canonical(Esc_, Esc).
 
-%?- boin_targetpct(ccd(ElimBdy, DeescBdy, EscBdy), 25).
-%@    ElimBdy = [3/5,4/8,5/10,6/12], DeescBdy = [1/3,2/6,3/10,4/12], EscBdy = [0/1,1/6,2/11]
-%@ ;  false.
+%?- boin_targetpct_nmax(BOIN, 25, 12).
+%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],12).
+
+boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
+    Nmax = 12, % TODO: Somehow don't hard-code this
+    boin_targetpct_nmax(BOIN, TargetPct, Nmax), % BOIN = ccd(...)
+    ccd_d_matrix(BOIN, D, Matrix).
+
+%?- Matrix+\(boin_targetpct_d_matrix(25, 3, Matrix)).
+%@    Matrix = [[0/1,0/1]^[0/6]^[]~>3]
+%@ ;  Matrix = [[0/1,0/1]^[1/6]^[]~>3]
+%@ ;  Matrix = [[0/1,0/1]^[1/6]^[]~>3]
+%@ ;  Matrix = [[0/1]^[0/2,2/6]^[]~>2]
+%@ ;  Matrix = [[0/3]^[1/6,2/6]^[]~>2]
+%@ ;  ...
+
+%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.092 seconds
+%@    % CPU time: 0.096 seconds
+%@    J = 10.
+
+%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 1.612 seconds
+%@    % CPU time: 1.616 seconds
+%@    J = 170.
+
+%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 9.009 seconds
+%@    % CPU time: 9.014 seconds
+%@    J = 949.
+
+%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 68.183 seconds
+%@    % CPU time: 68.188 seconds
+%@    J = 7139.
+
+%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=5, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 451.505 seconds
+%@    % CPU time: 451.510 seconds
+%@    J = 45927.
 
 %% These are very close rational approximations to Eqs (2) & (3) in [1],
-%% obtained using R MASS function 'fractions':
+%% obtained using R function 'MASS:fractions' ...
 
 phipct_lambda1_lambda2(15, 130904/1111271, 5280/29549).
 
@@ -106,11 +144,12 @@ elim_boundary(T/N, PhiPct) :-
     T in 1..N,
     post05_tally(Qupper, T/N),
     ratless(PhiPct/100, Qupper),
-    T_1 #= T - 1,
-    post05_tally(Qlower, T_1/N),
+    Tminus1 #= T - 1,
+    post05_tally(Qlower, Tminus1/N),
     ratless(Qlower, PhiPct/100).
 
 %?- elim_boundary(T/N, 25).
+%@ caught: error(existence_error(procedure,elim_boundary/2),elim_boundary/2)
 %@    T = 3, N = 3
 %@ ;  T = 3, N = 4
 %@ ;  T = 3, N = 5
@@ -144,3 +183,27 @@ post05_tally(P, T/N) :-
 
 %% From these predicates, we should now be able to obtain Prolog terms
 %% that define the boundaries of a CCD.
+
+%% TODO: Can I override library(ccd)'s (non-exported) definition of tally_decision/2?
+%%  ANS: Apparently not! So it needs to be supplied as an argument.
+/*
+tally_decision(Q, Decision) :-
+    tally_decision_ccd(Q, Decision, ccd([3/5, 4/8, 5/9, 6/12],
+					[1/1, 2/4, 3/7, 4/8, 5/11],
+					[0/1, 1/8],
+					12)).
+*/
+
+%?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
+%@    % CPU time: 10.555 seconds
+%@    % CPU time: 10.560 seconds
+%@    J = 1151. % It seems my local tally_decision doesn't override; is this lexical scoping?
+%@    % CPU time: 10.604 seconds
+%@    % CPU time: 10.608 seconds
+%@    J = 1151.
+%@    % CPU time: 10.961 seconds
+%@    % CPU time: 10.966 seconds
+%@    J = 1151.
+%@    % CPU time: 11.084 seconds
+%@    % CPU time: 11.088 seconds
+%@    J = 1151.
