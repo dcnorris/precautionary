@@ -19,6 +19,7 @@ qcompare(>=, T1/N1, T2/N2) :-
 
 %% Reified versions of the above, as done at bottom of clpz.pl
 qcompare(=<, T1/N1, T2/N2, Truth) :-
+    /*
     %% Let's try using fast arithmetic, when possible
     (	ground(T1/N1 - T2/N2) ->
 	(   DN is N2 - N1,
@@ -34,11 +35,13 @@ qcompare(=<, T1/N1, T2/N2, Truth) :-
 	    )
 	)
     ;	% general case (non-ground args 2 or 3) is handled by CLP(Z) ...
+    */(	
 	T1 + max(0, N2 - N1) #=< T2 #<==> B,
 	zo_t(B, Truth)
     ).
 
 qcompare(>=, T1/N1, T2/N2, Truth) :-
+    /*
     %% Let's try using fast arithmetic, when possible
     (	ground(T1/N1 - T2/N2) ->
 	(   DN is N1 - N2,
@@ -54,6 +57,7 @@ qcompare(>=, T1/N1, T2/N2, Truth) :-
 	    )
 	)
     ;	% general case (non-ground args 2 or 3) is handled by CLP(Z) ...
+    */(	
 	T1 #>= T2 + max(0, N1 - N2) #<==> B,
 	zo_t(B, Truth)
     ).
@@ -79,124 +83,27 @@ zo_t(1, true).
 
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
+    if_(Q &>= C
+	, Truth = true
+	, hit_ceiling_t(Q, Cs, Truth)
+       ).
+/*
     (	Q &>= C -> Truth = true
     ;	hit_ceiling_t(Q, Cs, Truth)
     ).
+*/
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
+    if_(Q &=< F
+	, Truth = true
+	, hit_floor_t(Q, Fs, Truth)
+       ).
+/*
     (	Q &=< F -> Truth = true
     ;	hit_floor_t(Q, Fs, Truth)
     ).
-
-
-/*
-
-Our 'spatial' understanding of floors/ceilings defined with respect to
-(&=) and (&>=) shows that their minimal representation is obtained by
-listing only their (outer) vertices.
-
 */
-
-ceiling_vertex_t(Qs, T/N, Truth) :-
-    memberd_t(T/N, Qs, true),
-    N1 #= N + 1,
-    if_(hit_ceiling_t(T/N1, Qs)
-	, Truth = false
-	, ( Tminus1 #= T - 1,
-	    Nminus1 #= N - 1,
-	    if_(hit_ceiling_t(Tminus1/Nminus1, Qs)
-		, Truth = false
-		, Truth = true
-	       )
-	  )
-       ).
-
-%?- time(ceiling_vertex_t([3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12], V, true)).
-%@    % CPU time: 0.017 seconds
-%@    V = 3/5
-%@ ;  % CPU time: 0.061 seconds
-%@    V = 4/8
-%@ ;  % CPU time: 0.105 seconds
-%@    V = 5/10
-%@ ;  % CPU time: 0.154 seconds
-%@    V = 6/12
-%@ ;  % CPU time: 0.174 seconds
-%@    false. %    ^^^^^ using memberd_t(T/N, Qs, true)
-%@    % CPU time: 0.011 seconds
-%@    V = 3/5
-%@ ;  % CPU time: 0.031 seconds
-%@    V = 4/8
-%@ ;  % CPU time: 0.052 seconds
-%@    V = 5/10
-%@ ;  % CPU time: 0.074 seconds
-%@    V = 6/12
-%@ ;  % CPU time: 0.086 seconds
-%@    false. %    ^^^^^ using member(T/N, Qs)
-
-%?- ceiling_vertex_t([3/3,3/4,3/5,4/6,5/7,6/8,6/11,6/12], V, true).
-%@    V = 3/5
-%@ ;  V = 6/12
-%@ ;  false.
-
-floor_vertex_t(Qs, T/N, Truth) :-
-    memberd_t(T/N, Qs, true),
-    Nminus1 #= N - 1,
-    if_(hit_floor_t(T/Nminus1, Qs)
-	, Truth = false
-	, ( T1 #= T + 1,
-	    N1 #= N + 1,
-	    if_(hit_floor_t(T1/N1, Qs)
-		, Truth = false
-		, Truth = true
-	       )
-	  )
-       ).
-
-%?- floor_vertex_t([0/3,1/4,2/5,4/8,5/12], V, true).
-%@    V = 2/5
-%@ ;  V = 4/8
-%@ ;  V = 5/12
-%@ ;  false.
-
-%?- floor_vertex_t([0/3,1/5,4/8,5/12], V, true).
-%@    V = 0/3
-%@ ;  V = 4/8
-%@ ;  V = 5/12
-%@ ;  false.
-
-%?- floor_vertex_t([0/3,1/5,4/8,5/12], V, false).
-%@    V = 1/5
-%@ ;  false.
-
-%?- tfilter(floor_vertex_t([0/3,1/5,4/8,5/12]), [0/3,1/5,4/8,5/12], Vs).
-%@    Vs = [0/3,4/8,5/12]
-%@ ;  false.
-
-%% It will help to have unique, minimal ('canonical') representations
-%% for floor- and ceiling-type boundaries.
-%% TODO: Are these concepts better represented through SETS than lists?
-%%       Shouldn't I require that each tally in a canonical floor/ceiling
-%%       contributes something? Does this requirement ensure uniqueness?
-ceiling_canonical(Qs, Ks) :-
-    tfilter(ceiling_vertex_t(Qs), Qs, Ks_),
-    sort(Ks_, Ks).
-
-%?- ceiling_canonical([3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12], K).
-%@    K = [3/5,4/8,5/10,6/12]
-%@ ;  false.
-
-%?- ceiling_canonical([6/12,4/8,3/3,3/4,3/5,4/6,4/7,5/9,5/10,6/11], K).
-%@    K = [3/5,4/8,5/10,6/12]
-%@ ;  false.
-
-floor_canonical(Qs, Ks) :-
-    tfilter(floor_vertex_t(Qs), Qs, Ks_),
-    sort(Ks_, Ks).
-
-%?- floor_canonical([0/1, 0/2, 0/3, 0/4, 0/5, 0/6, 0/7, 1/8, 1/9, 1/10, 1/11, 1/12], K).
-%@    K = [0/1,1/8]
-%@ ;  false.
 
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
@@ -209,11 +116,23 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
     T in 0..N,
+    if_(hit_ceiling_t(Q, RemovalBdy)
+	, Decision = remove
+	, if_(hit_ceiling_t(Q, DeescBdy)
+	      , Decision = deescalate
+	      , if_(hit_floor_t(Q, EscBdy)
+		    , Decision = escalate
+		    , Decision = stay
+		   )
+	     )
+       ).
+/*
     (	hit_ceiling_t(Q, RemovalBdy, true) -> Decision = remove
     ;	hit_ceiling_t(Q, DeescBdy, true) -> Decision = deescalate
     ;	hit_floor_t(Q, EscBdy, true) -> Decision = escalate
     ;	Decision = stay
     ).
+*/
 
 %% For testing purposes, we hard-code the CCD to obtain tally_decision/2
 tally_decision(Q, Decision) :-
@@ -222,49 +141,22 @@ tally_decision(Q, Decision) :-
 					[0/1, 1/8],
 					12)).
 
-%?- tally_decision(T/5, Decision).
-%@    Decision = remove, clpz:(T in 3..5).
-%@    Decision = stay, clpz:(T in 1..2)
-%@ ;  Decision = escalate, T = 0
-%@ ;  Decision = remove, clpz:(T in 3..5).
-
-%?- tally_decision(Q, Decision).
-%@    Q = 0/0, Decision = stay
-%@ ;  Q = 1/1, Decision = deescalate
-%@ ;  Q = 2/2, Decision = deescalate
-%@ ;  Q = 3/3, Decision = remove
-%@ ;  Q = _A/4, Decision = remove, clpz:(_A in 3..4)
-%@ ;  Q = _A/5, Decision = remove, clpz:(_A in 3..5)
-%@ ;  Q = _A/6, Decision = remove, clpz:(_A in 4..6)
-%@ ;  Q = _A/7, Decision = remove, clpz:(_A in 5..7)
-%@ ;  Q = _A/8, Decision = remove, clpz:(_A in 6..8)
-%@ ;  Q = _A/9, Decision = remove, clpz:(_A in 7..9)
-%@ ;  Q = _A/10, Decision = remove, clpz:(_A in 8..10)
-%@ ;  Q = _A/11, Decision = remove, clpz:(_A in 9..11)
-%@ ;  Q = _A/12, Decision = remove, clpz:(_A in 10..12).
-%@    Q = 0/0, Decision = stay
-%@ ;  Q = 0/1, Decision = escalate
-%@ ;  Q = 1/1, Decision = deescalate
-%@ ;  Q = 1/2, Decision = stay
-%@ ;  Q = 0/2, Decision = escalate
-%@ ;  Q = 2/2, Decision = deescalate
-%@ ;  Q = 1/3, Decision = stay
-%@ ;  Q = 0/3, Decision = escalate
-%@ ;  Q = 2/3, Decision = deescalate
-%@ ;  Q = 3/3, Decision = remove
-%@ ;  Q = 1/4, Decision = stay
-%@ ;  Q = 0/4, Decision = escalate
-%@ ;  Q = 2/4, Decision = deescalate
-%@ ;  Q = _A/4, Decision = remove, clpz:(_A in 3..4)
-%@ ;  Q = _A/5, Decision = stay, clpz:(_A in 1..2)
-%@ ;  Q = 0/5, Decision = escalate
-%@ ;  ...
-
 
 %% This enroll/3 goal, with its reified 'success' arg #3, creates fine
 %% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
 %% Presently, we are simply checking whether cohort N0 is already 'full'.
 enroll(T0/N0, T1/N1, Truth) :-
+    N0 #>= 6 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
+    if_(CohortFull #= 1
+       , Truth = false
+       , ( N1 #= N0 + 1,
+           T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+           indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
+           T1 #= T0 + T,
+           Truth = true
+         )
+       ).
+/*
     (	N0 #>= 6 -> Truth = false
     ;	N1 #= N0 + 1,
 	T in 0..1, % T is the pending tox assessment of newly-enrolled patient
@@ -272,22 +164,38 @@ enroll(T0/N0, T1/N1, Truth) :-
 	T1 #= T0 + T,
 	Truth = true
     ).
+*/
 
 length_plus_1(Ls, MTD) :-
     length(Ls, MTDminus1),
     MTD #= MTDminus1 + 1.
 
 stay(Ls ^ [R | Rs] ^ Es, State) :-
+    if_(enroll(R, R1)
+	, State = Ls ^ [R1 | Rs] ^ Es
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
+/*
     enroll(R, R1, Truth),
     (	Truth == true -> State = Ls ^ [R1 | Rs] ^ Es
     ;	length_plus_1(Ls, MTD),
 	State = declare_mtd(MTD)
     ).
+*/
 
 escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
     stay(Ls ^ [R] ^ Es, State).
 
 escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
+    if_(enroll(R, R1)
+	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
+/*
     enroll(R, R1, Truth),
     (	Truth == true -> State = [Q | Ls] ^ [R1 | Rs] ^ Es
     ;	%% If the next dose up (R) cannot be enrolled, that's because
@@ -298,16 +206,25 @@ escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
 	  State = declare_mtd(MTD)
 	)
     ).
+*/
 
 deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
 deescalate([L | Ls] ^ Rs ^ Es, State) :-
+    if_(enroll(L, L1)
+	, State = Ls ^ [L1 | Rs] ^ Es
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
+/*
     enroll(L, L1, Truth),
     (	Truth == true -> State = Ls ^ [L1 | Rs] ^ Es
     ;	( length_plus_1(Ls, MTD),
 	  State = declare_mtd(MTD)
 	)
     ).
+*/
 
 remove(Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
@@ -327,13 +244,6 @@ ccd_actions(_, declare_mtd(_)) --> [].
 ccd_actions(CCD, S0) --> [(S0->A->S)],
 			 { ccd_state0_action_state(CCD, S0, A, S) },
 			 ccd_actions(CCD, S).
-
-%% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- Trial+\(default_ccd(CCD), phrase(ccd_actions(CCD, []^[0/0]^[]), Trial)).
-%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->declare_mtd(1))]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
-%@ ;  ...
 
 :- op(900, xfx, ~>).
 
@@ -358,33 +268,105 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], Matrix).
 
+ccd_d_path(CCD, D, Path) :-
+    length(Tallies, D), maplist(=(0/0), Tallies),
+    phrase(ccd_actions(CCD, []^Tallies^[]), Path).
+
 %?- Matrix+\(default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
 %@    Matrix = [[0/1]^[0/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@ ;  Matrix = [[0/1]^[2/6]^[]~>2]
 %@ ;  ...
 
-%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.181 seconds
+%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 10.140 seconds
+%@    % CPU time: 10.144 seconds
+%@    J = 20. % ^ removing fast arithmetic branches from qcompare/4
+%@    % CPU time: 1.216 seconds
+%@    % CPU time: 1.220 seconds
+%@    J = 20. % ^ ... now in enroll/3
+%@    % CPU time: 0.405 seconds
+%@    % CPU time: 0.410 seconds
+%@    J = 20. % ^ now with if_ in escalate/2 too
+%@    % CPU time: 0.414 seconds
+%@    % CPU time: 0.418 seconds
+%@    J = 20. % ^ now with if_ in deescalate/2 as well
+%@    % CPU time: 0.396 seconds
+%@    % CPU time: 0.401 seconds
+%@    J = 20. % ^ swapping if_ into stay/2
+%@    % CPU time: 0.388 seconds
+%@    % CPU time: 0.392 seconds
+%@    J = 20. % ^ swapping if_ into hit_ceilingfloor_t/3 predicates
+%@    % CPU time: 0.273 seconds
+%@    % CPU time: 0.277 seconds
+%@    J = 20. % ^ swapping if_ into tally_decision_ccd/3
 %@    % CPU time: 0.185 seconds
+%@    % CPU time: 0.189 seconds
 %@    J = 20.
 
-%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 1.982 seconds
-%@    % CPU time: 1.986 seconds
+%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 108.094 seconds
+%@    % CPU time: 108.098 seconds
+%@    J = 212. % ^ removing fast arithmetic branches from qcompare/4
+%@    % CPU time: 13.608 seconds
+%@    % CPU time: 13.613 seconds
+%@    J = 212. % ^ ... now in enroll/3
+%@    % CPU time: 4.272 seconds
+%@    % CPU time: 4.277 seconds
+%@    J = 212. % ^ now with if_ in escalate/2 too
+%@    % CPU time: 4.269 seconds
+%@    % CPU time: 4.274 seconds
+%@    J = 212. % ^ now with if_ in deescalate/2 as well
+%@    % CPU time: 4.240 seconds
+%@    % CPU time: 4.244 seconds
+%@    J = 212. % ^ swapping if_ into stay/2
+%@    % CPU time: 4.049 seconds
+%@    % CPU time: 4.053 seconds
+%@    J = 212. % ^ swapping if_ into hit_ceilingfloor_t/3 predicates
+%@    % CPU time: 2.727 seconds
+%@    % CPU time: 2.731 seconds
+%@    J = 212. % ^ swapping if_ into tally_decision_ccd/3
+%@    % CPU time: 1.887 seconds
+%@    % CPU time: 1.891 seconds
 %@    J = 212.
 
-%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 10.613 seconds
-%@    % CPU time: 10.617 seconds
+%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 606.836 seconds
+%@    % CPU time: 606.840 seconds
+%@    J = 1151. % ^ removing fast arithmetic branches from qcompare/4
+%@    % CPU time: 73.445 seconds
+%@    % CPU time: 73.449 seconds
+%@    J = 1151. % ^ ... now in enroll/3
+%@    % CPU time: 24.449 seconds
+%@    % CPU time: 24.453 seconds
+%@    J = 1151. % ^ now with if_ in escalate/2 too
+%@    % CPU time: 23.212 seconds
+%@    % CPU time: 23.217 seconds
+%@    J = 1151. % ^ now with if_ in deescalate/2 as well
+%@    % CPU time: 23.018 seconds
+%@    % CPU time: 23.022 seconds
+%@    J = 1151. % ^ swapping if_ into stay/2
+%@    % CPU time: 22.220 seconds
+%@    % CPU time: 22.224 seconds
+%@    J = 1151. % ^ swapping if_ into hit_ceilingfloor_t/3 predicates
+%@    % CPU time: 14.681 seconds
+%@    % CPU time: 14.685 seconds
+%@    J = 1151. % ^ swapping if_ into tally_decision_ccd/3
+%@    % CPU time: 10.430 seconds
+%@    % CPU time: 10.434 seconds
 %@    J = 1151.
 
-%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 62.156 seconds
-%@    % CPU time: 62.161 seconds
+%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 132.071 seconds
+%@    % CPU time: 132.076 seconds
+%@    J = 6718. % ^ swapping if_ into hit_ceilingfloor_t/3 predicates
+%@    % CPU time: 85.553 seconds
+%@    % CPU time: 85.558 seconds
+%@    J = 6718. % ^ swapping if_ into tally_decision_ccd/3
+%@    % CPU time: 61.984 seconds
+%@    % CPU time: 61.989 seconds
 %@    J = 6718.
 
-%?- J+\(default_ccd(CCD), D=5, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 370.651 seconds
-%@    % CPU time: 370.655 seconds
-%@    J = 39289.
+%?- X is 3.14 * 2.
+%@    X = 6.28.
