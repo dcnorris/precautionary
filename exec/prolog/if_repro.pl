@@ -118,7 +118,7 @@ cohort_full(N, false) :- N < 6.
 enroll(T0/N0, T1/N1, Truth) :-
     %%N0 #>= 6 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
     %%if_(CohortFull #= 1
-    if_(cohort_full(N0) % yields a 2x speedup vs reified CohortFull above
+    if_(cohort_full(N0) % yields ~2.2x speedup vs reified CohortFull above
        , Truth = false
        , ( N1 #= N0 + 1,
            T in 0..1, % T is the pending tox assessment of newly-enrolled patient
@@ -185,6 +185,12 @@ ccd_d_path(CCD, D, Path) :-
     phrase(ccd_actions(CCD, []^Tallies^[]), Path).
 
 %?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 9.260 seconds
+%@    % CPU time: 9.264 seconds
+%@    J = 20. % ^ Showing 16x slowdown from dropping fast arithmetic branch of qcompare/4!
+%@    % CPU time: 1.194 seconds
+%@    % CPU time: 1.198 seconds
+%@    J = 20. % ^ Showing the > 2x slowdown from reified CohortFull in enroll/3
 %@    % CPU time: 0.565 seconds
 %@    % CPU time: 0.569 seconds
 %@    J = 20. % ^ PURE BASELINE
@@ -193,6 +199,12 @@ ccd_d_path(CCD, D, Path) :-
 %@    J = 20.
 
 %?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 98.820 seconds
+%@    % CPU time: 98.824 seconds
+%@    J = 212. % ^ Showing 17x slowdown from dropping fast arithmetic branch of qcompare/4!
+%@    % CPU time: 13.242 seconds
+%@    % CPU time: 13.246 seconds
+%@    J = 212. % ^ Showing 2.2x slowdown from reified CohortFull in enroll/3
 %@    % CPU time: 5.777 seconds
 %@    % CPU time: 5.781 seconds
 %@    J = 212. % ^ PURE BASELINE
@@ -201,6 +213,15 @@ ccd_d_path(CCD, D, Path) :-
 %@    J = 212.
 
 %?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 554.185 seconds
+%@    % CPU time: 554.189 seconds
+%@    J = 1151. % ^ Showing 17x slowdown from dropping fast arithmetic branch of qcompare/4!
+%@    % CPU time: 31.437 seconds
+%@    % CPU time: 31.441 seconds
+%@    J = 1151.
+%@    % CPU time: 71.946 seconds
+%@    % CPU time: 71.950 seconds
+%@    J = 1151. % ^ Showing 2.3x slowdown from reified CohortFull in enroll/3
 %@    % CPU time: 31.445 seconds
 %@    % CPU time: 31.449 seconds
 %@    J = 1151. % ^ PURE BASELINE
