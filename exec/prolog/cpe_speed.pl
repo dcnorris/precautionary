@@ -31,6 +31,16 @@ Q: What would I have to KNOW about qcompare/4 to assert this is valid?
 */
 %goal_expansion(if_(qcompare(C,Q,R), Then, Else), (qcompare(C,Q,R,true) -> Then ; Else)).
 
+
+%% For the record, the following expansion makes only a trivial change (2%)
+%% goal_expansion(if_(enroll(R, R1), Then, Else),
+%% 	       (   enroll(R, R1, Truth),
+%% 		   (   Truth == true -> Then
+%% 		   ;   Else
+%% 		   )
+%% 	       )
+%% 	      ).
+
 %% ======================================================================
 
 %?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
