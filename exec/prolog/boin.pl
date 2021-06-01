@@ -1,8 +1,8 @@
 %% Implement BOIN designs using CCD machinery
 :- use_module(library(clpz)).
 :- use_module(library(lambda)).
-:- use_module(library(precautionary/qbeta)).
-:- use_module(library(precautionary/ccd)).
+:- use_module('/Users/david/Precis/precautionary/exec/prolog/qbeta.pl').
+:- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
 
 /*
 
@@ -79,11 +79,26 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@ ;  ...
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.092 seconds
-%@    % CPU time: 0.096 seconds
+%@    % CPU time: 0.385 seconds
+%@    % CPU time: 0.389 seconds
+%@    J = 10.
+%@    % CPU time: 0.387 seconds
+%@    % CPU time: 0.391 seconds
+%@    J = 10.
+%@    % CPU time: 0.385 seconds
+%@    % CPU time: 0.390 seconds
+%@    J = 10.
+%@    % CPU time: 0.093 seconds
+%@    % CPU time: 0.097 seconds
 %@    J = 10.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 6.953 seconds
+%@    % CPU time: 6.957 seconds
+%@    J = 170.
+%@    % CPU time: 7.036 seconds
+%@    % CPU time: 7.040 seconds
+%@    J = 170.
 %@    % CPU time: 1.612 seconds
 %@    % CPU time: 1.616 seconds
 %@    J = 170.
@@ -149,7 +164,6 @@ elim_boundary(T/N, PhiPct) :-
     ratless(Qlower, PhiPct/100).
 
 %?- elim_boundary(T/N, 25).
-%@ caught: error(existence_error(procedure,elim_boundary/2),elim_boundary/2)
 %@    T = 3, N = 3
 %@ ;  T = 3, N = 4
 %@ ;  T = 3, N = 5
@@ -168,10 +182,6 @@ ratless(X1/Y1, X2/Y2) :-
 
 %% Greater-than relation on rationals
 ratmore(X1/Y1, X2/Y2) :- ratless(X2/Y2, X1/Y1).
-
-%?- findall(T/N, elim_boundary(T/N, 25), Bdy), portray_clause(Bdy).
-%@ [3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12].
-%@    Bdy = [3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,... / ...].
 
 %% The 5% quantile of posterior probability of toxicity,
 %% after observing toxicity tally T/N
@@ -194,16 +204,3 @@ tally_decision(Q, Decision) :-
 					12)).
 */
 
-%?- J+\(time(findall(Matrix, ccd_matrix(3, Matrix), _Paths)), length(_Paths, J)).
-%@    % CPU time: 10.555 seconds
-%@    % CPU time: 10.560 seconds
-%@    J = 1151. % It seems my local tally_decision doesn't override; is this lexical scoping?
-%@    % CPU time: 10.604 seconds
-%@    % CPU time: 10.608 seconds
-%@    J = 1151.
-%@    % CPU time: 10.961 seconds
-%@    % CPU time: 10.966 seconds
-%@    J = 1151.
-%@    % CPU time: 11.084 seconds
-%@    % CPU time: 11.088 seconds
-%@    J = 1151.
