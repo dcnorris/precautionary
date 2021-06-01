@@ -9,6 +9,64 @@
 :- use_module(library(reif)).
 :- use_module(library(lambda)).
 
+/*
+
+A pure, performant baseline (about 1/3 as fast as the fastest code
+tested thus far) is established by the plainly-named predicates.
+
+By uncommenting the goal_expansions below, alternate implementations
+that deviate from this baseline may be activated.
+
+*/
+
+/* 15% speedup from 'unrolling' nested if_/3 in tally_decision_ccd/3 */
+%goal_expansion(tally_decision_ccd(R, Action, CCD), tally_decision_ccd_fast(R, Action, CCD)).
+
+/* 2x slowdown from reified CohortFull in enroll/3 */
+%goal_expansion(enroll(C, C1, T), enroll_slow(C, C1, T)).
+
+/* >25% speedup from this transformation, affecting hit_ceiling_t/3 & hit_floor_t/3
+
+Q: What would I have to KNOW about qcompare/4 to assert this is valid?
+*/
+%goal_expansion(if_(qcompare(C,Q,R), Then, Else), (qcompare(C,Q,R,true) -> Then ; Else)).
+
+%% ======================================================================
+
+%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 0.565 seconds
+%@    % CPU time: 0.569 seconds
+%@    J = 20. % ^ PURE BASELINE
+%@    % CPU time: 0.185 seconds
+%@    % CPU time: 0.189 seconds
+%@    J = 20. % "It was the worst of code, it was the best of performance ..."
+
+%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 5.777 seconds
+%@    % CPU time: 5.781 seconds
+%@    J = 212. % ^ PURE BASELINE
+%@    % CPU time: 1.887 seconds
+%@    % CPU time: 1.891 seconds
+%@    J = 212.
+
+%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 31.445 seconds
+%@    % CPU time: 31.449 seconds
+%@    J = 1151. % ^ PURE BASELINE
+%@    % CPU time: 10.430 seconds
+%@    % CPU time: 10.434 seconds
+%@    J = 1151.
+
+%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
+%@    % CPU time: 184.071 seconds
+%@    % CPU time: 184.076 seconds
+%@    J = 6718. % ^ PURE BASELINE
+%@    % CPU time: 61.984 seconds
+%@    % CPU time: 61.989 seconds
+%@    J = 6718.
+
+%% --------------------------------------------------------------------------------
+
 qcompare(=<, T1/N1, T2/N2) :- T1 + max(0, N2 - N1) #=< T2.
 qcompare(>=, T1/N1, T2/N2) :- T1 #>= T2 + max(0, N1 - N2).
 
@@ -39,50 +97,23 @@ zo_t(0, false).
 zo_t(1, true).
 
 
-:- op(900, xfx, &=<).
-&=<(Q1, Q2) :- qcompare(=<, Q1, Q2).
-&=<(Q1, Q2, Truth) :- % reified
-    qcompare(=<, Q1, Q2, Truth).
-
-:- op(900, xfx, &>=).
-&>=(Q1, Q2) :- qcompare(>=, Q1, Q2).
-&>=(Q1, Q2, Truth) :- % reified
-    qcompare(>=, Q1, Q2, Truth).
-
-
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
-    if_(Q &>= C
+    if_(qcompare(>=, Q, C)
 	, Truth = true
 	, hit_ceiling_t(Q, Cs, Truth)
        ).
-/* Alternate formulation yielding 25% speedup
-hit_ceiling_t(Q, [C|Cs], Truth) :-
-    (	&>=(Q, C, true) -> Truth = true
-    ;	hit_ceiling_t(Q, Cs, Truth)
-    ).
-*/
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
-    if_(Q &=< F
+    if_(qcompare(=<, Q, F)
 	, Truth = true
 	, hit_floor_t(Q, Fs, Truth)
        ).
-/* Alternate formulation yielding 25% speedup
-hit_floor_t(Q, [F|Fs], Truth) :-
-    (	&=<(Q, F, true) -> Truth = true
-    ;	hit_floor_t(Q, Fs, Truth)
-    ).
-*/
 
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
 %% of a triplet of boundaries, followed by max enrollment per cohort.
-%% TODO: I believe the if-then cascade, with its default final 'escape clause',
-%%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
-%%       proves the determinism of tally_decision/2 so long as the defining
-%%       boundaries are lists from ℚ.
 tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
@@ -97,27 +128,34 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
 		   )
 	     )
        ).
-/* I see about 10-15% savings from this substitution ... (but at what cost?)
+
+tally_decision_ccd_fast(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
+    Q = T/N,
+    N in 0..FullCoh, indomain(N),
+    T in 0..N,
+    %% I see about 10-15% savings from this 'unrolling' ... (but at what cost?)
     (	hit_ceiling_t(Q, RemovalBdy, true) -> Decision = remove
     ;	hit_ceiling_t(Q, DeescBdy, true) -> Decision = deescalate
     ;	hit_floor_t(Q, EscBdy, true) -> Decision = escalate
     ;	Decision = stay
     ).
-*/
 
-cohort_full(N, true) :- N >= 6.
-cohort_full(N, false) :- N < 6.
+enroll_slow(T0/N0, T1/N1, Truth) :-
+    N0 #>= 6 #<==> CohortFull,
+    if_(CohortFull #= 1
+       , Truth = false
+       , ( N1 #= N0 + 1,
+           T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+           indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
+           T1 #= T0 + T,
+           Truth = true
+         )
+       ).
 
-%?- cohort_full(N, false).
-%@ caught: error(instantiation_error,(is)/2)
-%@ caught: error(instantiation_error,(is)/2)
+cohort_full(N, true) :- N #>= 6.
+cohort_full(N, false) :- N #< 6.
 
-%% This enroll/3 goal, with its reified 'success' arg #3, creates fine
-%% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
-%% Presently, we are simply checking whether cohort N0 is already 'full'.
 enroll(T0/N0, T1/N1, Truth) :-
-    %%N0 #>= 6 #<==> CohortFull, % suggestive of a line from a trial 'config file'?
-    %%if_(CohortFull #= 1
     if_(cohort_full(N0) % yields ~2.2x speedup vs reified CohortFull above
        , Truth = false
        , ( N1 #= N0 + 1,
@@ -166,7 +204,6 @@ remove(Ls ^ Rs ^ Es, State) :-
     deescalate(Ls ^ [] ^ RsEs, State).
 
 ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
-    %% TODO: Check whether total enrollment has been reached, and stop?
     tally_decision_ccd(R, Action, CCD),
     call(Action, Ls ^ [R | Rs] ^ Es, State).
 
@@ -183,56 +220,3 @@ default_ccd(ccd([3/5, 4/8, 5/10, 6/12],
 ccd_d_path(CCD, D, Path) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     phrase(ccd_actions(CCD, []^Tallies^[]), Path).
-
-%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
-%@    % CPU time: 9.260 seconds
-%@    % CPU time: 9.264 seconds
-%@    J = 20. % ^ Showing 16x slowdown from dropping fast arithmetic branch of qcompare/4!
-%@    % CPU time: 1.194 seconds
-%@    % CPU time: 1.198 seconds
-%@    J = 20. % ^ Showing the > 2x slowdown from reified CohortFull in enroll/3
-%@    % CPU time: 0.565 seconds
-%@    % CPU time: 0.569 seconds
-%@    J = 20. % ^ PURE BASELINE
-%@    % CPU time: 0.185 seconds
-%@    % CPU time: 0.189 seconds
-%@    J = 20.
-
-%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
-%@    % CPU time: 98.820 seconds
-%@    % CPU time: 98.824 seconds
-%@    J = 212. % ^ Showing 17x slowdown from dropping fast arithmetic branch of qcompare/4!
-%@    % CPU time: 13.242 seconds
-%@    % CPU time: 13.246 seconds
-%@    J = 212. % ^ Showing 2.2x slowdown from reified CohortFull in enroll/3
-%@    % CPU time: 5.777 seconds
-%@    % CPU time: 5.781 seconds
-%@    J = 212. % ^ PURE BASELINE
-%@    % CPU time: 1.887 seconds
-%@    % CPU time: 1.891 seconds
-%@    J = 212.
-
-%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
-%@    % CPU time: 554.185 seconds
-%@    % CPU time: 554.189 seconds
-%@    J = 1151. % ^ Showing 17x slowdown from dropping fast arithmetic branch of qcompare/4!
-%@    % CPU time: 31.437 seconds
-%@    % CPU time: 31.441 seconds
-%@    J = 1151.
-%@    % CPU time: 71.946 seconds
-%@    % CPU time: 71.950 seconds
-%@    J = 1151. % ^ Showing 2.3x slowdown from reified CohortFull in enroll/3
-%@    % CPU time: 31.445 seconds
-%@    % CPU time: 31.449 seconds
-%@    J = 1151. % ^ PURE BASELINE
-%@    % CPU time: 10.430 seconds
-%@    % CPU time: 10.434 seconds
-%@    J = 1151.
-
-%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_path(CCD, D, P), Ps)), length(Ps, J)).
-%@    % CPU time: 184.071 seconds
-%@    % CPU time: 184.076 seconds
-%@    J = 6718. % ^ PURE BASELINE
-%@    % CPU time: 61.984 seconds
-%@    % CPU time: 61.989 seconds
-%@    J = 6718.
