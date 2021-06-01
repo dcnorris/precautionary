@@ -112,9 +112,9 @@ qcompare(>, T1/N1, T2/N2) :-
 qcompare(=<, T1/N1, T2/N2, Truth) :-
     %% Let's try using fast arithmetic, when possible
     (	ground(T1/N1 - T2/N2) ->
-	(   DN is N2 - N1,
+	(   DN #= N2 - N1,
 	    (	DN >= 0 ->
-		(   T1plusDN is T1 + DN,
+		(   T1plusDN #= T1 + DN,
 		    T1plusDN =< T2 -> Truth = true
 		;   Truth = false
 		)
