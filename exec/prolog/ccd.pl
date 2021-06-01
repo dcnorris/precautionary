@@ -502,15 +502,17 @@ which is a consequence of the TRANSITIVITY of (&=<):
 
 hit_ceiling_t(_, [], false).
 hit_ceiling_t(Q, [C|Cs], Truth) :-
-    (	Q &>= C -> Truth = true
-    ;	hit_ceiling_t(Q, Cs, Truth)
-    ).
+    if_(qcompare(>=, Q, C)
+	, Truth = true
+	, hit_ceiling_t(Q, Cs, Truth)
+       ).
 
 hit_floor_t(_, [], false).
 hit_floor_t(Q, [F|Fs], Truth) :-
-    (	Q &=< F -> Truth = true
-    ;	hit_floor_t(Q, Fs, Truth)
-    ).
+    if_(qcompare(=<, Q, F)
+	, Truth = true
+	, hit_floor_t(Q, Fs, Truth)
+       ).
 
 
 /*
@@ -632,43 +634,16 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
     T in 0..N,
-    (	hit_ceiling_t(Q, RemovalBdy, true) -> Decision = remove
-    ;	hit_ceiling_t(Q, DeescBdy, true) -> Decision = deescalate
-    ;	hit_floor_t(Q, EscBdy, true) -> Decision = escalate
-    ;	Decision = stay
-    ).
-
-%% For testing purposes, we hard-code the CCD to obtain tally_decision/2
-tally_decision(Q, Decision) :-
-    tally_decision_ccd(Q, Decision, ccd([3/5, 4/8, 5/10, 6/12],
-					[1/1, 2/4, 3/6, 4/8, 5/11],
-					[0/1, 1/8],
-					12)).
-
-%?- tally_decision(T/5, Decision).
-%@    Decision = stay, clpz:(T in 1..2)
-%@ ;  Decision = escalate, T = 0
-%@ ;  Decision = remove, clpz:(T in 3..5).
-
-%?- tally_decision(Q, Decision).
-%@    Q = 0/0, Decision = stay
-%@ ;  Q = 0/1, Decision = escalate
-%@ ;  Q = 1/1, Decision = deescalate
-%@ ;  Q = 1/2, Decision = stay
-%@ ;  Q = 0/2, Decision = escalate
-%@ ;  Q = 2/2, Decision = deescalate
-%@ ;  Q = 1/3, Decision = stay
-%@ ;  Q = 0/3, Decision = escalate
-%@ ;  Q = 2/3, Decision = deescalate
-%@ ;  Q = 3/3, Decision = remove
-%@ ;  Q = 1/4, Decision = stay
-%@ ;  Q = 0/4, Decision = escalate
-%@ ;  Q = 2/4, Decision = deescalate
-%@ ;  Q = _A/4, Decision = remove, clpz:(_A in 3..4)
-%@ ;  Q = _A/5, Decision = stay, clpz:(_A in 1..2)
-%@ ;  Q = 0/5, Decision = escalate
-%@ ;  ...
-
+    if_(hit_ceiling_t(Q, RemovalBdy)
+	, Decision = remove
+	, if_(hit_ceiling_t(Q, DeescBdy)
+	      , Decision = deescalate
+	      , if_(hit_floor_t(Q, EscBdy)
+		    , Decision = escalate
+		    , Decision = stay
+		   )
+	     )
+       ).
 
 %% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %% Pick up from here...
@@ -711,28 +686,34 @@ Above text is included for comparison with current outlook.
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
-%% This enroll/3 goal, with its reified 'success' arg #3, creates fine
-%% opportunities to bring various CCD-adapted STOPPING CRITERIA to bear.
-%% Presently, we are simply checking whether cohort N0 is already 'full'.
+
+cohort_full(N, true) :- N #>= 6.
+cohort_full(N, false) :- N #< 6.
+
 enroll(T0/N0, T1/N1, Truth) :-
-    (	N0 #>= 6 -> Truth = false
-    ;	N1 #= N0 + 1,
-	T in 0..1, % T is the pending tox assessment of newly-enrolled patient
-	indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
-	T1 #= T0 + T,
-	Truth = true
-    ).
+    %%N0 #>= 6 #<==> CohortFull,
+    %%if_(CohortFull #= 1
+    if_(cohort_full(N0) % yields ~2.2x speedup vs reified CohortFull above
+       , Truth = false
+       , ( N1 #= N0 + 1,
+           T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+           indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
+           T1 #= T0 + T,
+           Truth = true
+         )
+       ).
 
 length_plus_1(Ls, MTD) :-
     length(Ls, MTDminus1),
     MTD #= MTDminus1 + 1.
 
 stay(Ls ^ [R | Rs] ^ Es, State) :-
-    enroll(R, R1, Truth),
-    (	Truth == true -> State = Ls ^ [R1 | Rs] ^ Es
-    ;	length_plus_1(Ls, MTD),
-	State = declare_mtd(MTD)
-    ).
+    if_(enroll(R, R1)
+	, State = Ls ^ [R1 | Rs] ^ Es
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
 
 %% TODO: Simply deferring to the 'stay' case discards the information
 %%       contained in having *desired* an escalation. Even if this
@@ -751,16 +732,16 @@ escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
     stay(Ls ^ [R] ^ Es, State).
 
 escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
-    enroll(R, R1, Truth),
-    (	Truth == true -> State = [Q | Ls] ^ [R1 | Rs] ^ Es
-    ;	%% If the next dose up (R) cannot be enrolled, that's because
+    if_(enroll(R, R1)
+	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
+	%% If the next dose up (R) cannot be enrolled, that's because
 	%% it's already full. What's more, it must have recommended
 	%% de-escalation---which is how we got to the current dose Q!
 	%% Accordingly, we declare the current dose to be MTD:
-	( length_plus_1(Ls, MTD),
-	  State = declare_mtd(MTD)
-	)
-    ).
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
 
 %% TODO: Suppose trial starts at lowest dose, and first patient has
 %%       a DLT. If Deesc = [1/1,...] then the following rule would
@@ -773,12 +754,12 @@ escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
 deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
 deescalate([L | Ls] ^ Rs ^ Es, State) :-
-    enroll(L, L1, Truth),
-    (	Truth == true -> State = Ls ^ [L1 | Rs] ^ Es
-    ;	( length_plus_1(Ls, MTD),
-	  State = declare_mtd(MTD)
-	)
-    ).
+    if_(enroll(L, L1)
+	, State = Ls ^ [L1 | Rs] ^ Es
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
 
 remove(Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
@@ -1001,16 +982,25 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@ ;  ...
 
 %?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.549 seconds
+%@    % CPU time: 0.554 seconds
+%@    J = 20. % ^ PURE BASELINE
 %@    % CPU time: 0.187 seconds
 %@    % CPU time: 0.191 seconds
 %@    J = 20.
 
 %?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 5.878 seconds
+%@    % CPU time: 5.882 seconds
+%@    J = 212. % ^ PURE BASELINE
 %@    % CPU time: 1.972 seconds
 %@    % CPU time: 1.976 seconds
 %@    J = 212.
 
 %?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 32.408 seconds
+%@    % CPU time: 32.413 seconds
+%@    J = 1151. % ^ PURE BASELINE
 %@    % CPU time: 10.686 seconds
 %@    % CPU time: 10.690 seconds
 %@    J = 1151.
