@@ -712,3 +712,14 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    % CPU time: 370.651 seconds
 %@    % CPU time: 370.655 seconds
 %@    J = 39289.
+
+regression :-
+    default_ccd(CCD),
+    J0s = [0, 20, 212, 1151, 6718, 39289], % 0-based list of values up to D=5
+    D in 1..3, % 1..5,
+    indomain(D),
+    format(" D = ~d ...", [D]),
+    time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
+    length(Ms, J),
+    nth0(D, J0s, J0),
+    dif(J, J0). % NB: we're looking for J =/= J0
