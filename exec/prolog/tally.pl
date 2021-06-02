@@ -110,16 +110,14 @@ qcompare(>, T1/N1, T2/N2) :-
 
 %% Reified versions of the above, as done at bottom of clpz.pl
 qcompare(=<, T1/N1, T2/N2, Truth) :-
-    %% Let's try using fast arithmetic, when possible
+    %% Substitute direct comparisons for reified constraints when possible:
     (	ground(T1/N1 - T2/N2) ->
-	(   DN #= N2 - N1,
-	    zcompare(C, DN, 0), % TODO: May be clearer to do zcompare(C, N1, N2).
-	    (	C = (>) ->
-		(   T1plusDN #= T1 + DN,
-		    T1plusDN #=< T2 -> Truth = true
+	(   zcompare(C, N2, N1),
+	    (	C = (>),
+		(   T1 + N2 - N1 #=< T2 -> Truth = true
 		;   Truth = false
 		)
-	    ;	% DN =< 0, so a simpler condition applies
+	    ;	(C = (=) ; C = (<)),
 		(   T1 #=< T2 -> Truth = true
 		;   Truth = false
 		)
