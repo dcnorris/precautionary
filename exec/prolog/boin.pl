@@ -2,6 +2,9 @@
 :- use_module(library(clpz)).
 :- use_module(library(lambda)).
 :- use_module('/Users/david/Precis/precautionary/exec/prolog/qbeta.pl').
+
+goal_expansion(cohort_max(N), N = 6).
+
 :- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
 
 /*
@@ -63,7 +66,8 @@ boin_targetpct_nmax(ccd(Elim, Deesc, Esc, Nmax), TargetPct, Nmax) :-
     floor_canonical(Esc_, Esc).
 
 %?- boin_targetpct_nmax(BOIN, 25, 12).
-%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],12).
+%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],12)
+%@ ;  false.
 
 boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
     Nmax = 12, % TODO: Somehow don't hard-code this
@@ -79,36 +83,36 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@ ;  ...
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.385 seconds
-%@    % CPU time: 0.389 seconds
-%@    J = 10.
-%@    % CPU time: 0.387 seconds
-%@    % CPU time: 0.391 seconds
-%@    J = 10.
-%@    % CPU time: 0.385 seconds
-%@    % CPU time: 0.390 seconds
-%@    J = 10.
+%@    % CPU time: 0.316 seconds
+%@    % CPU time: 0.320 seconds
+%@    J = 10
 %@    % CPU time: 0.093 seconds
 %@    % CPU time: 0.097 seconds
 %@    J = 10.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 6.953 seconds
-%@    % CPU time: 6.957 seconds
-%@    J = 170.
-%@    % CPU time: 7.036 seconds
-%@    % CPU time: 7.040 seconds
-%@    J = 170.
+%@    % CPU time: 5.684 seconds
+%@    % CPU time: 5.689 seconds
+%@    J = 170
+%@ ;  false.
 %@    % CPU time: 1.612 seconds
 %@    % CPU time: 1.616 seconds
 %@    J = 170.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 32.129 seconds
+%@    % CPU time: 32.134 seconds
+%@    J = 949
+%@ ;  false.
 %@    % CPU time: 9.009 seconds
 %@    % CPU time: 9.014 seconds
 %@    J = 949.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 231.354 seconds
+%@    % CPU time: 231.359 seconds
+%@    J = 7139
+%@ ;  false.
 %@    % CPU time: 68.183 seconds
 %@    % CPU time: 68.188 seconds
 %@    J = 7139.

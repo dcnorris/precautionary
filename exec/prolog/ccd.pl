@@ -6,6 +6,8 @@
 	      tally_decision_ccd/3,
 	      %% This infix op is used by path_matrix//0 to represent final rec:
               op(900, xfx, ~>),
+	      %% defined via goal_expansion
+	      %% cohort_max/1,
 	      ccd_d_matrix/3
 	  ]).
 
@@ -384,14 +386,19 @@ Above text is included for comparison with current outlook.
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
+goal_expansion(cohort_max(N), N = 6). % Hook for goal_expansion/2 by client code
 
-cohort_full(N, true) :- N #>= 6.
-cohort_full(N, false) :- N #< 6.
+cohort_full(N, Truth) :-
+    cohort_max(Nmax),
+    zcompare(C, N, Nmax),
+    (	C = (<),
+	Truth = false
+    ;	(C = (=) ; C = (>)),
+	Truth = true
+    ).
 
 enroll(T0/N0, T1/N1, Truth) :-
-    %%N0 #>= 6 #<==> CohortFull,
-    %%if_(CohortFull #= 1
-    if_(cohort_full(N0) % yields ~2.2x speedup vs reified CohortFull above
+    if_(cohort_full(N0)
        , Truth = false
        , ( N1 #= N0 + 1,
            T in 0..1, % T is the pending tox assessment of newly-enrolled patient
@@ -721,5 +728,35 @@ regression :-
     format(" D = ~d ...", [D]),
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
     length(Ms, J),
+    format(" J(~d) = ~d.~n", [D,J]),
     nth0(D, J0s, J0),
     J #\= J0.
+
+%% See Scryer issue #979 re performance loss vs PURE BASELINE above,
+%% which was captured before this file was converted to a module.
+%% Notably, the introduction of a goal_expansion/2 clause above
+%% recovered from 38% to just 19% performance loss, presumably (?)
+%% by inducing at least some partial compilation.
+
+%?- ccd:regression.
+%@  D = 1 ...   % CPU time: 0.682 seconds
+%@    % CPU time: 0.686 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 7.439 seconds
+%@    % CPU time: 7.443 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 39.948 seconds
+%@    % CPU time: 39.953 seconds
+%@  J(3) = 1151.
+%@ false.
+%% The following happened before goal_expansion(cohort_max) defined above
+%@  D = 1 ...   % CPU time: 0.892 seconds
+%@    % CPU time: 0.897 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 9.686 seconds
+%@    % CPU time: 9.690 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 52.403 seconds
+%@    % CPU time: 52.407 seconds
+%@  J(3) = 1151.
+%@ false.
