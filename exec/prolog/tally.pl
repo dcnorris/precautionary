@@ -171,54 +171,6 @@ tally_pair(T1/N1, T2/N2, Size) :-
     T2 in 0..N2,
     indomain(T1), indomain(T2).
 
-
-%% Demonstrate that strict inequalities are exclusive of ~~
-%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(>, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
-%@  % A = 1 ...   % CPU time: 0.024 seconds
-%@  % A = 2 ...   % CPU time: 0.066 seconds
-%@  % A = 3 ...   % CPU time: 0.141 seconds
-%@  % A = 4 ...   % CPU time: 0.231 seconds
-%@  % A = 5 ...   % CPU time: 0.379 seconds
-%@  % A = 6 ...   % CPU time: 0.554 seconds
-%@  % A = 7 ...   % CPU time: 0.786 seconds
-%@  % A = 8 ...   % CPU time: 1.072 seconds
-%@  % A = 9 ...   % CPU time: 1.456 seconds
-%@  % A = 10 ...   % CPU time: 1.888 seconds
-%@  % A = 11 ...   % CPU time: 2.399 seconds
-%@  % A = 12 ...   % CPU time: 2.983 seconds
-%@ false.
-
-%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(<, Q1, Q2), qcompare(~~, Q1, Q2)), MaxN, 1..12).
-%@  % A = 1 ...   % CPU time: 0.022 seconds
-%@  % A = 2 ...   % CPU time: 0.064 seconds
-%@  % A = 3 ...   % CPU time: 0.133 seconds
-%@  % A = 4 ...   % CPU time: 0.231 seconds
-%@  % A = 5 ...   % CPU time: 0.368 seconds
-%@  % A = 6 ...   % CPU time: 0.549 seconds
-%@  % A = 7 ...   % CPU time: 0.787 seconds
-%@  % A = 8 ...   % CPU time: 1.076 seconds
-%@  % A = 9 ...   % CPU time: 1.437 seconds
-%@  % A = 10 ...   % CPU time: 1.884 seconds
-%@  % A = 11 ...   % CPU time: 2.384 seconds
-%@  % A = 12 ...   % CPU time: 2.996 seconds
-%@ false.
-
-%% Show that =< and >= hold simultaneously only in case of equivalence:
-%?- inconceivable((tally_pair(Q1, Q2, MaxN), qcompare(>=, Q1, Q2), qcompare(=<, Q1, Q2), dif(Q1, Q2)), MaxN, 1..12).
-%@  % A = 1 ...   % CPU time: 0.026 seconds
-%@  % A = 2 ...   % CPU time: 0.069 seconds
-%@  % A = 3 ...   % CPU time: 0.130 seconds
-%@  % A = 4 ...   % CPU time: 0.226 seconds
-%@  % A = 5 ...   % CPU time: 0.372 seconds
-%@  % A = 6 ...   % CPU time: 0.535 seconds
-%@  % A = 7 ...   % CPU time: 0.767 seconds
-%@  % A = 8 ...   % CPU time: 1.064 seconds
-%@  % A = 9 ...   % CPU time: 1.407 seconds
-%@  % A = 10 ...   % CPU time: 1.831 seconds
-%@  % A = 11 ...   % CPU time: 2.299 seconds
-%@  % A = 12 ...   % CPU time: 2.919 seconds
-%@ false.
-
 %% TODO: Generalize tally_pair/3, tally_triple/4 to LISTS of tallies?
 tally_triple(T1/N1, T2/N2, T3/N3, Size) :-
     tally_pair(T1/N1, T2/N2, Size),
@@ -234,33 +186,30 @@ violate_transitivity(C, Q1, Q2, Q3, Size) :-
     %% ask whether it's possible that Q1 (C) Q3 DOESN'T:
     qcompare(C, Q1, Q3, false). % reification to the rescue!
 
-%?- inconceivable(violate_transitivity(>=, Q1, Q2, Q3, Size), Size, 1..12).
-%@  % A = 1 ...   % CPU time: 0.125 seconds
-%@  % A = 2 ...   % CPU time: 0.591 seconds
-%@  % A = 3 ...   % CPU time: 1.642 seconds
-%@  % A = 4 ...   % CPU time: 3.755 seconds
-%@  % A = 5 ...   % CPU time: 7.341 seconds
-%@  % A = 6 ...   % CPU time: 13.139 seconds
-%@  % A = 7 ...   % CPU time: 21.844 seconds
-%@  % A = 8 ...   % CPU time: 33.834 seconds
-%@  % A = 9 ...   % CPU time: 50.710 seconds
-%@  % A = 10 ...   % CPU time: 73.905 seconds
-%@  % A = 11 ...   % CPU time: 109.859 seconds
-%@  % A = 12 ...   % CPU time: 143.716 seconds
-%@ false.
-
-%?- inconceivable(violate_transitivity(=<, Q1, Q2, Q3, Size), Size, 1..12).
-%@  % A = 1 ...   % CPU time: 0.073 seconds
-%@  % A = 2 ...   % CPU time: 0.337 seconds
-%@  % A = 3 ...   % CPU time: 0.945 seconds
-%@  % A = 4 ...   % CPU time: 2.128 seconds
-%@  % A = 5 ...   % CPU time: 4.236 seconds
-%@  % A = 6 ...   % CPU time: 7.433 seconds
-%@  % A = 7 ...   % CPU time: 12.438 seconds
-%@  % A = 8 ...   % CPU time: 19.504 seconds
-%@  % A = 9 ...   % CPU time: 28.609 seconds
-%@  % A = 10 ...   % CPU time: 41.008 seconds
-%@  % A = 11 ...   % CPU time: 57.192 seconds
-%@  % A = 12 ...   % CPU time: 83.729 seconds
-%@ false.
+test :-
+    (	format("Show that =< and >= hold simultaneously only in case of equivalence:~n", []),
+	inconceivable((tally_pair(Q1, Q2, MaxN),
+		       qcompare(>=, Q1, Q2),
+		       qcompare(=<, Q1, Q2),
+		       dif(Q1, Q2)),
+		      MaxN, 1..12)
+    ;	format("Demonstrate that strict inequalities are exclusive of ~~ ...~n", []),
+	inconceivable((tally_pair(Q1, Q2, MaxN),
+		       qcompare(>, Q1, Q2),
+		       qcompare(~~, Q1, Q2)),
+		      MaxN, 1..12)
+    ;	inconceivable((tally_pair(Q1, Q2, MaxN),
+		       qcompare(<, Q1, Q2),
+		       qcompare(~~, Q1, Q2)),
+		      MaxN, 1..12)
+    ;	format("Show that =< and >= hold simultaneously only in case of equivalence:~n", []),
+	inconceivable((tally_pair(Q1, Q2, MaxN),
+		       qcompare(>=, Q1, Q2),
+		       qcompare(=<, Q1, Q2),
+		       dif(Q1, Q2)),
+		      MaxN, 1..12)
+    ;	format("Demonstrate transitivity of =< and >= ...~n", []),
+	inconceivable(violate_transitivity(>=, Q1, Q2, Q3, Size), Size, 1..12)
+    ;	inconceivable(violate_transitivity(=<, Q1, Q2, Q3, Size), Size, 1..12)
+    ).
 
