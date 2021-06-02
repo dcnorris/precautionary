@@ -722,4 +722,4 @@ regression :-
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
     length(Ms, J),
     nth0(D, J0s, J0),
-    dif(J, J0). % NB: we're looking for J =/= J0
+    J #\= J0.
