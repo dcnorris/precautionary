@@ -1,5 +1,11 @@
 man/
 vignettes/*.html
+vignettes/packages.bib
 doc
 Meta
 R/sysdata.rda
+.DS_Store
+.Rdata
+.Rhistory
+docs/
+pkgdown/
