@@ -481,17 +481,12 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
 %?- ccd:state0_enrollment([1/6] ^ [1/4] ^ [2/5], Ntot).
 %@    Ntot = 15.
 
-%% TODO: As a purely practical matter, it may be necessary to implement
-%%       STOPPING RULES that depend on TOTAL ENROLLMENT, and not merely
-%%       upon CURRENT-COHORT enrollment. Otherwise, CPE may get bogged
-%%       down in listing enormous numbers of highly unlikely paths.
-%%       To preserve the pure CC-dependence of most of the predicates,
-%%       such a branch may have to be introduced here, perhaps renaming
-%%       to ccd_state0_action_state_enrollmax/5.
+goal_expansion(enroll_max(N), N = 24). % Hook for goal_expansion/2 by client code
+
 ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
-    %% TODO: Check whether total enrollment has been reached, and stop?
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
-    zcompare(C, Ntotal, 24),
+    enroll_max(Nmax),
+    zcompare(C, Ntotal, Nmax),
     (	C = (<),
 	tally_decision_ccd(R, Action, CCD),
 	call(Action, Ls ^ [R | Rs] ^ Es, State)
@@ -755,8 +750,8 @@ ccd_d_matrix(CCD, D, Matrix) :-
 
 regression :-
     default_ccd(CCD),
-    J0s = [0, 20, 212, 1151, 6718, 39289], % 0-based list of values up to D=5
-    D in 1..5, % 1..5,
+    J0s = [0, 20, 212, 1151, 6718, 26131], % 0-based list of values up to D=5
+    D in 1..3, % 1..5,
     indomain(D),
     format(" D = ~d ...", [D]),
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
@@ -772,22 +767,16 @@ regression :-
 %% by inducing at least some partial compilation.
 
 %?- ccd:regression.
-%@  D = 1 ...   % CPU time: 0.828 seconds
-%@    % CPU time: 0.832 seconds
+%@  D = 1 ...   % CPU time: 0.844 seconds
+%@    % CPU time: 0.848 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.312 seconds
-%@    % CPU time: 10.318 seconds
+%@  D = 2 ...   % CPU time: 10.737 seconds
+%@    % CPU time: 10.741 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 63.118 seconds
-%@    % CPU time: 63.122 seconds
+%@  D = 3 ...   % CPU time: 64.164 seconds
+%@    % CPU time: 64.168 seconds
 %@  J(3) = 1151.
-%@  D = 4 ...   % CPU time: 407.730 seconds
-%@    % CPU time: 407.734 seconds
-%@  J(4) = 6718.
-%@  D = 5 ...   % CPU time: 1644.802 seconds
-%@    % CPU time: 1644.808 seconds
-%@  J(5) = 26131. % < 39289, as expected since D*6 > 24
-%@    true.
+%@ false.
 %@  D = 1 ...   % CPU time: 0.824 seconds
 %@    % CPU time: 0.828 seconds
 %@  J(1) = 20.
