@@ -326,7 +326,7 @@ floor_canonical(Qs, Ks) :-
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
 %% of a triplet of boundaries, followed by max enrollment per cohort.
-%% TODO: I believe the if-then cascade, with its default final 'escape clause',
+%% TODO: I believe the if_/3 cascade, with its default final 'escape clause',
 %%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
 %%       proves the determinism of tally_decision/2 so long as the defining
 %%       boundaries are lists from ℚ.
@@ -402,7 +402,7 @@ enroll(T0/N0, T1/N1, Truth) :-
        , Truth = false
        , ( N1 #= N0 + 1,
            T in 0..1, % T is the pending tox assessment of newly-enrolled patient
-           indomain(T), % TODO: How to 'parametrize' this? Use OPTIONS?
+           indomain(T), % TODO: Would it ever be useful to defer labeling?
            T1 #= T0 + T,
            Truth = true
          )
@@ -470,6 +470,17 @@ remove(Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
     deescalate(Ls ^ [] ^ RsEs, State).
 
+state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
+    foldl(append, [Ls, Rs], Es, Cohorts),
+    %% TODO: Maybe faster to sum each list, then sum the sums?
+    maplist(\Q^N^(Q=_/N), Cohorts, Ns),
+    sum(Ns, #=, Ntotal).
+
+%?- ccd:state0_enrollment([] ^ [] ^ [], Ntot).
+%@    Ntot = 0.
+%?- ccd:state0_enrollment([1/6] ^ [1/4] ^ [2/5], Ntot).
+%@    Ntot = 15.
+
 %% TODO: As a purely practical matter, it may be necessary to implement
 %%       STOPPING RULES that depend on TOTAL ENROLLMENT, and not merely
 %%       upon CURRENT-COHORT enrollment. Otherwise, CPE may get bogged
@@ -479,8 +490,15 @@ remove(Ls ^ Rs ^ Es, State) :-
 %%       to ccd_state0_action_state_enrollmax/5.
 ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
     %% TODO: Check whether total enrollment has been reached, and stop?
-    tally_decision_ccd(R, Action, CCD),
-    call(Action, Ls ^ [R | Rs] ^ Es, State).
+    state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
+    zcompare(C, Ntotal, 24),
+    (	C = (<),
+	tally_decision_ccd(R, Action, CCD),
+	call(Action, Ls ^ [R | Rs] ^ Es, State)
+    ;	(C = (=) ; C = (>)),
+	length_plus_1(Ls, MTD),
+	State = declare_mtd(MTD)
+    ).
 
 %% Note how this state-machine naturally starts up from a blank slate:
 %?- (Action-State)+\(default_ccd(CCD), ccd_state0_action_state(CCD, [] ^ [0/0, 0/0, 0/0] ^ [], Action, State)).
@@ -676,17 +694,23 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], Matrix).
 
+%?- use_module(library(lambda)).
+%@    true.
+
 %% TODO: Can I label 'on demand', e.g. so that it happens right before portray_clause/2?
 %%       Perhaps my solution is to redefine enroll/3 for each new design? If it turns out
 %%       that everything variable in CCDs is inside enroll/3, that's a splendid finding,
 %%       since it focuses attention for development of a CCD DSL.
-%?- Matrix+\(default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
+%?- Matrix+\(ccd:default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
 %@    Matrix = [[0/1]^[0/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
 %@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
 %@ ;  ...
 
-%?- J+\(default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%?- J+\(ccd:default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.797 seconds
+%@    % CPU time: 0.802 seconds
+%@    J = 20.
 %@    % CPU time: 0.549 seconds
 %@    % CPU time: 0.554 seconds
 %@    J = 20. % ^ PURE BASELINE
@@ -694,7 +718,10 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    % CPU time: 0.191 seconds
 %@    J = 20.
 
-%?- J+\(default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%?- J+\(ccd:default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 10.606 seconds
+%@    % CPU time: 10.612 seconds
+%@    J = 212.
 %@    % CPU time: 5.878 seconds
 %@    % CPU time: 5.882 seconds
 %@    J = 212. % ^ PURE BASELINE
@@ -702,7 +729,10 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    % CPU time: 1.976 seconds
 %@    J = 212.
 
-%?- J+\(default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%?- J+\(ccd:default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 59.797 seconds
+%@    % CPU time: 59.801 seconds
+%@    J = 1151.
 %@    % CPU time: 32.408 seconds
 %@    % CPU time: 32.413 seconds
 %@    J = 1151. % ^ PURE BASELINE
@@ -710,7 +740,10 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    % CPU time: 10.690 seconds
 %@    J = 1151.
 
-%?- J+\(default_ccd(CCD), D=4, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%?- J+\(ccd:default_ccd(CCD), D=4, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 388.514 seconds
+%@    % CPU time: 388.518 seconds
+%@    J = 6718.
 %@    % CPU time: 62.763 seconds
 %@    % CPU time: 62.767 seconds
 %@    J = 6718.
@@ -723,7 +756,7 @@ ccd_d_matrix(CCD, D, Matrix) :-
 regression :-
     default_ccd(CCD),
     J0s = [0, 20, 212, 1151, 6718, 39289], % 0-based list of values up to D=5
-    D in 1..3, % 1..5,
+    D in 1..5, % 1..5,
     indomain(D),
     format(" D = ~d ...", [D]),
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
@@ -739,24 +772,29 @@ regression :-
 %% by inducing at least some partial compilation.
 
 %?- ccd:regression.
-%@  D = 1 ...   % CPU time: 0.682 seconds
-%@    % CPU time: 0.686 seconds
+%@  D = 1 ...   % CPU time: 0.828 seconds
+%@    % CPU time: 0.832 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 7.439 seconds
-%@    % CPU time: 7.443 seconds
+%@  D = 2 ...   % CPU time: 10.312 seconds
+%@    % CPU time: 10.318 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 39.948 seconds
-%@    % CPU time: 39.953 seconds
+%@  D = 3 ...   % CPU time: 63.118 seconds
+%@    % CPU time: 63.122 seconds
 %@  J(3) = 1151.
-%@ false.
-%% The following happened before goal_expansion(cohort_max) defined above
-%@  D = 1 ...   % CPU time: 0.892 seconds
-%@    % CPU time: 0.897 seconds
+%@  D = 4 ...   % CPU time: 407.730 seconds
+%@    % CPU time: 407.734 seconds
+%@  J(4) = 6718.
+%@  D = 5 ...   % CPU time: 1644.802 seconds
+%@    % CPU time: 1644.808 seconds
+%@  J(5) = 26131. % < 39289, as expected since D*6 > 24
+%@    true.
+%@  D = 1 ...   % CPU time: 0.824 seconds
+%@    % CPU time: 0.828 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 9.686 seconds
-%@    % CPU time: 9.690 seconds
+%@  D = 2 ...   % CPU time: 10.108 seconds
+%@    % CPU time: 10.114 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 52.403 seconds
-%@    % CPU time: 52.407 seconds
+%@  D = 3 ...   % CPU time: 61.585 seconds
+%@    % CPU time: 61.590 seconds
 %@  J(3) = 1151.
 %@ false.
