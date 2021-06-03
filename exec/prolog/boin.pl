@@ -3,10 +3,6 @@
 :- use_module(library(lambda)).
 :- use_module('/Users/david/Precis/precautionary/exec/prolog/qbeta.pl').
 
-goal_expansion(cohort_max(N), N = 6).
-
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
-
 /*
 
 1. Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
@@ -24,28 +20,17 @@ lambda_{2,j} 1/1  2/2  2/3  2/4  3/5  3/6  4/7  4/8  5/9  5/10  5/11  6/12
 elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 
 */
+
 % My initial emphasis is on generating all possible paths (CPE) for the BOIN
 % design set forth in the table above. Although the BOIN design of [1] lacks
 % any terminating principle except elimination of all doses, we do need such
-% a rule here. The most natural type of rule, in view of the Table above,
-% might be a 'stop-for-consensus' type of rule as found in package 'dtpcrm'.
-% This is specified as a maximum number of patients to enroll at any 1 dose.
+% rules here. Two rule are provided, implemented via goal_expansion/2 clauses
+% asserted BEFORE consulting library(ccd).
 
-/*
+goal_expansion(cohort_max(N), N = 6).  % max DOSE-COHORT enrollment
+goal_expansion(enroll_max(N), N = 24). % max TRIAL enrollment
 
-A crucial task for this module is to generate the defining boundaries
-for a whole range of BOIN designs. Without access to floating point math,
-this involves essentially hard-coding each possible design. An analysis
-of the design space thus proves essential.
-
-This also should promote thought about how in general to represent such
-design-defining boundaries, and communicate them to the CCD code.
-
-Of course, representing trial designs as Prolog terms (who woulda thot?)
-does present itself as one obvious solution. Ideally, this could be done
-in such a way that ALL POSSIBLE CCDs could be fairly enumerated.
- 
-*/
+:- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
 
 /*
 
@@ -83,6 +68,10 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@ ;  ...
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.380 seconds
+%@    % CPU time: 0.386 seconds
+%@    J = 10
+%@ ;  false.
 %@    % CPU time: 0.316 seconds
 %@    % CPU time: 0.320 seconds
 %@    J = 10
@@ -91,6 +80,10 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@    J = 10.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 7.470 seconds
+%@    % CPU time: 7.476 seconds
+%@    J = 170
+%@ ;  false.
 %@    % CPU time: 5.684 seconds
 %@    % CPU time: 5.689 seconds
 %@    J = 170
@@ -109,6 +102,10 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@    J = 949.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 396.386 seconds
+%@    % CPU time: 396.390 seconds
+%@    J = 7139
+%@ ;  false.
 %@    % CPU time: 231.354 seconds
 %@    % CPU time: 231.359 seconds
 %@    J = 7139
@@ -118,6 +115,10 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@    J = 7139.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=5, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 1822.763 seconds
+%@    % CPU time: 1822.767 seconds
+%@    J = 31475 % < 45927, as expected since now D*6 > 24
+%@ ;  false.
 %@    % CPU time: 451.505 seconds
 %@    % CPU time: 451.510 seconds
 %@    J = 45927.
