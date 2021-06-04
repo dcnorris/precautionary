@@ -390,12 +390,10 @@ goal_expansion(cohort_max(N), N = 6). % Hook for goal_expansion/2 by client code
 
 cohort_full(N, Truth) :-
     cohort_max(Nmax),
-    zcompare(C, N, Nmax),
-    (	C = (<),
-	Truth = false
-    ;	(C = (=) ; C = (>)),
-	Truth = true
-    ).
+    if_(N #< Nmax
+	, Truth = false
+	, Truth = true
+       ).
 
 enroll(T0/N0, T1/N1, Truth) :-
     if_(cohort_full(N0)
@@ -486,14 +484,14 @@ goal_expansion(enroll_max(N), N = 24). % Hook for goal_expansion/2 by client cod
 ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
     enroll_max(Nmax),
-    zcompare(C, Ntotal, Nmax),
-    (	C = (<),
-	tally_decision_ccd(R, Action, CCD),
-	call(Action, Ls ^ [R | Rs] ^ Es, State)
-    ;	(C = (=) ; C = (>)),
-	length_plus_1(Ls, MTD),
-	State = declare_mtd(MTD)
-    ).
+    if_(Ntotal #< Nmax
+	, ( tally_decision_ccd(R, Action, CCD),
+	    call(Action, Ls ^ [R | Rs] ^ Es, State)
+	  )
+	, ( length_plus_1(Ls, MTD),
+	    State = declare_mtd(MTD)
+	  )
+       ).
 
 %% Note how this state-machine naturally starts up from a blank slate:
 %?- (Action-State)+\(default_ccd(CCD), ccd_state0_action_state(CCD, [] ^ [0/0, 0/0, 0/0] ^ [], Action, State)).
@@ -767,6 +765,67 @@ regression :-
 %% by inducing at least some partial compilation.
 
 %?- ccd:regression.
+%@  D = 1 ...   % CPU time: 11.009 seconds
+%@    % CPU time: 11.014 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 119.952 seconds
+%@    % CPU time: 119.956 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 674.596 seconds (0.09x)
+%@    % CPU time: 674.602 seconds
+%@  J(3) = 1151.
+%@ false.
+%%  ^^^ with ground(...) -> branch removed from tally:qcompare/4(=<)
+%@  D = 1 ...   % CPU time: 1.826 seconds
+%@    % CPU time: 1.830 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 21.564 seconds
+%@    % CPU time: 21.568 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 123.581 seconds (0.5x)
+%@    % CPU time: 123.585 seconds
+%@  J(3) = 1151.
+%@ false. % ^^^ with zcompare ~~> if_ in BOTH cohort_full/2 and ccd_state0_action_state/4
+%@  D = 1 ...   % CPU time: 1.422 seconds
+%@    % CPU time: 1.426 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 16.587 seconds
+%@    % CPU time: 16.591 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 96.870 seconds (0.64x)
+%@    % CPU time: 96.875 seconds
+%@  J(3) = 1151.
+%@ false. % ^^^ zcompare ~~> if_ in ccd_state0_action_state/4 ONLY
+%@  D = 1 ...   % CPU time: 0.823 seconds
+%@    % CPU time: 0.828 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 10.242 seconds
+%@    % CPU time: 10.246 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 61.945 seconds
+%@    % CPU time: 61.949 seconds
+%@  J(3) = 1151.
+%@ false. % ^^^ BACK TO BASELINE (paranoia!)
+%@  D = 1 ...   % CPU time: 1.264 seconds
+%@    % CPU time: 1.268 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 15.286 seconds
+%@    % CPU time: 15.290 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 89.022 seconds (0.7x)
+%@    % CPU time: 89.027 seconds
+%@  J(3) = 1151.
+%@ false. % ^^^ Swapping zcompare ~~> if_ in cohort_full/2 ONLY
+%@  D = 1 ...   % CPU time: 0.825 seconds
+%@    % CPU time: 0.831 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 10.156 seconds
+%@    % CPU time: 10.162 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 61.867 seconds
+%@    % CPU time: 61.871 seconds
+%@  J(3) = 1151.
+%@ false. % ^^^ RE-BASELINE POST #982
 %@  D = 1 ...   % CPU time: 0.844 seconds
 %@    % CPU time: 0.848 seconds
 %@  J(1) = 20.

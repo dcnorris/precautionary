@@ -110,23 +110,8 @@ qcompare(>, T1/N1, T2/N2) :-
 
 %% Reified versions of the above, as done at bottom of clpz.pl
 qcompare(=<, T1/N1, T2/N2, Truth) :-
-    %% Substitute direct comparisons for reified constraints when possible:
-    (	ground(T1/N1 - T2/N2) ->
-	(   zcompare(C, N2, N1),
-	    (	C = (>),
-		(   T1 + N2 - N1 #=< T2 -> Truth = true
-		;   Truth = false
-		)
-	    ;	(C = (=) ; C = (<)),
-		(   T1 #=< T2 -> Truth = true
-		;   Truth = false
-		)
-	    )
-	)
-    ;	% general case (non-ground args 2 or 3) is handled by CLP(Z) ...
-	T1 + max(0, N2 - N1) #=< T2 #<==> B,
-	zo_t(B, Truth)
-    ).
+    T1 + max(0, N2 - N1) #=< T2 #<==> B,
+    zo_t(B, Truth).
 
 qcompare(<, T1/N1, T2/N2, Truth) :-
     T1 + max(0, N2 - N1) #< T2 #<==> B,
