@@ -685,7 +685,7 @@ ccd_state0_matrix(CCD, State0, Matrix) :-
 %% where a CCD trial starts from the lowest dose.
 ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
-    ccd_state0_matrix(CCD, []^Tallies^[], Matrix).
+    ccd_state0_matrix(CCD, []^Tallies^[], [Matrix]).
 
 %?- use_module(library(lambda)).
 %@    true.
@@ -695,9 +695,16 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %%       that everything variable in CCDs is inside enroll/3, that's a splendid finding,
 %%       since it focuses attention for development of a CCD DSL.
 %?- Matrix+\(ccd:default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
-%@    Matrix = [[0/1]^[0/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
-%@ ;  Matrix = [[0/1]^[1/6]^[]~>2]
+%@    Matrix = ([0/1]^[0/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
+%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
+%@ ;  Matrix = ([]^[0/2,3/6]^[]~>1)
+%@ ;  Matrix = ([]^[1/6,3/6]^[]~>1)
+%@ ;  Matrix = ([]^[2/6,3/6]^[]~>1)
 %@ ;  ...
 
 %?- J+\(ccd:default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
