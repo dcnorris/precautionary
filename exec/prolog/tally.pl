@@ -18,7 +18,7 @@
 :- use_module(library(reif)).
 :- use_module(library(format)).
 :- use_module(library(lambda)).
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/inconceivable.pl').
+:- use_module(inconceivable).
 
 %% The most fundamental relation between tallies is REACHABILITY,
 %% the question of whether a possible path exists connecting them.

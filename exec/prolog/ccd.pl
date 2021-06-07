@@ -105,7 +105,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(reif)).
 :- use_module(library(format)).
 :- use_module(library(lambda)).
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/tally.pl').
+:- use_module(tally).
 
 % TODO: Review library(debug); it includes * and other useful predicates
 % TODO: Look at clpz:automaton/_ predicates

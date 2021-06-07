@@ -1,7 +1,6 @@
 %% Prototyping some checks of CPE ...
 
-%%:- use_module('/Users/david/Precis/precautionary/exec/prolog/tally.pl').
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
+:- use_module(ccd).
 
 :- use_module(library(lambda)).
 

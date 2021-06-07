@@ -1,7 +1,7 @@
 %% Implement BOIN designs using CCD machinery
 :- use_module(library(clpz)).
 :- use_module(library(lambda)).
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/qbeta.pl').
+:- use_module(qbeta).
 
 /*
 
@@ -30,7 +30,7 @@ elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 goal_expansion(cohort_max(N), N = 6).  % max DOSE-COHORT enrollment
 goal_expansion(enroll_max(N), N = 24). % max TRIAL enrollment
 
-:- use_module('/Users/david/Precis/precautionary/exec/prolog/ccd.pl').
+:- use_module(ccd).
 
 /*
 
