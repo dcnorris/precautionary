@@ -23,6 +23,72 @@ benchmark(Elegance) :-
 	ccd:regression
     ).
 
+version(Version) :-
+    '$scryer_prolog_version'(Version).
+
+%?- version(Version).
+%@    Version = "v0.8.123-595-g176da ...".
+
+%?- benchmark(elegant_if_). % remember to use C-u C-u F10
+%@ Pure code that will go in the paper:
+%@  D = 1 ...   % CPU time: 0.866 seconds
+%@    % CPU time: 0.870 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 10.524 seconds
+%@    % CPU time: 10.528 seconds
+%@  J(2) = 212.
+%@ Faster code, exploiting several inelegances:
+%@ Warning: overwriting goal_expansion/2
+%@  D = 1 ...   % CPU time: 1.151 seconds
+%@    % CPU time: 1.155 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 13.564 seconds
+%@    % CPU time: 13.568 seconds
+%@  J(2) = 212.
+%@ Partial restoration of elegance ... [elegant_if_].
+%@ Warning: overwriting goal_expansion/2
+%@  D = 1 ...   % CPU time: 1.207 seconds
+%@    % CPU time: 1.211 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 14.263 seconds
+%@    % CPU time: 14.267 seconds
+%@  J(2) = 212.
+%@ false.
+
+%?- benchmark(elegant_qcompare). % remember to use C-u C-u F10
+%@ Pure code that will go in the paper:
+%@  D = 1 ...   % CPU time: 0.924 seconds
+%@    % CPU time: 0.928 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 11.387 seconds
+%@    % CPU time: 11.391 seconds
+%@  J(2) = 212.
+%@ Faster code, exploiting several inelegances:
+%@ Warning: overwriting goal_expansion/2
+%@  D = 1 ...   % CPU time: 1.217 seconds
+%@    % CPU time: 1.222 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 14.498 seconds
+%@    % CPU time: 14.503 seconds
+%@  J(2) = 212.
+%@ Partial restoration of elegance ... [elegant_qcompare].
+%@ Warning: overwriting goal_expansion/2
+%@  D = 1 ...   % CPU time: 0.870 seconds
+%@    % CPU time: 0.874 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 10.730 seconds
+%@    % CPU time: 10.734 seconds
+%@  J(2) = 212.
+%@ false.
+
+%% ------------------------------------------------------------
+%%
+%% The following benchmarks were done with older version (my bad!)
+
+%% With these definitions, I get:
+%?- version(Version).
+%@    Version = "v0.8.123-587-g87ef3 ...".
+
 %?- benchmark(elegant_if_). % remember to use C-u C-u F10
 %@ Pure code that will go in the paper:
 %@  D = 1 ...   % CPU time: 11.179 seconds
