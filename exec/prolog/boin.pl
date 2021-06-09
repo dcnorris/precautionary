@@ -1,7 +1,9 @@
 %% Implement BOIN designs using CCD machinery
 :- use_module(library(clpz)).
 :- use_module(library(lambda)).
+:- use_module(library(format)).
 :- use_module(qbeta).
+:- use_module(benchmarking).
 
 /*
 
@@ -27,8 +29,14 @@ elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 % rules here. Two rule are provided, implemented via goal_expansion/2 clauses
 % asserted BEFORE consulting library(ccd).
 
-goal_expansion(cohort_max(N), N = 6).  % max DOSE-COHORT enrollment
-goal_expansion(enroll_max(N), N = 24). % max TRIAL enrollment
+/* ~~ Performance Note ~~
+  Using goal_expansion/2 to compile cohort_max & enroll_max into ccd on load
+  does cut overhead by about 25% versus treating these settings as predicates
+  asserted dynamically into the database.
+  Judicious use of this technique may be indicated.
+*/
+%%goal_expansion(cohort_max(N), N = 6).  % max DOSE-COHORT enrollment
+%%goal_expansion(enroll_max(N), N = 24). % max TRIAL enrollment
 
 :- use_module(ccd).
 
@@ -54,32 +62,38 @@ boin_targetpct_nmax(ccd(Elim, Deesc, Esc, Nmax), TargetPct, Nmax) :-
 %@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],12)
 %@ ;  false.
 
-boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
-    Nmax = 12, % TODO: Somehow don't hard-code this
-    boin_targetpct_nmax(BOIN, TargetPct, Nmax), % BOIN = ccd(...)
+boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
+    boin_targetpct_nmax(BOIN, TargetPct, EnrollMax),
+    (	retract(ccd:cohort_max(_)),
+	fail
+    ;	asserta(ccd:cohort_max(CohortMax))
+    ),
+    (	retract(ccd:enroll_max(_)),
+	fail
+    ;	asserta(ccd:enroll_max(EnrollMax))
+    ) ->
     ccd_d_matrix(BOIN, D, Matrix).
 
-%?- Matrix+\(boin_targetpct_d_matrix(25, 3, Matrix)).
-%@    Matrix = [[0/1,0/1]^[0/6]^[]~>3]
-%@ ;  Matrix = [[0/1,0/1]^[1/6]^[]~>3]
-%@ ;  Matrix = [[0/1,0/1]^[1/6]^[]~>3]
-%@ ;  Matrix = [[0/1]^[0/2,2/6]^[]~>2]
-%@ ;  Matrix = [[0/3]^[1/6,2/6]^[]~>2]
+%?- Matrix+\(boin_targetpct_d_cmax_nmax_matrix(25, 3, 6, 24, Matrix)).
+%@    Matrix = ([0/1,0/1]^[0/6]^[]~>3)
+%@ ;  Matrix = ([0/1,0/1]^[1/6]^[]~>3)
+%@ ;  Matrix = ([0/1,0/1]^[1/6]^[]~>3)
+%@ ;  Matrix = ([0/1]^[0/2,2/6]^[]~>2)
+%@ ;  Matrix = ([0/3]^[1/6,2/6]^[]~>2)
 %@ ;  ...
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.380 seconds
-%@    % CPU time: 0.386 seconds
-%@    J = 10
-%@ ;  false.
-%@    % CPU time: 0.316 seconds
-%@    % CPU time: 0.320 seconds
-%@    J = 10
-%@    % CPU time: 0.093 seconds
-%@    % CPU time: 0.097 seconds
+%@    % CPU time: 0.492 seconds
+%@    % CPU time: 0.496 seconds
 %@    J = 10.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 9.888 seconds
+%@    % CPU time: 9.893 seconds
+%@    J = 170.
+%@    % CPU time: 9.745 seconds
+%@    % CPU time: 9.749 seconds
+%@    J = 170.
 %@    % CPU time: 7.470 seconds
 %@    % CPU time: 7.476 seconds
 %@    J = 170
@@ -93,12 +107,8 @@ boin_targetpct_d_matrix(TargetPct, D, Matrix) :-
 %@    J = 170.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 32.129 seconds
-%@    % CPU time: 32.134 seconds
-%@    J = 949
-%@ ;  false.
-%@    % CPU time: 9.009 seconds
-%@    % CPU time: 9.014 seconds
+%@    % CPU time: 60.834 seconds
+%@    % CPU time: 60.838 seconds
 %@    J = 949.
 
 %?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
@@ -196,16 +206,33 @@ post05_tally(P, T/N) :-
     qbeta05_alpha_beta(P, Alpha, Beta).
 
 
-%% From these predicates, we should now be able to obtain Prolog terms
-%% that define the boundaries of a CCD.
+%% Write out tab-delimited BOIN path matrices BOIN<TgtPct>_<D>_<CohortMax>_<EnrollMax>.tab
 
-%% TODO: Can I override library(ccd)'s (non-exported) definition of tally_decision/2?
-%%  ANS: Apparently not! So it needs to be supplied as an argument.
-/*
-tally_decision(Q, Decision) :-
-    tally_decision_ccd(Q, Decision, ccd([3/5, 4/8, 5/9, 6/12],
-					[1/1, 2/4, 3/7, 4/8, 5/11],
-					[0/1, 1/8],
-					12)).
-*/
+write_T(TargetPct, D, CohortMax, EnrollMax) :-
+    phrase(format_("BOIN~d-~d-~d-~d.tab",
+		   [TargetPct, D, CohortMax, EnrollMax]),
+	   Filename),
+    boin_targetpct_nmax(BOIN, TargetPct, EnrollMax),
+    ccd_d_cmax_nmax_tabfile(BOIN, D, CohortMax, EnrollMax, Filename).
 
+%?- write_T(25, 2, 6, 24).
+%@ Opening file 'BOIN25-2-6-24.tab'...
+%@ Writing path vectors .... done (0.20 minutes). J = 170
+%@    true.
+
+%?- write_T(25, 3, 6, 24).
+%@ Opening file 'BOIN25-3-6-24.tab'...
+%@ Writing path vectors .... done (1.22 minutes). J = 949
+%@    true.
+
+%?- write_T(25, 4, 6, 24).
+%@ Opening file 'BOIN25-4-6-24.tab'...
+%@ Writing path vectors .... done (10.32 minutes). J = 7139
+%@    true.
+
+%?- write_T(25, 4, 9, 24).
+%@ Opening file 'BOIN25-4-9-24.tab'...
+%@ Writing path vectors .... done (177.76 minutes). J = 131,898
+%@    true.
+
+% NB: Net rate is 700+ paths/minute.

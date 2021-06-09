@@ -6,10 +6,18 @@
 	      tally_decision_ccd/3,
 	      %% This infix op is used by path_matrix//0 to represent final rec:
               op(900, xfx, ~>),
-	      %% defined via goal_expansion
-	      %% cohort_max/1,
-	      ccd_d_matrix/3
+	      cohort_max/1, % dynamic predicates that
+	      enroll_max/1, % client code should redefine
+	      ccd_d_matrix/3,
+	      ccd_d_pathvector/3,
+	      ccd_d_cmax_nmax_tabfile/5
 	  ]).
+
+:- dynamic(cohort_max/1).
+:- dynamic(enroll_max/1).
+
+:- multifile(cohort_max/1).
+:- multifile(enroll_max/1).
 
 /*
 
@@ -106,6 +114,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(format)).
 :- use_module(library(lambda)).
 :- use_module(tally).
+:- use_module(benchmarking).
 
 % TODO: Review library(debug); it includes * and other useful predicates
 % TODO: Look at clpz:automaton/_ predicates
@@ -386,8 +395,6 @@ Above text is included for comparison with current outlook.
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
-goal_expansion(cohort_max(N), N = 6). % Hook for goal_expansion/2 by client code
-
 cohort_full(N, Truth) :-
     cohort_max(Nmax),
     if_(N #< Nmax
@@ -478,8 +485,6 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
 %@    Ntot = 0.
 %?- ccd:state0_enrollment([1/6] ^ [1/4] ^ [2/5], Ntot).
 %@    Ntot = 15.
-
-goal_expansion(enroll_max(N), N = 24). % Hook for goal_expansion/2 by client code
 
 ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
@@ -662,7 +667,69 @@ context such as indexes into the data structure storing the designs' T[,,] array
 Thus, all we really need to extract for T[,,] output of each design is the final
 state of ccd_actions//1.
 
+---
+
+TODO: Note that 'cumulative-cohort matrices' (or 'cc matrices' for short) may
+      better express the fact of our having eschewed a full path representation.
+      OTOH, these matrices remain _summaries_ of the paths, and I'm not so sure
+      that a term like 'path matrix' entails any kind of unique representation.
+
+In terms of the actual tabular output to be read by R, a single row vector per
+path seems ideal. The first element can be the selected dose, and this can be
+followed by (T, N) pairs that even the human eye will be able to index easily.
+
 */
+
+%% Rows of output table:
+recdose_ccs, [] --> [(_->_->_^_^_)], recdose_ccs. % skip to end ...
+recdose_ccs, [Pathvector] --> [ (S->_->declare_mtd(MTD)) ],
+			      { recdose_state_pathvector(MTD, S, Pathvector) }.
+
+recdose_state_pathvector(MTD, Ls^Rs^Es, Pathvector) :-
+    foldl(append, [Ls,Rs,Es], [], Qs),
+    phrase(tallyvector(Qs), TNs),
+    Pathvector = [MTD|TNs].
+
+tallyvector([T/N|Qs]) --> [T, N], tallyvector(Qs).
+tallyvector([]) --> [].
+
+%% This predicate implements the common special case
+%% where a CCD trial starts from the lowest dose.
+ccd_d_pathvector(CCD, D, Pathvector) :-
+    length(Tallies, D), maplist(=(0/0), Tallies),
+    phrase(ccd_actions(CCD, []^Tallies^[]), Path),
+    phrase(recdose_ccs, Path, [Pathvector]).
+
+ccd_d_cmax_nmax_tabfile(CCD, D, CohortMax, EnrollMax, Filename) :-
+    atom_chars(File, Filename),
+    format("Opening file ~q...~n", [File]), % feedback to console
+    open(File, write, OS),
+    format("Writing path vectors ..", []),
+    (	retract(cohort_max(_)),
+	fail
+    ;	asserta(cohort_max(CohortMax))
+    ),
+    (	retract(enroll_max(_)),
+	fail
+    ;	asserta(enroll_max(EnrollMax))
+    ),
+    Ncols #= 2*D + 1,
+    phrase(columns_format(Ncols), Format) ->
+	'$cpu_now'(T0),
+	(   ccd_d_pathvector(CCD, D, Pathvector),
+	    format(OS, Format, Pathvector),
+	    fail % exhaust all Pathvector solutions
+	;   close(OS),
+	    minutes_since(Minutes, T0),
+	    format(".. done (~2f minutes).~n", [Minutes])
+	).
+
+% Copied from 'esc.pl'
+columns_format(1) --> "~w~n".
+columns_format(N) --> "~w\t",
+		      { N #> 1,
+			N1 #= N - 1 },
+		      columns_format(N1).
 
 :- op(900, xfx, ~>).
 
@@ -687,13 +754,6 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], [Matrix]).
 
-%?- use_module(library(lambda)).
-%@    true.
-
-%% TODO: Can I label 'on demand', e.g. so that it happens right before portray_clause/2?
-%%       Perhaps my solution is to redefine enroll/3 for each new design? If it turns out
-%%       that everything variable in CCDs is inside enroll/3, that's a splendid finding,
-%%       since it focuses attention for development of a CCD DSL.
 %?- Matrix+\(ccd:default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
 %@    Matrix = ([0/1]^[0/6]^[]~>2)
 %@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
@@ -765,91 +825,11 @@ regression :-
     nth0(D, J0s, J0),
     J #\= J0.
 
-%% See Scryer issue #979 re performance loss vs PURE BASELINE above,
-%% which was captured before this file was converted to a module.
-%% Notably, the introduction of a goal_expansion/2 clause above
-%% recovered from 38% to just 19% performance loss, presumably (?)
-%% by inducing at least some partial compilation.
-
-%?- ccd:regression.
-%@  D = 1 ...   % CPU time: 11.009 seconds
-%@    % CPU time: 11.014 seconds
+%?- asserta(ccd:cohort_max(6)), asserta(ccd:enroll_max(24)), ccd:regression.
+%@  D = 1 ...   % CPU time: 1.089 seconds
+%@    % CPU time: 1.093 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 119.952 seconds
-%@    % CPU time: 119.956 seconds
+%@  D = 2 ...   % CPU time: 13.192 seconds
+%@    % CPU time: 13.196 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 674.596 seconds (0.09x)
-%@    % CPU time: 674.602 seconds
-%@  J(3) = 1151.
-%@ false.
-%%  ^^^ with ground(...) -> branch removed from tally:qcompare/4(=<)
-%@  D = 1 ...   % CPU time: 1.826 seconds
-%@    % CPU time: 1.830 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 21.564 seconds
-%@    % CPU time: 21.568 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 123.581 seconds (0.5x)
-%@    % CPU time: 123.585 seconds
-%@  J(3) = 1151.
-%@ false. % ^^^ with zcompare ~~> if_ in BOTH cohort_full/2 and ccd_state0_action_state/4
-%@  D = 1 ...   % CPU time: 1.422 seconds
-%@    % CPU time: 1.426 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 16.587 seconds
-%@    % CPU time: 16.591 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 96.870 seconds (0.64x)
-%@    % CPU time: 96.875 seconds
-%@  J(3) = 1151.
-%@ false. % ^^^ zcompare ~~> if_ in ccd_state0_action_state/4 ONLY
-%@  D = 1 ...   % CPU time: 0.823 seconds
-%@    % CPU time: 0.828 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.242 seconds
-%@    % CPU time: 10.246 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 61.945 seconds
-%@    % CPU time: 61.949 seconds
-%@  J(3) = 1151.
-%@ false. % ^^^ BACK TO BASELINE (paranoia!)
-%@  D = 1 ...   % CPU time: 1.264 seconds
-%@    % CPU time: 1.268 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 15.286 seconds
-%@    % CPU time: 15.290 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 89.022 seconds (0.7x)
-%@    % CPU time: 89.027 seconds
-%@  J(3) = 1151.
-%@ false. % ^^^ Swapping zcompare ~~> if_ in cohort_full/2 ONLY
-%@  D = 1 ...   % CPU time: 0.825 seconds
-%@    % CPU time: 0.831 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.156 seconds
-%@    % CPU time: 10.162 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 61.867 seconds
-%@    % CPU time: 61.871 seconds
-%@  J(3) = 1151.
-%@ false. % ^^^ RE-BASELINE POST #982
-%@  D = 1 ...   % CPU time: 0.844 seconds
-%@    % CPU time: 0.848 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.737 seconds
-%@    % CPU time: 10.741 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 64.164 seconds
-%@    % CPU time: 64.168 seconds
-%@  J(3) = 1151.
-%@ false.
-%@  D = 1 ...   % CPU time: 0.824 seconds
-%@    % CPU time: 0.828 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.108 seconds
-%@    % CPU time: 10.114 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 61.585 seconds
-%@    % CPU time: 61.590 seconds
-%@  J(3) = 1151.
 %@ false.
