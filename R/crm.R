@@ -200,7 +200,7 @@ Crm <- R6Class("Crm",
                    invisible(self)
                  },
                  ##' @details
-                 ##' Set patient-wise toxicity observations
+                 ##' Estimate the model
                  ##'
                  ##' @param impl A string choosing the low-level implementation to use.
                  ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
