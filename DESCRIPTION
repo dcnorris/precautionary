@@ -41,14 +41,12 @@ URL: https://precisionmethods.guru/
 License: MIT + file LICENSE
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
-LinkingTo: cargo (>= 0.1.28)
-SystemRequirements: Cargo (>= 1.42.0) for installation from sources:
-        see file INSTALL
 Encoding: UTF-8
 NeedsCompilation: yes
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
+    'ccd.R'
     'crm.R'
     'data.R'
     'dtp.R'
