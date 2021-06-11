@@ -476,7 +476,7 @@ remove(Ls ^ Rs ^ Es, State) :-
     deescalate(Ls ^ [] ^ RsEs, State).
 
 state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
-    foldl(append, [Ls, Rs], Es, Cohorts),
+    foldl(append, [Ls, Rs, Es], [], Cohorts),
     %% TODO: Maybe faster to sum each list, then sum the sums?
     maplist(\Q^N^(Q=_/N), Cohorts, Ns),
     sum(Ns, #=, Ntotal).
@@ -486,22 +486,17 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
 %?- ccd:state0_enrollment([1/6] ^ [1/4] ^ [2/5], Ntot).
 %@    Ntot = 15.
 
-ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
+ccd_state0_decision_state(CCD, Ls ^ [R | Rs] ^ Es, Decision, State) :-
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
     enroll_max(Nmax),
     if_(Ntotal #< Nmax
-	, ( tally_decision_ccd(R, Action, CCD),
-	    call(Action, Ls ^ [R | Rs] ^ Es, State)
+	, ( tally_decision_ccd(R, Decision, CCD),
+	    call(Decision, Ls ^ [R | Rs] ^ Es, State)
 	  )
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
-
-%% Note how this state-machine naturally starts up from a blank slate:
-%?- (Action-State)+\(default_ccd(CCD), ccd_state0_action_state(CCD, [] ^ [0/0, 0/0, 0/0] ^ [], Action, State)).
-%@    Action = stay, State = []^[0/1,0/0,0/0]^[]
-%@ ;  Action = stay, State = []^[1/1,0/0,0/0]^[].
 
 %% TODO: Consider restoring an 'mtd_notfound' concept to the trial.
 %%       Even if this notion disappears 'WLOG' from a purely formal perspective,
@@ -512,11 +507,11 @@ ccd_state0_action_state(CCD, Ls ^ [R | Rs] ^ Es, Action, State) :-
 %%       strictly *pharmacologic* realm which a formal analysis might best avoid.
 %%       A good test may be to demonstrate that mtd_notfound truly adds something
 %%       essential that can't be 'tacked on' in a post-processing step.
-%%ccd_actions(mtd_notfound(_)) --> [].
-ccd_actions(_, declare_mtd(_)) --> [].
-ccd_actions(CCD, S0) --> [(S0->A->S)],
-			 { ccd_state0_action_state(CCD, S0, A, S) },
-			 ccd_actions(CCD, S).
+%%ccd_decisions(mtd_notfound(_)) --> [].
+ccd_decisions(_, declare_mtd(_)) --> [].
+ccd_decisions(CCD, S0) --> [(S0->A->S)],
+			 { ccd_state0_decision_state(CCD, S0, A, S) },
+			 ccd_decisions(CCD, S).
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
 %?- Trial+\(default_ccd(CCD), phrase(ccd_actions(CCD, []^[0/0]^[]), Trial)).
@@ -665,7 +660,7 @@ dose recommendations provided that the stopping rule is CC-adapted and known via
 context such as indexes into the data structure storing the designs' T[,,] arrays.
 
 Thus, all we really need to extract for T[,,] output of each design is the final
-state of ccd_actions//1.
+state of ccd_decisions//1.
 
 ---
 
@@ -686,7 +681,8 @@ recdose_ccs, [Pathvector] --> [ (S->_->declare_mtd(MTD)) ],
 			      { recdose_state_pathvector(MTD, S, Pathvector) }.
 
 recdose_state_pathvector(MTD, Ls^Rs^Es, Pathvector) :-
-    foldl(append, [Ls,Rs,Es], [], Qs),
+    reverse(Ls, Ks), % recall that Ls is a _descending_ list
+    foldl(append, [Rs,Ks], Es, Qs),
     phrase(tallyvector(Qs), TNs),
     Pathvector = [MTD|TNs].
 
@@ -697,7 +693,7 @@ tallyvector([]) --> [].
 %% where a CCD trial starts from the lowest dose.
 ccd_d_pathvector(CCD, D, Pathvector) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
-    phrase(ccd_actions(CCD, []^Tallies^[]), Path),
+    phrase(ccd_decisions(CCD, []^Tallies^[]), Path),
     phrase(recdose_ccs, Path, [Pathvector]).
 
 ccd_d_cmax_nmax_tabfile(CCD, D, CohortMax, EnrollMax, Filename) :-
@@ -743,9 +739,9 @@ default_ccd(ccd([3/5, 4/8, 5/10, 6/12],
 		12)).
 
 %% I've implemented this predicate to more clearly exhibit the
-%% sharing of arguments with ccd_state0_action_state/4.
+%% sharing of arguments with ccd_state0_decision_state/4.
 ccd_state0_matrix(CCD, State0, Matrix) :-
-    phrase(ccd_actions(CCD, State0), Path),
+    phrase(ccd_decisions(CCD, State0), Path),
     phrase(path_matrix, Path, Matrix).
 
 %% This predicate implements the common special case
