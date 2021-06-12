@@ -68,19 +68,17 @@ Ccd <- R6Class("Ccd",
                  ##' of required \code{impl} parameter and optional \code{abbrev} flag.
                  ##' @return An object with components:
                  ##' * \code{$stop} - logical value indicating whether stop is indicated
-                 ##' * \code{$mtd} - integer value, the recommended dose.
-                 applied = function(x, o, last_dose, ...){
+                 ##' * \code{$mtd} - integer value, the recommended dose
+                 ##' * \code{$max_dose} - integer value, a dose not to be exceeded henceforth.
+                 applied = function(x, o, last_dose, max_dose, ...){
                    tox <- x[last_dose]
                    n <- tox + o[last_dose]
-                   #if (is.na(tox >= private$eliminate[n]))
-                   #  cat("INCONCEIVABLE! tox =", tox, ", n =", n,
-                   #      ", private$eliminate[n] =", private$eliminate[n], "\n")
                    rec <- if (tox >= private$eliminate[n])
-                            private$.max_dose <- last_dose-1
+                            max_dose <- last_dose-1
                           else if (tox >= private$deescalate[n])
                             last_dose-1
                           else if (tox <= private$escalate[n])
-                            min(last_dose+1, private$.max_dose)
+                            min(last_dose+1, max_dose)
                           else
                             last_dose
                    
@@ -89,7 +87,8 @@ Ccd <- R6Class("Ccd",
                              sum(x+o) >= private$enroll_max )
                    
                    return(list(mtd = rec,
-                               stop = stop))
+                               stop = stop,
+                               max_dose = max_dose))
                  }, #</applied>
                  ##' @details
                  ##' Do-nothing implementation to preserve Crm$trace_paths
@@ -118,7 +117,7 @@ Ccd <- R6Class("Ccd",
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
-                     paths_ <- function(n, x, coh, path_m, cohort_sizes){
+                     paths_ <- function(n, x, coh, path_m, max_dose, cohort_sizes){
                        ## This recursive accessory function manages PATH BRANCHING at the
                        ## crucial point of INDETERMINACY, where toxicity counts are observed.
                        ## It is called for its SIDE-EFFECT on statically scoped path_hash.
@@ -135,17 +134,16 @@ Ccd <- R6Class("Ccd",
                        for (ntox in 0L:cohort_sizes[coh]) {
                          path_m["T", coh] <- ntox
                          x[d] <- x_d + ntox
-                         cat("Ccd$applied(x =", x, ", o =", n-x, ", last_dose =", d, "...\n")
-                         rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
+                         rec <- self$applied(x=x, o=n-x, last_dose=d, max_dose=max_dose, ...)
                          ## we recommend dose <= 0 to signal stopped path:
                          path_m["D", coh+1] <- ifelse(rec$stop, -1L, 1L) * rec$mtd
                          if (rec$stop)
-                           paths_(n, x, coh+1, path_m, cohort_sizes[1:coh])
+                           paths_(n, x, coh+1, path_m, rec$max_dose, cohort_sizes[1:coh])
                          else
-                           paths_(n, x, coh+1, path_m, cohort_sizes)
+                           paths_(n, x, coh+1, path_m, rec$max_dose, cohort_sizes)
                        }
                      } #</paths_>
-                     paths_(n, x, coh, path_m, cohort_sizes)
+                     paths_(n, x, coh, path_m, private$.max_dose, cohort_sizes)
                      ## Regarding performant nature of the following as.list(env), see
                      ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
                      path_list <- as.list(path_hash, sorted = FALSE)
@@ -155,7 +153,8 @@ Ccd <- R6Class("Ccd",
                    ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
-                   n <- x <- integer(private$.max_dose)
+                   max_dose <- private$.max_dose # copy to local var we may thread thru recursion
+                   n <- x <- integer(max_dose)
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
@@ -166,7 +165,7 @@ Ccd <- R6Class("Ccd",
                      ## Let's be sure to skip the stopped paths, tho!
                      if (any(path_m["D",] <= 0, na.rm=TRUE))
                        return(list(ppe_))
-                     level <- factor(path_m["D",1:unroll], levels=seq(private$.max_dose))
+                     level <- factor(path_m["D",1:unroll], levels=1:max_dose)
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
