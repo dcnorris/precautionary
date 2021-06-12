@@ -12,3 +12,5 @@
 ^Rprof.out
 ^doc$
 ^Meta$
+^pkgdown
+^docs

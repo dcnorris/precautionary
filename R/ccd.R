@@ -64,6 +64,7 @@ Ccd <- R6Class("Ccd",
                  ##' @param o A dose-wise vector of non-toxicity counts
                  ##' @param last_dose The most recently given dose, as required to implement
                  ##' cumulative-cohort-based escalation decisions.
+                 ##' @param max_dose An upper limit on future dose levels
                  ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
                  ##' of required \code{impl} parameter and optional \code{abbrev} flag.
                  ##' @return An object with components:
