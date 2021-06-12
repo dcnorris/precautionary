@@ -227,7 +227,7 @@ write_T(TargetPct, D, CohortMax, EnrollMax) :-
 
 %?- write_T(25, 4, 6, 24).
 %@ Opening file 'BOIN25-4-6-24.tab'...
-%@ Writing path vectors .... done (10.32 minutes). J = 7139
+%@ Writing path vectors .... done (10.37 minutes).
 %@    true.
 
 %?- write_T(25, 4, 9, 24).

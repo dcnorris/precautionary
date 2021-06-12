@@ -51,20 +51,19 @@ test_that("CPE for BOIN/CCD matches Prolog's BOIN25-<D>-6-24.tab",
   ## Since BOIN obtains its dose recommendation from isotonic regression,
   ## we ignore the recommendations yielded by the dose-escalation process.
   ## We focus our checks instead solely on the final cumulative tallies:
-  r <<- unique(as.data.frame(pathvectors[,-1]))
+  r <- as.data.frame(pathvectors[,-1])
 
-  prolog <<- read.table(system.file("testdata", sprintf("BOIN25-%d-6-24.tab", D)
+  prolog <- read.table(system.file("testdata", sprintf("BOIN25-%d-6-24.tab", D)
                                     , package = "precautionary", mustWork = TRUE))[,-1]
-  prolog <<- unique(prolog)
-  colnames(prolog) <<- colnames(r)
+  colnames(prolog) <- colnames(r)
 
   ## TODO: Generalize these constructions to arbitrary D
-  rsols <<- with(r, paste(paste(T1, N1, sep="/")
+  rsols <- with(r, paste(paste(T1, N1, sep="/")
                         ,paste(T2, N2, sep="/")
                         ,paste(T3, N3, sep="/")
                         ,paste(T4, N4, sep="/")
                          ))
-  psols <<- with(prolog, paste(paste(T1, N1, sep="/")
+  psols <- with(prolog, paste(paste(T1, N1, sep="/")
                              ,paste(T2, N2, sep="/")
                              ,paste(T3, N3, sep="/")
                              ,paste(T4, N4, sep="/")
