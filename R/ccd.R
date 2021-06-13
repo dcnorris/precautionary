@@ -160,8 +160,7 @@ Ccd <- R6Class("Ccd",
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
                    ## ..and parallelize over the pending partial paths:
-                   ####cpe_parts <- mclapply(ppe, function(ppe_) {
-                   cpe_parts <- lapply(ppe, function(ppe_) {
+                   cpe_parts <- mclapply(ppe, function(ppe_) {
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      ## Let's be sure to skip the stopped paths, tho!
                      if (any(path_m["D",] <= 0, na.rm=TRUE))
@@ -173,8 +172,7 @@ Ccd <- R6Class("Ccd",
                      x <- as.vector(xtabs(tox ~ level))
                      paths.(n, x, unroll+1, path_m, cohort_sizes)
                    }
-                   )
-                   ####, mc.preschedule = TRUE)
+                   , mc.preschedule = TRUE)
                    cpe <- do.call(c, cpe_parts)
                    ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
                    ##                                                  which='performance'))
