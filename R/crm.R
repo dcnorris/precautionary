@@ -318,18 +318,18 @@ Crm <- R6Class("Crm",
                  ##' Return dose recommendation for given tox/no-tox tallies.
                  ##'
                  ##' This function caches results, which greatly saves computation time
-                 ##' in DTP calculations. (It yields approximately a 5x speedup for the
-                 ##' VIOLA trial example!)
+                 ##' in CPE -- yielding e.g. a 5x speedup for the VIOLA trial example.
                  ##' @param x A dose-wise vector of toxicity counts
                  ##' @param o A dose-wise vector of non-toxicity counts
                  ##' @param last_dose The most recently given dose, as required to implement
                  ##' the \code{global_coherent_esc=TRUE} behavior
+                 ##' @param max_dose Unused; included for compatibility with superclass method
                  ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
                  ##' of required \code{impl} parameter and optional \code{abbrev} flag.
                  ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
                  ##' or possibly an abbreviated version of such object as returned by
                  ##' method \code{Crm$est()}.
-                 applied = function(x, o, last_dose = NA, ...){
+                 applied = function(x, o, last_dose = NA, max_dose = NULL, ...){
                    if (!is.null(private$cache)) {
                      key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
                      if (private$.global_coherent_esc)
@@ -364,86 +364,7 @@ Crm <- R6Class("Crm",
                    if (!is.null(private$cache))
                      assign(key, est, envir = private$cache)
                    return(est)
-                 }, #</applied>
-                 ##' @details
-                 ##' Compute trial paths forward from current tally
-                 ##'
-                 ##' The computed paths are saved in a private field, from which variously
-                 ##' formatted results may be obtained by accessor functions.
-                 ##'
-                 ##' @param root_dose The starting dose for tree of paths
-                 ##' @param cohort_sizes Integer vector giving sizes of future cohorts,
-                 ##' its length being the maximum number of cohorts to look ahead.
-                 ##' @param ... Parameters passed ultimately to \code{Crm$esc()},
-                 ##' enabling passthru of its required \code{impl} parameter.
-                 ##' @param unroll Integer; how deep to unroll path tree for parallelism
-                 ##' @return Self, invisibly
-                 ##' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
-                 ##' @importFrom parallel mclapply
-                 trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
-                   stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
-                   paths. <- function(n, x, coh, path_m, cohort_sizes){
-                     path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
-                     paths_ <- function(n, x, coh, path_m, cohort_sizes){
-                       ## This recursive accessory function manages PATH BRANCHING at the
-                       ## crucial point of INDETERMINACY, where toxicity counts are observed.
-                       ## It is called for its SIDE-EFFECT on statically scoped path_hash.
-                       d <- path_m["D",coh]
-                       ## Handle the terminal case upon entry, simplifying the code to follow.
-                       if (coh > length(cohort_sizes) || is.na(d) || d <= 0L) {
-                         tox_c <- path_m["T",]
-                         key <- paste(tox_c[!is.na(tox_c)], collapse='.')
-                         assign(key, as.vector(path_m), envir = path_hash)
-                         return()
-                       }
-                       n[d] <- n[d] + cohort_sizes[coh]
-                       x_d <- x[d]
-                       for (ntox in 0L:cohort_sizes[coh]) {
-                         path_m["T", coh] <- ntox
-                         x[d] <- x_d + ntox
-                         rec <- self$applied(x = x, o = n-x, last_dose = d, ...)
-                         ## we recommend dose <= 0 to signal stopped path:
-                         path_m["D", coh+1] <- ifelse(rec$stop, -1L, 1L) * rec$mtd
-                         if (rec$stop)
-                           paths_(n, x, coh+1, path_m, cohort_sizes[1:coh])
-                         else
-                           paths_(n, x, coh+1, path_m, cohort_sizes)
-                       }
-                     } #</paths_>
-                     paths_(n, x, coh, path_m, cohort_sizes)
-                     ## Regarding performant nature of the following as.list(env), see
-                     ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
-                     path_list <- as.list(path_hash, sorted = FALSE)
-                     attr(path_list,'performance') <- self$report()
-                     return(path_list)
-                   } #</paths.>
-                   ## 'Unroll' the first few levels of the tree recursion..
-                   path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
-                                    dimnames=list(c("D","T")))
-                   n <- x <- integer(self$max_dose())
-                   path_m["D",1] <- as.integer(root_dose)
-                   ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
-                   ppe <- ppe[order(names(ppe))]
-                   ## ..and parallelize over the pending partial paths:
-                   cpe_parts <- mclapply(ppe, function(ppe_) {
-                     path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
-                     ## Let's be sure to skip the stopped paths, tho!
-                     if (any(path_m["D",] <= 0, na.rm=TRUE))
-                       return(list(ppe_))
-                     level <- factor(path_m["D",1:unroll], levels=seq_along(private$ln_skel))
-                     tox <- path_m["T",1:unroll]
-                     enr <- cohort_sizes[1:unroll]
-                     n <- as.vector(xtabs(enr ~ level))
-                     x <- as.vector(xtabs(tox ~ level))
-                     paths.(n, x, unroll+1, path_m, cohort_sizes)
-                   }, mc.preschedule = TRUE)
-                   cpe <- do.call(c, cpe_parts)
-                   ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
-                   ##                                                  which='performance'))
-                   private$path_list <- cpe[order(names(cpe))]
-                   self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
-                   invisible(self)
-                 } # </trace_paths>
+                 } #</applied>
                ), # </public>
                private = list(
                  ln_skel = NA
