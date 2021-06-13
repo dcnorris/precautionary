@@ -99,7 +99,7 @@ Cpe <- R6Class("Cpe",
                            paths_(n, x, coh+1, path_m, rec$max_dose, cohort_sizes)
                        }
                      } #</paths_>
-                     paths_(n, x, coh, path_m, private$.max_dose, cohort_sizes)
+                     paths_(n, x, coh, path_m, self$max_dose(), cohort_sizes)
                      ## Regarding performant nature of the following as.list(env), see
                      ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
                      path_list <- as.list(path_hash, sorted = FALSE)
@@ -109,8 +109,7 @@ Cpe <- R6Class("Cpe",
                    ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
-                   max_dose <- private$.max_dose # copy to local var we may thread thru recursion
-                   n <- x <- integer(max_dose)
+                   n <- x <- integer(self$max_dose())
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
@@ -120,7 +119,7 @@ Cpe <- R6Class("Cpe",
                      ## Let's be sure to skip the stopped paths, tho!
                      if (any(path_m["D",] <= 0, na.rm=TRUE))
                        return(list(ppe_))
-                     level <- factor(path_m["D",1:unroll], levels=1:max_dose)
+                     level <- factor(path_m["D",1:unroll], levels=1:self$max_dose())
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
@@ -181,7 +180,7 @@ Cpe <- R6Class("Cpe",
                  path_array = function(condense=TRUE) {
                    pmx <- self$path_matrix()
                    C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
-                   D <- private$.max_dose # dose levels range 1:D
+                   D <- self$max_dose() # dose levels range 1:D
                    ## (Note how the stopping-rec dose<=0 idiom works smoothly here.)
                    I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
                    I[I] <- 1L

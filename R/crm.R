@@ -22,6 +22,7 @@
 ##' @importFrom R6 R6Class
 ##' @export
 Crm <- R6Class("Crm",
+               inherit = Cpe,
                public = list(
                  ##' @details
                  ##' Create a new `Crm` object.
@@ -51,6 +52,19 @@ Crm <- R6Class("Crm",
                    private$x <- private$o <- integer(length(private$ln_skel))
                  },
                  ##' @details
+                 ##' Return number of pre-specified doses
+                 ##' @note This specializes the superclass set/get method, consistent
+                 ##' with the non-mutable number of doses of CRM with fixed skeleton.
+                 ##'
+                 ##' @param D Included to match signature of superclass method.
+                 ##' It is an error to call this method with non-missing `D` parameter.
+                 ##' @return Length of CRM skeleton.
+                 max_dose = function(D) {
+                   if (missing(D))
+                     return(length(private$ln_skel))
+                   stop("Class 'Crm' has fixed number of doses determined by the skeleton.")
+                 },
+                 ##' @details
                  ##' Set or query CRM skeleton
                  ##'
                  ##' @param skeleton A numeric vector to set as the model skeleton.
@@ -63,6 +77,7 @@ Crm <- R6Class("Crm",
                    private$cache <- NULL
                    private$skips <- NA
                    private$ln_skel <- log(skeleton)
+                   super$max_dose(length(skeleton)) # TODO: Delete super's private$.max_dose?
                    invisible(self)
                  },
                  ##' @details
@@ -155,7 +170,7 @@ Crm <- R6Class("Crm",
                  observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
                    stopifnot(length(level) == length(tox))
                    stopifnot(all(tox %in% c(0,1)))
-                   D <- length(private$ln_skel)
+                   D <- self$max_dose()
                    stopifnot(all(level %in% 1:D))
                    level <- factor(level, levels=1:D)
                    self$tally(x = xtabs(tox ~ level),
@@ -168,7 +183,7 @@ Crm <- R6Class("Crm",
                  ##' @param o A dose-wise vector of non-toxicity counts
                  ##' @return Self, invisibly
                  tally = function(x, o){
-                   D <- length(private$ln_skel)
+                   D <- self$max_dose()
                    ## We expect 'x' to be a dosewise vector of exchangeable toxicity counts
                    stopifnot(length(x) == D)
                    stopifnot(is.numeric(x))
@@ -350,8 +365,6 @@ Crm <- R6Class("Crm",
                      assign(key, est, envir = private$cache)
                    return(est)
                  }, #</applied>
-                 ##' @field performance A vector used for vetting performance
-                 performance = NULL,
                  ##' @details
                  ##' Compute trial paths forward from current tally
                  ##'
@@ -407,7 +420,7 @@ Crm <- R6Class("Crm",
                    ## 'Unroll' the first few levels of the tree recursion..
                    path_m <- matrix(NA_integer_, nrow=2, ncol=1+length(cohort_sizes),
                                     dimnames=list(c("D","T")))
-                   n <- x <- integer(length(private$ln_skel))
+                   n <- x <- integer(self$max_dose())
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
@@ -430,128 +443,7 @@ Crm <- R6Class("Crm",
                    private$path_list <- cpe[order(names(cpe))]
                    self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
                    invisible(self)
-                 }, # </trace_paths>
-                 ##' @details
-                 ##' Return computed trial paths in matrix form
-                 ##'
-                 ##' @return An integer matrix with the same column layout as the
-                 ##' DTP tables of \CRANpkg{dtpcrm}. That is, there is a D0 column
-                 ##' followed by paired Tc, Dc columns giving the toxicity count
-                 ##' for cohort c and the resulting dose recommendation \emph{yielded by}
-                 ##' cohort c -- which is generally the recommendation \emph{for} cohort
-                 ##' c+1.
-                 ##' @seealso \code{trace_paths}, which must already have been invoked
-                 ##' if this method is to return a meaningful result.
-                 path_matrix = function() {
-                   stopifnot(length(private$path_list) > 0)
-                   Ncol <- max(sapply(private$path_list, length)) - 1L
-                   pmx <- matrix(NA_integer_,
-                                 nrow=length(private$path_list),
-                                 ncol=Ncol)
-                   for (j in 1L:nrow(pmx))
-                     pmx[j,] <- private$path_list[[j]][1L:ncol(pmx)]
-                   Cmax <- (Ncol - 1L)/2L
-                   colnames(pmx) <- paste0(c("T","D"), rep(0:Cmax, each=2))[-1]
-                   pmx
-                 }, #</path_matrix>
-                 ##' @details
-                 ##' Return computed trial paths in a 3D array
-                 ##'
-                 ##' @param condense Logical value; if FALSE, the returned array has its
-                 ##' cohorts indexed trial-wise instead of dose-wise. This inflates the
-                 ##' array more than needed for the matrix computations it must support
-                 ##' (observe that in Norris2020c Eq. (4), the \code{c} index is eliminated
-                 ##' already by summation), but enables the sequence of events along a path
-                 ##' to be read off directly if this is required e.g. for visualization or
-                 ##' debugging. Default is TRUE.
-                 ##' @return For the \code{j}'th path, the C*D matrix \code{T[j,,]} gives
-                 ##' the number of toxicities \code{T[j,c,d]} occurring in the \code{c}'th
-                 ##' cohort for dose d. In case \code{condense=FALSE}, see above.
-                 ##'
-                 ##' @references
-                 ##' Norris DC. What Were They Thinking? Pharmacologic priors implicit in
-                 ##' a choice of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\].
-                 ##' December 2020. \url{https://arxiv.org/abs/2012.05301}
-                 ##' @seealso \code{trace_paths}, which must already have been invoked
-                 ##' if this method is to return a result.
-                 path_array = function(condense=TRUE) {
-                   pmx <- self$path_matrix()
-                   C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
-                   D <- length(private$ln_skel) # dose levels range 1:D
-                   ## (Note how the stopping-rec dose<=0 idiom works smoothly here.)
-                   I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
-                   I[I] <- 1L
-                   I[!I] <- NA_integer_
-                   ## Now I[,,] is a J*C*D indicator array that we may use
-                   ## in the manner of a bitmask, to select the toxicities
-                   ## into their proper positions within T[j,c,d]:
-                   T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
-                   dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
-                   dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
-                   ## We take a moment to save private b, Y and U calculated from T
-                   private$b <- apply(log(choose(2, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
-                   private$Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   Z <- apply(2-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   private$U <- cbind(private$Y, Z)
-                   if (!condense)
-                     return(T)
-                   ## T is at this point larger (sparser) than necessary for the
-                   ## matrix computations which it is intended to support.
-                   ## Specifically, the cohorts are now indexed within the whole trial,
-                   ## whereas they really need only to be indexed on a per-dose basis.
-                   ## We next identify the largest number of non-NA entries in any
-                   ## dose column of the array; this will be the new, smaller
-                   ## C-dimension. Note that for the VIOLA trial example, this
-                   ## condenses the C-dimension from 7 to 4. So a massive size
-                   ## reduction is not necessarily achieved here, although with
-                   ## the absolute size of these T arrays being potentially quite
-                   ## large, a 50% reduction could be worthwhile.
-                   c_dim <- max(apply(apply(T, MARGIN=c(1,3), FUN=function(x) sum(!is.na(x))),
-                                      MARGIN=2, max))
-                   dim_ <- dim(T); dim_[2] <- c_dim
-                   T_ <- array(NA_integer_, dim = dim_)
-                   for (j in 1:dim(T)[1]) {
-                     for (d in 1:dim(T)[3]) {
-                       x <- T[j,,d]
-                       x <- x[!is.na(x)]
-                       if (length(x) > 0)
-                         T_[j,1:length(x),d] <- x
-                     }
-                   }
-                   dimnames(T_)[[3]] <- dimnames(T)[[3]]
-                   dimnames(T_)[[2]] <- paste0("c", 1:dim(T_)[2]) # NB: little-c
-                   T_
-                 }, # </path_array>
-                 ##' @details
-                 ##' Path probabilities for given dose-wise DLT probs
-                 ##'
-                 ##' The design's paths must already have been completely enumerated by
-                 ##' \code{trace_paths}, and the associated array \code{T}, matrix \code{U}
-                 ##' and vector \code{b} computed by a call to \code{path_array}.
-                 ##' @param probs.DLT Numeric vector of DLT probabilities for the design's
-                 ##' pre-specified doses.
-                 ##' @return A vector of probabilities for the enumerated paths
-                 path_probs = function(probs.DLT) {
-                   if (is.na(private$b) || is.na(private$U))
-                     stop("Must invoke path_array() before log_pi()")
-                   log_p <- log(probs.DLT)
-                   log_q <- log(1 - probs.DLT)
-                   log_pi <- private$b + private$U %*% c(log_p, log_q)
-                   exp(log_pi)
-                 }, # </path_probs>
-                 ##' @details
-                 ##' Vector of path-wise final dose recommendations
-                 ##'
-                 ##' The design's paths must already have been completely enumerated by
-                 ##' \code{trace_paths}. This method is a temporizing measure, bridging
-                 ##' to a new format for the return value of \code{path_matrix}, possibly
-                 ##' a \code{data.table} where the dose recs would be a column.
-                 ##' @return Integer vector of final dose recs on the enumerated paths
-                 path_rx = function() {
-                   pmx <- self$path_matrix()
-                   rxcol <- max.col(!is.na(pmx), ties.method="last")
-                   rxdose <- abs(pmx[cbind(seq.int(nrow(pmx)),rxcol)])
-                 } # </path_recs>
+                 } # </trace_paths>
                ), # </public>
                private = list(
                  ln_skel = NA
