@@ -4,7 +4,7 @@ library(BOIN)
 
 test_that("CPE for BOIN/CCD matches Prolog's BOIN25-<D>-6-24.tab",
 {
-  D <- 4 # TODO: Get 4 to work, also!
+  D <- 4
   bdy <- get.boundary(target = 0.25
                      ,ncohort = 24
                      ,cohortsize = 1

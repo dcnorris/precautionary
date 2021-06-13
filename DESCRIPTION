@@ -47,6 +47,7 @@ RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
     'ccd.R'
+    'cpe.R'
     'crm.R'
     'data.R'
     'dtp.R'
