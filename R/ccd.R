@@ -8,14 +8,8 @@
 ##' @title An R6 class encapsulating Cumulative-Cohort Designs
 ##'
 ##' @details
-##' Syntactically, the method chaining supported by R6 classes makes the
-##' invocation of CRM models more transparent. The mutability conferred
-##' by reference semantics enables memoization (caching) of results, which
-##' can speed up DTP calculations significantly.
-##'
-##' Presently, this class supports only the 'empiric' (aka 'power') model.
-##' But it is hoped that inheritance will assist in rendering other models
-##' implemented in package \CRANpkg{dfcrm} clearly, with code reuse.
+##' TODO: Explain the hierarchy of model classes, including connections
+##'       with the executable specifications set forth in Prolog.
 ##' @importFrom R6 R6Class
 ##' @export
 Ccd <- R6Class("Ccd",
@@ -52,8 +46,7 @@ Ccd <- R6Class("Ccd",
                  ##' @param last_dose The most recently given dose, as required to implement
                  ##' cumulative-cohort-based escalation decisions.
                  ##' @param max_dose An upper limit on future dose levels
-                 ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
-                 ##' of required \code{impl} parameter and optional \code{abbrev} flag.
+                 ##' @param ... Unused by `Ccd`; included for superclass method compatibility
                  ##' @return An object with components:
                  ##' * \code{$stop} - logical value indicating whether stop is indicated
                  ##' * \code{$mtd} - integer value, the recommended dose

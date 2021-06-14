@@ -46,6 +46,7 @@ NeedsCompilation: yes
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
+    'boin.R'
     'ccd.R'
     'cpe.R'
     'crm.R'

@@ -1,24 +1,13 @@
 ## Independently corroborate BOIN CPE done in Prolog ...
 
-library(BOIN)
-
 test_that("CPE for BOIN/CCD matches Prolog's BOIN25-<D>-6-24.tab",
 {
   D <- 4
-  bdy <- get.boundary(target = 0.25
-                     ,ncohort = 24
-                     ,cohortsize = 1
-                     ,n.earlystop = 12
-                     ,extrasafe = FALSE
-                     ,offset = 0.05
-                      )$boundary_tab
 
-  boin <- Ccd$new(escalate = bdy[2,]
-                 ,deescalate = bdy[3,]
-                 ,eliminate = bdy[4,]
-                 ,cohort_max = 6 # TODO: Try 9 if fast enough
-                 ,enroll_max = 24
-                  )$max_dose(D)
+  boin <- Boin$new(target = 0.25
+                  ,cohort_max = 6
+                  ,enroll_max = 24
+                   )$max_dose(D)
 
   paths <- boin$trace_paths(
                   root_dose = 1,
