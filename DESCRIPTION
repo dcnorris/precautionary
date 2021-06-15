@@ -17,12 +17,12 @@ Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: 
     magrittr,
     escalation,
-    dtpcrm,
     data.table,
     R6,
     R (>= 3.5.0)
 Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
 Suggests: 
+    dtpcrm,
     rmarkdown,
     bookdown,
     tufte,
