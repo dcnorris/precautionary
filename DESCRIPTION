@@ -1,8 +1,8 @@
 Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
-Version: 0.2-3
-Date: 2021-04-25
+Version: 0.2.4
+Date: 2021-06-14
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -29,6 +29,9 @@ Suggests:
     testthat,
     lattice,
     latticeExtra,
+    shiny,
+    shinyjs,
+    shinyFeedback
 Description: Enhances various R packages that support the design and simulation
              of phase 1 dose-escalation trials, adding diagnostics to examine
              the safety characteristics of these designs in light of expected
