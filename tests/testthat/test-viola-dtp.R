@@ -1,5 +1,3 @@
-library(dtpcrm)
-
 test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
   ## VIOLA trial set-up
   start.dose.level <- 3
@@ -16,7 +14,7 @@ test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
     if(y$stop){
       x <- y
     } else {
-      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+      x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
     }
   }
 
@@ -61,7 +59,7 @@ test_that("Crm$trace_paths() answer invariant to unroll depth", {
     if(y$stop){
       x <- y
     } else {
-      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+      x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
     }
   }
 
@@ -110,7 +108,7 @@ test_that("Crm-class path_matrix can be recovered from path_array", {
     if(y$stop){
       x <- y
     } else {
-      x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+      x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
     }
   }
 
