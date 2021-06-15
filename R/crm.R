@@ -231,8 +231,8 @@ Crm <- R6Class("Crm",
                    method <- "bayes"
                    include <- seq_along(private$w)
                    pid <- include
-                   switch(impl,
-                          dfcrm = {
+                   switch(impl
+                         ,dfcrm = {
                             ans <-
                               dfcrm::crm(prior = exp(private$ln_skel), target = private$target,
                                          tox=(private$w==0), level=private$level,

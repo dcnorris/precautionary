@@ -10,3 +10,5 @@ R/sysdata.rda
 docs/
 pkgdown/
 *~
+/doc/
+/Meta/
