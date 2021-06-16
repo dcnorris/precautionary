@@ -34,7 +34,7 @@ library(latticeExtra)
 
 # Aims
 
-@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette demonstrates the fulfillment of that promise, in a demonstration of *complete path enumeration* (CPE) implemented efficiently for both the continual reassessment method (CRM) and the Bayesian Optimal INterval method (BOIN).
+@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette demonstrates the fulfillment of that promise, in a demonstration of *complete path enumeration* (CPE) implemented efficiently for the continual reassessment method (CRM).
 
 # Generalized exact simulation of dose escalation
 
@@ -75,13 +75,13 @@ where $\mathrm{Y} = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $\
 
 # Connection with DTP
 
-The DTP idea apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
+Dose transition pathways (DTP) seem to have been introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
 
 1. The "flexibility" of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.
 2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
 3. From the trialist's perspective, the 'black-box' recommendations of model-based designs "contrast unfavorably with the transparent, simple rules of a rule-based design."
 
-To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (say, $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs conceptually in its *global* reach (reflected in the 'CPE' moniker), and its intent to support *computation* over the paths as opposed to cursory inspection. Supporting this expansive concept has required significant programming effort; the implementation of CPE in package `precautionary` is hundreds of times faster than the DTP of package `dtpcrm` [@R-dtpcrm] on the VIOLA trial example below.
+To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (say, $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs conceptually in its *global* reach (reflected in the 'CPE' moniker), and in its intent to support *computation* over the paths as opposed to cursory inspection. Supporting this expansive concept has required significant programming effort; the implementation of CPE in package `precautionary` is hundreds of times faster than the DTP of package `dtpcrm` [@R-dtpcrm] on the VIOLA trial example below.
 
 # An application
 
