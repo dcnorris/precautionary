@@ -4,6 +4,7 @@
 
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![R-CMD-check](https://github.com/dcnorris/precautionary/workflows/R-CMD-check/badge.svg)](https://github.com/dcnorris/precautionary/actions)
 <!-- badges: end -->
 
 `precautionary` implements new layers of patient-centered safety analysis
