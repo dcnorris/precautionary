@@ -1,9 +1,9 @@
+name: pkgdown
+
 on:
   push:
     branches:
-      - none
-
-name: pkgdown
+      - main
 
 jobs:
   pkgdown:
