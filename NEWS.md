@@ -1,3 +1,14 @@
+# precautionary 0.2.4
+
+## Changes
+
+* Refined version numbering scheme to 0.<tranche>.<feature>-<patch>
+* Implemented CPE as R6 superclass 'Cpe'
+* Implemented Cumulative-Cohort Designs (CCDs) in 'Cpe' subclass 'Ccd'
+* Implemented BOIN design as 'Boin' subclass of 'Ccd'
+* Executable specification for CCD and BOIN in exec/prolog/
+* Demoted package dtpcrm from a 'Depends' to a 'Suggests'
+
 # precautionary 0.2-3
 
 ## Changes
