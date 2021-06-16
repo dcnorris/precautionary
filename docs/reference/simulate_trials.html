@@ -74,9 +74,6 @@ more realistic toxicity-distribution generators." />
 
 
 
-<!-- dependencies from examples -->
-
-
   
 
   
@@ -99,7 +96,7 @@ more realistic toxicity-distribution generators." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -128,7 +125,7 @@ more realistic toxicity-distribution generators." />
       <a href="../articles/MCSE-Free.html">MCSE-Free CRM Performance and Safety Assessment</a>
     </li>
     <li>
-      <a href="../articles/Safety-Schematic-via-DTP.html">Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)</a>
+      <a href="../articles/Safety-Schematic-via-CPE.html">Generalized dose-escalation safety schematics via Complete Path Enumeration (CPE)</a>
     </li>
   </ul>
 </li>
@@ -164,7 +161,7 @@ vectors of &#8216;true toxicity probabilities&#8217; are replaced by <code>preca
 more realistic toxicity-distribution generators.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>simulate_trials</span><span class='op'>(</span>
+    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>simulate_trials</span><span class='op'>(</span>
   <span class='va'>selector_factory</span>,
   <span class='va'>num_sims</span>,
   <span class='va'>true_prob_tox</span>,
@@ -215,7 +212,7 @@ more realistic toxicity-distribution generators.</p>
   <span class='va'>true_prob_tox</span>,
   true_prob_eff <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>...</span>
-<span class='op'>)</span></pre>
+<span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -251,7 +248,7 @@ to be invoked iteratively by <a href='extend.html'>extend</a> (with <code>num_si
 without the nuisance of nested progress bars.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='r-in'><span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>dose_levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>4</span>, <span class='fl'>6</span>, <span class='fl'>8</span><span class='op'>)</span><span class='op'>)</span></span>
+    <div class="ref-examples sourceCode"><pre class='sourceCode r'><code><span class='r-in'><span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>dose_levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>4</span>, <span class='fl'>6</span>, <span class='fl'>8</span><span class='op'>)</span><span class='op'>)</span></span>
 <span class='r-in'><span class='va'>mtdi_gen</span> <span class='op'>&lt;-</span> <span class='fu'><a href='hyper_mtdi_lognormal-class.html'>hyper_mtdi_lognormal</a></span><span class='op'>(</span>CV <span class='op'>=</span> <span class='fl'>1</span></span>
 <span class='r-in'>                                 , median_mtd <span class='op'>=</span> <span class='fl'>6</span>, median_sdlog <span class='op'>=</span> <span class='fl'>0.5</span></span>
 <span class='r-in'>                                 , units<span class='op'>=</span><span class='st'>"mg/kg"</span><span class='op'>)</span></span>
@@ -267,28 +264,28 @@ without the nuisance of nested progress bars.</p>
 <span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>hsims</span>, ordinalizer<span class='op'>=</span><span class='cn'>NULL</span><span class='op'>)</span> <span class='co'># vanilla summary with binary toxicity</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># A tibble: 7 x 7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494;font-style: italic;'>&lt;ord&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>         </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span><span> NoDose            0   0       0               0         0               0     </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span><span> 1                 0.5 0       3.2             0         0.066</span><span style='text-decoration: underline;'>7</span><span>          0.178 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span><span> 2                 1   0.4     4.2             0         0.2             0.233 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span><span> 3                 2   0.8     4.2             0         0.333           0.233 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span><span> 4                 4   0.8     3.2             0         0.133           0.178 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span><span> 5                 6   0.467   2               0         0.2             0.111 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span><span> 6                 8   0.4     1.2             0         0.066</span><span style='text-decoration: underline;'>7</span><span>          0.066</span><span style='text-decoration: underline;'>7</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span> NoDose            0   0       0               0         0               0     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span> 1                 0.5 0       3.2             0         0.066<span style='text-decoration: underline;'>7</span>          0.178 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span> 2                 1   0.4     4.2             0         0.2             0.233 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span> 3                 2   0.8     4.2             0         0.333           0.233 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span> 4                 4   0.8     3.2             0         0.133           0.178 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span> 5                 6   0.467   2               0         0.2             0.111 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span> 6                 8   0.4     1.2             0         0.066<span style='text-decoration: underline;'>7</span>          0.066<span style='text-decoration: underline;'>7</span></span>
 <span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>hsims</span>, ordinalizer <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>dose</span>, <span class='va'>r0</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span></span>
 <span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='va'>dose</span><span class='op'>/</span><span class='va'>r0</span><span class='op'>^</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='va'>dose</span><span class='op'>/</span><span class='va'>r0</span>, Gr3<span class='op'>=</span><span class='va'>dose</span>, Gr4<span class='op'>=</span><span class='va'>dose</span><span class='op'>*</span><span class='va'>r0</span>, Gr5<span class='op'>=</span><span class='va'>dose</span><span class='op'>*</span><span class='va'>r0</span><span class='op'>^</span><span class='fl'>2</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>)</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $escalation</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># A tibble: 7 x 7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494;font-style: italic;'>&lt;ord&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>         </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span><span> NoDose            0   0       0               0         0               0     </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span><span> 1                 0.5 0       3.2             0         0.066</span><span style='text-decoration: underline;'>7</span><span>          0.178 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span><span> 2                 1   0.4     4.2             0         0.2             0.233 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span><span> 3                 2   0.8     4.2             0         0.333           0.233 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span><span> 4                 4   0.8     3.2             0         0.133           0.178 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span><span> 5                 6   0.467   2               0         0.2             0.111 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span><span> 6                 8   0.4     1.2             0         0.066</span><span style='text-decoration: underline;'>7</span><span>          0.066</span><span style='text-decoration: underline;'>7</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span> NoDose            0   0       0               0         0               0     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span> 1                 0.5 0       3.2             0         0.066<span style='text-decoration: underline;'>7</span>          0.178 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span> 2                 1   0.4     4.2             0         0.2             0.233 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span> 3                 2   0.8     4.2             0         0.333           0.233 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span> 4                 4   0.8     3.2             0         0.133           0.178 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span> 5                 6   0.467   2               0         0.2             0.111 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span> 6                 8   0.4     1.2             0         0.066<span style='text-decoration: underline;'>7</span>          0.066<span style='text-decoration: underline;'>7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $safety</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
@@ -338,14 +335,14 @@ without the nuisance of nested progress bars.</p>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $escalation</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># A tibble: 7 x 7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494;font-style: italic;'>&lt;ord&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>         </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span><span> NoDose            0    0     0                0           0             0     </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span><span> 1                 0.5  0     3                0           0             0.125 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span><span> 2                 1    0     0                0           0             0     </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span><span> 3                 2    0.25  2.25             0           0             0.093</span><span style='text-decoration: underline;'>8</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span><span> 4                 4    0.5   3.75             0           0.5           0.156 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span><span> 5                 6    2.25  8.25             0           0.25          0.344 </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span><span> 6                 8    2.25  6.75             0           0.25          0.281 </span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span> NoDose            0    0     0                0           0             0     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span> 1                 0.5  0     3                0           0             0.125 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span> 2                 1    0     0                0           0             0     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span> 3                 2    0.25  2.25             0           0             0.093<span style='text-decoration: underline;'>8</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span> 4                 4    0.5   3.75             0           0.5           0.156 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span> 5                 6    2.25  8.25             0           0.25          0.344 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span> 6                 8    2.25  6.75             0           0.25          0.281 </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $safety</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
@@ -380,14 +377,14 @@ without the nuisance of nested progress bars.</p>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $escalation</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># A tibble: 7 x 7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   dose   `dose (ng/kg/week)`   tox     n true_prob_tox prob_recommend</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494;font-style: italic;'>&lt;ord&gt;</span><span>                </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>         </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span><span> NoDose                   0   0     0        0   </span><span style='color: #949494;'> </span><span>               0  </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span><span> 1                        2   0     3        1.19</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>-19</span><span>            0  </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span><span> 2                        6   0     3        1.30</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>-11</span><span>            0  </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span><span> 3                       20   0     3        1.90</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 5</span><span>            0.1</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span><span> 4                       60   0.4   3.9      3.64</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 2</span><span>            0.9</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span><span> 5                      180   2.7   3.3      7.03</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span><span>            0  </span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span><span> 6                      400   0     0        9.87</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span><span>            0  </span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>                <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span> NoDose                   0   0     0        0   <span style='color: #949494;'> </span>               0  </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span> 1                        2   0     3        1.19<span style='color: #949494;'>e</span><span style='color: #BB0000;'>-19</span>            0  </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span> 2                        6   0     3        1.30<span style='color: #949494;'>e</span><span style='color: #BB0000;'>-11</span>            0  </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span> 3                       20   0     3        1.90<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 5</span>            0.1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span> 4                       60   0.4   3.9      3.64<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 2</span>            0.9</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span> 5                      180   2.7   3.3      7.03<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span>            0  </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span> 6                      400   0     0        9.87<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span>            0  </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># … with 1 more variable: prob_administer &lt;dbl&gt;</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $safety</span>
@@ -423,14 +420,14 @@ without the nuisance of nested progress bars.</p>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $escalation</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># A tibble: 7 x 7</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>   dose   `dose (ng/kg/week)`   tox     n true_prob_tox prob_recommend</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494;font-style: italic;'>&lt;ord&gt;</span><span>                </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>         </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>          </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span><span> NoDose                   0  0     0         0   </span><span style='color: #949494;'> </span><span>                 0</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span><span> 1                        2  0     3         1.19</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>-19</span><span>              0</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span><span> 2                        6  0     0         1.30</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>-11</span><span>              0</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span><span> 3                       20  0     0         1.90</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 5</span><span>              0</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span><span> 4                       60  0.85 18.8       3.64</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 2</span><span>              1</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span><span> 5                      180  1.7   2.25      7.03</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span><span>              0</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span><span> 6                      400  0     0         9.87</span><span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span><span>              0</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>                <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>1</span> NoDose                   0  0     0         0   <span style='color: #949494;'> </span>                 0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>2</span> 1                        2  0     3         1.19<span style='color: #949494;'>e</span><span style='color: #BB0000;'>-19</span>              0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>3</span> 2                        6  0     0         1.30<span style='color: #949494;'>e</span><span style='color: #BB0000;'>-11</span>              0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>4</span> 3                       20  0     0         1.90<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 5</span>              0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>5</span> 4                       60  0.85 18.8       3.64<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 2</span>              1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>6</span> 5                      180  1.7   2.25      7.03<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span>              0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #BCBCBC;'>7</span> 6                      400  0     0         9.87<span style='color: #949494;'>e</span><span style='color: #BB0000;'>- 1</span>              0</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> <span style='color: #949494;'># … with 1 more variable: prob_administer &lt;dbl&gt;</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> $safety</span>
@@ -515,7 +512,7 @@ without the nuisance of nested progress bars.</p>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> Expected participants 0.92689126 18.3818204</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> MCSE                  0.06611548  0.3381676</span>
 <span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span><span class='va'>old</span><span class='op'>)</span></span>
-</pre>
+</code></pre></div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

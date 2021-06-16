@@ -73,9 +73,6 @@ latent toxicity tolerance u_i for each individual participant." />
 
 
 
-<!-- dependencies from examples -->
-
-
   
 
   
@@ -98,7 +95,7 @@ latent toxicity tolerance u_i for each individual participant." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -127,7 +124,7 @@ latent toxicity tolerance u_i for each individual participant." />
       <a href="../articles/MCSE-Free.html">MCSE-Free CRM Performance and Safety Assessment</a>
     </li>
     <li>
-      <a href="../articles/Safety-Schematic-via-DTP.html">Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)</a>
+      <a href="../articles/Safety-Schematic-via-CPE.html">Generalized dose-escalation safety schematics via Complete Path Enumeration (CPE)</a>
     </li>
   </ul>
 </li>
@@ -162,7 +159,7 @@ of individuality, this override adds an extra line of code to draw as well a
 latent toxicity tolerance <code>u_i</code> for each individual participant.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>cohorts_of_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>3</span>, mean_time_delta <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
+    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>cohorts_of_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>3</span>, mean_time_delta <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -189,7 +186,7 @@ and arrival-time increment for each trial participant.</p>
 minute changes in order to incorporate <code>u_i</code>.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='r-in'><span class='fu'>cohorts_of_n</span><span class='op'>(</span><span class='op'>)</span></span>
+    <div class="ref-examples sourceCode"><pre class='sourceCode r'><code><span class='r-in'><span class='fu'>cohorts_of_n</span><span class='op'>(</span><span class='op'>)</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span>          u_i time_delta</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 1 0.08075014        1.6</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 2 0.83433304        5.2</span>
@@ -206,7 +203,7 @@ minute changes in order to incorporate <code>u_i</code>.</p></div>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 8  0.19566983        2.1</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 9  0.40353812        0.6</span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 10 0.06366146        1.8</span>
-</pre>
+</code></pre></div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

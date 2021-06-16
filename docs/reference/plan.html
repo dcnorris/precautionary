@@ -70,7 +70,6 @@
 
 
 
-
   
 
   
@@ -93,7 +92,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -122,7 +121,7 @@
       <a href="../articles/MCSE-Free.html">MCSE-Free CRM Performance and Safety Assessment</a>
     </li>
     <li>
-      <a href="../articles/Safety-Schematic-via-DTP.html">Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)</a>
+      <a href="../articles/Safety-Schematic-via-CPE.html">Generalized dose-escalation safety schematics via Complete Path Enumeration (CPE)</a>
     </li>
   </ul>
 </li>
@@ -156,27 +155,37 @@
 
 
 
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2-3</h2>
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.4</h2>
 
     
 
 <ul>
-<li><p>Efficient parallelization of Crm$trace_paths</p><ul>
-<li><p>Start longest (usu., least toxic?) paths first</p></li>
-<li><p>Ensure adequate unrolling depth</p><ul>
-<li><p>Could this be <em>adaptive</em>?</p></li>
+<li><p>Enumerate BOIN designs</p></li>
+<li><p>BOIN recs via isotonic regression</p></li>
+<li><p>Buff up MCSE-Free vignette</p><ul>
+<li><p>Cite Ivanova 2007</p></li>
 </ul></li>
+<li><p>Implement logistic model</p></li>
+<li><p>Demote <span class="pkg">dtpcrm</span> to 'Suggests'</p><ul>
+<li><p>Note that I employ some aspects of dtpcrm's 'wrapper'
+around the CRM functionality, which introduces ideas
+such as 'stop_for_consensus'.</p></li>
+<li><p>Some of these concepts are better derived from the
+deep analysis emerging from the Prolog coding.</p></li>
+<li><p>But wherever such concepts do remain in this version,
+they should be acknowledged, e.g. in @seealso notes.</p></li>
+<li><p>The 'demotion' of dtpcrm should also be evident in the
+vignette, where 'CPE' should come to the fore, and 'DTP'
+relegated to the footnotes.</p></li>
 </ul></li>
-<li><p>Complete MCSE-Free vignette</p></li>
 </ul>
 
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2-4</h2>
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.5</h2>
 
     
 
 <ul>
-<li><p>Restore Windows build</p></li>
-<li><p>Implement logistic model</p></li>
+<li><p>Convert EscRisk to MCSE-free CPE</p></li>
 <li><p>Implement TITE CRM?</p><ul>
 <li><p>Is TITE even amenable to path enumeration?</p></li>
 <li><p>If not, there may be little sense in implementing it here!</p></li>
@@ -187,22 +196,16 @@ for enumerable designs in context.</p></li>
 </ul></li>
 </ul>
 
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2-5</h2>
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.6</h2>
 
     
 
 <ul>
-<li><p>Enumerate BOIN designs</p></li>
-<li><p>Convert EscRisk to MCSE-free CPE</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2-6</h2>
-
-    
-
-<ul>
-<li><p>Progress bar for long runs</p></li>
-<li><p>Eliminate dependence on <span class="pkg">dtpcrm</span></p></li>
+<li><p>Progress bar for long CPE runs</p><ul>
+<li><p>Note that this is an opportunity/inducement to analyze the
+parallelism of CPE, and find principles for anticipating
+CPE problem size.</p></li>
+</ul></li>
 </ul>
 
     <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.3</h2>
@@ -217,12 +220,12 @@ for enumerable designs in context.</p></li>
 <li><p>Stop exposing the <code>impl</code> parameter</p></li>
 </ul>
 
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.3-1</h2>
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.3.1</h2>
 
     
 
 <ul>
-<li><p>Native Rust DTP</p></li>
+<li><p>Native Rust CPE</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="dependencies"><a class="anchor" href="#dependencies"></a>Dependencies</h2>

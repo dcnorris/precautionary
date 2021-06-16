@@ -69,7 +69,6 @@
 
 
 
-
   
 
   
@@ -92,7 +91,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3-1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4</span>
       </span>
     </div>
 
@@ -121,7 +120,7 @@
       <a href="../articles/MCSE-Free.html">MCSE-Free CRM Performance and Safety Assessment</a>
     </li>
     <li>
-      <a href="../articles/Safety-Schematic-via-DTP.html">Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)</a>
+      <a href="../articles/Safety-Schematic-via-CPE.html">Generalized dose-escalation safety schematics via Complete Path Enumeration (CPE)</a>
     </li>
   </ul>
 </li>
@@ -170,18 +169,30 @@
       <tr>
         
         <td>
+          <p><code><a href="Boin-class.html">Boin-class</a></code> </p>
+        </td>
+        <td><p>The BOIN design as a Cumulative-Cohort Design (CCD) subclass</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Ccd-class.html">Ccd-class</a></code> </p>
+        </td>
+        <td><p>An R6 class encapsulating Cumulative-Cohort Designs</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Cpe-class.html">Cpe-class</a></code> </p>
+        </td>
+        <td><p>An R6 base class for designs requiring Complete Path Enumeration</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="Crm-class.html">Crm-class</a></code> </p>
         </td>
         <td><p>An R6 class encapsulating CRM models
 
 This class wraps the functionality of package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>, adding
 efficient Rust implementations of some numerical routines.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="applied_crm.html">applied_crm()</a></code> </p>
-        </td>
-        <td><p>Execute CRM</p></td>
       </tr><tr>
         
         <td>
@@ -194,12 +205,6 @@ efficient Rust implementations of some numerical routines.</p></td>
           <p><code><a href="as.data.table.precautionary.html">as.data.table(<i>&lt;precautionary&gt;</i>)</a></code> </p>
         </td>
         <td><p>Convert an object of class c('precautionary','simulations') to a data.table</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="calculate_dtps.html">calculate_dtps()</a></code> </p>
-        </td>
-        <td><p>Faster Dose Transition Pathways (DTP) calculation</p></td>
       </tr><tr>
         
         <td>
