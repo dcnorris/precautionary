@@ -12,3 +12,5 @@ pkgdown/
 *~
 /doc/
 /Meta/
+.ediprolog-temp
+Rprof.out
