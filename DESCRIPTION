@@ -40,7 +40,7 @@ Description: Enhances various R packages that support the design and simulation
              trial" <arXiv:2004.12755> and (2020c) "What Were They Thinking?
              Pharmacologic priors implicit in a choice of 3+3 dose-escalation design"
              <arXiv:2012.05301>.
-URL: https://precisionmethods.guru/
+URL: https://github.com/dcnorris/precautionary
 License: MIT + file LICENSE
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
@@ -64,3 +64,4 @@ Collate:
 LazyData: true
 ByteCompile: true
 Config/testthat/edition: 3
+BugReports: https://github.com/dcnorris/precautionary/issues
