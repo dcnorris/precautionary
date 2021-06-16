@@ -73,15 +73,19 @@ NULL
 
 #' Plan
 #'
-#' @section Version 0.2-3:
-#' * Efficient parallelization of Crm$trace_paths
-#'   - Start longest (usu., least toxic?) paths first
-#'   - Ensure adequate unrolling depth
-#'     * Could this be *adaptive*?
-#' * Complete MCSE-Free vignette
+#' @section Version 0.2.4-1:
+#' * BOIN recs via isotonic regression
 #'
-#' @section Version 0.2-4:
-#' * Restore Windows build
+#' @section Version 0.2.5:
+#' * Convert EscRisk to MCSE-free CPE
+#'
+#' @section Version 0.2.6:
+#' * Progress bar for long CPE runs
+#'   - Note that this is an opportunity/inducement to analyze the
+#'     parallelism of CPE, and find principles for anticipating
+#'     CPE problem size.
+#'
+#' @section Version 0.2.7:
 #' * Implement logistic model
 #' * Implement TITE CRM?
 #'   - Is TITE even amenable to path enumeration?
@@ -91,22 +95,14 @@ NULL
 #'   - OTOH, implementing TITE would help place the numerics
 #'     for enumerable designs in context.
 #'
-#' @section Version 0.2-5:
-#' * Enumerate BOIN designs
-#' * Convert EscRisk to MCSE-free CPE
-#'
-#' @section Version 0.2-6:
-#' * Progress bar for long runs
-#' * Eliminate dependence on \pkg{dtpcrm}
-#'
-#' @section Version 0.3:
+#' @section Version 0.3.0:
 #' * Demote \pkg{escalation} to a 'Suggests'
 #' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 #'   - Ideally 100% sim-free via integration over the hyperprior!
 #' * Stop exposing the \code{impl} parameter
 #'
-#' @section Version 0.3-1:
-#' * Native Rust DTP
+#' @section Version 0.3.1:
+#' * Native Rust CPE
 #'
 #' @section Dependencies:
 #' * Eliminate dependence on/adherence to dtpcrm layout

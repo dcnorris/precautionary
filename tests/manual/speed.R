@@ -359,7 +359,7 @@ compare_dtp_functions <- function(cache=TRUE, impl='rusti', mc.cores=1) {
   if (!cache) crmB$dontcache()
 
   Rprof()
-  B <- crmB$paths(root_dose = 3,
+  B <- crmB$trace_paths(root_dose = 3,
                   cohort_sizes = rep(3, 7),
                   impl = impl)
   Rprof(NULL)

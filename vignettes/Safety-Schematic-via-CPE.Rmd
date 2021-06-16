@@ -1,13 +1,13 @@
 ---
-title: "Generalized dose-escalation safety schematics via Dose Transition Pathways (DTP)"
+title: "Generalized dose-escalation safety schematics via Complete Path Enumeration (CPE)"
 author: "David C. Norris"
-date: "1/12/2021; revised 4/02/2021"
+date: "1/12/2021; revised 4/02/2021; revised again 6/14/2021"
 output:
   bookdown::tufte_html2:
     highlight: pygments
 vignette: <
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Universal safety schematics via DTP}
+  %\VignetteIndexEntry{Universal safety schematics via CPE}
   \usepackage[utf8]{inputenc}
 bibliography:
   - precautionary-package.bib
@@ -29,27 +29,12 @@ library(precautionary)
 library(knitr)
 library(kableExtra)
 library(dplyr)
-library(dtpcrm)
 library(latticeExtra)
-
-options(ordinalizer = NULL) # vignette presumes this is not already set
-
-# Echo source focused on package functionality by redacting calls to kable()
-# see https://bookdown.org/yihui/rmarkdown-cookbook/hook-hide.html:
-local({
-  hook_source <- knitr::knit_hooks$get('source')
-  knitr::knit_hooks$set(source = function(x, options) {
-    x <- gsub(" -> etc.", "", x)
-    x <- x[!grepl("^etc. %>%", x)] # strip lines starting "etc. %>% ..."
-    x <- x[!grepl("\\(etc.,", x)]  # strip lines with fun(etc., ...)
-    hook_source(x, options)
-  })
-})
 ```
 
 # Aims
 
-@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette explores that conjecture in relation to the continual reassessment method (CRM), using the `dtpcrm` package [@R-dtpcrm].
+@norris_what_2020 proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the *dose transition pathways* (DTP) of @yap_dose_2017 would enable a similar treatment of model-based designs. This vignette demonstrates the fulfillment of that promise, in a demonstration of *complete path enumeration* (CPE) implemented efficiently for the continual reassessment method (CRM).
 
 # Generalized exact simulation of dose escalation
 
@@ -57,7 +42,7 @@ Dose-escalation trial designs commonly operate with a fixed set of $D$ prespecif
 
 In @norris_what_2020, for example, paths through the 3+3 design could be represented as $2 \times D$ matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices $T_{c,d}^j$ was independent of the 3+3 rules, however, and carries forward generally:
 
-Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is easily applied by using `NA` to represent '$-$', and performing aggregate operations with option `na.rm=TRUE`.]
+Denoting the prespecified doses by $(X_d)$ and the cumulative distribution function of $\MTDi$ by $P$, we can write the vector $(\pi^j)$ of path probabilities:^[Products or sums over $c$ or pairs $(c,d)$ are understood to be taken over the *non-empty* cohorts thus indexed. In R, this convention is easily applied by using `NA` to represent '$-$' , and performing aggregate operations with option `na.rm=TRUE`.]
 
 $$
 \begin{align}
@@ -70,7 +55,7 @@ $$
 Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
 
 $$
-\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + U\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + \mathrm{U}\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
 $$
 where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the given dose-escalation design.
 
@@ -86,17 +71,17 @@ $$
 \boldsymbol{\pi}^\intercal \mathrm{Y} \mathbf{f},  (\#eq:fatalities)
 $$
 
-where $Y = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $U$.
+where $\mathrm{Y} = \sum_c T_{c,d}^j$ denotes the $(J \times D)$ left half of $\mathrm{U}$.
 
 # Connection with DTP
 
-The DTP idea apparently was introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
+Dose transition pathways (DTP) seem to have been introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, @yap_dose_2017 cites 3 specific "perceived challenges" in making the transition from rule-based to model-based designs:
 
 1. The "flexibility" of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.
 2. Benefits of model-based designs are likewise not apparent to clinical investigators, against the background of "rule-based designs perceived to be 'successful' for decades".
 3. From the trialist's perspective, the 'black-box' recommendations of model-based designs "contrast unfavorably with the transparent, simple rules of a rule-based design."
 
-To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (e.g., $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs only in its *global* reach, and its intent to support *computation* over the paths as opposed to cursory inspection.
+To meet these challenges, DTP effectively transforms a model-based design into a rule-based design *locally* --- so that its immediate operation several steps ahead can be 'eyeballed' by trialists as a small set of (say, $4^4 = 64$) distinct paths. The exhaustive enumeration employed here as in @norris_what_2020 differs conceptually in its *global* reach (reflected in the 'CPE' moniker), and in its intent to support *computation* over the paths as opposed to cursory inspection. Supporting this expansive concept has required significant programming effort; the implementation of CPE in package `precautionary` is hundreds of times faster than the DTP of package `dtpcrm` [@R-dtpcrm] on the VIOLA trial example below.
 
 # An application
 
@@ -134,14 +119,14 @@ stop_func <- function(x) {
   if(y$stop){
     x <- y
   } else {
-    x <- stop_for_consensus_reached(x, req_at_mtd = 12)
+    x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = 12)
   }
 }
 ```
 
-## Computing DTPs
+## Complete Path Enumeration (CPE)
 
-```{r compute-dtp}
+```{r compute-cpe, cache=FALSE}
 t0 <- proc.time()
 crm <- Crm$new(skeleton = prior.DLT,
                scale = sqrt(prior.var),
@@ -151,42 +136,19 @@ crm <- Crm$new(skeleton = prior.DLT,
   no_skip_deesc(FALSE)$
   global_coherent_esc(TRUE)
 
-viola_dtp <- calculate_dtps(
-  next_dose = start.dose.level,
-  cohort_sizes = rep(3, 7),
-  dose_func = crm$applied,
-  impl = 'rusti')
 
-proc.time() - t0 # used to take ~17 minutes on a 2.6GHz Quad Core i7
+crm$trace_paths(
+      root_dose = start.dose.level,
+      cohort_sizes = rep(3, 7),
+      impl = 'rusti')
+
+proc.time() - t0 # ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1
 ```
 
-With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation lists a total of $4^7 = 16384$ paths. These are not all distinct paths, however, since early stopping results in path degeneracy.^[Indeed, the underlying calculations exhbit an even more re remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class `Crm` introduced in version 0.2-2 of `precautionary`.] For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
-```{r degenerates}
-knitr::kable(viola_dtp[1000:1010,])
-```
-
-Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of ```r round(nrow(viola_dtp)/nrow(unique(viola_dtp)), 1)```:
-```{r degeneracy}
-viola_paths <- as.matrix(unique(viola_dtp))
-nrow(viola_paths)
-```
-
-To distinguish it from the degenerate DTP table returned by `dtpcrm::calculate_dtps`, we will refer to `viola_paths` as the DTP *matrix*.
-
-# Computing $\mathbf{b}$ and $\mathrm{U}$ from the DTP matrix
-
-## Transform DTP table into $T_{c,d}^j$
+This yields all elements of the matrix formalism laid out in equations \@ref(eq:pi)--\@ref(eq:fatalities) above:^[Those interested in implementation details may examine the abstract R6 superclass `Cpe` from which class `Crm` is derived.]
 
 ```{r T-constructed}
-I <- outer(viola_paths[,paste0("D",0:6)], 1:7, FUN = "==")
-I[I] <- 1
-I[!I] <- NA
-# Now I[j,c,d] is an indicator array that we may use
-# in the manner of a bitmask, to select the toxicities
-# into their proper positions within T[j,c,d]:
-T <- I * outer(viola_paths[,paste0("T",1:7)], rep(1,7))
-dimnames(T)[[2]] <- paste0("C",1:7) # best labeled as Cohorts
-dimnames(T)[[3]] <- paste0("X",1:7) # label as doses X1..X7
+T <- crm$path_array()
 dim(T)
 ```
 
@@ -215,6 +177,26 @@ log_pi <- b + U %*% c(log_p, log_q)
 sum(exp(log_pi)) # check probabilities sum to 1
 ```
 
+## Comparison with the DTP formulation
+
+With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation of `dtpcrm` lists a total of $4^7 = 16384$ paths. These are not all distinct paths, however, since early stopping results in path degeneracy.^[Indeed, the underlying calculations exhibit an even more remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class `Cpe` of `precautionary`.] For example, we can see that paths 1005--1008 all terminate at the 6th cohort, resulting in a $4\times$ degeneracy:
+```{r degenerates}
+data(viola_dtp) # as originally generated by 'dtpcrm:calculate_dtps'
+knitr::kable(viola_dtp[1000:1010,])
+```
+
+Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of ```r round(nrow(viola_dtp)/nrow(unique(viola_dtp)), 1)```:
+```{r degeneracy}
+viola_paths <- as.matrix(unique(viola_dtp))
+dim(viola_paths)
+```
+
+ To distinguish it from the degenerate DTP table returned by `dtpcrm::calculate_dtps`, we will refer to the unique listing as the *path matrix*. Note that in `precautionary` this is available straightaway from the `Crm` object `crm` after having invoked `$trace_paths` on it above:
+
+```{r straightaway}
+pmx <- crm$path_matrix()
+dim(pmx)
+```
 
 # Fitting a lognormal $\MTDi$ to VIOLA's CRM skeleton
 

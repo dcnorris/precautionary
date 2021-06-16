@@ -1,4 +1,4 @@
-LIBDIR = rust/target/release
+LIBDIR = ./rust/target/release
 STATLIB = $(LIBDIR)/libprecautionary.a
 PKG_LIBS = -L$(LIBDIR) -lprecautionary
 
@@ -7,7 +7,7 @@ all: C_clean
 $(SHLIB): $(STATLIB)
 
 $(STATLIB):
-	"${R_HOME}/bin${R_ARCH_BIN}/Rscript" ../tools/staticlib.R
+	cargo build --lib --release --manifest-path=./rust/Cargo.toml
 
 C_clean:
 	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS)

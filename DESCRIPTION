@@ -1,8 +1,8 @@
 Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
-Version: 0.2.3-1
-Date: 2021-05-12
+Version: 0.2.4
+Date: 2021-06-14
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -17,18 +17,21 @@ Maintainer: David C. Norris <david@precisionmethods.guru>
 Depends: 
     magrittr,
     escalation,
-    dtpcrm,
     data.table,
     R6,
     R (>= 3.5.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
 Suggests: 
+    dtpcrm,
     rmarkdown,
     bookdown,
     tufte,
     testthat,
     lattice,
     latticeExtra,
+    shiny,
+    shinyjs,
+    shinyFeedback
 Description: Enhances various R packages that support the design and simulation
              of phase 1 dose-escalation trials, adding diagnostics to examine
              the safety characteristics of these designs in light of expected
@@ -41,14 +44,14 @@ URL: https://precisionmethods.guru/
 License: MIT + file LICENSE
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
-LinkingTo: cargo (>= 0.1.28)
-SystemRequirements: Cargo (>= 1.42.0) for installation from sources:
-        see file INSTALL
 Encoding: UTF-8
 NeedsCompilation: yes
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
+    'boin.R'
+    'ccd.R'
+    'cpe.R'
     'crm.R'
     'data.R'
     'dtp.R'

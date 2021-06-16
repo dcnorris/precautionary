@@ -8,3 +8,13 @@ doc
 Meta
 R/sysdata.rda
 pkgdown/favicon
+.DS_Store
+.Rdata
+.Rhistory
+docs/
+pkgdown/
+*~
+/doc/
+/Meta/
+.ediprolog-temp
+Rprof.out
