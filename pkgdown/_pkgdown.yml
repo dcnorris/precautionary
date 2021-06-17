@@ -5,6 +5,9 @@ home:
     oncology dose-escalation trials, accounting
     for inter-individual variation in PKPD.
 
+development:
+  mode: unreleased
+
 url: https://dcnorris.github.io/precautionary/
 
 template:

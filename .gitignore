@@ -11,6 +11,8 @@ pkgdown/favicon
 .Rdata
 .Rhistory
 pkgdown/
+# I believe pkgdown::build_site() errs in copying logo.svg to this 'png'
+docs/package-logo.png
 *~
 /doc/
 /Meta/
