@@ -81,7 +81,14 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/dcnorris/precautionary/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -100,7 +107,7 @@
             
             <h4 data-toc-skip class="date">9/20/2020</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/master/vignettes/FDA-proactive.Rmd" class="external-link"><code>vignettes/FDA-proactive.Rmd</code></a></small>
       <div class="hidden name"><code>FDA-proactive.Rmd</code></div>
 
     </div>
@@ -118,7 +125,7 @@
 <a href="#mapping-the-trial-to-the-precautionary-package" class="anchor" aria-hidden="true"></a>Mapping the trial to the <code>precautionary</code> package</h1>
 <p>AFM11-102 used two modifications that do not map readily to designs implemented in the <code>escalation</code> package on which <code>precautionary</code> is based. Firstly, whereas the design specified an initial ‘accelerated titration’ phase <span class="citation">(Simon et al. 1997)</span>, we will simply simulate a standard ‘3+3’ design.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Secondly, the trial employed step-up dosing such that patients initiated treatment at 1/3 of their cohort’s target dose, stepping up to the full dose after 1 week. Whereas the abovementioned Bayesian model exploited the extra information available from this step-up protocol, we will for present purposes regard each cohort as characterized simply by its target dose:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://precisionmethods.guru/" class="external-link">precautionary</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dcnorris/precautionary" class="external-link">precautionary</a></span><span class="op">)</span>
 <span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html" class="external-link">get_three_plus_three</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>dose_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">6</span>, <span class="fl">20</span>, <span class="fl">60</span>, <span class="fl">180</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="co"># ng/kg/week</span></code></pre></div>
 <p>As in <span class="citation">Norris (2020)</span>, we suppose <span class="math inline">\(\mathrm{MTD}_i\)</span> is lognormally distributed, with a coefficient of variation (CV) of 1/2, and a median centered at the next-to-highest dose of 180 ng/kg/week. We allow for a ±60% uncertainty in this median.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>

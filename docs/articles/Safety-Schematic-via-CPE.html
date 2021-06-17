@@ -81,7 +81,14 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/dcnorris/precautionary/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -99,7 +106,7 @@
             
             <h4 data-toc-skip class="date">1/12/2021; revised 4/02/2021; revised again 6/14/2021</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/master/vignettes/Safety-Schematic-via-CPE.Rmd" class="external-link"><code>vignettes/Safety-Schematic-via-CPE.Rmd</code></a></small>
       <div class="hidden name"><code>Safety-Schematic-via-CPE.Rmd</code></div>
 
     </div>
@@ -215,7 +222,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   2.938   0.289   1.759</code></pre>
+##   2.974   0.279   1.791</code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>
@@ -1046,7 +1053,7 @@ Yap, Christina, Daniel Slade, Kristian Brock, and Yi Pan. 2019. <em>Dtpcrm: Dose
 <li id="fn2"><p>Products or sums over <span class="math inline">\(c\)</span> or pairs <span class="math inline">\((c,d)\)</span> are understood to be taken over the <em>non-empty</em> cohorts thus indexed. In R, this convention is easily applied by using <code>NA</code> to represent ‘<span class="math inline">\(-\)</span>’ , and performing aggregate operations with option <code>na.rm=TRUE</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>See Table 1 in <span class="citation">Craddock et al. (2019)</span>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Those interested in implementation details may examine the abstract R6 superclass <code>Cpe</code> from which class <code>Crm</code> is derived.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
-<li id="fn5"><p>Indeed, the underlying calculations exhibit an even more remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class <code>Cpe</code> of <code>precautionary</code>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Indeed, the underlying calculations exhibit an even more remarkable degree of degeneracy, which is exploited through memoization implemented in R6 class <code>Crm</code> of <code>precautionary</code>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 <li id="fn6"><p>For a related perspective on interpretational issues, see <span class="citation">Norris (2020a)</span>.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 <li id="fn7"><p>See also <a href="https://en.wikipedia.org/wiki/Gustafson%27s_law" class="external-link uri">https://en.wikipedia.org/wiki/Gustafson%27s_law</a>.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 </ol>
