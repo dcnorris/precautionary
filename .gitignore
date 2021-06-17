@@ -10,7 +10,6 @@ pkgdown/favicon
 .DS_Store
 .Rdata
 .Rhistory
-docs/
 pkgdown/
 *~
 /doc/
