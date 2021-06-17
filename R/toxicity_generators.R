@@ -30,13 +30,13 @@ setClass("mtdi_distribution",
 
 setGeneric("plot")
 
-#' Visualize n samples from an \code{mtdi_generator} object
+#' Visualize n samples from an `mtdi_generator` object
 #'
-#' @param x An \code{mtdi_generator} object
+#' @param x An `mtdi_generator` object
 #' @param y Included for compatibility with generic signature
 #' @param n Number of samples to draw from hyperprior for visualization
 #' @param col Color of lines used to depict samples
-#' @param \dots Additional arguments passed onward to \code{plot}
+#' @param \dots Additional arguments passed onward to `plot`
 #'
 #' @importFrom graphics abline axis lines mtext par plot.default
 #' @examples
@@ -87,11 +87,11 @@ setMethod("plot", "mtdi_generator", function(x, y=NULL, n=20, col="gray", ...) {
   par(oldpar)
 })
 
-#' Visualize an \code{mtdi_distribution} object
+#' Visualize an `mtdi_distribution` object
 #'
-#' @param x An \code{mtdi_distribution} object 
+#' @param x An `mtdi_distribution` object 
 #' @param y Included for compatibility with generic signature
-#' @param \dots Additional arguments passed onward to \code{plot}
+#' @param \dots Additional arguments passed onward to `plot`
 #'
 #' @importFrom graphics axis lines mtext par plot.default
 #' @examples 
@@ -143,8 +143,8 @@ setMethod("plot", "mtdi_distribution", function(x, y=NULL, ...) {
 
 #' A lognormal MTDi distribution
 #' 
-#' @slot dist A list with \code{cdf}, \code{quantile} and \code{name} components
-#'  intended to provide that portion of the interface of \code{distr6::Lognormal}.
+#' @slot dist A list with `cdf`, `quantile` and `name` components
+#'  intended to provide that portion of the interface of `distr6::Lognormal`.
 #'
 #' @export mtdi_lognormal
 mtdi_lognormal <- setClass("mtdi_lognormal",
@@ -185,17 +185,17 @@ setGeneric("draw_samples", function(hyper, n, ...) {
 #' Because the standard deviation of this distribution is
 #'  \deqn{sd = \sigma \sqrt{(2 - \pi/2)} \approx 0.655 \sigma,}{%
 #'        sd = \sigma \sqrt(2 - \pi/2) ~ 0.655 \sigma,}
-#' this conveniently links our uncertainty about \code{CV} to its \emph{mode},
+#' this conveniently links our uncertainty about `CV` to its *mode*,
 #' and indeed to other measures of centrality that are proportional to this:
 #'  \deqn{mean = \sigma \sqrt{\pi/2} \approx 1.25 \sigma}{%
 #'        mean = \sigma \sqrt(\pi/2) ~ 1.25 \sigma}
 #'        
 #'  \deqn{median = \sigma \sqrt{2 log(2)} \approx 1.18 \sigma.}{%
 #'        median = \sigma \sqrt(2 log(2)) ~ 1.18 \sigma.}
-#' The \emph{medians} of the lognormal distributions generated are themselves
-#' drawn from a lognormal distribution with \code{meanlog = log(median_mtd)}
-#' and \code{sdlog = median_sdlog}. Thus, parameter \code{median_sdlog}
-#' represents a proportional uncertainty in \code{median_mtd}.
+#' The *medians* of the lognormal distributions generated are themselves
+#' drawn from a lognormal distribution with `meanlog = log(median_mtd)`
+#' and `sdlog = median_sdlog`. Thus, parameter `median_sdlog`
+#' represents a proportional uncertainty in `median_mtd`.
 #'
 #' @slot CV Coefficient of variation
 #' @slot median_mtd Median MTDi
@@ -233,7 +233,7 @@ setMethod(
           , SIMPLIFY = FALSE)
   })
 
-#' Test performance of \code{draw_samples} function
+#' Test performance of `draw_samples` function
 #' 
 #' @param n Number of samples to draw
 #'

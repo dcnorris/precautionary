@@ -9,24 +9,24 @@ setOldClass(c("u_i","tox_selector_factory","selector_factory"))
 
 u_i <- function(selector_factory) {
   stopifnot("Class 'u_i' applies only to a (tox|derived_dose)_selector_factory"
-            = is(selector_factory,"tox_selector_factory") || 
+            = is(selector_factory,"tox_selector_factory") ||
               is(selector_factory,"derived_dose_selector_factory")
             )
   prependClass("u_i", selector_factory)
 }
 
-#' Get a function that simulates dose-escalation trials using latent \code{u_i}
-#' 
+#' Get a function that simulates dose-escalation trials using latent `u_i`
+#'
 #' Overrides \code{\link[escalation:simulation_function]{simulation_function.tox_selector_factory}}
-#' to return a [phase1_sim()] that employs latent \code{u_i} in place of
+#' to return a [phase1_sim()] that employs latent `u_i` in place of
 #' the version native to package \CRANpkg{escalation}, which merely invokes
-#' \code{rbinom}.
-#' 
+#' `rbinom`.
+#'
 #' This function is exported for the purpose of effecting this override,
 #' and is not meant to be invoked directly by the user.
-#' 
-#' @param selector_factory Presently, this must be a \code{tox_selector_factory};
-#' no equivalent for \code{simulation_function.derived_dose_selector_factory}
+#'
+#' @param selector_factory Presently, this must be a `tox_selector_factory`;
+#' no equivalent for `simulation_function.derived_dose_selector_factory`
 #' is yet implemented.
 #'
 #' @importFrom escalation simulation_function
@@ -36,22 +36,22 @@ simulation_function.u_i <- function(selector_factory) {
 }
 
 #' Override \code{\link[escalation]{cohorts_of_n}} to include latent toxicity tolerances
-#' 
+#'
 #' The original function in package \CRANpkg{escalation} recognizes that individual
 #' trial participants arrive at distinct times. Building upon this acknowledgment
 #' of individuality, this override adds an extra line of code to draw as well a
-#' latent toxicity tolerance \code{u_i} for each individual participant.
-#' 
+#' latent toxicity tolerance `u_i` for each individual participant.
+#'
 #' @seealso [phase1_sim()], which this package also overrides with similarly
-#' minute changes in order to incorporate \code{u_i}.
+#' minute changes in order to incorporate `u_i`.
 #'
 #' @param n integer, sample arrival times for this many patients.
 #' @param mean_time_delta the average gap between patient arrival times. I.e.
 #' the reciprocal of the rate parameter in an Exponential distribution.
-#' @return \code{data.frame} with columns \code{u_i} and \code{time_delta}
+#' @return `data.frame` with columns `u_i` and `time_delta`
 #' containing respectively the uniformly-distributed latent toxicity tolerance
 #' and arrival-time increment for each trial participant.
-#' 
+#'
 #' @importFrom stats rexp runif
 #' @examples
 #' cohorts_of_n()
@@ -63,15 +63,15 @@ cohorts_of_n <- function(n = 3, mean_time_delta = 1) {
   data.frame(u_i = u_i, time_delta = time_delta)
 }
 
-#' Override \code{escalation:::phase1_sim} to incorporate latent toxicity tolerances
+#' Override `escalation:::phase1_sim` to incorporate latent toxicity tolerances
 #'
 #' @param selector_factory A \code{\link[escalation]{selector_factory}} object
 #' @param true_prob_tox A vector of toxicity probabilities for the doses
-#'  defined in \code{selector_factory} 
+#'  defined in `selector_factory`
 #' @param sample_patient_arrivals A function implementing an arrivals process
 #'  for trial enrollment
 #' @param previous_outcomes This may or may not apply in applications of
-#'  package \code{precautionary}
+#'  package `precautionary`
 #' @param next_dose Undocumented
 #' @param i_like_big_trials I didn't choose this parameter name
 #' @param return_all_fits Don't do this
@@ -122,7 +122,7 @@ phase1_sim <- function(
   fits[[1]] <- list(.depth = i, time = time_now, fit = fit)
   while(fit %>% continue() & !is.na(next_dose) &
         (i_like_big_trials | i < max_i)) {
-    
+
     current_data = data.frame(
       cohort = cohort,
       patient = seq_along(dose),
@@ -136,7 +136,7 @@ phase1_sim <- function(
     new_dose <- rep(next_dose, n_new_pts)
     new_tox <- ( new_pts$u_i < true_prob_tox[next_dose] )
     new_cohort <- rep(next_cohort, n_new_pts)
-    
+
     dose <- c(dose, new_dose)
     u_i <- c(u_i, new_pts$u_i)
     tox <- c(tox, new_tox)
@@ -150,7 +150,7 @@ phase1_sim <- function(
       tox = tox,
       time = time
     )
-    
+
     time_now <- time_now + max(arrival_time_deltas)
     i <- i + 1
     fit <- selector_factory %>% fit(new_data)
@@ -158,14 +158,14 @@ phase1_sim <- function(
     fits[[i]] <- list(.depth = i, time = time_now, fit = fit)
     next_dose <- fit %>% recommended_dose()
   }
-  
+
   # Warn about i_like_big_trials if sim stopped because of too big i.
   if(!i_like_big_trials & i >= max_i) {
     warning(paste(
       "Simulation stopped because max depth reached.",
       "Set 'i_like_big_trials = TRUE' to avoid this constraint. "))
   }
-  
+
   if(return_all_fits) {
     return(fits)
   } else {
@@ -195,33 +195,33 @@ prob_administer.precautionary <- function(x, ...) {
 #'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.precautionary <- function(x, ...) {
-  
+
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
-  
+
   cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
-  
+
   cat('True probability of toxicity:\n')
   print(x$true_prob_tox, digits = 3)
   cat('\n')
-  
+
   cat('Probability of recommendation:\n')
   print(prob_recommend(x), digits = 3)
   cat('\n')
-  
+
   cat('Probability of administration:\n')
   print(prob_administer(x), digits = 3)
   cat('\n')
-  
+
   cat('Sample size:\n')
   print(summary(num_patients(x)))
   cat('\n')
-  
+
   cat('Total toxicities:\n')
   print(summary(num_tox(x)))
   cat('\n')
-  
+
   cat('Trial duration:\n')
   print(summary(trial_duration(x)))
   cat('\n')
@@ -236,33 +236,33 @@ print.precautionary <- function(x, ...) {
 #'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.hyper <- function(x, ...) {
-  
+
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
-  
+
   cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
-  
+
   cat('Average probability of toxicity:\n')
   print(x$avg_prob_tox, digits = 3)
   cat('\n')
-  
+
   cat('Probability of recommendation:\n')
   print(prob_recommend(x), digits = 3)
   cat('\n')
-  
+
   cat('Probability of administration:\n')
   print(prob_administer(x), digits = 3)
   cat('\n')
-  
+
   cat('Sample size:\n')
   print(summary(num_patients(x)))
   cat('\n')
-  
+
   cat('Total toxicities:\n')
   print(summary(num_tox(x)))
   cat('\n')
-  
+
   cat('Trial duration:\n')
   print(summary(trial_duration(x)))
   cat('\n')
@@ -279,7 +279,7 @@ print.hyper <- function(x, ...) {
 #'  recognized by the dose-escalation design) to a named vector giving dose
 #'  thresholds for multiple grades of toxicity. The names of this vector will
 #'  be taken as designations of the toxicity grades.
-#' @param ... Additional parameters passed to the \code{ordinalizer}
+#' @param ... Additional parameters passed to the `ordinalizer`
 #'
 #' @export
 as.data.table.precautionary <- function(x, keep.rownames = FALSE
@@ -312,16 +312,16 @@ as.data.table.precautionary <- function(x, keep.rownames = FALSE
 }
 
 #' Specialize a method defined in package 'escalation' for class 'simulations'
-#' 
-#' Simulations produced by package \code{precautionary} incorporate a \sQuote{u_i}
+#'
+#' Simulations produced by package `precautionary` incorporate a \sQuote{u_i}
 #' latent toxicity tolerance that characterizes the toxic dose-response of each
 #' simulated individual trial participant. In conjunction with an
 #' \sQuote{ordinalizer} function, these extra data enable questions to be asked
 #' about trial safety, in terms of the probabilities of high-grade toxicities.
-#' This function specializes the \code{escalation:::summary.simulations} method
+#' This function specializes the `escalation:::summary.simulations` method
 #' accordingly.
-#' 
-#' @param object An object of class c('precautionary','simulations') 
+#'
+#' @param object An object of class c('precautionary','simulations')
 #'
 #' @param ordinalizer An ordinalizer function
 #' @param ... Additional parameters passed to the ordinalizer
@@ -356,23 +356,23 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
 #' Format a phase 1 trial safety tabulation to show significant digits only
 #'
 #' The essential insight of package [precautionary] is distilled into the
-#' \emph{safety tabulation} which it generates from trial simulations, reporting
+#' *safety tabulation* which it generates from trial simulations, reporting
 #' the expected number of patients who will experience each grade of toxicity.
 #' To render this table for easy interpretation, these expectations are simply
 #' displayed with a number of significant digits appropriate to their Monte Carlo
-#' standard errors (MCSEs). 
+#' standard errors (MCSEs).
 #'
-#' @param x A safety tabulation as found in the \code{safety} component of the
+#' @param x A safety tabulation as found in the `safety` component of the
 #'  list returned by [summary.precautionary].
 #'
 #' @param ... Unused; included for compatibility with generic signature
 #'
 #' @note The MCSEs of safety tabulations remain available for inspection
 #'  (see example), but are omitted from standard displays because they may lend
-#'  themselves to misinterpretation as \emph{confidence bounds} on the number
-#'  of patients who will experience each toxicity grade \emph{in any given trial}.
+#'  themselves to misinterpretation as *confidence bounds* on the number
+#'  of patients who will experience each toxicity grade *in any given trial*.
 #'
-#' @examples 
+#' @examples
 #' mtdi_gen <- hyper_mtdi_lognormal(CV = 1
 #'                                 ,median_mtd = 5
 #'                                 ,median_sdlog = 0.5
@@ -392,7 +392,7 @@ summary.precautionary <- function(object, ordinalizer = getOption('ordinalizer')
 #' safety[,]  # indexing strips 'safetytab' class, returning plain matrix
 #' # Note that, by extend()ing the simulation we can increase precision:
 #' if (interactive()) { # may run a bit too long for CRAN servers' taste
-#'   boin_hsims %>% extend(target_mcse = 0.1) -> boin_hsimsX 
+#'   boin_hsims %>% extend(target_mcse = 0.1) -> boin_hsimsX
 #'   summary(boin_hsimsX)$safety
 #' }
 #' options(old)
@@ -412,9 +412,9 @@ print.safetytab <- function(x, ...) {
   invisible(x)
 }
 
-#' Output a \code{kable} for a simulation summary of class \code{safetytab}
+#' Output a `kable` for a simulation summary of class `safetytab`
 #'
-#' @param safetytab An object of S3 class \code{safetytab}
+#' @param safetytab An object of S3 class `safetytab`
 #'
 #' @param ... Additional parameters passed to [knitr::kable]
 #'

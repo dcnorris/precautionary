@@ -68,7 +68,7 @@ Crm <- R6Class("Crm",
                  #' Set or query CRM skeleton
                  #'
                  #' @param skeleton A numeric vector to set as the model skeleton.
-                 #' @return Self (invisibly), unless \code{skeleton} is missing,
+                 #' @return Self (invisibly), unless `skeleton` is missing,
                  #' in which case the skeleton, a numeric vector, is returned.
                  skeleton = function(skeleton) {
                    if (missing(skeleton))
@@ -109,7 +109,7 @@ Crm <- R6Class("Crm",
                  #' @details
                  #' Set the stopping function
                  #'
-                 #' @param sfunc A function taking \code{mtd} objects to \code{mtd} objects,
+                 #' @param sfunc A function taking `mtd` objects to `mtd` objects,
                  #' attaching suitable stopping information
                  #' @return Self, invisibly
                  stop_func = function(sfunc){
@@ -120,7 +120,7 @@ Crm <- R6Class("Crm",
                    invisible(self)
                  },
                  #' @details
-                 #' Set the \code{no_skip_esc} behavior
+                 #' Set the `no_skip_esc` behavior
                  #'
                  #' @param tf An atomic logical value, TRUE or FALSE
                  #' @return Self, invisibly
@@ -131,7 +131,7 @@ Crm <- R6Class("Crm",
                    invisible(self)
                  },
                  #' @details
-                 #' Set the \code{no_skip_deesc} behavior
+                 #' Set the `no_skip_deesc` behavior
                  #'
                  #' @param tf An atomic logical value, TRUE or FALSE
                  #' @return Self, invisibly
@@ -142,7 +142,7 @@ Crm <- R6Class("Crm",
                    invisible(self)
                  },
                  #' @details
-                 #' Set the \code{global_coherent_esc} behavior
+                 #' Set the `global_coherent_esc` behavior
                  #'
                  #' @param tf An atomic logical value, TRUE or FALSE
                  #' @return Self, invisibly
@@ -218,11 +218,11 @@ Crm <- R6Class("Crm",
                  #' Estimate the model
                  #'
                  #' @param impl A string choosing the low-level implementation to use.
-                 #' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
-                 #' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
+                 #' Possible values include `"dfcrm"`, `"rusti"` and `"ruste"`.
+                 #' @param abbrev Logical; if TRUE (the default), an abbreviated `mtd`
                  #' object is returned to save execution time. If FALSE, a complete object is
                  #' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
-                 #' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
+                 #' @return An object of class `mtd` as per package \CRANpkg{dfcrm}
                  est = function(impl, abbrev=TRUE){
                    private$evals <- private$evals + 1
                    t0 <- proc.time()
@@ -322,13 +322,13 @@ Crm <- R6Class("Crm",
                  #' @param x A dose-wise vector of toxicity counts
                  #' @param o A dose-wise vector of non-toxicity counts
                  #' @param last_dose The most recently given dose, as required to implement
-                 #' the \code{global_coherent_esc=TRUE} behavior
+                 #' the `global_coherent_esc=TRUE` behavior
                  #' @param max_dose Unused; included for compatibility with superclass method
-                 #' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
-                 #' of required \code{impl} parameter and optional \code{abbrev} flag.
-                 #' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
+                 #' @param ... Parameters passed to `Crm$esc()`, enabling passthru
+                 #' of required `impl` parameter and optional `abbrev` flag.
+                 #' @return An object of class `mtd` as per package \CRANpkg{dfcrm},
                  #' or possibly an abbreviated version of such object as returned by
-                 #' method \code{Crm$est()}.
+                 #' method `Crm$est()`.
                  applied = function(x, o, last_dose = NA, max_dose = NULL, ...){
                    if (!is.null(private$cache)) {
                      key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
@@ -409,7 +409,7 @@ Crm <- R6Class("Crm",
 #' for various performance tuning experiments. The 'impl' arg allows selection
 #' of various alternative implementations:
 #' - rusti substitutes integrands crmh, crmht, crmht2 written in Rust
-#' - dfcrm is the original as implemented in package \code{dfcrm}.
+#' - dfcrm is the original as implemented in package `dfcrm`.
 #' @param prior The CRM skeleton: dose-wise prior probabilities of toxicity
 #' @param target Target toxicity rate
 #' @param tox A patient-wise vector of toxicity counts
@@ -431,9 +431,9 @@ Crm <- R6Class("Crm",
 #' be displayed.  Default is TRUE.
 #' @param var.est If TRUE, variance of the estimate of the model parameter and
 #' probability/confidence interval for the dose-toxicity curve will be computed
-#' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
-#' Currently the \code{'rusti'} option is implemented only for the Bayes method
-#' of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}
+#' @param impl Switch between `'rusti'` and `'dfcrm'` implementations.
+#' Currently the `'rusti'` option is implemented only for the Bayes method
+#' of the empirical (\sQuote{power}) model. An experimental `'ruste'`
 #' implementaton is in the works.
 #' @importFrom stats integrate optimize qnorm
 #' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt

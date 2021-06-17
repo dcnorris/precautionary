@@ -10,7 +10,7 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' 
 #' @param selector_factory An object of type
 #'  \code{\link[escalation:get_three_plus_three]{three_plus_three_selector_factory}},
-#'  with \code{allow_deescalation = TRUE}.
+#'  with `allow_deescalation = TRUE`.
 #'
 #' @details 
 #' In any given realization of a 3+3 design, each of the \eqn{D} prespecified doses
@@ -33,13 +33,13 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' }
 #' (Indeed, as you may verify at the R prompt, the above matrix is the 262nd of 442
 #' such paths enumerated comprehensively in the \eqn{2 \times 4 \times 442}{2 x 4 x 442}
-#' array \code{precautionary:::T[[4]]}.)
+#' array `precautionary:::T[[4]]`.)
 #' 
 #' As detailed in Norris 2020c (below), these matrices may be used to construct simple
 #' matrix computations that altogether eliminate the need for discrete-event simulation
-#' of the 3+3 design. For each \eqn{D = 2,...,8}, the \code{precautionary} package has
-#' pretabulated a \eqn{J \times 2D}{J x 2D} matrix \code{precautionary:::U[[D]]} and
-#' \eqn{J}-vector \code{precautionary:::b[[D]]} such that the eqn{J}-vector \eqn{\pi}
+#' of the 3+3 design. For each \eqn{D = 2,...,8}, the `precautionary` package has
+#' pretabulated a \eqn{J \times 2D}{J x 2D} matrix `precautionary:::U[[D]]` and
+#' \eqn{J}-vector `precautionary:::b[[D]]` such that the eqn{J}-vector \eqn{\pi}
 #' of path probabilities is given by:
 #' \deqn{
 #' log(\pi) = b + U [log(p), log(q)]',
@@ -49,11 +49,11 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' Norris (2020c).
 #' 
 #' For details on the enumeration itself, please see the Prolog code in directory
-#' \code{exec/} of the installed package.
+#' `exec/` of the installed package.
 #' @references 
 #' Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
 #' of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
-#' \url{https://arxiv.org/abs/2012.05301}
+#' <https://arxiv.org/abs/2012.05301>
 #' @examples 
 #' # Run an exact version of the simulation from FDA-proactive vignette
 #' design <- get_three_plus_three(
@@ -235,7 +235,7 @@ print.hyper <- function(x, ...) {
 #'  recognized by the dose-escalation design) to a named vector giving dose
 #'  thresholds for multiple grades of toxicity. The names of this vector will
 #'  be taken as designations of the toxicity grades.
-#' @param ... Additional parameters passed to the \code{ordinalizer}
+#' @param ... Additional parameters passed to the `ordinalizer`
 #'
 #' @export
 as.data.table.exact <- function(x, keep.rownames = FALSE
@@ -271,7 +271,7 @@ as.data.table.exact <- function(x, keep.rownames = FALSE
 #' 
 #' Algorithmic (or 'rule-based') dose-escalation designs admit exact computation
 #' of their outcomes. This method summarizes such an exact treatment in a manner
-#' roughly parallel to that of \code{summary.precautionary}.
+#' roughly parallel to that of `summary.precautionary`.
 #' 
 #' @param object An object of class 'exact' 
 #'

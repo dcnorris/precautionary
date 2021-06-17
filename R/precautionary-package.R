@@ -11,42 +11,42 @@
 #' @references
 #' 1. Norris DC. Dose Titration Algorithm Tuning (DTAT) should supersede
 #'    \sQuote{the} Maximum Tolerated Dose (MTD) in oncology dose-finding trials.
-#'    \emph{F1000Research}. 2017;6:112. \doi{10.12688/f1000research.10624.3}.
-#'    \url{https://f1000research.com/articles/6-112/v3}
+#'    *F1000Research*. 2017;6:112. \doi{10.12688/f1000research.10624.3}.
+#'    <https://f1000research.com/articles/6-112/v3>
 #'
-#' 2. Norris DC. Costing \sQuote{the} MTD. \emph{bioRxiv}. August 2017:150821.
+#' 2. Norris DC. Costing \sQuote{the} MTD. *bioRxiv*. August 2017:150821.
 #'    \doi{10.1101/150821}.
-#'    \url{https://www.biorxiv.org/content/10.1101/150821v3}
+#'    <https://www.biorxiv.org/content/10.1101/150821v3>
 #'
 #' 3. Norris DC. Precautionary Coherence Unravels Dose Escalation Designs.
-#'    \emph{bioRxiv}. December 2017:240846. \doi{10.1101/240846}.
-#'    \url{https://www.biorxiv.org/content/10.1101/240846v1}
+#'    *bioRxiv*. December 2017:240846. \doi{10.1101/240846}.
+#'    <https://www.biorxiv.org/content/10.1101/240846v1>
 #'
 #' 4. Norris DC. One-size-fits-all dosing in oncology wastes money, innovation
-#'    and lives. \emph{Drug Discov Today}. 2018;23(1):4-6.
+#'    and lives. *Drug Discov Today*. 2018;23(1):4-6.
 #'    \doi{10.1016/j.drudis.2017.11.008}.
-#'    \url{https://www.sciencedirect.com/science/article/pii/S1359644617303586}
+#'    <https://www.sciencedirect.com/science/article/pii/S1359644617303586>
 #'
-#' 5. Norris DC. Costing \sQuote{the} MTD ... in 2-D. \emph{bioRxiv}. July 2018:370817.
+#' 5. Norris DC. Costing \sQuote{the} MTD ... in 2-D. *bioRxiv*. July 2018:370817.
 #'    \doi{10.1101/370817}.
-#'    \url{https://www.biorxiv.org/content/10.1101/370817v1}
+#'    <https://www.biorxiv.org/content/10.1101/370817v1>
 #'
 #' 6. Norris DC. Ethical Review and Methodologic Innovation in Phase 1 Cancer Trials.
-#'    \emph{JAMA Pediatrics}. 2019;173(6):609
+#'    *JAMA Pediatrics*. 2019;173(6):609
 #'    \doi{10.1001/jamapediatrics.2019.0811}.
 #'
 #' 7. Norris DC. Comment on Wages et al., Coherence principles in interval-based
 #'    dose finding. Pharmaceutical Statistics 2019, DOI: 10.1002/pst.1974.
-#'    \emph{Pharmaceutical Statistics}. March 2020.
+#'    *Pharmaceutical Statistics*. March 2020.
 #'    \doi{10.1002/pst.2016}.
 #'
 #' 8. Norris DC. Retrospective analysis of a fatal dose-finding trial.
 #'    arXiv:2004.12755 \[stat.ME\]. April 2020.
-#'    \url{https://arxiv.org/abs/2004.12755}
+#'    <https://arxiv.org/abs/2004.12755>
 #'
 #' 9. Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
 #'    of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
-#'    \url{https://arxiv.org/abs/2012.05301}
+#'    <https://arxiv.org/abs/2012.05301>
 #'
 #' @import methods
 #' @import magrittr
@@ -100,7 +100,7 @@ NULL
 #' * Demote \pkg{escalation} to a 'Suggests'
 #' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 #'   - Ideally 100% sim-free via integration over the hyperprior!
-#' * Stop exposing the \code{impl} parameter
+#' * Stop exposing the `impl` parameter
 #'
 #' @section Version 0.3.1:
 #' * Native Rust CPE
@@ -116,7 +116,7 @@ NULL
 #'   - Even the term 'DTP' seems not quite right anymore for a complete
 #'     path enumeration (CPE?), and should be abandoned.
 #' * Eliminate dependence on 'escalation' and 'dfcrm'
-#'   - With the special emphasis on \emph{speed} created by CPE,
+#'   - With the special emphasis on *speed* created by CPE,
 #'     I now must implement all underlying trial designs in Rust.
 #' * What may be retained in each case are 'Suggests:'-type relations,
 #'   wherever regression tests are helpful -- esp. wrt dfcrm.
@@ -139,7 +139,7 @@ NULL
 #' * What is role of G function in exact.R?
 #'
 #' @section Extend:
-#' * Implement exact 3+3 variant with \code{allow_deescalation=FALSE}
+#' * Implement exact 3+3 variant with `allow_deescalation=FALSE`
 #' * Implement rolling 6
 #' * Allow an accelerated titration phase
 #'   - Note that this requires access to graded toxicities at simulation time,

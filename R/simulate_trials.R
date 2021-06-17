@@ -4,9 +4,9 @@ NULL
 #' Simulate trials defined via package \CRANpkg{escalation}
 #' 
 #' An S4 generic method providing a more abstract interface to trial simulation than
-#' the \code{\link[escalation]{simulate_trials}} function of package \code{escalation}.
-#' This abstraction is needed to support simulations in which \code{escalation}'s simple
-#' vectors of \sQuote{true toxicity probabilities} are replaced by \code{precautionary}'s
+#' the \code{\link[escalation]{simulate_trials}} function of package `escalation`.
+#' This abstraction is needed to support simulations in which `escalation`'s simple
+#' vectors of \sQuote{true toxicity probabilities} are replaced by `precautionary`'s
 #' more realistic toxicity-distribution generators.
 #' 
 #' @docType methods
@@ -16,10 +16,10 @@ NULL
 #' @param true_prob_eff Provided for compatibility with \code{\link[escalation]{simulate_trials}}
 #' @param ... Passed to subroutines
 #' 
-#' @details If invoked interactively with \code{num_sims} > 10, then a
-#' \code{txtProgressBar} is displayed in the console. The condition on
-#' \code{num_sims} has the useful side effect of allowing this function
-#' to be invoked iteratively by [extend] (with \code{num_sims} = 10)
+#' @details If invoked interactively with `num_sims` > 10, then a
+#' `txtProgressBar` is displayed in the console. The condition on
+#' `num_sims` has the useful side effect of allowing this function
+#' to be invoked iteratively by [extend] (with `num_sims` = 10)
 #' without the nuisance of nested progress bars.
 #' 
 #' @importFrom escalation simulate_trials selector_factory
@@ -388,25 +388,25 @@ setMethod(
 #' A trial simulation carried through a predetermined number of replications
 #' may not achieve desired precision as judged by Monte Carlo standard errors
 #' (MCSE) of estimated toxicity counts. This method enables simulations of
-#' class \code{c('precautionary','simulations')} to be extended until a given
+#' class `c('precautionary','simulations')` to be extended until a given
 #' level of precision has been achieved on expected counts of enrollment and
 #' DLTs, or (optionally) for a fixed additional number of simulations.
 #'
-#' @param sims An existing object of class \code{c('precautionary','simulations')}
+#' @param sims An existing object of class `c('precautionary','simulations')`
 #' @param num_sims Optionally, a fixed number of additional replications to accumulate
 #' @param target_mcse Optionally, an MCSE constraint to be imposed on expected counts
 #'  of DLTs, non-DLTs, and Total enrollment.
 #'
-#' @return An extended simulation of same class as \code{sims}.
+#' @return An extended simulation of same class as `sims`.
 #' 
-#' @note The MCSE constraint is imposed during trial \emph{simulation}, at which
-#'  point only \emph{binary} toxicities are available. Thus, as a practical matter,
-#'  \code{extend} can target MCSEs only for DLTs, non-DLTs and Total enrollment.
-#'  The subsequent subdivision of these categories during trial \emph{summary}
+#' @note The MCSE constraint is imposed during trial *simulation*, at which
+#'  point only *binary* toxicities are available. Thus, as a practical matter,
+#'  `extend` can target MCSEs only for DLTs, non-DLTs and Total enrollment.
+#'  The subsequent subdivision of these categories during trial *summary*
 #'  (at which point the ordinalizer comes into play along with its parameters) thus
-#'  may generate expected counts with MCSEs exceeding \code{target_mcse}.
+#'  may generate expected counts with MCSEs exceeding `target_mcse`.
 #'  In practice, however, this tends to affect the estimated counts only for the
-#'  \emph{lowest} toxicity grades---those of least concern from a trial-safety
+#'  *lowest* toxicity grades---those of least concern from a trial-safety
 #'  perspective.
 #' 
 #' @export

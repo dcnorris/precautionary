@@ -20,7 +20,7 @@ Cpe <- R6Class("Cpe",
                  #' by overriding (TODO: or deleting?) this method.
                  #'
                  #' @param D A positive integer, the highest permissible dose.
-                 #' @return Self (invisibly), unless \code{D} is missing,
+                 #' @return Self (invisibly), unless `D` is missing,
                  #' in which case the top dose, an integer, is returned.
                  max_dose = function(D) {
                    if (missing(D))
@@ -36,12 +36,12 @@ Cpe <- R6Class("Cpe",
                  #' @param last_dose The most recently given dose, as required to implement
                  #' cumulative-cohort-based escalation decisions.
                  #' @param max_dose An upper limit on future dose levels
-                 #' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
-                 #' of required \code{impl} parameter and optional \code{abbrev} flag.
+                 #' @param ... Parameters passed to `Crm$esc()`, enabling passthru
+                 #' of required `impl` parameter and optional `abbrev` flag.
                  #' @return An object with components:
-                 #' * \code{$stop} - logical value indicating whether stop is indicated
-                 #' * \code{$mtd} - integer value, the recommended dose
-                 #' * \code{$max_dose} - integer value, a dose not to be exceeded henceforth.
+                 #' * `$stop` - logical value indicating whether stop is indicated
+                 #' * `$mtd` - integer value, the recommended dose
+                 #' * `$max_dose` - integer value, a dose not to be exceeded henceforth.
                  applied = function(x, o, last_dose, max_dose, ...){
                    stop("Must override $applied() method of abstract class 'Cpe'")
                  }, #</applied>
@@ -63,11 +63,11 @@ Cpe <- R6Class("Cpe",
                  #' @param root_dose The starting dose for tree of paths
                  #' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  #' its length being the maximum number of cohorts to look ahead.
-                 #' @param ... Parameters passed ultimately to \code{Crm$esc()},
-                 #' enabling passthru of its required \code{impl} parameter.
+                 #' @param ... Parameters passed ultimately to `Crm$esc()`,
+                 #' enabling passthru of its required `impl` parameter.
                  #' @param unroll Integer; how deep to unroll path tree for parallelism
                  #' @return Self, invisibly
-                 #' @seealso \code{path_matrix}, \code{path_table}, \code{path_array}.
+                 #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
@@ -140,10 +140,10 @@ Cpe <- R6Class("Cpe",
                  #' @return An integer matrix with the same column layout as the
                  #' DTP tables of \CRANpkg{dtpcrm}. That is, there is a D0 column
                  #' followed by paired Tc, Dc columns giving the toxicity count
-                 #' for cohort c and the resulting dose recommendation \emph{yielded by}
-                 #' cohort c -- which is generally the recommendation \emph{for} cohort
+                 #' for cohort c and the resulting dose recommendation *yielded by*
+                 #' cohort c -- which is generally the recommendation *for* cohort
                  #' c+1.
-                 #' @seealso \code{trace_paths}, which must already have been invoked
+                 #' @seealso `trace_paths`, which must already have been invoked
                  #' if this method is to return a meaningful result.
                  path_matrix = function() {
                    stopifnot(length(private$path_list) > 0)
@@ -163,19 +163,19 @@ Cpe <- R6Class("Cpe",
                  #' @param condense Logical value; if FALSE, the returned array has its
                  #' cohorts indexed trial-wise instead of dose-wise. This inflates the
                  #' array more than needed for the matrix computations it must support
-                 #' (observe that in Norris2020c Eq. (4), the \code{c} index is eliminated
+                 #' (observe that in Norris2020c Eq. (4), the `c` index is eliminated
                  #' already by summation), but enables the sequence of events along a path
                  #' to be read off directly if this is required e.g. for visualization or
                  #' debugging. Default is TRUE.
-                 #' @return For the \code{j}'th path, the C*D matrix \code{T[j,,]} gives
-                 #' the number of toxicities \code{T[j,c,d]} occurring in the \code{c}'th
-                 #' cohort for dose d. In case \code{condense=FALSE}, see above.
+                 #' @return For the `j`'th path, the C*D matrix `T[j,,]` gives
+                 #' the number of toxicities `T[j,c,d]` occurring in the `c`'th
+                 #' cohort for dose d. In case `condense=FALSE`, see above.
                  #'
                  #' @references
                  #' Norris DC. What Were They Thinking? Pharmacologic priors implicit in
                  #' a choice of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\].
-                 #' December 2020. \url{https://arxiv.org/abs/2012.05301}
-                 #' @seealso \code{trace_paths}, which must already have been invoked
+                 #' December 2020. <https://arxiv.org/abs/2012.05301>
+                 #' @seealso `trace_paths`, which must already have been invoked
                  #' if this method is to return a result.
                  path_array = function(condense=TRUE) {
                    pmx <- self$path_matrix()
@@ -229,8 +229,8 @@ Cpe <- R6Class("Cpe",
                  #' Path probabilities for given dose-wise DLT probs
                  #'
                  #' The design's paths must already have been completely enumerated by
-                 #' \code{trace_paths}, and the associated array \code{T}, matrix \code{U}
-                 #' and vector \code{b} computed by a call to \code{path_array}.
+                 #' `trace_paths`, and the associated array `T`, matrix `U`
+                 #' and vector `b` computed by a call to `path_array`.
                  #' @param probs.DLT Numeric vector of DLT probabilities for the design's
                  #' pre-specified doses.
                  #' @return A vector of probabilities for the enumerated paths
@@ -246,9 +246,9 @@ Cpe <- R6Class("Cpe",
                  #' Vector of path-wise final dose recommendations
                  #'
                  #' The design's paths must already have been completely enumerated by
-                 #' \code{trace_paths}. This method is a temporizing measure, bridging
-                 #' to a new format for the return value of \code{path_matrix}, possibly
-                 #' a \code{data.table} where the dose recs would be a column.
+                 #' `trace_paths`. This method is a temporizing measure, bridging
+                 #' to a new format for the return value of `path_matrix`, possibly
+                 #' a `data.table` where the dose recs would be a column.
                  #' @return Integer vector of final dose recs on the enumerated paths
                  path_rx = function() {
                    pmx <- self$path_matrix()

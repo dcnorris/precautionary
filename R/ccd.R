@@ -48,9 +48,9 @@ Ccd <- R6Class("Ccd",
                  #' @param max_dose An upper limit on future dose levels
                  #' @param ... Unused by `Ccd`; included for superclass method compatibility
                  #' @return An object with components:
-                 #' * \code{$stop} - logical value indicating whether stop is indicated
-                 #' * \code{$mtd} - integer value, the recommended dose
-                 #' * \code{$max_dose} - integer value, a dose not to be exceeded henceforth.
+                 #' * `$stop` - logical value indicating whether stop is indicated
+                 #' * `$mtd` - integer value, the recommended dose
+                 #' * `$max_dose` - integer value, a dose not to be exceeded henceforth.
                  applied = function(x, o, last_dose, max_dose, ...){
                    tox <- x[last_dose]
                    n <- tox + o[last_dose]

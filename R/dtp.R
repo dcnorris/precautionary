@@ -4,14 +4,14 @@
 #' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
 #' doesn't even show up! More importantly, the consumption is now dominated
 #' by (at 75%) by the objective function 'f' in integrate().
-#' @param x A object of class \code{mtd}
+#' @param x A object of class `mtd`
 #' @param tox_lim Scalar upper threshold on estimated toxicity rate
 #' @param prob_cert Confidence level for threshold exceedance
 #' @param dose Integer scalar, the dose being considered
-#' @param suppress_dose Logical; if TRUE the MTD is set to \code{NA} when
+#' @param suppress_dose Logical; if TRUE the MTD is set to `NA` when
 #' trial stop is recommended.
 #' @return
-#' The \code{mtd} object x, with stop decision annotated
+#' The `mtd` object x, with stop decision annotated
 #' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
 #' @importFrom stats pnorm
 #' @export
