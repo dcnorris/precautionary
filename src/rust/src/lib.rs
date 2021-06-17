@@ -55,7 +55,7 @@ fn crmh_v(a: &[f64],
     v.collect_robj()
 }
 
-/// Rust implementation of \code{dfcrm::crmh*} integrands for w==1 case
+/// Rust implementation of `dfcrm::crmh*` integrands for w==1 case
 ///
 /// @param a Numeric vector of evaluation points
 /// @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
@@ -101,12 +101,12 @@ fn crmh_xo(a: &[f64],
     v.collect_robj()
 }
 
-/// Rust implementation of \code{dfcrm::crmh*} integrands
+/// Rust implementation of `dfcrm::crmh*` integrands
 ///
 /// @param a Numeric vector of evaluation points
 /// @param ln_x A numeric vector of dose-wise prior log-probabilities of toxicity
 /// @param w Patient-wise weights (used for TITE CRM), also encoding toxicity
-/// by \code{w[i] == 0.0}.
+/// by `w[i] == 0.0`.
 /// @param s Scalar scale factor
 /// @describeIn crmh Posterior for 1-parameter empiric (aka 'power') model
 /// @export
