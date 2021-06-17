@@ -1,20 +1,20 @@
-##' A supremely faster version of a function from 'dtpcrm' v0.1.1
-##'
-##' Originally, the sampling in stats::rnorm() (see inline comments in code)
-##' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
-##' doesn't even show up! More importantly, the consumption is now dominated
-##' by (at 75%) by the objective function 'f' in integrate().
-##' @param x A object of class \code{mtd}
-##' @param tox_lim Scalar upper threshold on estimated toxicity rate
-##' @param prob_cert Confidence level for threshold exceedance
-##' @param dose Integer scalar, the dose being considered
-##' @param suppress_dose Logical; if TRUE the MTD is set to \code{NA} when
-##' trial stop is recommended.
-##' @return
-##' The \code{mtd} object x, with stop decision annotated
-##' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
-##' @importFrom stats pnorm
-##' @export
+#' A supremely faster version of a function from 'dtpcrm' v0.1.1
+#'
+#' Originally, the sampling in stats::rnorm() (see inline comments in code)
+#' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
+#' doesn't even show up! More importantly, the consumption is now dominated
+#' by (at 75%) by the objective function 'f' in integrate().
+#' @param x A object of class \code{mtd}
+#' @param tox_lim Scalar upper threshold on estimated toxicity rate
+#' @param prob_cert Confidence level for threshold exceedance
+#' @param dose Integer scalar, the dose being considered
+#' @param suppress_dose Logical; if TRUE the MTD is set to \code{NA} when
+#' trial stop is recommended.
+#' @return
+#' The \code{mtd} object x, with stop decision annotated
+#' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
+#' @importFrom stats pnorm
+#' @export
 stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,
                                               suppress_dose = TRUE) {
   post_beta_mean = x$estimate

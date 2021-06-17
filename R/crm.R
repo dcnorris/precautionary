@@ -4,46 +4,46 @@
 ## TODO: Organize a class hierarchy of model types (empiric, logistic),
 ##       exploiting inheritance to clarify what is special vs shared.
 
-##' @name Crm-class
-##' @title An R6 class encapsulating CRM models
-##'
-##' This class wraps the functionality of package \CRANpkg{dfcrm}, adding
-##' efficient Rust implementations of some numerical routines.
-##'
-##' @details
-##' Syntactically, the method chaining supported by R6 classes makes the
-##' invocation of CRM models more transparent. The mutability conferred
-##' by reference semantics enables memoization (caching) of results, which
-##' can speed up DTP calculations significantly.
-##'
-##' Presently, this class supports only the 'empiric' (aka 'power') model.
-##' But it is hoped that inheritance will assist in rendering other models
-##' implemented in package \CRANpkg{dfcrm} clearly, with code reuse.
-##' @importFrom R6 R6Class
-##' @export
+#' @name Crm-class
+#' @title An R6 class encapsulating CRM models
+#'
+#' This class wraps the functionality of package \CRANpkg{dfcrm}, adding
+#' efficient Rust implementations of some numerical routines.
+#'
+#' @details
+#' Syntactically, the method chaining supported by R6 classes makes the
+#' invocation of CRM models more transparent. The mutability conferred
+#' by reference semantics enables memoization (caching) of results, which
+#' can speed up DTP calculations significantly.
+#'
+#' Presently, this class supports only the 'empiric' (aka 'power') model.
+#' But it is hoped that inheritance will assist in rendering other models
+#' implemented in package \CRANpkg{dfcrm} clearly, with code reuse.
+#' @importFrom R6 R6Class
+#' @export
 Crm <- R6Class("Crm",
                inherit = Cpe,
                public = list(
-                 ##' @details
-                 ##' Create a new `Crm` object.
-                 ##'
-                 ##' @param skeleton CRM skeleton
-                 ##' @param scale Sigma parameter of prior on beta parameter
-                 ##' @param target Target toxicity rate
-                 ##' @return A Crm object.
-                 ##'
-                 ##' @examples
-                 ##' # An example verbatim from dfcrm::crm()
-                 ##' prior <- c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70)
-                 ##' target <- 0.2
-                 ##' level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
-                 ##' y     <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
-                 ##' s <- sqrt(1.34)
-                 ##' old <- dfcrm::crm(prior, target, y, level)
-                 ##' new <- Crm$new(skeleton = prior, target = target)$
-                 ##'          dontcache()$
-                 ##'          observe(level, y)$
-                 ##'          est(impl="rusti", abbrev=FALSE)
+                 #' @details
+                 #' Create a new `Crm` object.
+                 #'
+                 #' @param skeleton CRM skeleton
+                 #' @param scale Sigma parameter of prior on beta parameter
+                 #' @param target Target toxicity rate
+                 #' @return A Crm object.
+                 #'
+                 #' @examples
+                 #' # An example verbatim from dfcrm::crm()
+                 #' prior <- c(0.05, 0.10, 0.20, 0.35, 0.50, 0.70)
+                 #' target <- 0.2
+                 #' level <- c(3, 4, 4, 3, 3, 4, 3, 2, 2, 2)
+                 #' y     <- c(0, 0, 1, 0, 0, 1, 1, 0, 0, 0)
+                 #' s <- sqrt(1.34)
+                 #' old <- dfcrm::crm(prior, target, y, level)
+                 #' new <- Crm$new(skeleton = prior, target = target)$
+                 #'          dontcache()$
+                 #'          observe(level, y)$
+                 #'          est(impl="rusti", abbrev=FALSE)
                  initialize = function(skeleton, scale = sqrt(1.34), target) {
                    private$ln_skel <- log(skeleton)
                    private$scale <- scale
@@ -51,25 +51,25 @@ Crm <- R6Class("Crm",
                    private$cache <- new.env(hash = TRUE, size = 10000L)
                    private$x <- private$o <- integer(length(private$ln_skel))
                  },
-                 ##' @details
-                 ##' Return number of pre-specified doses
-                 ##' @note This specializes the superclass set/get method, consistent
-                 ##' with the non-mutable number of doses of CRM with fixed skeleton.
-                 ##'
-                 ##' @param D Included to match signature of superclass method.
-                 ##' It is an error to call this method with non-missing `D` parameter.
-                 ##' @return Length of CRM skeleton.
+                 #' @details
+                 #' Return number of pre-specified doses
+                 #' @note This specializes the superclass set/get method, consistent
+                 #' with the non-mutable number of doses of CRM with fixed skeleton.
+                 #'
+                 #' @param D Included to match signature of superclass method.
+                 #' It is an error to call this method with non-missing `D` parameter.
+                 #' @return Length of CRM skeleton.
                  max_dose = function(D) {
                    if (missing(D))
                      return(length(private$ln_skel))
                    stop("Class 'Crm' has fixed number of doses determined by the skeleton.")
                  },
-                 ##' @details
-                 ##' Set or query CRM skeleton
-                 ##'
-                 ##' @param skeleton A numeric vector to set as the model skeleton.
-                 ##' @return Self (invisibly), unless \code{skeleton} is missing,
-                 ##' in which case the skeleton, a numeric vector, is returned.
+                 #' @details
+                 #' Set or query CRM skeleton
+                 #'
+                 #' @param skeleton A numeric vector to set as the model skeleton.
+                 #' @return Self (invisibly), unless \code{skeleton} is missing,
+                 #' in which case the skeleton, a numeric vector, is returned.
                  skeleton = function(skeleton) {
                    if (missing(skeleton))
                      return(exp(private$ln_skel))
@@ -80,19 +80,19 @@ Crm <- R6Class("Crm",
                    super$max_dose(length(skeleton)) # TODO: Delete super's private$.max_dose?
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set private cache to NULL; useful for performance testing
-                 ##'
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set private cache to NULL; useful for performance testing
+                 #'
+                 #' @return Self, invisibly
                  dontcache = function() {
                    private$cache <- NULL
                    private$skips <- NA
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Report lifetime duty & performance statistics
-                 ##'
-                 ##' @return A named vector summarizing lifetime duty and performance
+                 #' @details
+                 #' Report lifetime duty & performance statistics
+                 #'
+                 #' @return A named vector summarizing lifetime duty and performance
                  report = function() {
                    data.table(
                      pid = Sys.getpid(),
@@ -106,12 +106,12 @@ Crm <- R6Class("Crm",
                      'us/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
                      )
                  },
-                 ##' @details
-                 ##' Set the stopping function
-                 ##'
-                 ##' @param sfunc A function taking \code{mtd} objects to \code{mtd} objects,
-                 ##' attaching suitable stopping information
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set the stopping function
+                 #'
+                 #' @param sfunc A function taking \code{mtd} objects to \code{mtd} objects,
+                 #' attaching suitable stopping information
+                 #' @return Self, invisibly
                  stop_func = function(sfunc){
                    private$.stop_func <- sfunc
                    ## NB: Changing stop_func does NOT invalidate cache, since the
@@ -119,54 +119,54 @@ Crm <- R6Class("Crm",
                    ##     application of stopping rules occurs in $applied().
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set the \code{no_skip_esc} behavior
-                 ##'
-                 ##' @param tf An atomic logical value, TRUE or FALSE
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set the \code{no_skip_esc} behavior
+                 #'
+                 #' @param tf An atomic logical value, TRUE or FALSE
+                 #' @return Self, invisibly
                  no_skip_esc = function(tf){
                    stopifnot(is.logical(tf))
                    stopifnot(length(tf) == 1)
                    private$.no_skip_esc = tf
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set the \code{no_skip_deesc} behavior
-                 ##'
-                 ##' @param tf An atomic logical value, TRUE or FALSE
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set the \code{no_skip_deesc} behavior
+                 #'
+                 #' @param tf An atomic logical value, TRUE or FALSE
+                 #' @return Self, invisibly
                  no_skip_deesc = function(tf){
                    stopifnot(is.logical(tf))
                    stopifnot(length(tf) == 1)
                    private$.no_skip_deesc = tf
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set the \code{global_coherent_esc} behavior
-                 ##'
-                 ##' @param tf An atomic logical value, TRUE or FALSE
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set the \code{global_coherent_esc} behavior
+                 #'
+                 #' @param tf An atomic logical value, TRUE or FALSE
+                 #' @return Self, invisibly
                  global_coherent_esc = function(tf){
                    stopifnot(is.logical(tf))
                    stopifnot(length(tf) == 1)
                    private$.global_coherent_esc = tf
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set the required confidence level for escalation decisions
-                 ##'
-                 ##' @param conf A numeric confidence less than 1.0
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set the required confidence level for escalation decisions
+                 #'
+                 #' @param conf A numeric confidence less than 1.0
+                 #' @return Self, invisibly
                  conf_level = function(conf){
                    private$conf.level <- conf
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Set patient-wise toxicity observations
-                 ##'
-                 ##' @param level A patient-wise vector of dose assignments
-                 ##' @param tox A patient-wise vector of 0/1 toxicity assessments
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set patient-wise toxicity observations
+                 #'
+                 #' @param level A patient-wise vector of dose assignments
+                 #' @param tox A patient-wise vector of 0/1 toxicity assessments
+                 #' @return Self, invisibly
                  observe = function(level, tox){ # TODO: Preserve order for dfcrm's sake?
                    stopifnot(length(level) == length(tox))
                    stopifnot(all(tox %in% c(0,1)))
@@ -176,12 +176,12 @@ Crm <- R6Class("Crm",
                    self$tally(x = xtabs(tox ~ level),
                               o = xtabs(!tox ~ level))
                  },
-                 ##' @details
-                 ##' Set dose-wise toxicity observations
-                 ##'
-                 ##' @param x A dose-wise vector of toxicity counts
-                 ##' @param o A dose-wise vector of non-toxicity counts
-                 ##' @return Self, invisibly
+                 #' @details
+                 #' Set dose-wise toxicity observations
+                 #'
+                 #' @param x A dose-wise vector of toxicity counts
+                 #' @param o A dose-wise vector of non-toxicity counts
+                 #' @return Self, invisibly
                  tally = function(x, o){
                    D <- self$max_dose()
                    ## We expect 'x' to be a dosewise vector of exchangeable toxicity counts
@@ -214,15 +214,15 @@ Crm <- R6Class("Crm",
                    }
                    invisible(self)
                  },
-                 ##' @details
-                 ##' Estimate the model
-                 ##'
-                 ##' @param impl A string choosing the low-level implementation to use.
-                 ##' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
-                 ##' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
-                 ##' object is returned to save execution time. If FALSE, a complete object is
-                 ##' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
-                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
+                 #' @details
+                 #' Estimate the model
+                 #'
+                 #' @param impl A string choosing the low-level implementation to use.
+                 #' Possible values include \code{"dfcrm"}, \code{"rusti"} and \code{"ruste"}.
+                 #' @param abbrev Logical; if TRUE (the default), an abbreviated \code{mtd}
+                 #' object is returned to save execution time. If FALSE, a complete object is
+                 #' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
+                 #' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm}
                  est = function(impl, abbrev=TRUE){
                    private$evals <- private$evals + 1
                    t0 <- proc.time()
@@ -314,21 +314,21 @@ Crm <- R6Class("Crm",
                    class(ans) <- "mtd"
                    return(ans)
                  }, #</est()>
-                 ##' @details
-                 ##' Return dose recommendation for given tox/no-tox tallies.
-                 ##'
-                 ##' This function caches results, which greatly saves computation time
-                 ##' in CPE -- yielding e.g. a 5x speedup for the VIOLA trial example.
-                 ##' @param x A dose-wise vector of toxicity counts
-                 ##' @param o A dose-wise vector of non-toxicity counts
-                 ##' @param last_dose The most recently given dose, as required to implement
-                 ##' the \code{global_coherent_esc=TRUE} behavior
-                 ##' @param max_dose Unused; included for compatibility with superclass method
-                 ##' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
-                 ##' of required \code{impl} parameter and optional \code{abbrev} flag.
-                 ##' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
-                 ##' or possibly an abbreviated version of such object as returned by
-                 ##' method \code{Crm$est()}.
+                 #' @details
+                 #' Return dose recommendation for given tox/no-tox tallies.
+                 #'
+                 #' This function caches results, which greatly saves computation time
+                 #' in CPE -- yielding e.g. a 5x speedup for the VIOLA trial example.
+                 #' @param x A dose-wise vector of toxicity counts
+                 #' @param o A dose-wise vector of non-toxicity counts
+                 #' @param last_dose The most recently given dose, as required to implement
+                 #' the \code{global_coherent_esc=TRUE} behavior
+                 #' @param max_dose Unused; included for compatibility with superclass method
+                 #' @param ... Parameters passed to \code{Crm$esc()}, enabling passthru
+                 #' of required \code{impl} parameter and optional \code{abbrev} flag.
+                 #' @return An object of class \code{mtd} as per package \CRANpkg{dfcrm},
+                 #' or possibly an abbreviated version of such object as returned by
+                 #' method \code{Crm$est()}.
                  applied = function(x, o, last_dose = NA, max_dose = NULL, ...){
                    if (!is.null(private$cache)) {
                      key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
@@ -404,41 +404,41 @@ Crm <- R6Class("Crm",
 ## s: A (scalar) scale factor
 
 
-##' A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().
-##'
-##' for various performance tuning experiments. The 'impl' arg allows selection
-##' of various alternative implementations:
-##' - rusti substitutes integrands crmh, crmht, crmht2 written in Rust
-##' - dfcrm is the original as implemented in package \code{dfcrm}.
-##' @param prior The CRM skeleton: dose-wise prior probabilities of toxicity
-##' @param target Target toxicity rate
-##' @param tox A patient-wise vector of toxicity counts
-##' @param level A patient-wise vector of dose level assignments
-##' @param n The number of patients enrolled
-##' @param dosename Optional designators for the doses
-##' @param include Index of patients to include
-##' @param pid Vector of patient ID labels
-##' @param conf.level Used to assign upper and lower bounds on predicted ptox,
-##' which in turn may be referenced in (de)escalation and stopping decisions.
-##' @param method Estimation method:
-##' @param model Presently, only the \sQuote{empiric} (or \sQuote{power}) model
-##' has a Rust likelihood implementation.
-##' @param intcpt Intercept for \sQuote{logistic} model
-##' @param scale  Sigma parameter of prior on beta parameter
-##' @param model.detail If FALSE, the model content of an ‘"mtd"’ object will not
-##' be displayed.  Default is TRUE.
-##' @param patient.detail If FALSE, patient summary of an ‘"mtd"’ object will not
-##' be displayed.  Default is TRUE.
-##' @param var.est If TRUE, variance of the estimate of the model parameter and
-##' probability/confidence interval for the dose-toxicity curve will be computed
-##' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
-##' Currently the \code{'rusti'} option is implemented only for the Bayes method
-##' of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}
- ##' implementaton is in the works.
-##' @importFrom stats integrate optimize qnorm
-##' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
-##' @importFrom dfcrm lcrm lcrmlgt
-##' @author Adapted by David C. Norris, from Ken Cheung's \CRANpkg{dfcrm}
+#' A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().
+#'
+#' for various performance tuning experiments. The 'impl' arg allows selection
+#' of various alternative implementations:
+#' - rusti substitutes integrands crmh, crmht, crmht2 written in Rust
+#' - dfcrm is the original as implemented in package \code{dfcrm}.
+#' @param prior The CRM skeleton: dose-wise prior probabilities of toxicity
+#' @param target Target toxicity rate
+#' @param tox A patient-wise vector of toxicity counts
+#' @param level A patient-wise vector of dose level assignments
+#' @param n The number of patients enrolled
+#' @param dosename Optional designators for the doses
+#' @param include Index of patients to include
+#' @param pid Vector of patient ID labels
+#' @param conf.level Used to assign upper and lower bounds on predicted ptox,
+#' which in turn may be referenced in (de)escalation and stopping decisions.
+#' @param method Estimation method:
+#' @param model Presently, only the \sQuote{empiric} (or \sQuote{power}) model
+#' has a Rust likelihood implementation.
+#' @param intcpt Intercept for \sQuote{logistic} model
+#' @param scale  Sigma parameter of prior on beta parameter
+#' @param model.detail If FALSE, the model content of an ‘"mtd"’ object will not
+#' be displayed.  Default is TRUE.
+#' @param patient.detail If FALSE, patient summary of an ‘"mtd"’ object will not
+#' be displayed.  Default is TRUE.
+#' @param var.est If TRUE, variance of the estimate of the model parameter and
+#' probability/confidence interval for the dose-toxicity curve will be computed
+#' @param impl Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
+#' Currently the \code{'rusti'} option is implemented only for the Bayes method
+#' of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}
+#' implementaton is in the works.
+#' @importFrom stats integrate optimize qnorm
+#' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
+#' @importFrom dfcrm lcrm lcrmlgt
+#' @author Adapted by David C. Norris, from Ken Cheung's \CRANpkg{dfcrm}
 crm <- function(prior, target, tox, level, n=length(level),
                 dosename=NULL, include=1:n, pid=1:n, conf.level=0.90,
                 method="bayes", model="empiric", intcpt=3,

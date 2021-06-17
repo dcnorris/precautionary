@@ -1,25 +1,25 @@
-##' @name Boin-class
-##' @title The BOIN design as a Cumulative-Cohort Design (CCD) subclass
-##'
-##' @details
-##' TODO: Provide references, and note clearly the choice of defaults.
-##'       Also provide citations to BOIN paper(s).
-##' @importFrom R6 R6Class
-##' @importFrom BOIN get.boundary select.mtd
-##' @export
+#' @name Boin-class
+#' @title The BOIN design as a Cumulative-Cohort Design (CCD) subclass
+#'
+#' @details
+#' TODO: Provide references, and note clearly the choice of defaults.
+#'       Also provide citations to BOIN paper(s).
+#' @importFrom R6 R6Class
+#' @importFrom BOIN get.boundary select.mtd
+#' @export
 Boin <- R6Class("Boin",
                inherit = Ccd,
                public = list(
-                 ##' @details
-                 ##' Create a new `Boin` object.
-                 ##'
-                 ##' @param target Target toxicity rate
-                 ##' @param cohort_max Upper bound on dose-wise enrollment
-                 ##' @param enroll_max Upper bound on total enrollment
-                 ##' @return A Boin object.
-                 ##'
-                 ##' @examples
-                 ##' # TODO
+                 #' @details
+                 #' Create a new `Boin` object.
+                 #'
+                 #' @param target Target toxicity rate
+                 #' @param cohort_max Upper bound on dose-wise enrollment
+                 #' @param enroll_max Upper bound on total enrollment
+                 #' @return A Boin object.
+                 #'
+                 #' @examples
+                 #' # TODO
                  initialize = function(target, cohort_max, enroll_max) {
                    private$target <- target
                    bdy <- get.boundary(target = 0.25

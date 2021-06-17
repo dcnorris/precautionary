@@ -2,8 +2,8 @@
 ## The idea is to write an expression 'expr' that includes '...'
 ## which can be filled in using (most appropriately!) this very
 ## function's '...' argument!)
-##' @importFrom microbenchmark microbenchmark
-##' @importFrom stats median
+#' @importFrom microbenchmark microbenchmark
+#' @importFrom stats median
 benchtab <- function(expr, ...) {
   ## In general, this function should evaluate <expr> with various
   ## substitutions as provided in the ... args.

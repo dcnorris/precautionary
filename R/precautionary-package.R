@@ -75,6 +75,7 @@ NULL
 #'
 #' @section Version 0.2.4-1:
 #' * BOIN recs via isotonic regression
+#' * Test comparing CPE vs BOIN::get.oc() sim
 #'
 #' @section Version 0.2.5:
 #' * Convert EscRisk to MCSE-free CPE
