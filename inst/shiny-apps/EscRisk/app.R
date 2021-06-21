@@ -1,13 +1,34 @@
-#
-# This is a Shiny web application providing a simple interface to the
-# simulation capabilities of the 'precautionary' package.
-#
-# TODO:
-#x1. Logarithmic scaling of TI slider
-#  -> Remarkably, no such slider is available off-the-shelf!
-# 2. Craft a complete intro/tutorial https://shiny.rstudio.com/articles/js-introjs.html
-#/(a) Implement a skeleton intro
-# (b) Restructure sidebar's div<>s for intro
+##
+## This was a Shiny web application providing a simple interface to the
+## simulation capabilities of the 'precautionary' package.
+## Now I want to obtain an 'MCSE-free' version that generates
+## safety schematics such as Fig 3 of Norris 2020c.
+##
+## TODO:
+## MARK II -- eliminate trial-wise discrete-event sim
+## 1. Factor out 'escalation' in favor of CPE-based computations
+##    - Use easy defaults for args not yet supported in the UI
+##    - Ideally, refactor simulate_trials to use 'exact' matrix math;
+##      this leaves the UI essentially unchanged!
+## 2. Run longer CPEs with pop-up progress bar?
+## 3. Add & activate 'consensus' enrollment to CRM/BOIN
+## 4. Account properly for whatever MCSE remains
+##    - Does the existing MCSE calculation carry forward
+##      validly even with CPE?
+##    - Does the MCSE progress bar even remain necessary,
+##      or does hyperprior sampling loop run so fast that
+##      I can drop it for practical purposes?
+## 5. Add a Bernoulli dose scaling
+##    - Find a decent *citation* for this, beyond rumor & innuendo!
+## 6. Visual feedback on hyperprior sampling via top-right plot?
+##    - This could be profoundly helpful in conveying the meaning
+##      of what's going on under the hood! Each trace added to the
+##      plot during sampling represents another 'scenario' of 'truth'
+##      that is being explored and tallied.
+## MARK III (?)
+## 1. Obtain the safety schematic
+## 2. Can I 'mark the spot' on schematic selected by hyperprior?
+##    - Or is it perhaps a *region* on the schematic?
 
 library(shiny)
 library(precautionary)
@@ -19,13 +40,13 @@ ui <- fluidPage(
 
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "introjs.css"))),
   singleton(tags$head(tags$script(src="intro.js"))),
-  
+
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "tweaks.css"))),
-  
-  # Application title
+
+  ## Application title
   titlePanel("Predict Risks of High-Grade Toxicities in Dose-Escalation Trials"),
-  
-  # Sidebar with a slider input for number of bins 
+
+  ## Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
       tags$fieldset(id="dose-levels",
@@ -102,10 +123,10 @@ ui <- fluidPage(
       ), # </fieldset>
       splitLayout(
       uiOutput('RunStopButton'),
-      # centered button
-      div(class="flexcontainer", 
-          
-          # action button
+      ## centered button
+      div(class="flexcontainer",
+
+          ## action button
           actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
       ),
       cellWidths = c("50%","50%"),
@@ -132,31 +153,31 @@ ui <- fluidPage(
                )
       )
     ),
-    
-    # Show a plot of the generated distribution
+
+    ## Show a plot of the generated distribution
     mainPanel(
       plotOutput("hyperprior"),
       plotOutput("simprogress", height = "150px"),
       htmlOutput("safety")
     )
   ),
-  
-  # Define message handlers and overlay help-system data on now-defined UI
+
+  ## Define message handlers and overlay help-system data on now-defined UI
   tags$body(tags$script(src="help.js")),
-  
+
 )
 
 server <- function(input, output, session) {
-  
+
   observeEvent(input$startHelp,{
     session$sendCustomMessage(type = 'startHelp', message = list(""))
   })
-  
-  # Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
-  # without exploiting Javascript. This would seem to require maintaining the
-  # desired state as a reactiveVal, and re-rendering the button accordingly.
+
+  ## Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
+  ## without exploiting Javascript. This would seem to require maintaining the
+  ## desired state as a reactiveVal, and re-rendering the button accordingly.
   state <- reactiveValues(sim = 'ready') # 'ready' | 'running'
-  
+
   output$RunStopButton <- renderUI({
     if (state$sim == 'ready')
       actionButton("run_stop", label = "RUN simulation"
@@ -165,20 +186,20 @@ server <- function(input, output, session) {
       actionButton("run_stop", label = "STOP simulation"
                    , style = "color: #fff; background-color: #cd0000")
   })
-  
+
   observeEvent(input$run_stop, {
     if (isolate(state$sim) == 'ready')
       state$sim <- 'running'
     else
       state$sim <- 'ready'
   })
-  
+
   blank_safety <- rep("--", 7)
   names(blank_safety) <- c("None", paste("Grade", 1:5), "Total")
   blank_kable <- blank_safety %>% t %>% knitr::kable(align='r') %>%
     kable_styling(position = "left", full_width = FALSE) %>%
     add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
-  
+
   options(ordinalizer = function(dose, r0) { # NB: no r0 default
     c(`Grade 1` = dose/r0^2
       , `Grade 2` = dose/r0
@@ -186,7 +207,7 @@ server <- function(input, output, session) {
       , `Grade 4` = dose*r0
       , `Grade 5` = dose*r0^2)
   })
-  
+
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
@@ -196,11 +217,11 @@ server <- function(input, output, session) {
       shinyjs::enable("enroll_max")
     }
   })
-  
+
   dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
-  
-  # TODO: Perform validation of these inputs as per
-  # https://mastering-shiny.org/action-feedback.html#validate
+
+  ## TODO: Perform validation of these inputs as per
+  ## https://mastering-shiny.org/action-feedback.html#validate
   mindose <- reactive({
     mindose <- as.numeric(input$mindose)
     isnum <- !is.na(mindose)
@@ -219,15 +240,15 @@ server <- function(input, output, session) {
     req(isnum && gtmin)
     maxdose
   })
-  
-  # NB: Reading mindose() & maxdose() directly avoids a *race condition*
+
+  ## NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
     c(mindose()
       , sapply(2:(input$num_doses-1), function(k) as.numeric(input[[paste0("D",k)]]))
       , maxdose()
       )
   )
-  
+
   dose_levels <- reactive(
     switch(input$range_scaling,
            geom = exp(seq(from = log(mindose())
@@ -239,11 +260,11 @@ server <- function(input, output, session) {
            custom = readDoseLevels()
     )
   )
-  
+
   observe(
     options(dose_levels = dose_levels())
   )
-  
+
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       textInput(inputId = paste0("D", k)
@@ -251,15 +272,15 @@ server <- function(input, output, session) {
                 , value = dose_levels()[k]
                 , ...)))
   })
-  
-  # TODO: Should the inputs be validated here?
+
+  ## TODO: Should the inputs be validated here?
   mtdi_gen <- reactive(
     hyper_mtdi_lognormal(CV = 0.01*as.numeric(input$sigma_CV)
                          , median_mtd = as.numeric(input$median_mtd)
                          , median_sdlog = 0.01*as.numeric(input$sigma_median)
                          , units = input$dose_units)
   )
-  
+
   design <- reactive(
     switch(input$design,
            `3 + 3` = get_three_plus_three(num_doses = input$num_doses),
@@ -275,23 +296,23 @@ server <- function(input, output, session) {
              stop_at_n(n = 24)
     )
   )
-  
-  # Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
-  # and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
+
+  ## Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
+  ## and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
   hsims <- reactiveVal(NULL)
-  
+
   safety <- reactive({
     if (is.null(hsims()))
       return(NULL)
     summary(hsims(), r0 = input$r0)$safety
   })
-  
+
   worst_mcse <- reactive({
     if (is.null(safety()))
       return(NA)
     max(safety()['MCSE', 2:6])
   })
-  
+
   observe({
     if (state$sim == 'running') {
       hsims(
@@ -308,17 +329,17 @@ server <- function(input, output, session) {
       invalidateLater(500, session) # repeat
     }
   })
-  
+
   output$safety <- renderText({
     ifelse(is.null(safety()),
            blank_kable,
            safety_kable(safety()))
   })
-  
+
   observeEvent(worst_mcse(), {
     if (!is.na(worst_mcse()) && worst_mcse() < 0.05) state$sim <- 'ready' # HALT sim
   })
-  
+
   plotProgress <- function(worst_mcse) {
     reps_so_far <- length(hsims()$fits)
     reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
@@ -334,10 +355,10 @@ server <- function(input, output, session) {
     axis(side = 1, at = (0.05/tics)^2
          , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
   }
-  
+
   output$simprogress <- renderPlot(plotProgress(worst_mcse()))
 
-  # Any one of these many UI events will invalidate the safety table:
+  ## Any one of these many UI events will invalidate the safety table:
   observeEvent({
     dose_levels()
     mtdi_gen()
@@ -353,15 +374,15 @@ server <- function(input, output, session) {
       shinyjs::disable(paste0("D", input$num_doses))
     })
   })
-  
+
   output$hyperprior <- renderPlot({
     set.seed(2020) # avoid distracting dance of the samples
     options(dose_levels = dose_levels())
     plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
   })
-  
+
 }
 
-# Run the application 
+## Run the application
 shinyApp(ui = ui, server = server)
 
