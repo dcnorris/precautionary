@@ -1,4 +1,4 @@
-TARGET = i686-pc-windows-gnu
+TARGET = mingw-w64-x86_64-gcc
 LIBDIR = ./rust/target/$(TARGET)/release
 STATLIB = $(LIBDIR)/libprecautionary.a
 PKG_LIBS = -L$(LIBDIR) -lprecautionary -lws2_32 -ladvapi32 -luserenv
