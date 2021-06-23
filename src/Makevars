@@ -13,8 +13,8 @@ export CARGO_HOME=$(PWD)/.cargo
 
 $(STATLIB):
 	PATH="$(HOME)/.cargo/bin:$(PATH)" cargo build --lib --release --manifest-path=./rust/Cargo.toml
-#	rm -Rf $(CARGO_HOME)
-#	rm -Rf $(LIBDIR)/build
+	rm -Rf $(CARGO_HOME)
+	rm -Rf $(LIBDIR)/build
 
 clean:
 	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) rust/target
