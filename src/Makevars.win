@@ -1,17 +1,24 @@
-TARGET = x86_64-pc-windows-gnu
+TARGET = $(subst 64,x86_64,$(subst 32,i686,$(WIN)))-pc-windows-gnu
 LIBDIR = ./rust/target/$(TARGET)/release
 STATLIB = $(LIBDIR)/libprecautionary.a
 PKG_LIBS = -L$(LIBDIR) -lprecautionary -lws2_32 -ladvapi32 -luserenv
 
-all: C_clean
+# These can also be set in ~/.cargo/config
+#export CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER=C:\\rtools40\\mingw$(WIN)\\bin\\gcc
+#export CC=$(CC)
+#export AR=$(AR)
+
+# This bypasses the exception stuff
+#export CARGO_TARGET_I686_PC_WINDOWS_GNU_RUSTFLAGS=-C panic=abort
+
+GCCPATH=$(subst C:\,/c/,$(RTOOLS40_HOME))/mingw$(WIN)/bin
+
+all: clean
 
 $(SHLIB): $(STATLIB)
 
 $(STATLIB):
-	cargo build --target=$(TARGET) --lib --release --manifest-path=./rust/Cargo.toml
-
-C_clean:
-	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS)
+	PATH="$(GCCPATH):$(PATH)" cargo build --target=$(TARGET) --lib --release --manifest-path=./rust/Cargo.toml
 
 clean:
 	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) rust/target
