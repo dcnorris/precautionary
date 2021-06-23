@@ -63,7 +63,7 @@ jobs:
 
       - name: Avoid Rust error[E0463] on Windows; see https://stackoverflow.com/q/66252428/3338147
         if: runner.os == 'Windows'
-        run: rustup target add mingw-w64-x86_64-gcc
+        run: rustup target add x86_64-pc-windows-msvc
         shell: bash
 
       - name: Install system dependencies
