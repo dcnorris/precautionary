@@ -143,7 +143,7 @@
 <p>Prerequisite to any CRM prior calibration procedure aiming to optimize selected performance characteristics, is the ability to characterize performance for any given CRM model with fixed prior parameters.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> So we begin by repeating Braun’s characterization of his calibrated model.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> The calibrated model is as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">skel_0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.03</span>, <span class="fl">0.11</span>, <span class="fl">0.25</span>, <span class="fl">0.42</span>, <span class="fl">0.58</span>, <span class="fl">0.71</span><span class="op">)</span>
-<span class="va">calmod</span> <span class="op">&lt;-</span> <span class="va">Crm</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">skel_0</span>,
+<span class="va">calmod</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/Crm-class.html">Crm</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">skel_0</span>,
                   scale <span class="op">=</span> <span class="fl">0.85</span>, <span class="co"># aka 'sigma'</span>
                   target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></code></pre></div>
 <p>Braun’s initial characterization is of trials of fixed enrollment <span class="math inline">\(N=30\)</span>, with a cohort size of 2.<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a> Trials of this size readily yield to CPE on desktop hardware:</p>
@@ -165,7 +165,7 @@
   <span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">calmod</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   9.778   0.421   8.795</code></pre>
+##  11.710   0.678  10.711</code></pre>
 <p>The 3-dimensional array <code>T[j,c,d]</code> has the same structure and function as in <span class="citation">Norris (2020)</span>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>

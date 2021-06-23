@@ -190,7 +190,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <a href="#early-stopping" class="anchor"></a>Early stopping</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">stop_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">stop_for_excess_toxicity_empiric</span><span class="op">(</span><span class="va">x</span>,
+  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stop_for_excess_toxicity_empiric.html">stop_for_excess_toxicity_empiric</a></span><span class="op">(</span><span class="va">x</span>,
                                         tox_lim <span class="op">=</span> <span class="va">target.DLT</span> <span class="op">+</span> <span class="fl">0.1</span>,
                                         prob_cert <span class="op">=</span> <span class="fl">0.72</span>,
                                         dose <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
@@ -207,7 +207,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <a href="#complete-path-enumeration-cpe" class="anchor"></a>Complete Path Enumeration (CPE)</h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">crm</span> <span class="op">&lt;-</span> <span class="va">Crm</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">prior.DLT</span>,
+<span class="va">crm</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/Crm-class.html">Crm</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">prior.DLT</span>,
                scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">prior.var</span><span class="op">)</span>,
                target <span class="op">=</span> <span class="va">target.DLT</span><span class="op">)</span><span class="op">$</span>
   <span class="fu">stop_func</span><span class="op">(</span><span class="va">stop_func</span><span class="op">)</span><span class="op">$</span>
@@ -226,7 +226,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   2.837   0.246   1.680</code></pre>
+##   3.766   0.478   2.324</code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>

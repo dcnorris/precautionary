@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title> • precautionary</title>
+<title>Function reference • precautionary</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="" />
+<meta property="og:title" content="Function reference" />
 <meta property="og:image" content="https://github.com/dcnorris/precautionary/raw/main/docs/card.png" />
 <meta property="og:image:alt" content="Logo for precautionary package" />
 <meta name="twitter:card" content="summary" />
@@ -157,7 +157,215 @@
       <col class="title" />
     </colgroup>
 
-    
+    <tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="Boin-class.html">Boin-class</a></code> </p>
+        </td>
+        <td><p>The BOIN design as a Cumulative-Cohort Design (CCD) subclass</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Ccd-class.html">Ccd-class</a></code> </p>
+        </td>
+        <td><p>An R6 class encapsulating Cumulative-Cohort Designs</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Cpe-class.html">Cpe-class</a></code> </p>
+        </td>
+        <td><p>An R6 base class for designs requiring Complete Path Enumeration</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Crm-class.html">Crm-class</a></code> </p>
+        </td>
+        <td><p>An R6 class encapsulating CRM models
+
+This class wraps the functionality of package <a href='https://CRAN.R-project.org/package=dfcrm'><span class="pkg">dfcrm</span></a>, adding
+efficient Rust implementations of some numerical routines.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="as.data.table.exact.html">as.data.table(<i>&lt;exact&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Convert an object of class c('exact','precautionary','simulations') to a data.table</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="as.data.table.precautionary.html">as.data.table(<i>&lt;precautionary&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Convert an object of class c('precautionary','simulations') to a data.table</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="cohorts_of_n.html">cohorts_of_n()</a></code> </p>
+        </td>
+        <td><p>Override <code><a href='https://rdrr.io/pkg/escalation/man/cohorts_of_n.html'>cohorts_of_n</a></code> to include latent toxicity tolerances</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="crm.html">crm()</a></code> </p>
+        </td>
+        <td><p>A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="crmh.html">crmh()</a></code> <code><a href="crmh.html">crmht()</a></code> <code><a href="crmh.html">crmht2()</a></code> </p>
+        </td>
+        <td><p>Rust implementation of <code>dfcrm::crmh*</code> integrands</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="crmh_xo.html">crmh_xo()</a></code> </p>
+        </td>
+        <td><p>Rust implementation of <code>dfcrm::crmh*</code> integrands for w==1 case</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="exact.html">exact()</a></code> </p>
+        </td>
+        <td><p>A wrapper function supporting exact simulation of dose-escalation trials.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="extend.html">extend()</a></code> </p>
+        </td>
+        <td><p>Extend an existing simulation, using one of several stopping criteria</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="format.safetytab.html">format(<i>&lt;safetytab&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Format a phase 1 trial safety tabulation to show significant digits only</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="hyper_mtdi_lognormal-class.html">hyper_mtdi_lognormal-class</a></code> </p>
+        </td>
+        <td><p>Hyperprior for lognormal MTDi distributions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="mtdi_lognormal-class.html">mtdi_lognormal-class</a></code> </p>
+        </td>
+        <td><p>A lognormal MTDi distribution</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ordinalizer.html">ordinalizer</a></code> </p>
+        </td>
+        <td><p>Ordinalizers</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="phase1_sim.html">phase1_sim()</a></code> </p>
+        </td>
+        <td><p>Override <code>escalation:::phase1_sim</code> to incorporate latent toxicity tolerances</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plan.html">plan</a></code> </p>
+        </td>
+        <td><p>Plan</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot-mtdi_distribution-ANY-method.html">plot(<i>&lt;mtdi_distribution&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Visualize an <code>mtdi_distribution</code> object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot-mtdi_generator-ANY-method.html">plot(<i>&lt;mtdi_generator&gt;</i>,<i>&lt;ANY&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Visualize n samples from an <code>mtdi_generator</code> object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="precautionary-package.html">precautionary-package</a></code> </p>
+        </td>
+        <td><p>Safety Diagnostics for Dose-Escalation Trial Designs</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.exact.html">print(<i>&lt;exact&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Specialize print method for objects of class <code><a href='https://rdrr.io/pkg/escalation/man/simulations.html'>simulations</a></code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.hyper.html">print(<i>&lt;hyper&gt;</i>)</a></code> <code><a href="print.hyper.html">print(<i>&lt;hyper&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Specialize print method defined for class <code><a href='https://rdrr.io/pkg/escalation/man/simulations.html'>simulations</a></code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.precautionary.html">print(<i>&lt;precautionary&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Specialize print method for objects of class <code><a href='https://rdrr.io/pkg/escalation/man/simulations.html'>simulations</a></code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="safety_kable.html">safety_kable()</a></code> </p>
+        </td>
+        <td><p>Output a <code>kable</code> for a simulation summary of class <code>safetytab</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="simulate_trials.html">simulate_trials()</a></code> </p>
+        </td>
+        <td><p>Simulate trials defined via package <a href='https://CRAN.R-project.org/package=escalation'><span class="pkg">escalation</span></a></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="simulation_function.u_i.html">simulation_function(<i>&lt;u_i&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get a function that simulates dose-escalation trials using latent <code>u_i</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="stop_for_excess_toxicity_empiric.html">stop_for_excess_toxicity_empiric()</a></code> </p>
+        </td>
+        <td><p>A supremely faster version of a function from 'dtpcrm' v0.1.1</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="summary.exact.html">summary(<i>&lt;exact&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Summarize an exact treatment of a dose-escalation design</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="summary.precautionary.html">summary(<i>&lt;precautionary&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Specialize a method defined in package 'escalation' for class 'simulations'</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="test_draw_samples.html">test_draw_samples()</a></code> </p>
+        </td>
+        <td><p>Test performance of <code>draw_samples</code> function</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="viola_dtp.html">viola_dtp</a></code> </p>
+        </td>
+        <td><p>Complete dose transition pathways (DTP) table for the VIOLA trial.</p></td>
+      </tr>
+    </tbody>
     </table>
   </div>
 
