@@ -62,6 +62,18 @@ HyperMTDi_lognormal <- R6Class(
       invisible(self)
     },
     #' @details
+    #' Set or query the vector of pre-specified dose levels
+    #'
+    #' @param x A vector of dose levels
+    #' @return Self (invisibly), unless `x` is missing,
+    #' in which case the dose vector is returned.
+    doses = function(x) {
+      if (missing(x))
+        return(private$.doses)
+      private$.doses <- x
+      invisible(self)
+    },
+    #' @details
     #' Apply a distribution-type function over the sampled realizations
     #' TODO: Consider taking this method private.
     #'
@@ -74,6 +86,79 @@ HyperMTDi_lognormal <- R6Class(
       lapply(seq(nrow(private$samples))
            , function(j)
              with(private$samples[j,], f(CV, median)(...)))
+    },
+    #' @details
+    #' Return expected counts of ordinal toxicities
+    #'
+    #' @param b The pathwise (length-J) vector defined by Eq (4) of Norris2020c
+    #' @param U The J*2D matrix defined by Eq (4) of Norris2020c
+    #' @param kappa A log-therapeutic index as in Eq (5) of Norris2020c
+    #' @return A 6-column matrix, each row being the expected counts for toxicity
+    #' grades 0 through 5, at one sampled scenario.
+    #' @seealso Documentation for `Cpe-class`
+    fractionate = function(b, U, kappa) {
+      self$apply(function(CV, median)
+        function(b, U, kappa) {
+          ## This function should compute pi %*% U %*% F at each sampled pair (CV,median)!
+          p <- private$dist$cdf(CV, median)(private$.doses)
+          q <- 1 - p
+          log_pq <- pmax(c(log(p), log(q)), .Machine$double.min.exp) # avoid -Inf from log(0.0)
+          LOG_PQ <<- log_pq
+          stopifnot(all(is.finite(log_pq)))
+          log_pi <- b + U %*% log_pq
+          ## Now I need to construct the fractionation matrix F ...
+          ## 1. Obtain a 5*D matrix of shifted doses, marking off MTDi thresholds
+          ##    for toxicities of Gr1+, Gr2+, Gr3+, Gr4+ and Gr5, which we will
+          ##    denote through strict inequalities as STRICTLY WORSE THAN Gr0..Gr4.
+          ##    (Note that this would even be in keeping with the left-continuity
+          ##    required to preserve the 'MTD' intuition; we are looking for maximum
+          ##    doses that still produce a given grade of toxicity, with dose+epsilon
+          ##    resulting in the next-higher grade.)
+          gradescale <- c(Gr0=2, Gr1=1, Gr2=0, Gr3=-1, Gr4=-2)
+          X <- outer(exp(gradescale*kappa), private$.doses)
+          ## 2. Evaluate the COMPLEMENTARY CDF on this matrix, to obtain INCREASING
+          ##    vectors with probability of Gr0, Gr1 or less, Gr2 or less, etc.
+          F <- 1 - private$dist$cdf(CV, median)(X)
+          ## 3. 'Cap' these probability vectors with [0,1] endpoints,
+          ##    then difference the columns to obtain a 6*D matrix
+          F <- diff(rbind(0, F, Gr5=1)) # NB: prob of Gr5 or less is exactly 1
+          ## 4. Transpose F to D*6 matrix
+          F <- t(F)
+          ## 5. 'Explode' F to a 2D*6 block-antidiagonal matrix
+          H <- F[,1:3] # Gr0, Gr1, Gr2
+          G <- F[,4:6] # Gr3, Gr4, Gr5
+          O <- 0*H
+          F <- rbind(cbind(O, G),
+                     cbind(H, O))
+          ## 6. Normalize the rows of F
+          F <- F / rowSums(F)
+          ## TODO: Analyze the cases where F can't be normalized, and find a
+          ##       principled way of dealing with these. For the time being,
+          ##       I'll presume we are dealing with zero-probability events
+          ##       in the t(pi) %*% U matrix that render the product with F
+          ##       insensitive to those rows of the F matrix.
+          ##       I suspect that these cases arise when we draw an extremely
+          ##       narrow MTDi distribution (with implausibly small CV) from
+          ##       our hyperprior. (One way to deal with these troublesome
+          ##       cases would be to avert them entirely by truncating the
+          ##       Rayleigh distribution from which CV is drawn, or indeed
+          ##       finding another standard distribution altogether. Maybe
+          ##       there would be some real benefit from encouraging USERS
+          ##       to posit the lower and upper bounds of a uniform density!)
+          if (any(is.nan(F))) {
+            ## Check that the NaN's are negligible, then zero them
+            stopifnot(abs(t(exp(log_pi)) %*% U %*% (is.nan(F))) < 10*.Machine$double.eps)
+            F[is.nan(F)] <- 0
+          }
+          ## Finally, return the matrix product
+          t(exp(log_pi)) %*% U %*% F
+        }, b, U, kappa) -> expectations
+      toxTab <- do.call('rbind', expectations) %>%
+        addmargins(margin = 2, FUN = list(Total=sum))
+      expectation <- rbind("Expected participants" = colMeans(toxTab)
+                          ,"MCSE" = apply(toxTab, MARGIN = 2, FUN = sd) / sqrt(nrow(toxTab))
+                           )
+      prependClass("safetytab", expectation)
     },
     #' @details
     #' Visualize the samples of a `HyperMTDi` object
@@ -142,5 +227,6 @@ HyperMTDi_lognormal <- R6Class(
   , median_sdlog = NA
   , units = NA
   , samples = NULL
+  , .doses = numeric(0)
   )
 ) # </HyperMTDi_lognormal>
