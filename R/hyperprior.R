@@ -46,6 +46,13 @@ HyperMTDi_lognormal <- R6Class(
       self$extend(n)
     },
     #' @details
+    #' Get number of samples
+    #' TODO: Consider a higher-level interface to progress-bar info
+    #' @return Number of samples drawn so far
+    nsamples = function() {
+      nrow(private$samples)
+    },
+    #' @details
     #' Extend the samples, typically improving the approximation
     #' TODO: Investigate how much variance reduction QRNG yields.
     #' @param n Number of additional MTDi scenarios to sample
@@ -86,6 +93,16 @@ HyperMTDi_lognormal <- R6Class(
       lapply(seq(nrow(private$samples))
            , function(j)
              with(private$samples[j,], f(CV, median)(...)))
+    },
+    #' @details
+    #' Get average toxicity probabilities over the sample
+    #' @return Toxicity probabilites at fixed doses, averaged over sample
+    avg_tox_probs = function() {
+      self$apply(function(CV, median)
+        function() {
+          private$dist$cdf(CV, median)(private$.doses)
+        }) -> probs
+      colMeans(do.call('rbind', probs))
     },
     #' @details
     #' Return expected counts of ordinal toxicities

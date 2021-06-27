@@ -112,11 +112,11 @@ ui <- fluidPage(
                       ,max = 33
                       ,value = 25
                       ,post = "%")
-        , numericInput(inputId = "enroll_max"
-                       ,label = HTML("Max enroll")
-                       ,value = 24
-                       ,min = 18
-                       ,max = 36
+        , numericInput(inputId = "cohort_max"
+                       ,label = HTML("Cohort max")
+                       ,value = 12
+                       ,min = 9
+                       ,max = 15
                        ,step = 3)
         , cellWidths = c("20%","55%","25%")
       )
@@ -211,10 +211,10 @@ server <- function(input, output, session) {
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
-      shinyjs::disable("enroll_max")
+      shinyjs::disable("cohort_max")
     } else {
       shinyjs::enable("ttr")
-      shinyjs::enable("enroll_max")
+      shinyjs::enable("cohort_max")
     }
   })
 
@@ -273,38 +273,70 @@ server <- function(input, output, session) {
                 , ...)))
   })
 
-  ## TODO: Should the inputs be validated here?
-  mtdi_gen <- reactive(
-    hyper_mtdi_lognormal(CV = 0.01*as.numeric(input$sigma_CV)
-                         , median_mtd = as.numeric(input$median_mtd)
-                         , median_sdlog = 0.01*as.numeric(input$sigma_median)
-                         , units = input$dose_units)
+  ## Changes to MTDi_gen don't propagate, so let me create a simple
+  ## reactiveVal in the hope that solves the problem...
+  ## TODO: Consider including this as component of 'state'.
+  ## TODO: Find a more natural idiom.
+  nsamples <- reactiveVal(100)
+
+  MTDi_gen <- reactive(
+    HyperMTDi_lognormal$new(CV = 0.01*as.numeric(input$sigma_CV)
+                          , median_mtd = as.numeric(input$median_mtd)
+                          , median_sdlog = 0.01*as.numeric(input$sigma_median)
+                          , units = input$dose_units
+                          , n = nsamples())$doses(dose_levels())
   )
 
   design <- reactive(
     switch(input$design,
-           `3 + 3` = get_three_plus_three(num_doses = input$num_doses),
-           CRM = get_dfcrm(
-             skeleton = rowMeans( # TODO: Abstract this to 'precautionary' package
-               sapply(precautionary:::draw_samples(mtdi_gen(), n=100)
-                      , function(mtdi) mtdi@dist$cdf(dose_levels()))),
-             target = 0.01*input$ttr) %>%
-             stop_at_n(n = input$enroll_max),
-           BOIN = get_boin(
-             num_doses = 5,
-             target = 0.01*input$ttr) %>%
-             stop_at_n(n = 24)
-    )
+           `3 + 3` = list(b = precautionary:::b[[input$num_doses]]
+                         ,U = precautionary:::U[[input$num_doses]]
+                          )
+           ## TODO: Provide UI inputs for the CRM skeleton, and display on plot
+         , CRM = Crm$new(skeleton = MTDi_gen()$avg_tox_probs()
+                       , target = 0.01*input$ttr)$
+             stop_func(function(x) {
+               y <- stop_for_excess_toxicity_empiric(x,
+                                                     tox_lim = 0.01*input$ttr + 0.1,
+                                                     prob_cert = 0.72,
+                                                     dose = 1)
+               if(y$stop){
+                 x <- y
+               } else {
+                 x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = input$cohort_max)
+               }
+             })$
+             no_skip_esc(TRUE)$
+             no_skip_deesc(FALSE)$
+             global_coherent_esc(TRUE)$
+             trace_paths(root_dose=1
+                       , cohort_sizes=rep(3, 7) # TODO: Don't hard-code
+                       , impl = 'rusti')
+
+         , BOIN = Boin$new(target = 0.01*input$ttr
+                          ,cohort_max = input$cohort_max
+                          ,enroll_max = 24)$
+             max_dose(input$num_doses)$
+             trace_paths(root_dose=1
+                       , cohort_sizes=rep(3, 7)) # TODO: Don't hard-code
+
+    ) # </switch>
   )
 
-  ## Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
-  ## and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
-  hsims <- reactiveVal(NULL)
+  ## Perhaps the key to my refactoring is threading UPSTREAM from the final output?
 
   safety <- reactive({
-    if (is.null(hsims()))
-      return(NULL)
-    summary(hsims(), r0 = input$r0)$safety
+    nsamples() # take a dependency
+    ## Let's just have a quick look at avg_tox_probs()
+    ##cat("skeleton =", paste(MTDi_gen()$avg_tox_probs(), collapse=", "), "\n")
+    cpe <- design()
+    if (is(cpe, 'Cpe')) {
+      cpe$path_array() # TODO: Design a more efficient scheme within 'Cpe-class'
+      cpe <- cpe$bU()
+    }
+    MTDi_gen()$fractionate(b = cpe$b
+                          ,U = cpe$U
+                          ,kappa = log(input$r0))
   })
 
   worst_mcse <- reactive({
@@ -315,17 +347,12 @@ server <- function(input, output, session) {
 
   observe({
     if (state$sim == 'running') {
-      hsims(
-        if (!is.null(isolate(hsims()))) {
-          isolate(hsims()) %>% extend(num_sims = 10) # <11 ==> no txtProgressBar
-        } else { # iteration base case
-          isolate(design()) %>%
-            simulate_trials(
-              num_sims = 10,
-              true_prob_tox = isolate(mtdi_gen())
-            )
-        }
-      )
+      MTDi_gen()$extend(n=100)
+      nsamples(MTDi_gen()$nsamples())
+      cat("nsamples =", nsamples(), "\n")
+      ## The above printout shows that MTDi_gen indeed does sample,
+      ## and that the new state is available from MTDi_gen().
+      ## Do I have to initiate the update cascade explicitly here?
       invalidateLater(500, session) # repeat
     }
   })
@@ -340,15 +367,14 @@ server <- function(input, output, session) {
     if (!is.na(worst_mcse()) && worst_mcse() < 0.05) state$sim <- 'ready' # HALT sim
   })
 
-  plotProgress <- function(worst_mcse) {
-    reps_so_far <- length(hsims()$fits)
-    reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
+  plotProgress <- function(reps_so_far, worst_mcse) {
+    reps_needed <- ceiling(reps_so_far * ( worst_mcse / 0.05 )^2)
     fraction_done <- reps_so_far / reps_needed
     barplot(fraction_done, width = 0.9
             , ylim = c(0,1), xlim = c(0,1)
             , horiz = TRUE, asp = 0.04
             , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
-            , main = paste0(reps_so_far, " trials")
+            , main = paste0(reps_so_far, " scenarios")
             , axes = FALSE # will be drawn separately
     )
     tics <- c(Inf, seq(0.1, 0.05, -0.01))
@@ -356,15 +382,15 @@ server <- function(input, output, session) {
          , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
   }
 
-  output$simprogress <- renderPlot(plotProgress(worst_mcse()))
+  output$simprogress <- renderPlot(plotProgress(MTDi_gen()$nsamples(), worst_mcse()))
 
   ## Any one of these many UI events will invalidate the safety table:
   observeEvent({
     dose_levels()
-    mtdi_gen()
+    MTDi_gen() # TODO: Does this even generate events, presently?
+    nsamples()
     design()
   }, {
-    hsims(NULL)
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
       if (input$range_scaling == "custom")
@@ -376,9 +402,13 @@ server <- function(input, output, session) {
   })
 
   output$hyperprior <- renderPlot({
+    ## TODO: Do I no longer need to set the seed like this,
+    ##       since R6 MTDi_gen has saved simulation state?
+    ##       Or should I be setting this seed at the time
+    ##       when MTDi_gen is instantiated?
     set.seed(2020) # avoid distracting dance of the samples
     options(dose_levels = dose_levels())
-    plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
+    MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25))
   })
 
 }

@@ -29,6 +29,12 @@ Cpe <- R6Class("Cpe",
                    invisible(self)
                  },
                  #' @details
+                 #' Get the `b` vector and `U` matrix
+                 #' @return Named list with components `b` and `U`
+                 bU = function() {
+                   list(b = private$b, U = private$U)
+                 },
+                 #' @details
                  #' Return dose recommendation for given tox/no-tox tallies.
                  #' @note Concrete subclasses must implement this abstract method.
                  #' @param x A dose-wise vector of toxicity counts
