@@ -31,6 +31,7 @@
 ##    - Or is it perhaps a *region* on the schematic?
 
 library(shiny)
+library(shinyjs)
 library(precautionary)
 library(kableExtra)
 
@@ -103,7 +104,7 @@ ui <- fluidPage(
       splitLayout(
         radioButtons(inputId = "design"
                      ,label = "Method"
-                     ,choices = c("3 + 3","CRM","BOIN")
+                     ,choices = c("3 + 3","BOIN","CRM")
                      ,selected = "3 + 3"
                      ,inline = FALSE)
         , sliderInput(inputId = "ttr"
@@ -112,14 +113,26 @@ ui <- fluidPage(
                       ,max = 33
                       ,value = 25
                       ,post = "%")
-        , numericInput(inputId = "cohort_max"
-                       ,label = HTML("Cohort max")
-                       ,value = 12
-                       ,min = 9
-                       ,max = 15
-                       ,step = 3)
+        , verticalLayout(
+            numericInput(inputId = "cohort_size"
+                        ,label = HTML("Cohort size")
+                        ,value = 2
+                        ,min = 1
+                        ,max = 3
+                        ,step = 1)
+          , numericInput(inputId = "cohort_max"
+                        ,label = HTML("Max / dose")
+                        ,value = 12
+                        ,min = 9
+                        ,max = 15
+                        ,step = 3)
+            )
         , cellWidths = c("20%","55%","25%")
       )
+      ), # </fieldset>
+      tags$fieldset(id="CRM-skeleton",
+      tags$legend("crm skeleton"),
+      uiOutput("crm_skeleton"),
       ), # </fieldset>
       splitLayout(
       uiOutput('RunStopButton'),
@@ -200,23 +213,31 @@ server <- function(input, output, session) {
     kable_styling(position = "left", full_width = FALSE) %>%
     add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
 
-  options(ordinalizer = function(dose, r0) { # NB: no r0 default
-    c(`Grade 1` = dose/r0^2
-      , `Grade 2` = dose/r0
-      , `Grade 3` = dose
-      , `Grade 4` = dose*r0
-      , `Grade 5` = dose*r0^2)
-  })
-
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
       shinyjs::disable("cohort_max")
-    } else {
+      shinyjs::disable("cohort_size")
+      shinyjs::disable("crm_skeleton")
+    } else if (input$design == "BOIN") {
       shinyjs::enable("ttr")
       shinyjs::enable("cohort_max")
-    }
+      shinyjs::enable("cohort_size")
+      shinyjs::disable("crm_skeleton")
+    } else if (input$design == "CRM") {
+      shinyjs::enable("ttr")
+      shinyjs::enable("cohort_max")
+      shinyjs::enable("cohort_size")
+      shinyjs::enable("crm_skeleton")
+      ## Also here set the skeleton from default when I first select (x) CRM
+      probs <- auto_skeleton()
+      for (k in dose_counter())
+        updateTextInput(session, inputId = paste0("P",k), value = probs[k])
+    } else
+      stop() # all cases exhausted
   })
+
+  auto_skeleton <- reactive(MTDi_gen()$avg_tox_probs())
 
   dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
 
@@ -261,16 +282,34 @@ server <- function(input, output, session) {
     )
   )
 
-  observe(
-    options(dose_levels = dose_levels())
-  )
-
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       textInput(inputId = paste0("D", k)
-                , label = HTML(paste0("D<sub>", k,"</sub>"))
-                , value = dose_levels()[k]
-                , ...)))
+              , label = HTML(paste0("D<sub>", k,"</sub>"))
+              , value = dose_levels()[k]
+              , ...)))
+  })
+
+  crm_skeleton <- reactive(
+    sapply(1:input$num_doses, function(k) as.numeric(input[[paste0("P",k)]]))
+  )
+
+  output$crm_skeleton <- renderUI({
+    avg_tox_probs <-  MTDi_gen()$avg_tox_probs()
+    do.call(splitLayout, lapply(dose_counter(), function(k, ...)
+      if (input$design == "CRM")
+        textInput(inputId = paste0("P", k)
+                , label = HTML(paste0("P<sub>", k,"</sub>"))
+                , value = crm_skeleton()[k]
+                , ...)
+      else
+        disabled(
+          textInput(inputId = paste0("P", k)
+                  , label = HTML(paste0("P<sub>", k,"</sub>"))
+                  , value = crm_skeleton()[k]
+                  , ...)
+        )
+      ))
   })
 
   ## Changes to MTDi_gen don't propagate, so let me create a simple
@@ -310,15 +349,18 @@ server <- function(input, output, session) {
              no_skip_deesc(FALSE)$
              global_coherent_esc(TRUE)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(3, 7) # TODO: Don't hard-code
+                       , cohort_sizes=rep(input$cohort_size,
+                                          input$cohort_max/input$cohort_size)
                        , impl = 'rusti')
 
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = input$cohort_max
-                          ,enroll_max = 24)$
+                          ,enroll_max = 24)$ # TODO: Don't hard-code this
              max_dose(input$num_doses)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(3, 7)) # TODO: Don't hard-code
+                       , cohort_sizes=rep(input$cohort_size,
+                                          input$cohort_max/input$cohort_size)
+                         )
 
     ) # </switch>
   )
