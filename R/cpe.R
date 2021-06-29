@@ -84,7 +84,11 @@ Cpe <- R6Class("Cpe",
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
-                   private$T <- private$b <- private$Y <- private$U <- NULL # $path_array recalcs
+                   stopifnot("Only constant cohorts_sizes are supported currently" =
+                               length(unique(cohort_sizes))==1)
+                   ## NT: The reason cohort_sizes must be a constant vector is that
+                   ##     $path_array() uses a constant n = max(T) in choose(n,T).
+                   private$T <- private$b <- private$U <- NULL # force recalc by $path_array()
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
@@ -209,10 +213,11 @@ Cpe <- R6Class("Cpe",
                    dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
                    ## Save {T, b, Y, U} to avoid costly recalculation
                    private$T <- T
-                   private$b <- apply(log(choose(2, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
-                   private$Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   Z <- apply(2-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   private$U <- cbind(private$Y, Z)
+                   n <- max(T) # TODO: Handle the case where not all cohorts are same size
+                   private$b <- apply(log(choose(n, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+                   Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                   Z <- apply(n-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                   private$U <- cbind(Y, Z)
                    } else { T <- private$T } # TODO: Simply trade 'T' for 'private$T' below
                    if (!condense)
                      return(T)
@@ -276,10 +281,9 @@ Cpe <- R6Class("Cpe",
                private = list(
                  .max_dose = NA
                , path_list = list()
-                 ## See Norris2020c for definitions of T, b, U, Y
+                 ## See Norris2020c for definitions of T, b, U
                , T = NULL # J*C*D array
                , b = NULL # J-vector
                , U = NULL # J*2D matrix
-               , Y = NULL # left half of U
                )
                )
