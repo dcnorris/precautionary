@@ -32,13 +32,15 @@ Cpe <- R6Class("Cpe",
                  #' Get the `b` vector and `U` matrix
                  #' @return Named list with components `b` and `U`
                  bU = function() {
+                   if (is.null(private$b) || is.null(private$U))
+                     self$path_array()
                    list(b = private$b, U = private$U)
                  },
                  #' @details
                  #' Get the number `J` of paths
                  #' @return Integer number of paths
                  J = function() {
-                   length(private$b)
+                   length(private$path_list)
                  },
                  #' @details
                  #' Return dose recommendation for given tox/no-tox tallies.
@@ -82,6 +84,7 @@ Cpe <- R6Class("Cpe",
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
+                   private$T <- private$b <- private$Y <- private$U <- NULL # $path_array recalcs
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
                    paths. <- function(n, x, coh, path_m, cohort_sizes){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
@@ -190,6 +193,7 @@ Cpe <- R6Class("Cpe",
                  #' @seealso `trace_paths`, which must already have been invoked
                  #' if this method is to return a result.
                  path_array = function(condense=TRUE) {
+                   if (is.null(private$T)) {
                    pmx <- self$path_matrix()
                    C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
                    D <- self$max_dose() # dose levels range 1:D
@@ -203,11 +207,13 @@ Cpe <- R6Class("Cpe",
                    T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
                    dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
                    dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
-                   ## We take a moment to save private b, Y and U calculated from T
+                   ## Save {T, b, Y, U} to avoid costly recalculation
+                   private$T <- T
                    private$b <- apply(log(choose(2, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
                    private$Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
                    Z <- apply(2-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
                    private$U <- cbind(private$Y, Z)
+                   } else { T <- private$T } # TODO: Simply trade 'T' for 'private$T' below
                    if (!condense)
                      return(T)
                    ## T is at this point larger (sparser) than necessary for the
@@ -241,14 +247,13 @@ Cpe <- R6Class("Cpe",
                  #' Path probabilities for given dose-wise DLT probs
                  #'
                  #' The design's paths must already have been completely enumerated by
-                 #' `trace_paths`, and the associated array `T`, matrix `U`
-                 #' and vector `b` computed by a call to `path_array`.
+                 #' `trace_paths`.
                  #' @param probs.DLT Numeric vector of DLT probabilities for the design's
                  #' pre-specified doses.
                  #' @return A vector of probabilities for the enumerated paths
                  path_probs = function(probs.DLT) {
-                   if (is.na(private$b) || is.na(private$U))
-                     stop("Must invoke path_array() before log_pi()")
+                   if (is.null(private$b) || is.null(private$U))
+                     self$path_array()
                    log_p <- log(probs.DLT)
                    log_q <- log(1 - probs.DLT)
                    log_pi <- private$b + private$U %*% c(log_p, log_q)
@@ -272,9 +277,9 @@ Cpe <- R6Class("Cpe",
                  .max_dose = NA
                , path_list = list()
                  ## See Norris2020c for definitions of T, b, U, Y
-               , T = NA # J*C*D array
-               , b = NA # J-vector
-               , U = NA # J*2D matrix
-               , Y = NA # left half of U
+               , T = NULL # J*C*D array
+               , b = NULL # J-vector
+               , U = NULL # J*2D matrix
+               , Y = NULL # left half of U
                )
                )
