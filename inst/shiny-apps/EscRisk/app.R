@@ -107,23 +107,26 @@ ui <- fluidPage(
                      ,choices = c("3 + 3","BOIN","CRM")
                      ,selected = "3 + 3"
                      ,inline = FALSE)
-        , sliderInput(inputId = "ttr"
-                      ,label = "Target toxicity rate"
-                      ,min = 15
-                      ,max = 33
-                      ,value = 25
-                      ,post = "%")
+        , verticalLayout(
+            sliderInput(inputId = "ttr"
+                       ,label = "Target toxicity rate"
+                       ,min = 15
+                       ,max = 33
+                       ,value = 25
+                       ,post = "%")
+          , textOutput("J")
+          )
         , verticalLayout(
             numericInput(inputId = "cohort_size"
                         ,label = HTML("Cohort size")
-                        ,value = 2
-                        ,min = 1
+                        ,value = 3
+                        ,min = 2
                         ,max = 3
                         ,step = 1)
           , numericInput(inputId = "cohort_max"
                         ,label = HTML("Max / dose")
-                        ,value = 12
-                        ,min = 9
+                        ,value = 6
+                        ,min = 6
                         ,max = 15
                         ,step = 3)
             )
@@ -189,7 +192,7 @@ server <- function(input, output, session) {
   ## Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
   ## without exploiting Javascript. This would seem to require maintaining the
   ## desired state as a reactiveVal, and re-rendering the button accordingly.
-  state <- reactiveValues(sim = 'ready') # 'ready' | 'running'
+  state <- reactiveValues(sim = 'ready', cpe_count = 0) # 'ready' | 'running'
 
   output$RunStopButton <- renderUI({
     if (state$sim == 'ready')
@@ -219,6 +222,8 @@ server <- function(input, output, session) {
       shinyjs::disable("cohort_max")
       shinyjs::disable("cohort_size")
       shinyjs::disable("crm_skeleton")
+      updateNumericInput(session, inputId = "cohort_size", value = 3)
+      updateNumericInput(session, inputId = "cohort_max", value = 6)
     } else if (input$design == "BOIN") {
       shinyjs::enable("ttr")
       shinyjs::enable("cohort_max")
@@ -230,14 +235,38 @@ server <- function(input, output, session) {
       shinyjs::enable("cohort_size")
       shinyjs::enable("crm_skeleton")
       ## Also here set the skeleton from default when I first select (x) CRM
-      probs <- auto_skeleton()
+      probs <- MTDi_gen()$avg_tox_probs()
       for (k in dose_counter())
         updateTextInput(session, inputId = paste0("P",k), value = probs[k])
     } else
       stop() # all cases exhausted
   })
 
-  auto_skeleton <- reactive(MTDi_gen()$avg_tox_probs())
+  observeEvent(input$cohort_size, {
+    ## Actively manage the 'cohort_max' input to maintain consistency with cohort_size..
+    cohort_size <- input$cohort_size
+    cohort_max <- round(input$cohort_max / cohort_size) * cohort_size
+    min <- c(NA, 8, 9)[cohort_size]
+    max <- c(NA, 16, 15)[cohort_size]
+    cat("setting min:", min, ", max:", max, ", step:", cohort_size, ", value:", cohort_max, "\n")
+    if (input$cohort_max == cohort_max) {
+      ## In this case, the updateNumericInput below will NOT trigger
+      ## the input$cohort_max event below, necessitating a 'manual'
+      ## triggering of design() recalculation..
+      state$cpe_count <- state$cpe_count + 1
+    }
+    updateNumericInput(session, inputId = "cohort_max"
+                     , min = min #c(NA, 8, 9)[step]
+                     , max = max #c(NA, 16, 15)[step]
+                     , step = cohort_size
+                     , value = cohort_max)
+  })
+
+  ## Explicitly trigger design() recalculation when input$cohort_max changes,
+  ## effectively 'channeling' design()'s several dependencies through this variable.
+  observeEvent(input$cohort_max, {
+    state$cpe_count <- state$cpe_count + 1
+  })
 
   dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
 
@@ -326,8 +355,18 @@ server <- function(input, output, session) {
                           , n = nsamples())$doses(dose_levels())
   )
 
-  design <- reactive(
-    switch(input$design,
+  ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
+
+  ## Converting this expensive recalculation to 'eventReactive',
+  ## in the hope this creates opportunity to explicitly trigger
+  ## recomputations.
+  design <- eventReactive({ state$cpe_count; input$design }, {
+    ##cohort_size <- isolate(input$cohort_size) # avoid taking a dependency ...
+    cohort_size <-input$cohort_size # avoid taking a dependency ...
+    cat("recalculating design() with parameters:\n")
+    cat("  cohort_size =", cohort_size, ", cohort_max =", input$cohort_max, "...")
+    ## Okay, NOW we can proceed ...
+    des <- switch(input$design,
            `3 + 3` = list(b = precautionary:::b[[input$num_doses]]
                          ,U = precautionary:::U[[input$num_doses]]
                           )
@@ -343,27 +382,41 @@ server <- function(input, output, session) {
                  x <- y
                } else {
                  x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = input$cohort_max)
+                 if(!x$stop)
+                   x <- dtpcrm::stop_for_sample_size(x, ENROLL_MAX)
                }
+               return(x)
              })$
              no_skip_esc(TRUE)$
              no_skip_deesc(FALSE)$
              global_coherent_esc(TRUE)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(input$cohort_size,
-                                          input$cohort_max/input$cohort_size)
+                       , cohort_sizes=rep(cohort_size, ENROLL_MAX/cohort_size)
                        , impl = 'rusti')
 
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = input$cohort_max
-                          ,enroll_max = 24)$ # TODO: Don't hard-code this
+                          ,enroll_max = ENROLL_MAX)$
              max_dose(input$num_doses)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(input$cohort_size,
-                                          input$cohort_max/input$cohort_size)
+                       , cohort_sizes=rep(cohort_size, ENROLL_MAX/cohort_size)
                          )
 
     ) # </switch>
-  )
+    cat("\n")
+    return(des)
+  })
+
+  output$J <- renderText({
+    cpe <- design()
+    if (is(cpe,'Cpe')) {
+      cpe$path_array()
+      J <- cpe$J()
+    } else {
+      J <- length(cpe$b)
+    }
+    paste(J, "paths")
+  })
 
   ## Perhaps the key to my refactoring is threading UPSTREAM from the final output?
 
@@ -392,6 +445,7 @@ server <- function(input, output, session) {
       MTDi_gen()$extend(n=100)
       nsamples(MTDi_gen()$nsamples())
       cat("nsamples =", nsamples(), "\n")
+      cat("top MCSE =", worst_mcse(), "\n")
       ## The above printout shows that MTDi_gen indeed does sample,
       ## and that the new state is available from MTDi_gen().
       ## Do I have to initiate the update cascade explicitly here?
