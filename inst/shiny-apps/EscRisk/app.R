@@ -138,7 +138,8 @@ ui <- fluidPage(
       uiOutput("crm_skeleton"),
       ), # </fieldset>
       splitLayout(
-      uiOutput('RunStopButton'),
+      actionButton("resample", label = "RESAMPLE"
+                 , style = "color: #fff; background-color: #00aa00"),
       ## centered button
       div(class="flexcontainer",
 
@@ -173,7 +174,6 @@ ui <- fluidPage(
     ## Show a plot of the generated distribution
     mainPanel(
       plotOutput("hyperprior"),
-      plotOutput("simprogress", height = "150px"),
       htmlOutput("safety")
     )
   ),
@@ -189,25 +189,13 @@ server <- function(input, output, session) {
     session$sendCustomMessage(type = 'startHelp', message = list(""))
   })
 
-  ## Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
-  ## without exploiting Javascript. This would seem to require maintaining the
-  ## desired state as a reactiveVal, and re-rendering the button accordingly.
-  state <- reactiveValues(sim = 'ready', cpe_count = 0) # 'ready' | 'running'
+  ## Like an invisible actionButton -- just bump count to recompute
+  state <- reactiveValues(cpe_count = 0)
 
-  output$RunStopButton <- renderUI({
-    if (state$sim == 'ready')
-      actionButton("run_stop", label = "RUN simulation"
-                   , style = "color: #fff; background-color: #00aa00")
-    else
-      actionButton("run_stop", label = "STOP simulation"
-                   , style = "color: #fff; background-color: #cd0000")
-  })
-
-  observeEvent(input$run_stop, {
-    if (isolate(state$sim) == 'ready')
-      state$sim <- 'running'
-    else
-      state$sim <- 'ready'
+  observeEvent(input$resample, {
+    cat("Resampling..")
+    MTDi_gen()$resample()
+    cat("..done.\n")
   })
 
   blank_safety <- rep("--", 7)
@@ -246,18 +234,15 @@ server <- function(input, output, session) {
     ## Actively manage the 'cohort_max' input to maintain consistency with cohort_size..
     cohort_size <- input$cohort_size
     cohort_max <- round(input$cohort_max / cohort_size) * cohort_size
-    min <- c(NA, 8, 9)[cohort_size]
-    max <- c(NA, 16, 15)[cohort_size]
-    cat("setting min:", min, ", max:", max, ", step:", cohort_size, ", value:", cohort_max, "\n")
-    if (input$cohort_max == cohort_max) {
-      ## In this case, the updateNumericInput below will NOT trigger
-      ## the input$cohort_max event below, necessitating a 'manual'
-      ## triggering of design() recalculation..
+    if (input$cohort_max == cohort_max) { # If update will not change value ...
+      ## then the updateNumericInput below will NOT automatically trigger
+      ## the input$cohort_max event below, and so we require a 'manual'
+      ## triggering of design() recalculation...
       state$cpe_count <- state$cpe_count + 1
     }
     updateNumericInput(session, inputId = "cohort_max"
-                     , min = min #c(NA, 8, 9)[step]
-                     , max = max #c(NA, 16, 15)[step]
+                     , min = c(NA, 8, 9)[cohort_size]
+                     , max = c(NA, 16, 15)[cohort_size]
                      , step = cohort_size
                      , value = cohort_max)
   })
@@ -345,7 +330,7 @@ server <- function(input, output, session) {
   ## reactiveVal in the hope that solves the problem...
   ## TODO: Consider including this as component of 'state'.
   ## TODO: Find a more natural idiom.
-  nsamples <- reactiveVal(100)
+  nsamples <- reactiveVal(1000)
 
   MTDi_gen <- reactive(
     HyperMTDi_lognormal$new(CV = 0.01*as.numeric(input$sigma_CV)
@@ -360,7 +345,7 @@ server <- function(input, output, session) {
   ## Converting this expensive recalculation to 'eventReactive',
   ## in the hope this creates opportunity to explicitly trigger
   ## recomputations.
-  design <- eventReactive({ state$cpe_count; input$design }, {
+  design <- eventReactive({ state$cpe_count; input$design; input$num_doses }, {
     ##cohort_size <- isolate(input$cohort_size) # avoid taking a dependency ...
     cohort_size <-input$cohort_size # avoid taking a dependency ...
     cat("recalculating design() with parameters:\n")
@@ -410,7 +395,6 @@ server <- function(input, output, session) {
   output$J <- renderText({
     cpe <- design()
     if (is(cpe,'Cpe')) {
-      cpe$path_array()
       J <- cpe$J()
     } else {
       J <- length(cpe$b)
@@ -418,67 +402,22 @@ server <- function(input, output, session) {
     paste(J, "paths")
   })
 
-  ## Perhaps the key to my refactoring is threading UPSTREAM from the final output?
-
   safety <- reactive({
-    nsamples() # take a dependency
-    ## Let's just have a quick look at avg_tox_probs()
-    ##cat("skeleton =", paste(MTDi_gen()$avg_tox_probs(), collapse=", "), "\n")
+    input$resample # take dependency
     cpe <- design()
-    if (is(cpe, 'Cpe')) {
-      cpe$path_array() # TODO: Design a more efficient scheme within 'Cpe-class'
+    if (is(cpe, 'Cpe'))
       cpe <- cpe$bU()
-    }
     MTDi_gen()$fractionate(b = cpe$b
                           ,U = cpe$U
                           ,kappa = log(input$r0))
   })
 
-  worst_mcse <- reactive({
-    if (is.null(safety()))
-      return(NA)
-    max(safety()['MCSE', 2:6])
-  })
-
-  observe({
-    if (state$sim == 'running') {
-      MTDi_gen()$extend(n=100)
-      nsamples(MTDi_gen()$nsamples())
-      cat("nsamples =", nsamples(), "\n")
-      cat("top MCSE =", worst_mcse(), "\n")
-      ## The above printout shows that MTDi_gen indeed does sample,
-      ## and that the new state is available from MTDi_gen().
-      ## Do I have to initiate the update cascade explicitly here?
-      invalidateLater(500, session) # repeat
-    }
-  })
-
   output$safety <- renderText({
+    input$resample # take dependency
     ifelse(is.null(safety()),
            blank_kable,
            safety_kable(safety()))
   })
-
-  observeEvent(worst_mcse(), {
-    if (!is.na(worst_mcse()) && worst_mcse() < 0.05) state$sim <- 'ready' # HALT sim
-  })
-
-  plotProgress <- function(reps_so_far, worst_mcse) {
-    reps_needed <- ceiling(reps_so_far * ( worst_mcse / 0.05 )^2)
-    fraction_done <- reps_so_far / reps_needed
-    barplot(fraction_done, width = 0.9
-            , ylim = c(0,1), xlim = c(0,1)
-            , horiz = TRUE, asp = 0.04
-            , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
-            , main = paste0(reps_so_far, " scenarios")
-            , axes = FALSE # will be drawn separately
-    )
-    tics <- c(Inf, seq(0.1, 0.05, -0.01))
-    axis(side = 1, at = (0.05/tics)^2
-         , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
-  }
-
-  output$simprogress <- renderPlot(plotProgress(MTDi_gen()$nsamples(), worst_mcse()))
 
   ## Any one of these many UI events will invalidate the safety table:
   observeEvent({
@@ -497,13 +436,12 @@ server <- function(input, output, session) {
     })
   })
 
+  ## TODO: A nicety worth considering is to keep the horizontal axis fixed
+  ##       between resamplings. This helps the user to see more clearly
+  ##       how multiple resamplings compare. Presently, the axis recomputes
+  ##       with each resampling, jolting the plot misleadingly.
   output$hyperprior <- renderPlot({
-    ## TODO: Do I no longer need to set the seed like this,
-    ##       since R6 MTDi_gen has saved simulation state?
-    ##       Or should I be setting this seed at the time
-    ##       when MTDi_gen is instantiated?
-    set.seed(2020) # avoid distracting dance of the samples
-    options(dose_levels = dose_levels())
+    input$resample # take dependency
     MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25))
   })
 
