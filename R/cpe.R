@@ -35,6 +35,12 @@ Cpe <- R6Class("Cpe",
                    list(b = private$b, U = private$U)
                  },
                  #' @details
+                 #' Get the number `J` of paths
+                 #' @return Integer number of paths
+                 J = function() {
+                   length(private$b)
+                 },
+                 #' @details
                  #' Return dose recommendation for given tox/no-tox tallies.
                  #' @note Concrete subclasses must implement this abstract method.
                  #' @param x A dose-wise vector of toxicity counts
