@@ -42,8 +42,18 @@ HyperMTDi_lognormal <- R6Class(
       private$median_mtd <- median_mtd
       private$median_sdlog <- median_sdlog
       private$units <- units
+      self$resample(n)
+    },
+    #' @details
+    #' Draw fresh samples
+    #' @param n Number of samples to draw
+    #' @return Self, invisibly
+    resample = function(n) {
+      if (missing(n))
+        n <- nrow(private$samples)
       private$samples <- data.table(CV = numeric(0), median = numeric(0))
       self$extend(n)
+      invisible(self)
     },
     #' @details
     #' Get number of samples
