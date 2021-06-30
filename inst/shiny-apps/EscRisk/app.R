@@ -364,9 +364,7 @@ server <- function(input, output, session) {
         "...")
     ## Okay, NOW we can proceed ...
     des <- switch(input$design,
-           `3 + 3` = list(b = precautionary:::b[[num_doses()]]
-                         ,U = precautionary:::U[[num_doses()]]
-                          )
+           `3 + 3` = Cpe3_3$new(D = num_doses())
            ## TODO: Provide UI inputs for the CRM skeleton, and display on plot
          , CRM = Crm$new(skeleton = MTDi_gen()$avg_tox_probs()
                        , target = 0.01*input$ttr)$
@@ -405,20 +403,12 @@ server <- function(input, output, session) {
   })
 
   output$J <- renderText({
-    cpe <- design()
-    if (is(cpe,'Cpe')) {
-      J <- cpe$J()
-    } else {
-      J <- length(cpe$b)
-    }
-    paste(J, "paths")
+    paste(design()$J(), "paths")
   })
 
   safety <- reactive({
     input$resample # take dependency
-    cpe <- design()
-    if (is(cpe, 'Cpe'))
-      cpe <- cpe$bU()
+    cpe <- design()$bU()
     MTDi_gen()$fractionate(b = cpe$b
                           ,U = cpe$U
                           ,kappa = log(input$r0))

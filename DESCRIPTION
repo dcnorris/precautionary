@@ -62,6 +62,7 @@ Collate:
     'precautionary-package.R'
     'toxicity_generators.R'
     'simulate_trials.R'
+    'three3.R'
 LazyData: true
 ByteCompile: true
 Config/testthat/edition: 3
