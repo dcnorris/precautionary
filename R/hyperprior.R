@@ -232,12 +232,11 @@ HyperMTDi_lognormal <- R6Class(
       exponents <- erange[1]:erange[2]
       minor_ticks <- as.vector(outer(2:9, exponents, function(x,y) x*10^y))
       axis(1, at=minor_ticks, tcl=-0.3, labels=NA) # minor ticks
-      dose_levels <- getOption('dose_levels')
       for(i in 2:n){
         lines(CDFs ~ quantiles[[i]], col = col, ...)
       }
-      if( !is.null(dose_levels) ){
-        abline(v = dose_levels, lty = 3)
+      if( !is.null(private$.doses) ){
+        abline(v = private$.doses, lty = 3)
       }
       par(oldpar)
     }
