@@ -190,9 +190,10 @@ server <- function(input, output, session) {
   })
 
   num_doses <- reactive({
-    validate(
-      need(input$num_doses %in% 3:7, "Should be an integer from 3 to 7")
-    )
+    in_range <- input$num_doses %in% 3:7
+    shinyFeedback::feedbackWarning("num_doses", !in_range
+                                 , "Should be from 3 to 7")
+    req(in_range, cancel=TRUE)
     as.integer(input$num_doses)
   })
 
@@ -269,7 +270,7 @@ server <- function(input, output, session) {
     isnum <- !is.na(mindose)
     ispos <- mindose > 0
     shinyFeedback::feedbackWarning("mindose", !isnum, "Invalid dose")
-    shinyFeedback::feedbackWarning("mindose", !ispos, "Be serious!")
+    shinyFeedback::feedbackWarning("mindose", !ispos, "Dose must be > 0")
     req(isnum && ispos)
     mindose
   })
@@ -318,21 +319,15 @@ server <- function(input, output, session) {
   )
 
   output$crm_skeleton <- renderUI({
-    skeleton <- isolate(crm_skeleton())
-    do.call(splitLayout, lapply(dose_counter(), function(k, ...)
-      if (input$design == "CRM")
+    if (input$design == "CRM") {
+      skeleton <- isolate(crm_skeleton())
+      do.call(splitLayout, lapply(dose_counter(), function(k, ...)
         textInput(inputId = paste0("P", k)
                 , label = HTML(paste0("P<sub>", k,"</sub>"))
                 , value = skeleton[k]
                 , ...)
-      else
-        disabled(
-          textInput(inputId = paste0("P", k)
-                  , label = HTML(paste0("P<sub>", k,"</sub>"))
-                  , value = skeleton[k]
-                  , ...)
-        )
-      ))
+        ))
+    }
   })
 
   ## Changes to MTDi_gen don't propagate, so let me create a simple
