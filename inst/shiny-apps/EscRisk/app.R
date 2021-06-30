@@ -99,6 +99,18 @@ ui <- fluidPage(
         , cellWidths = c("35%","35%","30%")
       )
       ), # </fieldset>
+      splitLayout(
+      actionButton("resample", label = "RESAMPLE"
+                 , style = "color: #fff; background-color: #00aa00"),
+      ## centered button
+      div(class="flexcontainer",
+
+          ## action button
+          actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
+      ),
+      cellWidths = c("50%","50%"),
+      cellArgs = list(style = "padding: 4px", align = "center")
+      ), # </splitLayout>
       tags$fieldset(id="dose-escalation-design",
       tags$legend("dose-escalation design"),
       splitLayout(
@@ -133,24 +145,12 @@ ui <- fluidPage(
         , cellWidths = c("20%","55%","25%")
       )
       ), # </fieldset>
-      tags$fieldset(id="CRM-skeleton",
+      tags$fieldset(id="crm-skeleton",
       tags$legend("crm skeleton"),
       uiOutput("crm_skeleton"),
       ), # </fieldset>
-      splitLayout(
-      actionButton("resample", label = "RESAMPLE"
-                 , style = "color: #fff; background-color: #00aa00"),
-      ## centered button
-      div(class="flexcontainer",
-
-          ## action button
-          actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
-      ),
-      cellWidths = c("50%","50%"),
-      cellArgs = list(style = "padding: 4px", align = "center")
-      ),
-      tags$fieldset(id="ordinalize", style="padding-left: 6px; padding-right: 6px",
-      tags$legend("ordinalize toxicities"),
+      tags$fieldset(id="therapeutic-index", style="padding-left: 6px; padding-right: 6px",
+      tags$legend("therapeutic index"),
       sliderInput(inputId = "r0"
                   ,label = HTML("Therapeutic Index r<sub>0</sub>")
                   ,min = 1.1
@@ -187,6 +187,13 @@ server <- function(input, output, session) {
 
   observeEvent(input$startHelp,{
     session$sendCustomMessage(type = 'startHelp', message = list(""))
+  })
+
+  num_doses <- reactive({
+    validate(
+      need(input$num_doses %in% 3:7, "Should be an integer from 3 to 7")
+    )
+    as.integer(input$num_doses)
   })
 
   ## Like an invisible actionButton -- just bump count to recompute
@@ -253,7 +260,7 @@ server <- function(input, output, session) {
     state$cpe_count <- state$cpe_count + 1
   })
 
-  dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
+  dose_counter <- reactive(seq_len(num_doses())) # c(1,...,K) for K doses
 
   ## TODO: Perform validation of these inputs as per
   ## https://mastering-shiny.org/action-feedback.html#validate
@@ -262,7 +269,7 @@ server <- function(input, output, session) {
     isnum <- !is.na(mindose)
     ispos <- mindose > 0
     shinyFeedback::feedbackWarning("mindose", !isnum, "Invalid dose")
-    shinyFeedback::feedbackWarning("mindose", !ispos, "Seriously?")
+    shinyFeedback::feedbackWarning("mindose", !ispos, "Be serious!")
     req(isnum && ispos)
     mindose
   })
@@ -278,8 +285,10 @@ server <- function(input, output, session) {
 
   ## NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
+    ## TODO: A problem seems to be that this does not take a dependency
+    ##       on any of the intermediate doses.
     c(mindose()
-      , sapply(2:(input$num_doses-1), function(k) as.numeric(input[[paste0("D",k)]]))
+      , sapply(2:(num_doses()-1), function(k) as.numeric(input[[paste0("D",k)]]))
       , maxdose()
       )
   )
@@ -288,10 +297,10 @@ server <- function(input, output, session) {
     switch(input$range_scaling,
            geom = exp(seq(from = log(mindose())
                           , to = log(maxdose())
-                          , length.out = input$num_doses)),
+                          , length.out = num_doses())),
            arith = seq(from = mindose()
                        , to = maxdose()
-                       , length.out = input$num_doses),
+                       , length.out = num_doses()),
            custom = readDoseLevels()
     )
   )
@@ -305,22 +314,22 @@ server <- function(input, output, session) {
   })
 
   crm_skeleton <- reactive(
-    sapply(1:input$num_doses, function(k) as.numeric(input[[paste0("P",k)]]))
+    sapply(1:num_doses(), function(k) as.numeric(input[[paste0("P",k)]]))
   )
 
   output$crm_skeleton <- renderUI({
-    avg_tox_probs <-  MTDi_gen()$avg_tox_probs()
+    skeleton <- isolate(crm_skeleton())
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       if (input$design == "CRM")
         textInput(inputId = paste0("P", k)
                 , label = HTML(paste0("P<sub>", k,"</sub>"))
-                , value = crm_skeleton()[k]
+                , value = skeleton[k]
                 , ...)
       else
         disabled(
           textInput(inputId = paste0("P", k)
                   , label = HTML(paste0("P<sub>", k,"</sub>"))
-                  , value = crm_skeleton()[k]
+                  , value = skeleton[k]
                   , ...)
         )
       ))
@@ -345,15 +354,18 @@ server <- function(input, output, session) {
   ## Converting this expensive recalculation to 'eventReactive',
   ## in the hope this creates opportunity to explicitly trigger
   ## recomputations.
-  design <- eventReactive({ state$cpe_count; input$design; input$num_doses }, {
-    ##cohort_size <- isolate(input$cohort_size) # avoid taking a dependency ...
-    cohort_size <-input$cohort_size # avoid taking a dependency ...
+  design <- eventReactive({ state$cpe_count; input$design; dose_levels() }, {
+    cohort_size <-input$cohort_size
     cat("recalculating design() with parameters:\n")
-    cat("  cohort_size =", cohort_size, ", cohort_max =", input$cohort_max, "...")
+    cat("  cohort_size =", cohort_size,
+        "\n  cohort_max =", input$cohort_max,
+        "\n  num_doses =", num_doses(),
+        "\n  dose_levels =", dose_levels(),
+        "...")
     ## Okay, NOW we can proceed ...
     des <- switch(input$design,
-           `3 + 3` = list(b = precautionary:::b[[input$num_doses]]
-                         ,U = precautionary:::U[[input$num_doses]]
+           `3 + 3` = list(b = precautionary:::b[[num_doses()]]
+                         ,U = precautionary:::U[[num_doses()]]
                           )
            ## TODO: Provide UI inputs for the CRM skeleton, and display on plot
          , CRM = Crm$new(skeleton = MTDi_gen()$avg_tox_probs()
@@ -382,7 +394,7 @@ server <- function(input, output, session) {
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = input$cohort_max
                           ,enroll_max = ENROLL_MAX)$
-             max_dose(input$num_doses)$
+             max_dose(num_doses())$
              trace_paths(root_dose=1
                        , cohort_sizes=rep(cohort_size, ENROLL_MAX/cohort_size)
                          )
@@ -429,10 +441,10 @@ server <- function(input, output, session) {
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
       if (input$range_scaling == "custom")
-        for(k in 2:(input$num_doses-1)) shinyjs::enable(paste0("D", k))
+        for(k in 2:(num_doses()-1)) shinyjs::enable(paste0("D", k))
       else
-        for(k in 2:(input$num_doses-1)) shinyjs::disable(paste0("D", k))
-      shinyjs::disable(paste0("D", input$num_doses))
+        for(k in 2:(num_doses()-1)) shinyjs::disable(paste0("D", k))
+      shinyjs::disable(paste0("D", num_doses()))
     })
   })
 

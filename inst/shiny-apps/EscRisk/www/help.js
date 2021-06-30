@@ -36,8 +36,13 @@ intro.setOptions({steps: [
   },
   {
     element: '#hyperprior',
-    intro: "You see here 100 possible MTD<sub>i</sub> distributions, drawn randomly from the <i>hyperprior</i> you define via <b>median MTD<sub>i</sub></b>, <b>&sigma;<sub>median</sub></b> and <b>&sigma;<sub>CV</sub></b>. To gain a better sense for the meaning of these parameters, experiment with different values while observing how this plot shifts and stretches.",
+    intro: "You see here 1000 possible MTD<sub>i</sub> distributions, drawn randomly from the <i>hyperprior</i> you define via <b>median MTD<sub>i</sub></b>, <b>&sigma;<sub>median</sub></b> and <b>&sigma;<sub>CV</sub></b>. To gain a better sense for the meaning of these parameters, experiment with different values while observing how this plot shifts and stretches.",
     position: 'bottom'
+  },
+  {
+    element: '#resample',
+    intro: "You can also click this button to resample the hyperprior, and check the stability of the results.",
+    position: 'right'
   },
   {
     element: '#dose-escalation-design',
@@ -45,23 +50,18 @@ intro.setOptions({steps: [
     position: 'right'
   },
   {
-    element: '#RunStopButton',
-    intro: "With the above parameters defined, you can run a simulation ...",
+    element: '#crm-skeleton',
+    intro: "If you choose the CRM, you can enter its skeleton here, or accept defaults obtained from the hyperprior sample",
     position: 'right'
   },
   {
-    element: '#simprogress',
-    intro: "This 'smart' progress bar gives you insight into the progress of your simulation, in terms of the largest Monte Carlo standard error (MCSE) of the safety-related quantities of interest. Note the diminishing returns from long simulations; quadrupling the length of your sim only halves the MCSE.",
-    position: 'top'
-  },
-  {
     element: document.querySelector('#r0').parentElement,
-    intro: "Even when your dose-finding design recognizes only <i>binary</i> DLT's, you can still anticipate <i>graded</i> toxicities provided you are willing to venture a guess as to your drug's <i>therapeutic index</i> (TI). In the context of a dose-finding trial conducted under an &lsquo;MTD heuristic&rsquo;, the most useful TI notion is a <i>dosing ratio</i> <b>r<sub>0</sub></b> that relates adjacent high-level toxicities. Ask yourself, <i><b>Typically, what dose multiplier would push a grade-3 toxicity up to grade 4, or a grade-4 toxicity up to grade 5?</b></i> (Example: If you expect that a 50% increase in dose would typically bump the toxicity grade up by 1 level, then set <span>r<sub>0</sub> = 1.5</span>.)",
+    intro: "Even when your dose-finding design recognizes only <i>binary</i> DLT's, you can still anticipate <i>graded</i> toxicities provided you are willing to venture a guess as to your drug's <i>therapeutic index</i> (TI). In a dose-finding trial conducted under an &lsquo;MTD heuristic&rsquo;, the most useful TI notion is a <i>dosing ratio</i> <b>r<sub>0</sub></b> that relates adjacent high-level toxicities. Ask yourself, <i><b>Typically, what dose multiplier would push a grade-3 toxicity up to grade 4, or a grade-4 toxicity up to grade 5?</b></i> (Example: If you expect that a 50% increase in dose would typically bump the toxicity grade up by 1 level, then set <span>r<sub>0</sub> = 1.5</span>.)",
     position: 'top'
   },
   {
     element: '#safety',
-    intro: "This simple table contains the key safety-related quantities of interest, as estimated from your trial simulations together with <b>r<sub>0</sub></b>. Expected enrollment is broken down into expected numbers of patients who will experience each grade of toxicity. (For simplicity of presentation, these counts are rounded to show a significant tenths-placed digit only when MCSE < 0.1.) Obviously, the numbers of patients expected to experience grade-4 and grade-5 toxicities are of primary concern from a safety standpoint.",
+    intro: "This simple table contains the key safety-related quantities of interest, as estimated from your trial simulations together with <b>r<sub>0</sub></b>. Expected total enrollment is broken down into expected numbers of patients who will experience each grade of toxicity. Obviously, the numbers of patients expected to experience grade-4 and grade-5 toxicities are of primary concern from a safety standpoint.",
     position: 'top'
   }
 ]});
