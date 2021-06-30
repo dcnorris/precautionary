@@ -213,7 +213,7 @@ Cpe <- R6Class("Cpe",
                    dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
                    ## Save {T, b, Y, U} to avoid costly recalculation
                    private$T <- T
-                   n <- max(T) # TODO: Handle the case where not all cohorts are same size
+                   n <- max(T, na.rm=TRUE) # TODO: Handle non-constant cohorts size
                    private$b <- apply(log(choose(n, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
                    Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
                    Z <- apply(n-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
