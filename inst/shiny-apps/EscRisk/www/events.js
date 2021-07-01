@@ -1,5 +1,9 @@
 $(function() {
 
+    $(document).on('shiny:sessioninitialized', e => {
+	Shiny.setInputValue("editing_skeleton", false, {priority: "event"});
+    });
+
     var editing_skeleton = 0;
 
     const skel_probs = document.getElementById('crm-skeleton');

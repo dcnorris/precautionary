@@ -287,8 +287,6 @@ server <- function(input, output, session) {
 
   ## NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
-    ## TODO: A problem seems to be that this does not take a dependency
-    ##       on any of the intermediate doses.
     c(mindose()
       , sapply(2:(num_doses()-1), function(k) as.numeric(input[[paste0("D",k)]]))
       , maxdose()
@@ -316,18 +314,25 @@ server <- function(input, output, session) {
   })
 
   crm_skeleton <- reactive({
-    ## TODO: Why is this 'req()' not sufficient to recalculate design(), etc?
-    req(is.null(input$editing_skeleton) || !input$editing_skeleton)
-    sapply(1:num_doses(), function(k) as.numeric(input[[paste0("P",k)]]))
+    ## TODO: Ideally, the invalidated downstream outputs would appear
+    ##       grayed to clearly announce their invalidated status. But
+    ##       this is close enough for now!
+    req(!isTruthy(input$editing_skeleton)
+      , cancelOutput = TRUE) # avoid blanking the outputs
+    sapply(1:num_doses(),
+           function(k)
+             as.numeric(
+               isolate( # avoid over-eager recalc from a direct dependency
+                 input[[paste0("P",k)]])))
   })
 
   output$crm_skeleton <- renderUI({
     if (input$design == "CRM") {
-      skeleton <- isolate(crm_skeleton())
+      auto_skeleton <- MTDi_gen()$avg_tox_probs()
       do.call(splitLayout, lapply(dose_counter(), function(k, ...)
         textInput(inputId = paste0("P", k)
                 , label = HTML(paste0("P<sub>", k,"</sub>"))
-                , value = skeleton[k]
+                , value = auto_skeleton[k]
                 , ...)
         ))
     }
@@ -349,17 +354,22 @@ server <- function(input, output, session) {
 
   ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
 
-  ## Converting this expensive recalculation to 'eventReactive',
-  ## in the hope this creates opportunity to explicitly trigger
-  ## recomputations.
-  design <- eventReactive({ state$cpe_count; input$design; dose_levels() }, {
+  ## TODO: Consider renaming this to cpe(), to emphasize COST.
+  ##       (Also, this renaming would even remind that CPE is
+  ##       determinative; two 'different' designs that share
+  ##       same (b, U) aren't really different w.r.t. safety!)
+  design <- reactive({
+    state$cpe_count # take dependency
     cohort_size <-input$cohort_size
-    cat("recalculating design() with parameters:\n")
+    cat(input$design, "with parameters:\n")
     cat("  cohort_size =", cohort_size,
         "\n  cohort_max =", input$cohort_max,
         "\n  num_doses =", num_doses(),
-        "\n  dose_levels =", dose_levels(),
-        "...")
+        "\n  dose_levels =", dose_levels())
+    if (input$design == "CRM") {
+      cat("\n  skeleton =", unlist(crm_skeleton()))
+    }
+    cat(" ...")
     ## Okay, NOW we can proceed ...
     des <- switch(input$design,
            `3 + 3` = Cpe3_3$new(D = num_doses())
@@ -413,7 +423,6 @@ server <- function(input, output, session) {
   })
 
   output$safety <- renderText({
-    input$resample # take dependency
     ifelse(is.null(safety()),
            blank_kable,
            safety_kable(safety()))
@@ -424,12 +433,9 @@ server <- function(input, output, session) {
     cat("skeleton being edited:", input$editing_skeleton, "\n")
   })
 
-  ## Any one of these many UI events will invalidate the safety table:
+  ## Manage the dose-level inputs
   observeEvent({
     dose_levels()
-    MTDi_gen() # TODO: Does this even generate events, presently?
-    nsamples()
-    design()
   }, {
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
