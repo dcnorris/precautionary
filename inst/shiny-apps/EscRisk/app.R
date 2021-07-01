@@ -130,12 +130,11 @@ ui <- fluidPage(
           , textOutput("J")
           )
         , verticalLayout(
-            numericInput(inputId = "cohort_size"
+            radioButtons(inputId = "cohort_size"
                         ,label = HTML("Cohort size")
-                        ,value = 3
-                        ,min = 2
-                        ,max = 3
-                        ,step = 1)
+                        ,choices = c("2", "3")
+                        ,selected = "3"
+                        ,inline = TRUE)
           , numericInput(inputId = "cohort_max"
                         ,label = HTML("Max / dose")
                         ,value = 6
@@ -241,7 +240,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$cohort_size, {
     ## Actively manage the 'cohort_max' input to maintain consistency with cohort_size..
-    cohort_size <- input$cohort_size
+    cohort_size <- as.integer(input$cohort_size)
     cohort_max <- round(input$cohort_max / cohort_size) * cohort_size
     if (input$cohort_max == cohort_max) { # If update will not change value ...
       ## then the updateNumericInput below will NOT automatically trigger
@@ -360,7 +359,7 @@ server <- function(input, output, session) {
   ##       same (b, U) aren't really different w.r.t. safety!)
   design <- reactive({
     state$cpe_count # take dependency
-    cohort_size <-input$cohort_size
+    cohort_size <- as.integer(input$cohort_size)
     cat(input$design, "with parameters:\n")
     cat("  cohort_size =", cohort_size,
         "\n  cohort_max =", input$cohort_max,
