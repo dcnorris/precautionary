@@ -41,6 +41,7 @@ ui <- fluidPage(
 
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "introjs.css"))),
   singleton(tags$head(tags$script(src="intro.js"))),
+  tags$head(singleton(tags$script(src="events.js"))),
 
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "tweaks.css"))),
 
@@ -314,9 +315,11 @@ server <- function(input, output, session) {
               , ...)))
   })
 
-  crm_skeleton <- reactive(
+  crm_skeleton <- reactive({
+    ## TODO: Why is this 'req()' not sufficient to recalculate design(), etc?
+    req(is.null(input$editing_skeleton) || !input$editing_skeleton)
     sapply(1:num_doses(), function(k) as.numeric(input[[paste0("P",k)]]))
-  )
+  })
 
   output$crm_skeleton <- renderUI({
     if (input$design == "CRM") {
@@ -414,6 +417,11 @@ server <- function(input, output, session) {
     ifelse(is.null(safety()),
            blank_kable,
            safety_kable(safety()))
+  })
+
+  ## Show we receive this JavaScript event
+  observeEvent(input$editing_skeleton, {
+    cat("skeleton being edited:", input$editing_skeleton, "\n")
   })
 
   ## Any one of these many UI events will invalidate the safety table:
