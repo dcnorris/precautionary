@@ -135,12 +135,12 @@ ui <- fluidPage(
                         ,choices = c("2", "3")
                         ,selected = "3"
                         ,inline = TRUE)
-          , numericInput(inputId = "cohort_max"
-                        ,label = HTML("Max / dose")
-                        ,value = 6
-                        ,min = 6
-                        ,max = 15
-                        ,step = 3)
+          , numericInput(inputId = "maxcohs_perdose"
+                        ,label = HTML("Max cohs/dose")
+                        ,value = 2
+                        ,min = 3
+                        ,max = 6
+                        ,step = 1)
             )
         , cellWidths = c("20%","55%","25%")
       )
@@ -215,19 +215,21 @@ server <- function(input, output, session) {
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
-      shinyjs::disable("cohort_max")
+      shinyjs::disable("maxcohs_perdose")
       shinyjs::disable("cohort_size")
       shinyjs::disable("crm_skeleton")
       updateNumericInput(session, inputId = "cohort_size", value = 3)
-      updateNumericInput(session, inputId = "cohort_max", value = 6)
+      updateNumericInput(session, inputId = "maxcohs_perdose", value = 2)
     } else if (input$design == "BOIN") {
       shinyjs::enable("ttr")
-      shinyjs::enable("cohort_max")
+      shinyjs::enable("maxcohs_perdose")
+      updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
       shinyjs::enable("cohort_size")
       shinyjs::disable("crm_skeleton")
     } else if (input$design == "CRM") {
       shinyjs::enable("ttr")
-      shinyjs::enable("cohort_max")
+      shinyjs::enable("maxcohs_perdose")
+      updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
       shinyjs::enable("cohort_size")
       shinyjs::enable("crm_skeleton")
       ## Also here set the skeleton from default when I first select (x) CRM
@@ -236,29 +238,6 @@ server <- function(input, output, session) {
         updateTextInput(session, inputId = paste0("P",k), value = probs[k])
     } else
       stop() # all cases exhausted
-  })
-
-  observeEvent(input$cohort_size, {
-    ## Actively manage the 'cohort_max' input to maintain consistency with cohort_size..
-    cohort_size <- as.integer(input$cohort_size)
-    cohort_max <- round(input$cohort_max / cohort_size) * cohort_size
-    if (input$cohort_max == cohort_max) { # If update will not change value ...
-      ## then the updateNumericInput below will NOT automatically trigger
-      ## the input$cohort_max event below, and so we require a 'manual'
-      ## triggering of design() recalculation...
-      state$cpe_count <- state$cpe_count + 1
-    }
-    updateNumericInput(session, inputId = "cohort_max"
-                     , min = c(NA, 8, 9)[cohort_size]
-                     , max = c(NA, 16, 15)[cohort_size]
-                     , step = cohort_size
-                     , value = cohort_max)
-  })
-
-  ## Explicitly trigger design() recalculation when input$cohort_max changes,
-  ## effectively 'channeling' design()'s several dependencies through this variable.
-  observeEvent(input$cohort_max, {
-    state$cpe_count <- state$cpe_count + 1
   })
 
   dose_counter <- reactive(seq_len(num_doses())) # c(1,...,K) for K doses
@@ -312,6 +291,21 @@ server <- function(input, output, session) {
               , ...)))
   })
 
+  cohort_max <- reactive({
+    cohort_max <- as.integer(input$maxcohs_perdose)
+    toolow <- cohort_max < 3
+    cohort_size <- as.integer(input$cohort_size)
+    max_enroll <- 15
+    toohigh <- cohort_max * cohort_size > max_enroll
+    shinyFeedback::feedbackWarning("maxcohs_perdose", toolow
+                                 , "Should be &ge; 3")
+    shinyFeedback::feedbackWarning("maxcohs_perdose", toohigh
+                                 , paste0("Enroll/dose > ", max_enroll)
+                                   )
+    req(!toolow && !toohigh)
+    cohort_max * cohort_size # TODO: Rationalize naming of input!
+  })
+
   crm_skeleton <- reactive({
     ## TODO: Ideally, the invalidated downstream outputs would appear
     ##       grayed to clearly announce their invalidated status. But
@@ -362,7 +356,7 @@ server <- function(input, output, session) {
     cohort_size <- as.integer(input$cohort_size)
     cat(input$design, "with parameters:\n")
     cat("  cohort_size =", cohort_size,
-        "\n  cohort_max =", input$cohort_max,
+        "\n  cohort_max =", cohort_max(),
         "\n  num_doses =", num_doses(),
         "\n  dose_levels =", dose_levels())
     if (input$design == "CRM") {
@@ -383,7 +377,7 @@ server <- function(input, output, session) {
                if(y$stop){
                  x <- y
                } else {
-                 x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = input$cohort_max)
+                 x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = cohort_max())
                  if(!x$stop)
                    x <- dtpcrm::stop_for_sample_size(x, ENROLL_MAX)
                }
@@ -397,7 +391,7 @@ server <- function(input, output, session) {
                        , impl = 'rusti')
 
          , BOIN = Boin$new(target = 0.01*input$ttr
-                          ,cohort_max = input$cohort_max
+                          ,cohort_max = cohort_max()
                           ,enroll_max = ENROLL_MAX)$
              max_dose(num_doses())$
              trace_paths(root_dose=1
