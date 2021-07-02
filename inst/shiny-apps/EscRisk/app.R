@@ -141,7 +141,15 @@ ui <- fluidPage(
                         ,min = 3
                         ,max = 6
                         ,step = 1)
+          , disabled(
+              numericInput(inputId = "enroll_max"
+                          ,label = HTML("Max enroll")
+                          ,value = NA
+                          ,min = 24
+                          ,max = 24
+                          ,step = 1)
             )
+          )
         , cellWidths = c("20%","55%","25%")
       )
       ), # </fieldset>
@@ -220,16 +228,19 @@ server <- function(input, output, session) {
       shinyjs::disable("crm_skeleton")
       updateNumericInput(session, inputId = "cohort_size", value = 3)
       updateNumericInput(session, inputId = "maxcohs_perdose", value = 2)
+      updateNumericInput(session, inputId = "enroll_max", value = NA)
     } else if (input$design == "BOIN") {
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
       updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("cohort_size")
       shinyjs::disable("crm_skeleton")
     } else if (input$design == "CRM") {
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
       updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("cohort_size")
       shinyjs::enable("crm_skeleton")
       ## Also here set the skeleton from default when I first select (x) CRM
@@ -306,6 +317,8 @@ server <- function(input, output, session) {
     cohort_max * cohort_size # TODO: Rationalize naming of input!
   })
 
+  enroll_max <- reactive(input$enroll_max)
+
   crm_skeleton <- reactive({
     ## TODO: Ideally, the invalidated downstream outputs would appear
     ##       grayed to clearly announce their invalidated status. But
@@ -379,7 +392,7 @@ server <- function(input, output, session) {
                } else {
                  x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = cohort_max())
                  if(!x$stop)
-                   x <- dtpcrm::stop_for_sample_size(x, ENROLL_MAX)
+                   x <- dtpcrm::stop_for_sample_size(x, enroll_max())
                }
                return(x)
              })$
@@ -387,15 +400,15 @@ server <- function(input, output, session) {
              no_skip_deesc(FALSE)$
              global_coherent_esc(TRUE)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(cohort_size, ENROLL_MAX/cohort_size)
+                       , cohort_sizes=rep(cohort_size, enroll_max()/cohort_size)
                        , impl = 'rusti')
 
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = cohort_max()
-                          ,enroll_max = ENROLL_MAX)$
+                          ,enroll_max = enroll_max())$
              max_dose(num_doses())$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(cohort_size, ENROLL_MAX/cohort_size)
+                       , cohort_sizes=rep(cohort_size, enroll_max()/cohort_size)
                          )
 
     ) # </switch>
