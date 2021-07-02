@@ -400,9 +400,7 @@ server <- function(input, output, session) {
 
   safety <- reactive({
     input$resample # take dependency
-    bU <- cpe()$bU()
-    MTDi_gen()$fractionate(b = bU$b
-                          ,U = bU$U
+    MTDi_gen()$fractionate(cpe = cpe()
                           ,kappa = log(input$r0))
   })
 

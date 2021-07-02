@@ -34,8 +34,7 @@ test_that("CPE-cognizant tox fractionation matches old nested sims", {
                                      ,units = "mg/kg"
                                      ,n = 1000)$doses(getOption("dose_levels"))
 
-  bUF <- MTDi_gen$fractionate(b = precautionary:::b[[5]]
-                             ,U = precautionary:::U[[5]]
+  bUF <- MTDi_gen$fractionate(Cpe3_3$new(5)
                              ,kappa = log(r0)
                               )
 

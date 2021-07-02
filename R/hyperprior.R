@@ -117,13 +117,16 @@ HyperMTDi_lognormal <- R6Class(
     #' @details
     #' Return expected counts of ordinal toxicities
     #'
-    #' @param b The pathwise (length-J) vector defined by Eq (4) of Norris2020c
-    #' @param U The J*2D matrix defined by Eq (4) of Norris2020c
+    #' @param cpe An obect of class `Cpe`
     #' @param kappa A log-therapeutic index as in Eq (5) of Norris2020c
-    #' @return A 6-column matrix, each row being the expected counts for toxicity
-    #' grades 0 through 5, at one sampled scenario.
+    #' @return An `nsamples`-by-6 matrix, each row being the expected counts
+    #' for toxicity grades 0 through 5, at one sampled scenario.
     #' @seealso Documentation for `Cpe-class`
-    fractionate = function(b, U, kappa) {
+    fractionate = function(cpe, kappa) {
+      stopifnot(is(cpe,'Cpe'))
+      bU <- cpe$bU()
+      b <- bU$b
+      U <- bU$U
       self$apply(function(CV, median)
         function(b, U, kappa) {
           ## This function should compute pi %*% U %*% F at each sampled pair (CV,median)!
