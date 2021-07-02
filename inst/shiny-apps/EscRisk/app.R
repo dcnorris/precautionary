@@ -173,8 +173,8 @@ ui <- fluidPage(
                       "April 2020."
                ),
                tags$p(tags$b("See also:"),
-                      tags$a(href="https://cran.r-project.org/web/packages/precautionary/vignettes/Intro.html",
-                             "Introduction to package 'precautionary'")
+                      tags$a(href="https://dcnorris.github.io/precautionary/index.html",
+                             "R package 'precautionary'")
                )
       )
     ),
