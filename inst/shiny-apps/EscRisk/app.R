@@ -5,26 +5,8 @@
 ## safety schematics such as Fig 3 of Norris 2020c.
 ##
 ## TODO:
-## MARK II -- eliminate trial-wise discrete-event sim
-## 1. Factor out 'escalation' in favor of CPE-based computations
-##    - Use easy defaults for args not yet supported in the UI
-##    - Ideally, refactor simulate_trials to use 'exact' matrix math;
-##      this leaves the UI essentially unchanged!
+## 1. Refine event handling for custom doses
 ## 2. Run longer CPEs with pop-up progress bar?
-## 3. Add & activate 'consensus' enrollment to CRM/BOIN
-## 4. Account properly for whatever MCSE remains
-##    - Does the existing MCSE calculation carry forward
-##      validly even with CPE?
-##    - Does the MCSE progress bar even remain necessary,
-##      or does hyperprior sampling loop run so fast that
-##      I can drop it for practical purposes?
-## 5. Add a Bernoulli dose scaling
-##    - Find a decent *citation* for this, beyond rumor & innuendo!
-## 6. Visual feedback on hyperprior sampling via top-right plot?
-##    - This could be profoundly helpful in conveying the meaning
-##      of what's going on under the hood! Each trace added to the
-##      plot during sampling represents another 'scenario' of 'truth'
-##      that is being explored and tallied.
 ## MARK III (?)
 ## 1. Obtain the safety schematic
 ## 2. Can I 'mark the spot' on schematic selected by hyperprior?
@@ -360,11 +342,7 @@ server <- function(input, output, session) {
 
   ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
 
-  ## TODO: Consider renaming this to cpe(), to emphasize COST.
-  ##       (Also, this renaming would even remind that CPE is
-  ##       determinative; two 'different' designs that share
-  ##       same (b, U) aren't really different w.r.t. safety!)
-  design <- reactive({
+  cpe <- reactive({
     state$cpe_count # take dependency
     cohort_size <- as.integer(input$cohort_size)
     cat(input$design, "with parameters:\n")
@@ -417,14 +395,14 @@ server <- function(input, output, session) {
   })
 
   output$J <- renderText({
-    paste(design()$J(), "paths")
+    paste(cpe()$J(), "paths")
   })
 
   safety <- reactive({
     input$resample # take dependency
-    cpe <- design()$bU()
-    MTDi_gen()$fractionate(b = cpe$b
-                          ,U = cpe$U
+    bU <- cpe()$bU()
+    MTDi_gen()$fractionate(b = bU$b
+                          ,U = bU$U
                           ,kappa = log(input$r0))
   })
 
