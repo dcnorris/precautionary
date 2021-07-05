@@ -3,7 +3,7 @@
 <!-- badges: start -->
 
 [![Lifecycle:
-maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 [![R-CMD-check](https://github.com/dcnorris/precautionary/workflows/R-CMD-check/badge.svg)](https://github.com/dcnorris/precautionary/actions)
 <!-- badges: end -->
 
@@ -50,7 +50,7 @@ Please see the vignettes under the [Articles](#) tab above.
 ## References
 
 The `precautionary` package is the pointy end of the spear in a larger
-[DTAT research programme](https::/precisionmethods.guru), of which the
+[DTAT research programme](https://precisionmethods.guru), of which the
 following are key outputs. Several of these citations have accompanying
 online resources such as web applications. For the key references,
 lay explanations are available.
@@ -62,20 +62,20 @@ lay explanations are available.
 &ndash;&ndash;&ndash;&ndash;&ndash;. Dose Titration Algorithm Tuning (DTAT) should supplant &lsquo;the&rsquo; MTD. May 2017. [podium presentation] Symposium on Dose Selection for Cancer Treatment Drugs, Stanford Center for Innovative Study Design (CISD) May 12, 2017. doi:<a href="https://f1000research.com/slides/6-854">10.7490/f1000research.1114209.1</a>.
 </li>
 <li>
-&ndash;&ndash;&ndash;&ndash;&ndash;. Costing &lsquo;the&rsquo; MTD. <i>bioRxiv.</i> August 2017:150821. doi:<a href="https://www.biorxiv.org/content/early/2017/08/22/150821">10.1101/150821</a>. [<a href="https://precisionmethods.guru/2019/04/16/one-size-fits-all-dosing-of-cancer-treatment-drugs-how-much-does-it-cost-society/">lay explanation</a>]
+&ndash;&ndash;&ndash;&ndash;&ndash;. Costing &lsquo;the&rsquo; MTD. <i>bioRxiv.</i> August 2017:150821. doi:<a href="https://www.biorxiv.org/content/10.1101/150821v3">10.1101/150821</a>. [<a href="https://precisionmethods.guru/2019/04/16/one-size-fits-all-dosing-of-cancer-treatment-drugs-how-much-does-it-cost-society/">lay explanation</a>]
 </li>
 <li>
 &ndash;&ndash;&ndash;&ndash;&ndash;. Costing &lsquo;the&rsquo; MTD: What Is the Economic and Human Cost of 1-Size-Fits-All Dose Finding in Oncology? [poster] Presented at 8th American Conference on Pharmacometrics (ACoP8), October 16, 2017. doi:<a href="https://f1000research.com/posters/6-1861">10.7490/f1000research.1114988.1</a>.
 </li>
 <li>
-&ndash;&ndash;&ndash;&ndash;&ndash;. One-size-fits-all dosing in oncology wastes money, innovation and lives. <i>Drug Discovery Today.</i> 2018;23(1):4-6. doi:<a href="Norris (2018) One-size-fits-all dosing in oncology wastes money, innovation and lives.pdf">10.1016/j.drudis.2017.11.008</a>. [<a href="https://precision-methodologies.shinyapps.io/thecost/">Shiny app</a>]
+&ndash;&ndash;&ndash;&ndash;&ndash;. One-size-fits-all dosing in oncology wastes money, innovation and lives. <i>Drug Discovery Today.</i> 2018;23(1):4-6. doi:<a href="https://precisionmethods.guru/DTAT/Norris%20(2018)%20One-size-fits-all%20dosing%20in%20oncology%20wastes%20money,%20innovation%20and%20lives.pdf">10.1016/j.drudis.2017.11.008</a>. [<a href="https://precision-methodologies.shinyapps.io/thecost/">Shiny app</a>]
 </li>
 <li>
-&ndash;&ndash;&ndash;&ndash;&ndash;. Precautionary Coherence Unravels Dose Escalation Designs. <i>bioRxiv.</i> December 2017:240846. doi:<a href="https://www.biorxiv.org/content/early/2017/12/29/240846">10.1101/240846</a>. [<a href="https://precisionmethods.guru/2019/04/14/the-conduct-of-most-first-in-human-oncology-drug-trials-is-conceptually-incoherent-and-unethical/">lay explanation</a>] [<a href="../3+3/PC/">D3 app</a>]
+&ndash;&ndash;&ndash;&ndash;&ndash;. Precautionary Coherence Unravels Dose Escalation Designs. <i>bioRxiv.</i> December 2017:240846. doi:<a href="https://www.biorxiv.org/content/10.1101/240846v1">10.1101/240846</a>. [<a href="https://precisionmethods.guru/2019/04/14/the-conduct-of-most-first-in-human-oncology-drug-trials-is-conceptually-incoherent-and-unethical/">lay explanation</a>] [<a href="http://precisionmethods.guru/3+3/PC/">D3 app</a>]
 </li>
 <li>
 &ndash;&ndash;&ndash;&ndash;&ndash;. Costing &lsquo;the&rsquo; MTD ... in 2-D. <i>bioRxiv.</i> July 2018:370817. doi:<a
-href="https://www.biorxiv.org/content/early/2018/07/17/370817">10.1101/370817</a> [<a href="https://precisionmethods.guru/2019/04/16/clinicians-must-regain-control-over-phase-1-cancer-combination-therapy-trials/">lay explanation</a>]
+href="https://www.biorxiv.org/content/10.1101/370817v1">10.1101/370817</a> [<a href="https://precisionmethods.guru/2019/04/16/clinicians-must-regain-control-over-phase-1-cancer-combination-therapy-trials/">lay explanation</a>]
 </li>
 <li>
 &ndash;&ndash;&ndash;&ndash;&ndash;. Ethical Review and Methodologic Innovation in Phase 1 Cancer Trials. <i>JAMA Pediatrics.</i> April 2019. doi:<a href="https://dx.doi.org/10.1001/jamapediatrics.2019.0811">10.1001/jamapediatrics.2019.0811</a> [<a href="https://precisionmethods.guru/2019/04/25/precautionary-coherence-for-irbs/">2-minute video</a>]
