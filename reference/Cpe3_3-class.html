@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>An R6 class encapsulating Cumulative-Cohort Designs — Ccd-class • precautionary</title>
+<title>An R6 class encapsulating pre-calculated CPE for 3+3 design — Cpe3_3-class • precautionary</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,9 @@
 
 
 
-<meta property="og:title" content="An R6 class encapsulating Cumulative-Cohort Designs — Ccd-class" />
-<meta property="og:description" content="An R6 class encapsulating Cumulative-Cohort Designs
-An R6 class encapsulating Cumulative-Cohort Designs" />
+<meta property="og:title" content="An R6 class encapsulating pre-calculated CPE for 3+3 design — Cpe3_3-class" />
+<meta property="og:description" content="An R6 class encapsulating pre-calculated CPE for 3+3 design
+An R6 class encapsulating pre-calculated CPE for 3+3 design" />
 <meta property="og:image" content="https://github.com/dcnorris/precautionary/raw/main/docs/card.png" />
 <meta property="og:image:alt" content="Logo for precautionary package" />
 <meta name="twitter:card" content="summary" />
@@ -148,14 +148,14 @@ An R6 class encapsulating Cumulative-Cohort Designs" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>An R6 class encapsulating Cumulative-Cohort Designs</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dcnorris/precautionary/blob/master/R/ccd.R'><code>R/ccd.R</code></a></small>
-    <div class="hidden name"><code>Ccd-class.Rd</code></div>
+    <h1>An R6 class encapsulating pre-calculated CPE for 3+3 design</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dcnorris/precautionary/blob/master/R/three3.R'><code>R/three3.R</code></a></small>
+    <div class="hidden name"><code>Cpe3_3-class.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>An R6 class encapsulating Cumulative-Cohort Designs</p>
-<p>An R6 class encapsulating Cumulative-Cohort Designs</p>
+    <p>An R6 class encapsulating pre-calculated CPE for 3+3 design</p>
+<p>An R6 class encapsulating pre-calculated CPE for 3+3 design</p>
     </div>
 
 
@@ -164,41 +164,44 @@ An R6 class encapsulating Cumulative-Cohort Designs" />
 
     <p>TODO: Explain the hierarchy of model classes, including connections
 with the executable specifications set forth in exec/prolog/ccd.pl.</p>
+    <h2 class="hasAnchor" id="note"><a class="anchor" href="#note"></a>Note</h2>
+
+    <p>This specializes the generic method of Cpe superclass,
+removing the possibility of updating the state.</p>
+<p>#param D A positive integer, the highest permissible dose.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     
 <ol>
-<li><p>Ivanova A, Flournoy N, Chung Y. Cumulative cohort design for dose-finding.
-Journal of Statistical Planning and Inference. 2007;137(7):2316-2327.
-doi:10.1016/j.jspi.2006.07.009</p></li>
-<li><p>Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
-J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089</p></li>
+<li><p>Korn EL, Midthune D, Chen TT, Rubinstein LV, Christian MC, Simon RM.
+A comparison of two phase I trial designs. <em>Stat Med</em>. 1994;13(18):1799-1806.
+doi:10.1002/sim.4780131802</p></li>
 </ol>
 
     <h2 class="hasAnchor" id="super-class"><a class="anchor" href="#super-class"></a>Super class</h2>
 
-    <p><code><a href='Cpe-class.html'>precautionary::Cpe</a></code> -&gt; <code>Ccd</code></p>
+    <p><code><a href='Cpe-class.html'>precautionary::Cpe</a></code> -&gt; <code>Cpe3_3</code></p>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
 <h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Public methods</h3>
 
 <ul>
-<li><p><a href='#method-new'><code>Ccd$new()</code></a></p></li>
-<li><p><a href='#method-applied'><code>Ccd$applied()</code></a></p></li>
-<li><p><a href='#method-clone'><code>Ccd$clone()</code></a></p></li>
+<li><p><a href='#method-new'><code>Cpe3_3$new()</code></a></p></li>
+<li><p><a href='#method-max_dose'><code>Cpe3_3$max_dose()</code></a></p></li>
+<li><p><a href='#method-bU'><code>Cpe3_3$bU()</code></a></p></li>
+<li><p><a href='#method-J'><code>Cpe3_3$J()</code></a></p></li>
+<li><p><a href='#method-trace_paths'><code>Cpe3_3$trace_paths()</code></a></p></li>
+<li><p><a href='#method-path_matrix'><code>Cpe3_3$path_matrix()</code></a></p></li>
+<li><p><a href='#method-path_rx'><code>Cpe3_3$path_rx()</code></a></p></li>
+<li><p><a href='#method-clone'><code>Cpe3_3$clone()</code></a></p></li>
 </ul>
-<p><details ><summary>Inherited methods</summary>
+<p><details open ><summary>Inherited methods</summary>
 <ul>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="J"><a href='../../precautionary/html/Cpe.html#method-J'><code>precautionary::Cpe$J()</code></a></span></p></li>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="bU"><a href='../../precautionary/html/Cpe.html#method-bU'><code>precautionary::Cpe$bU()</code></a></span></p></li>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="max_dose"><a href='../../precautionary/html/Cpe.html#method-max_dose'><code>precautionary::Cpe$max_dose()</code></a></span></p></li>
+<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="applied"><a href='../../precautionary/html/Cpe.html#method-applied'><code>precautionary::Cpe$applied()</code></a></span></p></li>
 <li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_array"><a href='../../precautionary/html/Cpe.html#method-path_array'><code>precautionary::Cpe$path_array()</code></a></span></p></li>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_matrix"><a href='../../precautionary/html/Cpe.html#method-path_matrix'><code>precautionary::Cpe$path_matrix()</code></a></span></p></li>
 <li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_probs"><a href='../../precautionary/html/Cpe.html#method-path_probs'><code>precautionary::Cpe$path_probs()</code></a></span></p></li>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_rx"><a href='../../precautionary/html/Cpe.html#method-path_rx'><code>precautionary::Cpe$path_rx()</code></a></span></p></li>
 <li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="report"><a href='../../precautionary/html/Cpe.html#method-report'><code>precautionary::Cpe$report()</code></a></span></p></li>
-<li><p><span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="trace_paths"><a href='../../precautionary/html/Cpe.html#method-trace_paths'><code>precautionary::Cpe$trace_paths()</code></a></span></p></li>
 </ul>
 </details>
 
@@ -206,64 +209,100 @@ J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089</p></li>
 <a id="method-new"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>new()</code></h3>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Ccd</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>escalate</span>, <span class='va'>deescalate</span>, <span class='va'>eliminate</span>, <span class='va'>cohort_max</span>, <span class='va'>enroll_max</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>D</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>escalate</code></dt><dd><p>Escalation boundary</p></dd>
-
-<dt><code>deescalate</code></dt><dd><p>Deescalation boundary</p></dd>
-
-<dt><code>eliminate</code></dt><dd><p>Elimination boundary</p></dd>
-
-<dt><code>cohort_max</code></dt><dd><p>Upper bound on dose-wise enrollment</p></dd>
-
-<dt><code>enroll_max</code></dt><dd><p>Upper bound on total enrollment</p></dd>
+<dt><code>D</code></dt><dd><p>number of pre-specified doses</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
-<p>Create a new <code>Ccd</code> object.</p>
+<p>Create a new <code>Cpe3_3</code> object.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
-<p>A Ccd object.</p>
+<p>A <code>Cpe3_3</code> object.</p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
 <p><div class="r example copy"></p><pre><span class='co'># TODO</span>
 </pre><p></div></p>
 
 <p><hr>
-<a id="method-applied"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>applied()</code></h3>
+<a id="method-max_dose"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>max_dose()</code></h3>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Ccd</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, <span class='va'>last_dose</span>, <span class='va'>max_dose</span>, <span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>max_dose</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Query number of doses</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>Self (invisibly), unless <code>D</code> is missing,
+in which case the top dose, an integer, is returned.</p>
+<p><hr>
+<a id="method-bU"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>bU()</code></h3>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>bU</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Get the <code>b</code> vector and <code>U</code> matrix</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>Named list with components <code>b</code> and <code>U</code></p>
+<p><hr>
+<a id="method-J"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>J()</code></h3>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>J</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Get the number <code>J</code> of paths</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>Integer number of paths</p>
+<p><hr>
+<a id="method-trace_paths"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>trace_paths()</code></h3>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>x</code></dt><dd><p>A dose-wise vector of toxicity counts</p></dd>
-
-<dt><code>o</code></dt><dd><p>A dose-wise vector of non-toxicity counts</p></dd>
-
-<dt><code>last_dose</code></dt><dd><p>The most recently given dose, as required to implement
-cumulative-cohort-based escalation decisions.</p></dd>
-
-<dt><code>max_dose</code></dt><dd><p>An upper limit on future dose levels</p></dd>
-
-<dt><code>...</code></dt><dd><p>Unused by <code>Ccd</code>; included for superclass method compatibility</p></dd>
+<dt><code>...</code></dt><dd><p>Ignored</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
-<p>Return dose recommendation for given tox/no-tox tallies.</p>
+<p>No-op specialization of superclass method</p>
+<p>Since <code>Cpe3_3</code> has cached paths precomputed by Prolog code,
+it does not need to support this method.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
-<p>An object with components:</p><ul>
-<li><p><code>$stop</code> - logical value indicating whether stop is indicated</p></li>
-<li><p><code>$mtd</code> - integer value, the recommended dose</p></li>
-<li><p><code>$max_dose</code> - integer value, a dose not to be exceeded henceforth.</p></li>
-</ul>
+<p>Self, invisibly</p>
+<p><hr>
+<a id="method-path_matrix"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_matrix()</code></h3>
 
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>path_matrix</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Refuse superclass method</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>An error</p>
+<p><hr>
+<a id="method-path_rx"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>path_rx()</code></h3>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>path_rx</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Refuse superclass method</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>An error</p>
 <p><hr>
 <a id="method-clone"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>clone()</code></h3>
 <p>The objects of this class are cloneable with this method.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Ccd</span><span class='op'>$</span><span class='fu'>clone</span><span class='op'>(</span>deep <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe3_3</span><span class='op'>$</span><span class='fu'>clone</span><span class='op'>(</span>deep <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -276,7 +315,7 @@ cumulative-cohort-based escalation decisions.</p></dd>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
 <span class='co'>## ------------------------------------------------</span>
-<span class='co'>## Method `Ccd$new`</span>
+<span class='co'>## Method `Cpe3_3$new`</span>
 <span class='co'>## ------------------------------------------------</span>
 
 <span class='co'># TODO</span>
