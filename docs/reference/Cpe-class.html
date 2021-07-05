@@ -93,7 +93,7 @@ An R6 base class for designs requiring Complete Path Enumeration" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.4</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
       </span>
     </div>
 
@@ -199,6 +199,8 @@ if this method is to return a result.</p></div>
 
 <ul>
 <li><p><a href='#method-max_dose'><code>Cpe$max_dose()</code></a></p></li>
+<li><p><a href='#method-bU'><code>Cpe$bU()</code></a></p></li>
+<li><p><a href='#method-J'><code>Cpe$J()</code></a></p></li>
 <li><p><a href='#method-applied'><code>Cpe$applied()</code></a></p></li>
 <li><p><a href='#method-report'><code>Cpe$report()</code></a></p></li>
 <li><p><a href='#method-trace_paths'><code>Cpe$trace_paths()</code></a></p></li>
@@ -241,6 +243,48 @@ in which case the top dose, an integer, is returned.</p>
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self (invisibly), unless <code>D</code> is missing,
 in which case the top dose, an integer, is returned.</p>
+<p><hr>
+<a id="method-bU"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>bU()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>bU</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Get the <code>b</code> vector and <code>U</code> matrix</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Named list with components <code>b</code> and <code>U</code></p>
+<h3 class='hasAnchor' id='list-bu-'><a class='anchor' aria-hidden='true' href='#list-bu-'></a>Method <code>bU()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>bU</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Get the <code>b</code> vector and <code>U</code> matrix</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Named list with components <code>b</code> and <code>U</code></p>
+<p><hr>
+<a id="method-J"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>J()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>J</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Get the number <code>J</code> of paths</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Integer number of paths</p>
+<h3 class='hasAnchor' id='list-j-'><a class='anchor' aria-hidden='true' href='#list-j-'></a>Method <code>J()</code></h3>
+
+<h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>J</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+
+<h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
+<p>Get the number <code>J</code> of paths</p>
+
+<h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
+<p>Integer number of paths</p>
 <p><hr>
 <a id="method-applied"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>applied()</code></h3>
 
@@ -469,8 +513,7 @@ pre-specified doses.</p></dd>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Path probabilities for given dose-wise DLT probs</p>
 <p>The design's paths must already have been completely enumerated by
-<code>trace_paths</code>, and the associated array <code>T</code>, matrix <code>U</code>
-and vector <code>b</code> computed by a call to <code>path_array</code>.</p>
+<code>trace_paths</code>.</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>A vector of probabilities for the enumerated paths</p>
@@ -488,8 +531,7 @@ pre-specified doses.</p></dd>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Path probabilities for given dose-wise DLT probs</p>
 <p>The design's paths must already have been completely enumerated by
-<code>trace_paths</code>, and the associated array <code>T</code>, matrix <code>U</code>
-and vector <code>b</code> computed by a call to <code>path_array</code>.</p>
+<code>trace_paths</code>.</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>A vector of probabilities for the enumerated paths</p>
