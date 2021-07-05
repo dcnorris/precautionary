@@ -23,9 +23,8 @@ Releases starting with 0.2.3 incorporate fast numerics implemented in
 emphasizes performance and reliability---attributes crucial to
 applications such as the analysis of clinical trials.
 
-Until CRAN maintainers have worked out suitable practices for deploying
-R packages containing Rust code, the newest features of `precautionary`
-will be available only here on GitHub.
+These innovations have delayed review and acceptance by CRAN, pending which
+the newest features of `precautionary` will be available only here on GitHub.
 
 ``` r
 # Install release version from GitHub

@@ -1,3 +1,9 @@
+# precautionary 0.2.5
+
+## Changes
+
+* Overhauled EscRisk shiny app to use CPE
+
 # precautionary 0.2.4
 
 ## Changes

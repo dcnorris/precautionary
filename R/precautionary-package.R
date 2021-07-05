@@ -73,12 +73,11 @@ NULL
 
 #' Plan
 #'
-#' @section Version 0.2.4-1:
-#' * BOIN recs via isotonic regression
-#' * Test comparing CPE vs BOIN::get.oc() sim
-#'
 #' @section Version 0.2.5:
 #' * Convert EscRisk to MCSE-free CPE
+#'
+#' @section Version 0.2.5-1:
+#' * Update pkgdown site if CRAN accepts submission
 #'
 #' @section Version 0.2.6:
 #' * Progress bar for long CPE runs
@@ -87,7 +86,11 @@ NULL
 #'     CPE problem size.
 #'
 #' @section Version 0.2.7:
+#' * BOIN recs via isotonic regression
+#' * Test comparing CPE vs BOIN::get.oc() sim
 #' * Implement logistic model
+#'
+#' @section Version 0.2.8:
 #' * Implement TITE CRM?
 #'   - Is TITE even amenable to path enumeration?
 #'   - If not, there may be little sense in implementing it here!
@@ -99,7 +102,6 @@ NULL
 #' @section Version 0.3.0:
 #' * Demote \pkg{escalation} to a 'Suggests'
 #' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
-#'   - Ideally 100% sim-free via integration over the hyperprior!
 #' * Stop exposing the `impl` parameter
 #'
 #' @section Version 0.3.1:
