@@ -1,7 +1,6 @@
 *~
 .RData
 .Rhistory
-man/
 vignettes/*.html
 vignettes/packages.bib
 doc

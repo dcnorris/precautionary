@@ -47,6 +47,8 @@ if this method is to return a result.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-max_dose}{\code{Cpe$max_dose()}}
+\item \href{#method-bU}{\code{Cpe$bU()}}
+\item \href{#method-J}{\code{Cpe$J()}}
 \item \href{#method-applied}{\code{Cpe$applied()}}
 \item \href{#method-report}{\code{Cpe$report()}}
 \item \href{#method-trace_paths}{\code{Cpe$trace_paths()}}
@@ -79,6 +81,38 @@ Set or query upper limit on further dosing
 \subsection{Returns}{
 Self (invisibly), unless \code{D} is missing,
 in which case the top dose, an integer, is returned.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-bU"></a>}}
+\if{latex}{\out{\hypertarget{method-bU}{}}}
+\subsection{Method \code{bU()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$bU()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+Get the \code{b} vector and \code{U} matrix
+}
+
+\subsection{Returns}{
+Named list with components \code{b} and \code{U}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-J"></a>}}
+\if{latex}{\out{\hypertarget{method-J}{}}}
+\subsection{Method \code{J()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$J()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+Get the number \code{J} of paths
+}
+
+\subsection{Returns}{
+Integer number of paths
 }
 }
 \if{html}{\out{<hr>}}
@@ -242,8 +276,7 @@ pre-specified doses.}
 Path probabilities for given dose-wise DLT probs
 
 The design's paths must already have been completely enumerated by
-\code{trace_paths}, and the associated array \code{T}, matrix \code{U}
-and vector \code{b} computed by a call to \code{path_array}.
+\code{trace_paths}.
 }
 
 \subsection{Returns}{
