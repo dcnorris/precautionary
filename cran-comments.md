@@ -1,23 +1,24 @@
 ## Test environments
 * local OS X install, R 4.0.5
-* rhub::check(platform="debian-gcc-devel")
+* R-CMD-check GitHub matrix action
+  - macOS-latest (release)
+  - windows-latest (release)
+  - ubuntu-18.04 (release & devel)
+  - See https://github.com/dcnorris/precautionary/actions/runs/1001668187
 
 ## Rust library
 
-Thank you for your close analysis of v0.2-2
-(submitted 2021-04-15), which I understand
-you find in conformance with CRAN policies.
+Thank you for your close analysis of v0.2-2 (submitted 2021-04-15),
+which I understand you found in conformance with CRAN policies.
 
-Per Uwe Ligges's emailed request of 24 Apr,
-I now submit v0.2-3 without any OS_type
-restriction.
-
-Of note, the rhub check listed above passed
-v0.2-2, but is today unavailable due to
-https://github.com/r-hub/rhub/issues/462.
+My v0.2.3 submission (per Uwe Ligges's emailed request of 24 Apr)
+never got acted on, I think. Uwe's plan at that time had been to
+"disable the runtime tests so that we do not need to install [Rust
+package manager] cargo on the Windows machine" while avoiding the
+need for an 'OS_type: unix' constraint in my DESCRIPTION.
 
 ## R CMD check --as-cran results
-There was 1 NOTE re sub-dir sizes:
+There was 1 NOTE about sub-directory sizes:
 
 > checking installed package size
 >   installed size is  5.9Mb
@@ -25,6 +26,5 @@ There was 1 NOTE re sub-dir sizes:
 >     doc    2.9Mb
 >     libs   2.2Mb
 
-This reflects that the package includes
-compiled code, and that its vignettes are
-substantial.
+This reflects that the package includes compiled code, and that
+its vignettes are substantial.
