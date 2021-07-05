@@ -73,12 +73,14 @@ ui <- fluidPage(
                        ,label = HTML("&sigma;<sub>median</sub> (%)")
                        ,value = 50
                        ,min = 10
-                       ,max = 200)
+                       ,max = 200
+                       ,step = 10)
         , numericInput(inputId = "sigma_CV"
                        ,label = HTML("&sigma;<sub>CV</sub> (%)")
                        ,value = 50
                        ,min = 10
-                       ,max = 200)
+                       ,max = 200
+                       ,step = 10)
         , cellWidths = c("35%","35%","30%")
       )
       ), # </fieldset>
@@ -253,6 +255,33 @@ server <- function(input, output, session) {
     maxdose
   })
 
+  median_mtd <- reactive({
+    median_mtd <- as.numeric(input$median_mtd)
+    isnum <- !is.na(median_mtd)
+    ispos <- median_mtd > 0
+    shinyFeedback::feedbackWarning("median_mtd", !isnum || !ispos, "Invalid dose")
+    req(isnum && ispos)
+    median_mtd
+  })
+
+  sigma_median <- reactive({
+    sigma_median <- as.numeric(input$sigma_median)
+    isnum <- !is.na(sigma_median)
+    nonneg <- sigma_median >= 0
+    shinyFeedback::feedbackWarning("sigma_median", !isnum || !nonneg, "Invalid")
+    req(isnum && nonneg)
+    sigma_median
+  })
+
+  sigma_CV <- reactive({
+    sigma_CV <- as.numeric(input$sigma_CV)
+    isnum <- !is.na(sigma_CV)
+    nonneg <- sigma_CV >= 0
+    shinyFeedback::feedbackWarning("sigma_CV", !isnum || !nonneg, "Invalid")
+    req(isnum && nonneg)
+    sigma_CV
+  })
+
   ## NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
     c(mindose()
@@ -347,9 +376,9 @@ server <- function(input, output, session) {
   })
 
   MTDi_gen <- reactive(
-    HyperMTDi_lognormal$new(CV = 0.01*as.numeric(input$sigma_CV)
-                          , median_mtd = as.numeric(input$median_mtd)
-                          , median_sdlog = 0.01*as.numeric(input$sigma_median)
+    HyperMTDi_lognormal$new(CV = 0.01*sigma_CV()
+                          , median_mtd = median_mtd()
+                          , median_sdlog = 0.01*sigma_median()
                           , units = input$dose_units
                           , n = 1000)$
       doses(dose_levels())$
@@ -433,8 +462,8 @@ server <- function(input, output, session) {
   output$hyperprior <- renderPlot({
     input$resample # take dependency
     crm_skeleton() # depend on this to toggle or move skeleton points
-    log_median <- log(as.numeric(input$median_mtd))
-    half_width <- 3 * 0.01*(input$sigma_median + input$sigma_CV)
+    log_median <- log(median_mtd())
+    half_width <- 3 * 0.01*(sigma_median() + sigma_CV())
     xlim <- exp(log_median + half_width * c(-1, 1))
     MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25), xlim = xlim)
   })
