@@ -22,7 +22,7 @@ Boin <- R6Class("Boin",
                  #' # TODO
                  initialize = function(target, cohort_max, enroll_max) {
                    private$target <- target
-                   bdy <- get.boundary(target = 0.25
+                   bdy <- get.boundary(target = target
                                       ,ncohort = enroll_max
                                       ,cohortsize = 1 # TODO: Allow larger cohorts?
                                       ,n.earlystop = cohort_max

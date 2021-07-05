@@ -1,15 +1,19 @@
-#
-# This is a Shiny web application providing a simple interface to the
-# simulation capabilities of the 'precautionary' package.
-#
-# TODO:
-#x1. Logarithmic scaling of TI slider
-#  -> Remarkably, no such slider is available off-the-shelf!
-# 2. Craft a complete intro/tutorial https://shiny.rstudio.com/articles/js-introjs.html
-#/(a) Implement a skeleton intro
-# (b) Restructure sidebar's div<>s for intro
+##
+## This was a Shiny web application providing a simple interface to the
+## simulation capabilities of the 'precautionary' package.
+## Now I want to obtain an 'MCSE-free' version that generates
+## safety schematics such as Fig 3 of Norris 2020c.
+##
+## TODO:
+## 1. Refine event handling for custom doses
+## 2. Run longer CPEs with pop-up progress bar?
+## MARK III (?)
+## 1. Obtain the safety schematic
+## 2. Can I 'mark the spot' on schematic selected by hyperprior?
+##    - Or is it perhaps a *region* on the schematic?
 
 library(shiny)
+library(shinyjs)
 library(precautionary)
 library(kableExtra)
 
@@ -19,13 +23,14 @@ ui <- fluidPage(
 
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "introjs.css"))),
   singleton(tags$head(tags$script(src="intro.js"))),
-  
+  tags$head(singleton(tags$script(src="events.js"))),
+
   singleton(tags$head(tags$link(rel="stylesheet", type = "text/css", href = "tweaks.css"))),
-  
-  # Application title
+
+  ## Application title
   titlePanel("Predict Risks of High-Grade Toxicities in Dose-Escalation Trials"),
-  
-  # Sidebar with a slider input for number of bins 
+
+  ## Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
       tags$fieldset(id="dose-levels",
@@ -68,51 +73,77 @@ ui <- fluidPage(
                        ,label = HTML("&sigma;<sub>median</sub> (%)")
                        ,value = 50
                        ,min = 10
-                       ,max = 200)
+                       ,max = 200
+                       ,step = 10)
         , numericInput(inputId = "sigma_CV"
                        ,label = HTML("&sigma;<sub>CV</sub> (%)")
                        ,value = 50
                        ,min = 10
-                       ,max = 200)
+                       ,max = 200
+                       ,step = 10)
         , cellWidths = c("35%","35%","30%")
       )
       ), # </fieldset>
+      splitLayout(
+      actionButton("resample", label = "RESAMPLE"
+                 , style = "color: #fff; background-color: #00aa00"),
+      ## centered button
+      div(class="flexcontainer",
+
+          ## action button
+          actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
+      ),
+      cellWidths = c("50%","50%"),
+      cellArgs = list(style = "padding: 4px", align = "center")
+      ), # </splitLayout>
       tags$fieldset(id="dose-escalation-design",
       tags$legend("dose-escalation design"),
       splitLayout(
         radioButtons(inputId = "design"
                      ,label = "Method"
-                     ,choices = c("3 + 3","CRM","BOIN")
+                     ,choices = c("3 + 3","BOIN","CRM")
                      ,selected = "3 + 3"
                      ,inline = FALSE)
-        , sliderInput(inputId = "ttr"
-                      ,label = "Target toxicity rate"
-                      ,min = 15
-                      ,max = 33
-                      ,value = 25
-                      ,post = "%")
-        , numericInput(inputId = "enroll_max"
-                       ,label = HTML("Max enroll")
-                       ,value = 24
-                       ,min = 18
-                       ,max = 36
-                       ,step = 3)
+        , verticalLayout(
+            sliderInput(inputId = "ttr"
+                       ,label = "Target toxicity rate"
+                       ,min = 15
+                       ,max = 33
+                       ,value = 25
+                       ,post = "%")
+          , hidden(checkboxInput("editing_skeleton", "[hidden]", value = FALSE))
+          , textOutput("J")
+          )
+        , verticalLayout(
+            radioButtons(inputId = "cohort_size"
+                        ,label = HTML("Cohort size")
+                        ,choices = c("2", "3")
+                        ,selected = "3"
+                        ,inline = TRUE)
+          , numericInput(inputId = "maxcohs_perdose"
+                        ,label = HTML("Max cohs/dose")
+                        ,value = 2
+                        ,min = 3
+                        ,max = 6
+                        ,step = 1)
+          , disabled(
+              numericInput(inputId = "enroll_max"
+                          ,label = HTML("Max enrollment")
+                          ,value = NA
+                          ,min = 24
+                          ,max = 24
+                          ,step = 1)
+            )
+          )
         , cellWidths = c("20%","55%","25%")
       )
       ), # </fieldset>
-      splitLayout(
-      uiOutput('RunStopButton'),
-      # centered button
-      div(class="flexcontainer", 
-          
-          # action button
-          actionButton(inputId="startHelp", label="Tutorial", class="btn-info")
-      ),
-      cellWidths = c("50%","50%"),
-      cellArgs = list(style = "padding: 4px", align = "center")
-      ),
-      tags$fieldset(id="ordinalize", style="padding-left: 6px; padding-right: 6px",
-      tags$legend("ordinalize toxicities"),
+      tags$fieldset(id="crm-skeleton",
+      tags$legend("crm skeleton"),
+      uiOutput("crm_skeleton"),
+      ), # </fieldset>
+      tags$fieldset(id="therapeutic-index", style="padding-left: 6px; padding-right: 6px",
+      tags$legend("therapeutic index"),
       sliderInput(inputId = "r0"
                   ,label = HTML("Therapeutic Index r<sub>0</sub>")
                   ,min = 1.1
@@ -127,86 +158,90 @@ ui <- fluidPage(
                       "April 2020."
                ),
                tags$p(tags$b("See also:"),
-                      tags$a(href="https://cran.r-project.org/web/packages/precautionary/vignettes/Intro.html",
-                             "Introduction to package 'precautionary'")
+                      tags$a(href="https://dcnorris.github.io/precautionary/index.html",
+                             "R package 'precautionary'")
                )
       )
     ),
-    
-    # Show a plot of the generated distribution
+
+    ## Show a plot of the generated distribution
     mainPanel(
       plotOutput("hyperprior"),
-      plotOutput("simprogress", height = "150px"),
       htmlOutput("safety")
     )
   ),
-  
-  # Define message handlers and overlay help-system data on now-defined UI
+
+  ## Define message handlers and overlay help-system data on now-defined UI
   tags$body(tags$script(src="help.js")),
-  
+
 )
 
 server <- function(input, output, session) {
-  
+
   observeEvent(input$startHelp,{
     session$sendCustomMessage(type = 'startHelp', message = list(""))
   })
-  
-  # Let me try implementing a self-toggling Run/Stop button in 'pure Shiny',
-  # without exploiting Javascript. This would seem to require maintaining the
-  # desired state as a reactiveVal, and re-rendering the button accordingly.
-  state <- reactiveValues(sim = 'ready') # 'ready' | 'running'
-  
-  output$RunStopButton <- renderUI({
-    if (state$sim == 'ready')
-      actionButton("run_stop", label = "RUN simulation"
-                   , style = "color: #fff; background-color: #00aa00")
-    else
-      actionButton("run_stop", label = "STOP simulation"
-                   , style = "color: #fff; background-color: #cd0000")
+
+  num_doses <- reactive({
+    in_range <- input$num_doses %in% 3:7
+    shinyFeedback::feedbackWarning("num_doses", !in_range
+                                 , "Should be from 3 to 7")
+    req(in_range, cancel=TRUE)
+    as.integer(input$num_doses)
   })
-  
-  observeEvent(input$run_stop, {
-    if (isolate(state$sim) == 'ready')
-      state$sim <- 'running'
-    else
-      state$sim <- 'ready'
+
+  observeEvent(input$resample, {
+    MTDi_gen()$resample()
   })
-  
+
   blank_safety <- rep("--", 7)
   names(blank_safety) <- c("None", paste("Grade", 1:5), "Total")
   blank_kable <- blank_safety %>% t %>% knitr::kable(align='r') %>%
     kable_styling(position = "left", full_width = FALSE) %>%
     add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
-  
-  options(ordinalizer = function(dose, r0) { # NB: no r0 default
-    c(`Grade 1` = dose/r0^2
-      , `Grade 2` = dose/r0
-      , `Grade 3` = dose
-      , `Grade 4` = dose*r0
-      , `Grade 5` = dose*r0^2)
-  })
-  
+
+  updateManagedNumericInput <- function(session, inputId, value, ...) {
+    do.call(inputId, list(value), ...)
+    updateNumericInput(session, inputId = inputId, value = value)
+  }
+
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
-      shinyjs::disable("enroll_max")
-    } else {
+      shinyjs::disable("maxcohs_perdose")
+      shinyjs::disable("cohort_size")
+      shinyjs::disable("crm_skeleton")
+      updateNumericInput(session, inputId = "cohort_size", value = 3)
+      updateManagedNumericInput(session, "maxcohs_perdose", 2L)
+      updateNumericInput(session, inputId = "enroll_max", value = NA)
+    } else if (input$design == "BOIN") {
+      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("ttr")
-      shinyjs::enable("enroll_max")
-    }
+      shinyjs::enable("maxcohs_perdose")
+      shinyjs::enable("cohort_size")
+      shinyjs::disable("crm_skeleton")
+    } else if (input$design == "CRM") {
+      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
+      shinyjs::enable("ttr")
+      shinyjs::enable("maxcohs_perdose")
+      shinyjs::enable("cohort_size")
+      shinyjs::enable("crm_skeleton")
+    } else
+      stop() # all cases exhausted
   })
-  
-  dose_counter <- reactive(seq_len(input$num_doses)) # c(1,...,K) for K doses
-  
-  # TODO: Perform validation of these inputs as per
-  # https://mastering-shiny.org/action-feedback.html#validate
+
+  dose_counter <- reactive(seq_len(num_doses())) # c(1,...,K) for K doses
+
+  ## TODO: Perform validation of these inputs as per
+  ## https://mastering-shiny.org/action-feedback.html#validate
   mindose <- reactive({
     mindose <- as.numeric(input$mindose)
     isnum <- !is.na(mindose)
     ispos <- mindose > 0
     shinyFeedback::feedbackWarning("mindose", !isnum, "Invalid dose")
-    shinyFeedback::feedbackWarning("mindose", !ispos, "Seriously?")
+    shinyFeedback::feedbackWarning("mindose", !ispos, "Dose must be > 0")
     req(isnum && ispos)
     mindose
   })
@@ -219,149 +254,222 @@ server <- function(input, output, session) {
     req(isnum && gtmin)
     maxdose
   })
-  
-  # NB: Reading mindose() & maxdose() directly avoids a *race condition*
+
+  median_mtd <- reactive({
+    median_mtd <- as.numeric(input$median_mtd)
+    isnum <- !is.na(median_mtd)
+    ispos <- median_mtd > 0
+    shinyFeedback::feedbackWarning("median_mtd", !isnum || !ispos, "Invalid dose")
+    req(isnum && ispos)
+    median_mtd
+  })
+
+  sigma_median <- reactive({
+    sigma_median <- as.numeric(input$sigma_median)
+    isnum <- !is.na(sigma_median)
+    nonneg <- sigma_median >= 0
+    shinyFeedback::feedbackWarning("sigma_median", !isnum || !nonneg, "Invalid")
+    req(isnum && nonneg)
+    sigma_median
+  })
+
+  sigma_CV <- reactive({
+    sigma_CV <- as.numeric(input$sigma_CV)
+    isnum <- !is.na(sigma_CV)
+    nonneg <- sigma_CV >= 0
+    shinyFeedback::feedbackWarning("sigma_CV", !isnum || !nonneg, "Invalid")
+    req(isnum && nonneg)
+    sigma_CV
+  })
+
+  ## NB: Reading mindose() & maxdose() directly avoids a *race condition*
   readDoseLevels <- reactive(
     c(mindose()
-      , sapply(2:(input$num_doses-1), function(k) as.numeric(input[[paste0("D",k)]]))
+      , sapply(2:(num_doses()-1), function(k) as.numeric(input[[paste0("D",k)]]))
       , maxdose()
       )
   )
-  
+
   dose_levels <- reactive(
     switch(input$range_scaling,
            geom = exp(seq(from = log(mindose())
                           , to = log(maxdose())
-                          , length.out = input$num_doses)),
+                          , length.out = num_doses())),
            arith = seq(from = mindose()
                        , to = maxdose()
-                       , length.out = input$num_doses),
+                       , length.out = num_doses()),
            custom = readDoseLevels()
     )
   )
-  
-  observe(
-    options(dose_levels = dose_levels())
-  )
-  
+
   output$dose_levels <- renderUI({
     do.call(splitLayout, lapply(dose_counter(), function(k, ...)
       textInput(inputId = paste0("D", k)
-                , label = HTML(paste0("D<sub>", k,"</sub>"))
-                , value = dose_levels()[k]
-                , ...)))
+              , label = HTML(paste0("D<sub>", k,"</sub>"))
+              , value = dose_levels()[k]
+              , ...)))
   })
-  
-  # TODO: Should the inputs be validated here?
-  mtdi_gen <- reactive(
-    hyper_mtdi_lognormal(CV = 0.01*as.numeric(input$sigma_CV)
-                         , median_mtd = as.numeric(input$median_mtd)
-                         , median_sdlog = 0.01*as.numeric(input$sigma_median)
-                         , units = input$dose_units)
+
+  cohort_size <- reactive(
+    ifelse(input$design == "3 + 3", 3, as.integer(input$cohort_size))
   )
-  
-  design <- reactive(
-    switch(input$design,
-           `3 + 3` = get_three_plus_three(num_doses = input$num_doses),
-           CRM = get_dfcrm(
-             skeleton = rowMeans( # TODO: Abstract this to 'precautionary' package
-               sapply(precautionary:::draw_samples(mtdi_gen(), n=100)
-                      , function(mtdi) mtdi@dist$cdf(dose_levels()))),
-             target = 0.01*input$ttr) %>%
-             stop_at_n(n = input$enroll_max),
-           BOIN = get_boin(
-             num_doses = 5,
-             target = 0.01*input$ttr) %>%
-             stop_at_n(n = 24)
+
+  ## This reactiveVal effectively encapsulates input$maxcohs_perdose
+  ## as a 'managed input' on which I can use updateNumericInput()
+  ## without spawning recalculation side-effects. Provided that I set
+  ## this reactiveVal before any such update, that update (messaged,
+  ## and so delayed) will amount to a NO-OP from the perspective of
+  ## this reactiveVal and of its dependencies.
+  maxcohs_perdose <- reactiveVal(2L) # initialized for 3+3 default
+  observeEvent(input$maxcohs_perdose, {
+    maxcohs_perdose(as.integer(input$maxcohs_perdose))
+  })
+
+  cohort_max <- reactive({
+    if (input$design == "3 + 3")
+      return(6)
+    cohort_max <- maxcohs_perdose()
+    toolow <- cohort_max < 3
+    cohort_size <- cohort_size()
+    max_enroll <- 15
+    toohigh <- cohort_max * cohort_size > max_enroll
+    shinyFeedback::feedbackWarning("maxcohs_perdose", toolow
+                                 , "Should be &ge; 3")
+    shinyFeedback::feedbackWarning("maxcohs_perdose", toohigh
+                                 , paste0("Enroll/dose > ", max_enroll)
+                                   )
+    req(!toolow && !toohigh)
+    cohort_max * cohort_size
+  })
+
+  enroll_max <- reactive(
+    ifelse(input$design == "3 + 3", NA_integer_, ENROLL_MAX)
+  )
+
+  ## Like the 'managed input' maxcohs_perdose(), this crm_skeleton()
+  ## serves as a dependency buffer between the input$P_ text inputs
+  ## and downstream dependencies like the cpe() and hyperprior plot.
+  crm_skeleton <- reactiveVal(NULL)
+
+  observeEvent(input$editing_skeleton, {
+    req(!isTruthy(input$editing_skeleton)
+      , cancelOutput = TRUE) # avoid blanking the outputs
+    crm_skeleton(
+    sapply(1:num_doses(),
+           function(k)
+             as.numeric(
+                 input[[paste0("P",k)]]))
     )
-  )
-  
-  # Unlike all other expressions in this app, 'hsims' cannot be recalculated feasibly,
-  # and requires incremental *updates*. This necessitates its treatment as a reactiveVal.
-  hsims <- reactiveVal(NULL)
-  
-  safety <- reactive({
-    if (is.null(hsims()))
-      return(NULL)
-    summary(hsims(), r0 = input$r0)$safety
+    MTDi_gen()$skeleton(crm_skeleton())
   })
-  
-  worst_mcse <- reactive({
-    if (is.null(safety()))
-      return(NA)
-    max(safety()['MCSE', 2:6])
-  })
-  
-  observe({
-    if (state$sim == 'running') {
-      hsims(
-        if (!is.null(isolate(hsims()))) {
-          isolate(hsims()) %>% extend(num_sims = 10) # <11 ==> no txtProgressBar
-        } else { # iteration base case
-          isolate(design()) %>%
-            simulate_trials(
-              num_sims = 10,
-              true_prob_tox = isolate(mtdi_gen())
-            )
-        }
-      )
-      invalidateLater(500, session) # repeat
+
+  output$crm_skeleton <- renderUI({
+    if (input$design == "CRM") {
+      crm_skeleton(MTDi_gen()$skeleton())
+      do.call(splitLayout, lapply(dose_counter(), function(k, ...)
+        textInput(inputId = paste0("P", k)
+                , label = HTML(paste0("P<sub>", k,"</sub>"))
+                , value = crm_skeleton()[k]
+                , ...)
+        ))
     }
   })
-  
+
+  MTDi_gen <- reactive(
+    HyperMTDi_lognormal$new(CV = 0.01*sigma_CV()
+                          , median_mtd = median_mtd()
+                          , median_sdlog = 0.01*sigma_median()
+                          , units = input$dose_units
+                          , n = 1000)$
+      doses(dose_levels())$
+        skeleton(isolate(crm_skeleton()))
+  )
+
+  ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
+
+  cpe <- reactive({
+    cat("\n[REACTIVE:cpe] input$design =", input$design, "\n")
+    if (input$design != "CRM") # TODO: It doesn't feel entirely right to be managing
+      crm_skeleton(NULL)       #       crm_skeleton() here, although it does work.
+    isolate(MTDi_gen())$skeleton(crm_skeleton())
+    if (input$design == "3 + 3")
+      return(Cpe3_3$new(D = num_doses()))
+    cohort_sizes <- rep(cohort_size(), enroll_max()/cohort_size())
+    switch(input$design
+         , CRM = Crm$new(skeleton = crm_skeleton()
+                       , target = 0.01*input$ttr)$
+             stop_func(function(x) {
+               y <- stop_for_excess_toxicity_empiric(x,
+                                                     tox_lim = 0.01*input$ttr + 0.1,
+                                                     prob_cert = 0.72,
+                                                     dose = 1)
+               if(y$stop){
+                 x <- y
+               } else {
+                 x <- dtpcrm::stop_for_consensus_reached(x, req_at_mtd = cohort_max())
+                 if(!x$stop)
+                   x <- dtpcrm::stop_for_sample_size(x, enroll_max())
+               }
+               return(x)
+             })$
+             no_skip_esc(TRUE)$
+             no_skip_deesc(FALSE)$
+             global_coherent_esc(TRUE)$
+             trace_paths(root_dose=1
+                       , cohort_sizes=cohort_sizes
+                       , impl = 'rusti')
+         , BOIN = Boin$new(target = 0.01*input$ttr
+                          ,cohort_max = cohort_max()
+                          ,enroll_max = enroll_max())$
+             max_dose(num_doses())$
+             trace_paths(root_dose=1
+                       , cohort_sizes=cohort_sizes
+                         )
+
+    )
+  })
+
+  output$J <- renderText({
+    paste(cpe()$J(), "paths")
+  })
+
+  safety <- reactive({
+    input$resample # take dependency
+    MTDi_gen()$fractionate(cpe = cpe()
+                          ,kappa = log(input$r0))
+  })
+
   output$safety <- renderText({
     ifelse(is.null(safety()),
            blank_kable,
            safety_kable(safety()))
   })
-  
-  observeEvent(worst_mcse(), {
-    if (!is.na(worst_mcse()) && worst_mcse() < 0.05) state$sim <- 'ready' # HALT sim
-  })
-  
-  plotProgress <- function(worst_mcse) {
-    reps_so_far <- length(hsims()$fits)
-    reps_needed <- ceiling(length(hsims()$fits) * ( worst_mcse / 0.05 )^2)
-    fraction_done <- reps_so_far / reps_needed
-    barplot(fraction_done, width = 0.9
-            , ylim = c(0,1), xlim = c(0,1)
-            , horiz = TRUE, asp = 0.04
-            , xlab = "Largest MCSE for expected toxicity counts, Grades 1-5"
-            , main = paste0(reps_so_far, " trials")
-            , axes = FALSE # will be drawn separately
-    )
-    tics <- c(Inf, seq(0.1, 0.05, -0.01))
-    axis(side = 1, at = (0.05/tics)^2
-         , labels = c(expression("" %+-% infinity), paste0("±", substring(tics[-1],2))))
-  }
-  
-  output$simprogress <- renderPlot(plotProgress(worst_mcse()))
 
-  # Any one of these many UI events will invalidate the safety table:
+  ## Manage the dose-level inputs
   observeEvent({
     dose_levels()
-    mtdi_gen()
-    design()
   }, {
-    hsims(NULL)
     shinyjs::delay(0, { # https://github.com/daattali/shinyjs/issues/54#issuecomment-235347072
       shinyjs::disable("D1")
       if (input$range_scaling == "custom")
-        for(k in 2:(input$num_doses-1)) shinyjs::enable(paste0("D", k))
+        for(k in 2:(num_doses()-1)) shinyjs::enable(paste0("D", k))
       else
-        for(k in 2:(input$num_doses-1)) shinyjs::disable(paste0("D", k))
-      shinyjs::disable(paste0("D", input$num_doses))
+        for(k in 2:(num_doses()-1)) shinyjs::disable(paste0("D", k))
+      shinyjs::disable(paste0("D", num_doses()))
     })
   })
-  
+
   output$hyperprior <- renderPlot({
-    set.seed(2020) # avoid distracting dance of the samples
-    options(dose_levels = dose_levels())
-    plot(mtdi_gen(), n=100, col=adjustcolor("red", alpha=0.25))
+    input$resample # take dependency
+    crm_skeleton() # depend on this to toggle or move skeleton points
+    log_median <- log(median_mtd())
+    half_width <- 3 * 0.01*(sigma_median() + sigma_CV())
+    xlim <- exp(log_median + half_width * c(-1, 1))
+    MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25), xlim = xlim)
   })
-  
+
 }
 
-# Run the application 
+## Run the application
 shinyApp(ui = ui, server = server)
 
