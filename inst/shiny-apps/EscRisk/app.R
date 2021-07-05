@@ -391,7 +391,7 @@ server <- function(input, output, session) {
     cat("\n[REACTIVE:cpe] input$design =", input$design, "\n")
     if (input$design != "CRM") # TODO: It doesn't feel entirely right to be managing
       crm_skeleton(NULL)       #       crm_skeleton() here, although it does work.
-    MTDi_gen()$skeleton(crm_skeleton())
+    isolate(MTDi_gen())$skeleton(crm_skeleton())
     if (input$design == "3 + 3")
       return(Cpe3_3$new(D = num_doses()))
     cohort_sizes <- rep(cohort_size(), enroll_max()/cohort_size())
