@@ -88,6 +88,26 @@ HyperMTDi_lognormal <- R6Class(
       if (missing(x))
         return(private$.doses)
       private$.doses <- x
+      private$.skeleton <- NULL
+      invisible(self)
+    },
+    #' @details
+    #' Set or query a 'skeleton' probability vector
+    #'
+    #' @param p A vector of probabilities, one for each pre-specified dose
+    #' @return Self (invisibly), unless `p` is missing, in which case the
+    #' skeleton probabilities are returned (after being calculated from the
+    #' sample if not already set explicitly).
+    skeleton = function(p) {
+      if (missing(p)) {
+        if (is.null(private$.skeleton))
+          private$.skeleton <- self$avg_tox_probs()
+        return(private$.skeleton)
+      }
+      stopifnot("Non-empty skeleton probability vector must be same length as doses" =
+                  !length(p) || length(p) == length(private$.doses))
+      if (!length(p)) p <- NULL # convert any numeric(0) to proper NULL
+      private$.skeleton <- p
       invisible(self)
     },
     #' @details
@@ -194,6 +214,8 @@ HyperMTDi_lognormal <- R6Class(
     #' Visualize the samples of a `HyperMTDi` object
     #'
     #' @param col Color of lines used to depict samples
+    #' @param xlim May be used to override the default dose-axis limits,
+    #' which span the 1% to 99% quantiles of all samples.
     #' @param ... Additional arguments passed onward to `plot`
     #'
     #' @importFrom graphics abline axis lines mtext par plot.default
@@ -206,7 +228,7 @@ HyperMTDi_lognormal <- R6Class(
     #' mtdi_gen$plot()
     #' }
     #' @export
-    plot = function(col="gray", ...) {
+    plot = function(col="gray", xlim=NULL, ...) {
       n <- nrow(private$samples)
       xlab <- paste0("Dose (", private$units, ")")
       ylab <- "CDF"
@@ -218,7 +240,8 @@ HyperMTDi_lognormal <- R6Class(
                    , "MTDi distributions sampled from hyperprior")
       CDFs <- seq(0.01, 0.99, 0.01)
       quantiles <- self$apply(private$dist$quantile, CDFs)
-      xlim <- range(do.call(c, quantiles))
+      if (is.null(xlim))
+        xlim <- range(do.call(c, quantiles))
       oldpar <- par(mar = c(5,5,4,1) + 0.1)
       plot.default(CDFs ~ quantiles[[1]], type="l", log="x"
                  , xlab = xlab, ylab = "", main = title
@@ -238,8 +261,11 @@ HyperMTDi_lognormal <- R6Class(
       for(i in 2:n){
         lines(CDFs ~ quantiles[[i]], col = col, ...)
       }
-      if( !is.null(private$.doses) ){
+      if(!is.null(private$.doses) ){
         abline(v = private$.doses, lty = 3)
+      }
+      if(length(private$.skeleton) ){
+        points(x = private$.doses, y = private$.skeleton)
       }
       par(oldpar)
     }
@@ -256,6 +282,7 @@ HyperMTDi_lognormal <- R6Class(
   , median_sdlog = NA
   , units = NA
   , samples = NULL
-  , .doses = numeric(0)
+  , .doses = NULL
+  , .skeleton = NULL
   )
 ) # </HyperMTDi_lognormal>

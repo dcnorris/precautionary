@@ -125,7 +125,7 @@ ui <- fluidPage(
                         ,step = 1)
           , disabled(
               numericInput(inputId = "enroll_max"
-                          ,label = HTML("Max enroll")
+                          ,label = HTML("Max enrollment")
                           ,value = NA
                           ,min = 24
                           ,max = 24
@@ -187,13 +187,8 @@ server <- function(input, output, session) {
     as.integer(input$num_doses)
   })
 
-  ## Like an invisible actionButton -- just bump count to recompute
-  state <- reactiveValues(cpe_count = 0)
-
   observeEvent(input$resample, {
-    cat("Resampling..")
     MTDi_gen()$resample()
-    cat("..done.\n")
   })
 
   blank_safety <- rep("--", 7)
@@ -202,6 +197,11 @@ server <- function(input, output, session) {
     kable_styling(position = "left", full_width = FALSE) %>%
     add_header_above(c("Expected counts per toxicity grade"=6, " "=1))
 
+  updateManagedNumericInput <- function(session, inputId, value, ...) {
+    do.call(inputId, list(value), ...)
+    updateNumericInput(session, inputId = inputId, value = value)
+  }
+
   observeEvent(input$design, {
     if (input$design == "3 + 3") {
       shinyjs::disable("ttr")
@@ -209,26 +209,22 @@ server <- function(input, output, session) {
       shinyjs::disable("cohort_size")
       shinyjs::disable("crm_skeleton")
       updateNumericInput(session, inputId = "cohort_size", value = 3)
-      updateNumericInput(session, inputId = "maxcohs_perdose", value = 2)
+      updateManagedNumericInput(session, "maxcohs_perdose", 2L)
       updateNumericInput(session, inputId = "enroll_max", value = NA)
     } else if (input$design == "BOIN") {
+      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
-      updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
-      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("cohort_size")
       shinyjs::disable("crm_skeleton")
     } else if (input$design == "CRM") {
+      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
-      updateNumericInput(session, inputId = "maxcohs_perdose", value = 3)
-      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("cohort_size")
       shinyjs::enable("crm_skeleton")
-      ## Also here set the skeleton from default when I first select (x) CRM
-      probs <- MTDi_gen()$avg_tox_probs()
-      for (k in dose_counter())
-        updateTextInput(session, inputId = paste0("P",k), value = probs[k])
     } else
       stop() # all cases exhausted
   })
@@ -284,10 +280,27 @@ server <- function(input, output, session) {
               , ...)))
   })
 
+  cohort_size <- reactive(
+    ifelse(input$design == "3 + 3", 3, as.integer(input$cohort_size))
+  )
+
+  ## This reactiveVal effectively encapsulates input$maxcohs_perdose
+  ## as a 'managed input' on which I can use updateNumericInput()
+  ## without spawning recalculation side-effects. Provided that I set
+  ## this reactiveVal before any such update, that update (messaged,
+  ## and so delayed) will amount to a NO-OP from the perspective of
+  ## this reactiveVal and of its dependencies.
+  maxcohs_perdose <- reactiveVal(2L) # initialized for 3+3 default
+  observeEvent(input$maxcohs_perdose, {
+    maxcohs_perdose(as.integer(input$maxcohs_perdose))
+  })
+
   cohort_max <- reactive({
-    cohort_max <- as.integer(input$maxcohs_perdose)
+    if (input$design == "3 + 3")
+      return(6)
+    cohort_max <- maxcohs_perdose()
     toolow <- cohort_max < 3
-    cohort_size <- as.integer(input$cohort_size)
+    cohort_size <- cohort_size()
     max_enroll <- 15
     toohigh <- cohort_max * cohort_size > max_enroll
     shinyFeedback::feedbackWarning("maxcohs_perdose", toolow
@@ -296,69 +309,64 @@ server <- function(input, output, session) {
                                  , paste0("Enroll/dose > ", max_enroll)
                                    )
     req(!toolow && !toohigh)
-    cohort_max * cohort_size # TODO: Rationalize naming of input!
+    cohort_max * cohort_size
   })
 
-  enroll_max <- reactive(input$enroll_max)
+  enroll_max <- reactive(
+    ifelse(input$design == "3 + 3", NA_integer_, ENROLL_MAX)
+  )
 
-  crm_skeleton <- reactive({
-    ## TODO: Ideally, the invalidated downstream outputs would appear
-    ##       grayed to clearly announce their invalidated status. But
-    ##       this is close enough for now!
+  ## Like the 'managed input' maxcohs_perdose(), this crm_skeleton()
+  ## serves as a dependency buffer between the input$P_ text inputs
+  ## and downstream dependencies like the cpe() and hyperprior plot.
+  crm_skeleton <- reactiveVal(NULL)
+
+  observeEvent(input$editing_skeleton, {
     req(!isTruthy(input$editing_skeleton)
       , cancelOutput = TRUE) # avoid blanking the outputs
+    crm_skeleton(
     sapply(1:num_doses(),
            function(k)
              as.numeric(
-               isolate( # avoid over-eager recalc from a direct dependency
-                 input[[paste0("P",k)]])))
+                 input[[paste0("P",k)]]))
+    )
+    MTDi_gen()$skeleton(crm_skeleton())
   })
 
   output$crm_skeleton <- renderUI({
     if (input$design == "CRM") {
-      auto_skeleton <- MTDi_gen()$avg_tox_probs()
+      crm_skeleton(MTDi_gen()$skeleton())
       do.call(splitLayout, lapply(dose_counter(), function(k, ...)
         textInput(inputId = paste0("P", k)
                 , label = HTML(paste0("P<sub>", k,"</sub>"))
-                , value = auto_skeleton[k]
+                , value = crm_skeleton()[k]
                 , ...)
         ))
     }
   })
-
-  ## Changes to MTDi_gen don't propagate, so let me create a simple
-  ## reactiveVal in the hope that solves the problem...
-  ## TODO: Consider including this as component of 'state'.
-  ## TODO: Find a more natural idiom.
-  nsamples <- reactiveVal(1000)
 
   MTDi_gen <- reactive(
     HyperMTDi_lognormal$new(CV = 0.01*as.numeric(input$sigma_CV)
                           , median_mtd = as.numeric(input$median_mtd)
                           , median_sdlog = 0.01*as.numeric(input$sigma_median)
                           , units = input$dose_units
-                          , n = nsamples())$doses(dose_levels())
+                          , n = 1000)$
+      doses(dose_levels())$
+        skeleton(isolate(crm_skeleton()))
   )
 
   ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
 
   cpe <- reactive({
-    state$cpe_count # take dependency
-    cohort_size <- as.integer(input$cohort_size)
-    cat(input$design, "with parameters:\n")
-    cat("  cohort_size =", cohort_size,
-        "\n  cohort_max =", cohort_max(),
-        "\n  num_doses =", num_doses(),
-        "\n  dose_levels =", dose_levels())
-    if (input$design == "CRM") {
-      cat("\n  skeleton =", unlist(crm_skeleton()))
-    }
-    cat(" ...")
-    ## Okay, NOW we can proceed ...
-    des <- switch(input$design,
-           `3 + 3` = Cpe3_3$new(D = num_doses())
-           ## TODO: Provide UI inputs for the CRM skeleton, and display on plot
-         , CRM = Crm$new(skeleton = MTDi_gen()$avg_tox_probs()
+    cat("\n[REACTIVE:cpe] input$design =", input$design, "\n")
+    if (input$design != "CRM") # TODO: It doesn't feel entirely right to be managing
+      crm_skeleton(NULL)       #       crm_skeleton() here, although it does work.
+    MTDi_gen()$skeleton(crm_skeleton())
+    if (input$design == "3 + 3")
+      return(Cpe3_3$new(D = num_doses()))
+    cohort_sizes <- rep(cohort_size(), enroll_max()/cohort_size())
+    switch(input$design
+         , CRM = Crm$new(skeleton = crm_skeleton()
                        , target = 0.01*input$ttr)$
              stop_func(function(x) {
                y <- stop_for_excess_toxicity_empiric(x,
@@ -378,20 +386,17 @@ server <- function(input, output, session) {
              no_skip_deesc(FALSE)$
              global_coherent_esc(TRUE)$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(cohort_size, enroll_max()/cohort_size)
+                       , cohort_sizes=cohort_sizes
                        , impl = 'rusti')
-
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = cohort_max()
                           ,enroll_max = enroll_max())$
              max_dose(num_doses())$
              trace_paths(root_dose=1
-                       , cohort_sizes=rep(cohort_size, enroll_max()/cohort_size)
+                       , cohort_sizes=cohort_sizes
                          )
 
-    ) # </switch>
-    cat("\n")
-    return(des)
+    )
   })
 
   output$J <- renderText({
@@ -410,11 +415,6 @@ server <- function(input, output, session) {
            safety_kable(safety()))
   })
 
-  ## Show we receive this JavaScript event
-  observeEvent(input$editing_skeleton, {
-    cat("skeleton being edited:", input$editing_skeleton, "\n")
-  })
-
   ## Manage the dose-level inputs
   observeEvent({
     dose_levels()
@@ -429,13 +429,13 @@ server <- function(input, output, session) {
     })
   })
 
-  ## TODO: A nicety worth considering is to keep the horizontal axis fixed
-  ##       between resamplings. This helps the user to see more clearly
-  ##       how multiple resamplings compare. Presently, the axis recomputes
-  ##       with each resampling, jolting the plot misleadingly.
   output$hyperprior <- renderPlot({
     input$resample # take dependency
-    MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25))
+    crm_skeleton() # depend on this to toggle or move skeleton points
+    log_median <- log(as.numeric(input$median_mtd))
+    half_width <- 3 * 0.01*(input$sigma_median + input$sigma_CV)
+    xlim <- exp(log_median + half_width * c(-1, 1))
+    MTDi_gen()$plot(col=adjustcolor("red", alpha=0.25), xlim = xlim)
   })
 
 }
