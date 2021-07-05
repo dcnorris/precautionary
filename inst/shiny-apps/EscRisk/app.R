@@ -109,6 +109,7 @@ ui <- fluidPage(
                        ,max = 33
                        ,value = 25
                        ,post = "%")
+          , hidden(checkboxInput("editing_skeleton", "[hidden]", value = FALSE))
           , textOutput("J")
           )
         , verticalLayout(

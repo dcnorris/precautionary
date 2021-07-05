@@ -1,9 +1,5 @@
 $(function() {
 
-    $(document).on('shiny:sessioninitialized', e => {
-	Shiny.setInputValue("editing_skeleton", false, {priority: "event"});
-    });
-
     var editing_skeleton = 0;
 
     const skel_probs = document.getElementById('crm-skeleton');
@@ -11,12 +7,12 @@ $(function() {
 	editing_skeleton = editing_skeleton - 1;
 	setTimeout(function() {
 	    if (!editing_skeleton) {
-		Shiny.setInputValue("editing_skeleton", false, {priority: "event"});
+		Shiny.setInputValue("editing_skeleton", false);
 	    }
 	}); // TODO: Any need to set non-zero delay?
     });
     skel_probs.addEventListener('focusin', e => {
-	Shiny.setInputValue("editing_skeleton", true, {priority: "event"});
+	Shiny.setInputValue("editing_skeleton", true);
 	editing_skeleton = editing_skeleton + 1;
     });
 
