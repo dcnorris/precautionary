@@ -1,22 +1,16 @@
 % Abstracting the cumulative-cohort design (CCD) principle for dose escalation
-/*
+
 :- module(ccd, [
 	      ceiling_canonical/2,
 	      floor_canonical/2,
 	      tally_decision_ccd/3,
 	      %% This infix op is used by path_matrix//0 to represent final rec:
               op(900, xfx, ~>),
-	      enroll_max/1, % client code should redefine
 	      ccd_d_matrix/3,
 	      ccd_d_pathvector/3,
 	      ccd_d_nmax_tabfile/4
 	  ]).
-*/
-%%:- dynamic(enroll_max/1).
 
-%%:- multifile(enroll_max/1).
-
-enroll_max(24).
 
 /*
 
@@ -341,7 +335,7 @@ floor_canonical(Qs, Ks) :-
 %% NB: Interestingly, while threading the 'Check' predicate through enroll/4
 %%     (formerly enroll/3), I see that CCD already knew about full cohorts!
 %%     Does this mean I had coded this single idea in 2 places?
-tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
+tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
     T in 0..N,
@@ -497,10 +491,14 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
 
 ccd_state0_decision_state(CCD, Ls ^ [R | Rs] ^ Es, Decision, State) :-
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
-    enroll_max(Nmax),
+    CCD = ccd(_, _, _, _, Nmax), % extract Nmax from CCD
+    %% TODO: Given that this if_ is the only place where Nmax get used,
+    %%       might there be a case for separating it from the CCD term?
     if_(Ntotal #< Nmax
 	, ( tally_decision_ccd(R, Decision, CCD),
-	    CCD = ccd(_, _, _, FullCoh), % extract FullCoh known by the CCD
+	    CCD = ccd(_, _, _, FullCoh, _), % extract FullCoh known by the CCD
+	    %% NB: If clpz exported a (#=<)/3, that would spare us
+	    %%     the extra trouble of calculating MaxEnrollableCoh.
 	    MaxEnrollableCoh #= FullCoh - 1,
 	    Check = #<(MaxEnrollableCoh), % note this will be reified version, Check/2
 	    call(Decision, Check, Ls ^ [R | Rs] ^ Es, State)
@@ -741,13 +739,13 @@ columns_format(N) --> "~w\t",
 path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
 path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
-default_ccd(CCD) :- default_ccd_cmax(CCD, 12).
+default_ccd(CCD) :- default_ccd_cmax_nmax(CCD, 6, 24).
 
-default_ccd_cmax(ccd([3/5, 4/8, 5/10, 6/12],		
-		     [1/1, 2/4, 3/6, 4/8, 5/11],
-		     [0/1, 1/8],
-		     Cmax),
-		 Cmax).
+default_ccd_cmax_nmax(ccd([3/5, 4/8, 5/10, 6/12],		
+			  [1/1, 2/4, 3/6, 4/8, 5/11],
+			  [0/1, 1/8],
+			  Cmax, Nmax),
+		      Cmax, Nmax).
 
 %% I've implemented this predicate to more clearly exhibit the
 %% sharing of arguments with ccd_state0_decision_state/4.
@@ -761,7 +759,10 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], [Matrix]).
 
-%?- Matrix+\(default_ccd_cmax(CCD, 6), ccd_d_matrix(CCD, 2, Matrix)).
+%?- Matrix+\(default_ccd_cmax_nmax(CCD, 6, 24), ccd_d_matrix(CCD, 2, Matrix)).
+%@ false.
+%@ false.
+%@ caught: error(existence_error(procedure,default_ccd_cmax/3),default_ccd_cmax/3)
 %@    Matrix = ([0/1]^[0/6]^[]~>2)
 %@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
 %@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
@@ -821,9 +822,9 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    J = 39289.
 
 regression :-
-    default_ccd_cmax(CCD, 6),
+    default_ccd_cmax_nmax(CCD, 6, 24),
     J0s = [0, 20, 212, 1151, 6718, 26131], % 0-based list of values up to D=5
-    D in 1..5, % 1..5,
+    D in 1..4, % 1..5,
     indomain(D),
     format(" D = ~d ...", [D]),
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
@@ -842,19 +843,16 @@ regression :-
 %@ false.
 
 %?- regression.
-%@  D = 1 ...   % CPU time: 0.869 seconds
-%@    % CPU time: 0.873 seconds
+%@  D = 1 ...   % CPU time: 0.880 seconds
+%@    % CPU time: 0.884 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.610 seconds
-%@    % CPU time: 10.614 seconds
+%@  D = 2 ...   % CPU time: 10.709 seconds
+%@    % CPU time: 10.713 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 64.006 seconds
-%@    % CPU time: 64.010 seconds
+%@  D = 3 ...   % CPU time: 66.203 seconds
+%@    % CPU time: 66.208 seconds
 %@  J(3) = 1151.
-%@  D = 4 ...   % CPU time: 399.285 seconds
-%@    % CPU time: 399.289 seconds
+%@  D = 4 ...   % CPU time: 404.087 seconds
+%@    % CPU time: 404.091 seconds
 %@  J(4) = 6718.
-%@  D = 5 ...   % CPU time: 1575.120 seconds
-%@    % CPU time: 1575.124 seconds
-%@  J(5) = 26131.
 %@ false.

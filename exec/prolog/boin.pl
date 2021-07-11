@@ -49,7 +49,7 @@ adopt the recommended values 𝜙1 = 0.6𝜙, and 𝜙2 = 1.4𝜙.
 
 */
 
-boin_targetpct_nmax(ccd(Elim, Deesc, Esc, Nmax), TargetPct, Nmax) :-
+boin_targetpct_cmax_nmax(ccd(Elim, Deesc, Esc, FullCoh, Nmax), TargetPct, FullCoh, Nmax) :-
     phipct_lambda1_lambda2(TargetPct, Lambda1, Lambda2),
     findall(E, slope_floor(Lambda1, E), Esc_),
     findall(D, slope_ceiling(Lambda2, D), Deesc_),
@@ -58,20 +58,11 @@ boin_targetpct_nmax(ccd(Elim, Deesc, Esc, Nmax), TargetPct, Nmax) :-
     ceiling_canonical(Deesc_, Deesc),
     floor_canonical(Esc_, Esc).
 
-%?- boin_targetpct_nmax(BOIN, 25, 12).
-%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],12)
-%@ ;  false.
+%?- boin_targetpct_cmax_nmax(BOIN, 25, 6, 12).
+%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],6,12).
 
 boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
-    boin_targetpct_nmax(BOIN, TargetPct, EnrollMax),
-    (	retract(ccd:cohort_max(_)),
-	fail
-    ;	asserta(ccd:cohort_max(CohortMax))
-    ),
-    (	retract(ccd:enroll_max(_)),
-	fail
-    ;	asserta(ccd:enroll_max(EnrollMax))
-    ) ->
+    boin_targetpct_cmax_nmax(BOIN, TargetPct, CohortMax, EnrollMax),
     ccd_d_matrix(BOIN, D, Matrix).
 
 %?- Matrix+\(boin_targetpct_d_cmax_nmax_matrix(25, 3, 6, 24, Matrix)).
@@ -82,12 +73,15 @@ boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
 %@ ;  Matrix = ([0/3]^[1/6,2/6]^[]~>2)
 %@ ;  ...
 
-%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.492 seconds
-%@    % CPU time: 0.496 seconds
+%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.619 seconds
+%@    % CPU time: 0.623 seconds
 %@    J = 10.
 
-%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 11.246 seconds
+%@    % CPU time: 11.250 seconds
+%@    J = 170.
 %@    % CPU time: 9.888 seconds
 %@    % CPU time: 9.893 seconds
 %@    J = 170.
@@ -106,12 +100,18 @@ boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
 %@    % CPU time: 1.616 seconds
 %@    J = 170.
 
-%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 24), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 73.365 seconds
+%@    % CPU time: 73.370 seconds
+%@    J = 949.
 %@    % CPU time: 60.834 seconds
 %@    % CPU time: 60.838 seconds
 %@    J = 949.
 
-%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 24), D=4, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 600.243 seconds
+%@    % CPU time: 600.247 seconds
+%@    J = 7139.
 %@    % CPU time: 396.386 seconds
 %@    % CPU time: 396.390 seconds
 %@    J = 7139
@@ -124,7 +124,10 @@ boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
 %@    % CPU time: 68.188 seconds
 %@    J = 7139.
 
-%?- J+\(boin_targetpct_nmax(BOIN, 25, 12), D=5, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 24), D=5, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 2574.457 seconds
+%@    % CPU time: 2574.462 seconds
+%@    J = 31475.
 %@    % CPU time: 1822.763 seconds
 %@    % CPU time: 1822.767 seconds
 %@    J = 31475 % < 45927, as expected since now D*6 > 24
