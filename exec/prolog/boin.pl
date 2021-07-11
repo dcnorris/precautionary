@@ -26,17 +26,8 @@ elimination   -    -   3/3  3/4  3/5  4/6  4/7  4/8  5/9  5/10  6/11  6/12
 % My initial emphasis is on generating all possible paths (CPE) for the BOIN
 % design set forth in the table above. Although the BOIN design of [1] lacks
 % any terminating principle except elimination of all doses, we do need such
-% rules here. Two rule are provided, implemented via goal_expansion/2 clauses
-% asserted BEFORE consulting library(ccd).
-
-/* ~~ Performance Note ~~
-  Using goal_expansion/2 to compile cohort_max & enroll_max into ccd on load
-  does cut overhead by about 25% versus treating these settings as predicates
-  asserted dynamically into the database.
-  Judicious use of this technique may be indicated.
-*/
-%%goal_expansion(cohort_max(N), N = 6).  % max DOSE-COHORT enrollment
-%%goal_expansion(enroll_max(N), N = 24). % max TRIAL enrollment
+% rules here. Two rule are provided, implemented via the 4th & 5th arguments
+% of the ccd(_, _, _, Cmax, Nmax) term.
 
 :- use_module(ccd).
 

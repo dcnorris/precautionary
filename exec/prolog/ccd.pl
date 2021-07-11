@@ -327,7 +327,7 @@ floor_canonical(Qs, Ks) :-
 
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
-%% of a triplet of boundaries, followed by max enrollment per cohort.
+%% of a triplet of boundaries, followed by max enrollments per cohort & net.
 %% TODO: I believe the if_/3 cascade, with its default final 'escape clause',
 %%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
 %%       proves the determinism of tally_decision/2 so long as the defining
@@ -350,9 +350,6 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :
 	     )
        ).
 
-%% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-%% Pick up from here...
-
 /* A truly ESSENTIAL core pharmacologic concept undergirding dose-finding
  * trials is the monotonicity of the dose-toxicity function. To manifest
  * this notion in our code, we model the DOSE as a DESCENDING LIST.
@@ -371,20 +368,10 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :
  * 'R' - An ascending list of doses of which the head looks Right to enroll.
  * We can imagine these lists as 2 stacks, on the 'left' and 'right'.
  * 
- * I abandon the earlier 'bipartite' trial in alternating phases, in favor
- * of an all-in-one enroll/assess/decide cycle.
- *
- * it also appears necessary to append a 3rd, topmost list of excluded doses.
+ * To implement a 'memory' of doses that were perhaps EXCLUDED at some point
+ * during a CCD trial, we supplement this pair with a 3rd component 'Es'
+ * in a term of the form Ls ^ Rs ^ Es.
  */
-
-/*
-Above text is included for comparison with current outlook.
-*/
-
-%% Instead of carrying the tox boundaries along as parameters,
-%% let's simply assert them into the database ...
-%% Note that this naturally invites consideration of a DSL
-%% in which such design rules could be expressed generally!
 
 %% NB: The left-hand list of Ls ^ Rs is sorted in descending order.
 %%     So heads L and R in [L|Ls] ^ [R|Rs] are tallies belonging to
