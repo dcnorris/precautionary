@@ -1,23 +1,22 @@
 % Abstracting the cumulative-cohort design (CCD) principle for dose escalation
-
+/*
 :- module(ccd, [
 	      ceiling_canonical/2,
 	      floor_canonical/2,
 	      tally_decision_ccd/3,
 	      %% This infix op is used by path_matrix//0 to represent final rec:
               op(900, xfx, ~>),
-	      cohort_max/1, % dynamic predicates that
 	      enroll_max/1, % client code should redefine
 	      ccd_d_matrix/3,
 	      ccd_d_pathvector/3,
-	      ccd_d_cmax_nmax_tabfile/5
+	      ccd_d_nmax_tabfile/4
 	  ]).
+*/
+%%:- dynamic(enroll_max/1).
 
-:- dynamic(cohort_max/1).
-:- dynamic(enroll_max/1).
+%%:- multifile(enroll_max/1).
 
-:- multifile(cohort_max/1).
-:- multifile(enroll_max/1).
+enroll_max(24).
 
 /*
 
@@ -339,6 +338,9 @@ floor_canonical(Qs, Ks) :-
 %%       together with the determinism of hit_ceiling_t/3 and hit_floor_t/3,
 %%       proves the determinism of tally_decision/2 so long as the defining
 %%       boundaries are lists from ℚ.
+%% NB: Interestingly, while threading the 'Check' predicate through enroll/4
+%%     (formerly enroll/3), I see that CCD already knew about full cohorts!
+%%     Does this mean I had coded this single idea in 2 places?
 tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
@@ -395,15 +397,15 @@ Above text is included for comparison with current outlook.
 %%     *adjacent* doses, notwithstanding their non-juxtaposition in
 %%     our left-right reading of the term.
 
-cohort_full(N, Truth) :-
-    cohort_max(Nmax),
-    if_(N #< Nmax
-	, Truth = false
-	, Truth = true
-       ).
+%% The first argument should be a predicate Check/2 that reifies
+%% whether the 1st argument is cardinality of a too-full cohort.
+%% So Check = (#<(11))/2 for example would yield #<(11, N0, Truth)
+%% so that N0 in 12..sup => Truth==true, telling us the cohort is
+%% already full.
+:- meta_predicate enroll(2, ?, ?, ?).
 
-enroll(T0/N0, T1/N1, Truth) :-
-    if_(cohort_full(N0)
+enroll(Check, T0/N0, T1/N1, Truth) :-
+    if_(call(Check, N0)
        , Truth = false
        , ( N1 #= N0 + 1,
            T in 0..1, % T is the pending tox assessment of newly-enrolled patient
@@ -413,12 +415,19 @@ enroll(T0/N0, T1/N1, Truth) :-
          )
        ).
 
+%?- enroll(#<(11), 2/19, T1/N1, Truth).
+%@    Truth = false.
+
+%?- enroll(#<(11), 2/9, T1/N1, Truth).
+%@    Truth = true, T1 = 2, N1 = 10
+%@ ;  Truth = true, T1 = 3, N1 = 10.
+
 length_plus_1(Ls, MTD) :-
     length(Ls, MTDminus1),
     MTD #= MTDminus1 + 1.
 
-stay(Ls ^ [R | Rs] ^ Es, State) :-
-    if_(enroll(R, R1)
+stay(Check, Ls ^ [R | Rs] ^ Es, State) :-
+    if_(enroll(Check, R, R1)
 	, State = Ls ^ [R1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
@@ -438,11 +447,11 @@ stay(Ls ^ [R | Rs] ^ Es, State) :-
 %%       rules 'slice' a trial, where the paths are 'solutions'?
 %%       Does this analogy advise AGAINST introducing an complicating
 %%       logic like abovementioned "special escape clause"?
-escalate(Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
-    stay(Ls ^ [R] ^ Es, State).
+escalate(Check, Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
+    stay(Check, Ls ^ [R] ^ Es, State).
 
-escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
-    if_(enroll(R, R1)
+escalate(Check, Ls ^ [Q, R | Rs] ^ Es, State) :-
+    if_(enroll(Check, R, R1)
 	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
 	%% If the next dose up (R) cannot be enrolled, that's because
 	%% it's already full. What's more, it must have recommended
@@ -461,19 +470,19 @@ escalate(Ls ^ [Q, R | Rs] ^ Es, State) :-
 %%       But OTOH this effectively turns an initial toxicity into a
 %%       dose-removing event, blurring what otherwise ought to be a
 %%       clear distinction between de-escalation and removal.
-deescalate([] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
+deescalate(_, [] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-deescalate([L | Ls] ^ Rs ^ Es, State) :-
-    if_(enroll(L, L1)
+deescalate(Check, [L | Ls] ^ Rs ^ Es, State) :-
+    if_(enroll(Check, L, L1)
 	, State = Ls ^ [L1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
 
-remove(Ls ^ Rs ^ Es, State) :-
+remove(Check, Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
-    deescalate(Ls ^ [] ^ RsEs, State).
+    deescalate(Check, Ls ^ [] ^ RsEs, State).
 
 state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
     foldl(append, [Ls, Rs, Es], [], Cohorts),
@@ -491,7 +500,10 @@ ccd_state0_decision_state(CCD, Ls ^ [R | Rs] ^ Es, Decision, State) :-
     enroll_max(Nmax),
     if_(Ntotal #< Nmax
 	, ( tally_decision_ccd(R, Decision, CCD),
-	    call(Decision, Ls ^ [R | Rs] ^ Es, State)
+	    CCD = ccd(_, _, _, FullCoh), % extract FullCoh known by the CCD
+	    MaxEnrollableCoh #= FullCoh - 1,
+	    Check = #<(MaxEnrollableCoh), % note this will be reified version, Check/2
+	    call(Decision, Check, Ls ^ [R | Rs] ^ Es, State)
 	  )
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
@@ -514,10 +526,10 @@ ccd_decisions(CCD, S0) --> [(S0->A->S)],
 			 ccd_decisions(CCD, S).
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
-%?- Trial+\(default_ccd(CCD), phrase(ccd_actions(CCD, []^[0/0]^[]), Trial)).
-%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->declare_mtd(1))]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
+%?- Trial+\(default_ccd(CCD), phrase(ccd_decisions(CCD, []^[0/0]^[]), Trial)).
+%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
@@ -696,15 +708,11 @@ ccd_d_pathvector(CCD, D, Pathvector) :-
     phrase(ccd_decisions(CCD, []^Tallies^[]), Path),
     phrase(recdose_ccs, Path, [Pathvector]).
 
-ccd_d_cmax_nmax_tabfile(CCD, D, CohortMax, EnrollMax, Filename) :-
+ccd_d_nmax_tabfile(CCD, D, EnrollMax, Filename) :-
     atom_chars(File, Filename),
     format("Opening file ~q...~n", [File]), % feedback to console
     open(File, write, OS),
     format("Writing path vectors ..", []),
-    (	retract(cohort_max(_)),
-	fail
-    ;	asserta(cohort_max(CohortMax))
-    ),
     (	retract(enroll_max(_)),
 	fail
     ;	asserta(enroll_max(EnrollMax))
@@ -733,10 +741,13 @@ columns_format(N) --> "~w\t",
 path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
 path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
-default_ccd(ccd([3/5, 4/8, 5/10, 6/12],		
-		[1/1, 2/4, 3/6, 4/8, 5/11],
-		[0/1, 1/8],
-		12)).
+default_ccd(CCD) :- default_ccd_cmax(CCD, 12).
+
+default_ccd_cmax(ccd([3/5, 4/8, 5/10, 6/12],		
+		     [1/1, 2/4, 3/6, 4/8, 5/11],
+		     [0/1, 1/8],
+		     Cmax),
+		 Cmax).
 
 %% I've implemented this predicate to more clearly exhibit the
 %% sharing of arguments with ccd_state0_decision_state/4.
@@ -750,7 +761,7 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], [Matrix]).
 
-%?- Matrix+\(ccd:default_ccd(CCD), ccd_d_matrix(CCD, 2, Matrix)).
+%?- Matrix+\(default_ccd_cmax(CCD, 6), ccd_d_matrix(CCD, 2, Matrix)).
 %@    Matrix = ([0/1]^[0/6]^[]~>2)
 %@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
 %@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
@@ -810,9 +821,9 @@ ccd_d_matrix(CCD, D, Matrix) :-
 %@    J = 39289.
 
 regression :-
-    default_ccd(CCD),
+    default_ccd_cmax(CCD, 6),
     J0s = [0, 20, 212, 1151, 6718, 26131], % 0-based list of values up to D=5
-    D in 1..2, % 1..5,
+    D in 1..5, % 1..5,
     indomain(D),
     format(" D = ~d ...", [D]),
     time(findall(M, ccd_d_matrix(CCD, D, M), Ms)),
@@ -828,4 +839,22 @@ regression :-
 %@  D = 2 ...   % CPU time: 13.192 seconds
 %@    % CPU time: 13.196 seconds
 %@  J(2) = 212.
+%@ false.
+
+%?- regression.
+%@  D = 1 ...   % CPU time: 0.869 seconds
+%@    % CPU time: 0.873 seconds
+%@  J(1) = 20.
+%@  D = 2 ...   % CPU time: 10.610 seconds
+%@    % CPU time: 10.614 seconds
+%@  J(2) = 212.
+%@  D = 3 ...   % CPU time: 64.006 seconds
+%@    % CPU time: 64.010 seconds
+%@  J(3) = 1151.
+%@  D = 4 ...   % CPU time: 399.285 seconds
+%@    % CPU time: 399.289 seconds
+%@  J(4) = 6718.
+%@  D = 5 ...   % CPU time: 1575.120 seconds
+%@    % CPU time: 1575.124 seconds
+%@  J(5) = 26131.
 %@ false.
