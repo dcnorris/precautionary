@@ -1,8 +1,8 @@
 Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
-Version: 0.2.5
-Date: 2021-07-05
+Version: 0.2.6
+Date: 2021-07-15
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -19,7 +19,8 @@ Depends:
     escalation,
     data.table,
     R6,
-    R (>= 3.5.0)
+    future.apply,
+    R (>= 4.0.0)
 Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
 Suggests: 
     dtpcrm,
