@@ -19,9 +19,9 @@ Depends:
     escalation,
     data.table,
     R6,
-    future.apply,
     R (>= 4.0.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN,
+	 future.apply, progressr
 Suggests: 
     dtpcrm,
     rmarkdown,

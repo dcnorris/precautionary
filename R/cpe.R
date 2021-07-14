@@ -50,13 +50,11 @@ Cpe <- R6Class("Cpe",
                  #' @param last_dose The most recently given dose, as required to implement
                  #' cumulative-cohort-based escalation decisions.
                  #' @param max_dose An upper limit on future dose levels
-                 #' @param ... Parameters passed to `Crm$esc()`, enabling passthru
-                 #' of required `impl` parameter and optional `abbrev` flag.
                  #' @return An object with components:
                  #' * `$stop` - logical value indicating whether stop is indicated
                  #' * `$mtd` - integer value, the recommended dose
                  #' * `$max_dose` - integer value, a dose not to be exceeded henceforth.
-                 applied = function(x, o, last_dose, max_dose, ...){
+                 applied = function(x, o, last_dose, max_dose){
                    stop("Must override $applied() method of abstract class 'Cpe'")
                  }, #</applied>
                  #' @details
@@ -77,12 +75,13 @@ Cpe <- R6Class("Cpe",
                  #' @param root_dose The starting dose for tree of paths
                  #' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  #' its length being the maximum number of cohorts to look ahead.
-                 #' @param ... Parameters passed ultimately to `Crm$esc()`,
-                 #' enabling passthru of its required `impl` parameter.
+                 #' @param ... Parameters passed ultimately to `future.apply::future_lapply()`,
+                 #' enabling experimentation with various scheduling schemes.
                  #' @param unroll Integer; how deep to unroll path tree for parallelism
                  #' @return Self, invisibly
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @importFrom future.apply future_lapply
+                 #' @importFrom progressr progressor
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
                    stopifnot("Only constant cohorts_sizes are supported currently" =
                                length(unique(cohort_sizes))==1)
@@ -109,7 +108,7 @@ Cpe <- R6Class("Cpe",
                        for (ntox in 0L:cohort_sizes[coh]) {
                          path_m["T", coh] <- ntox
                          x[d] <- x_d + ntox
-                         rec <- self$applied(x=x, o=n-x, last_dose=d, max_dose=max_dose, ...)
+                         rec <- self$applied(x=x, o=n-x, last_dose=d, max_dose=max_dose)
                          ## we recommend dose <= 0 to signal stopped path:
                          path_m["D", coh+1] <- ifelse(rec$stop, -1L, 1L) * rec$mtd
                          if (rec$stop)
@@ -133,7 +132,9 @@ Cpe <- R6Class("Cpe",
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
                    ## ..and parallelize over the pending partial paths:
+                   prog <- progressor(along = ppe)
                    cpe_parts <- future_lapply(ppe, function(ppe_) {
+                     prog()
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      ## Let's be sure to skip the stopped paths, tho!
                      if (any(path_m["D",] <= 0, na.rm=TRUE))
@@ -145,7 +146,7 @@ Cpe <- R6Class("Cpe",
                      x <- as.vector(xtabs(tox ~ level))
                      paths.(n, x, unroll+1, path_m, cohort_sizes)
                    }
-                   )
+                   , ...)
                    cpe <- do.call(c, cpe_parts)
                    ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
                    ##                                                  which='performance'))

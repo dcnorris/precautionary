@@ -27,8 +27,7 @@ test_that("Crm$trace_paths() yields same VIOLA result as dtpcrm's version", {
     global_coherent_esc(TRUE)
 
   pmx <- crm$trace_paths(root_dose = start.dose.level,
-                         cohort_sizes = rep(3, 7),
-                         impl = 'rusti')$path_matrix()
+                         cohort_sizes = rep(3, 7))$path_matrix()
 
   data(viola_dtp) # saved for comparison
 
@@ -73,19 +72,19 @@ test_that("Crm$trace_paths() answer invariant to unroll depth", {
 
   pmx1 <- crm$trace_paths(root_dose = start.dose.level,
                           cohort_sizes = rep(3, 7),
-                          impl = 'rusti', unroll = 1)$path_matrix()
+                          unroll = 1)$path_matrix()
 
   pmx2 <- crm$trace_paths(root_dose = start.dose.level,
                           cohort_sizes = rep(3, 7),
-                          impl = 'rusti', unroll = 2)$path_matrix()
+                          unroll = 2)$path_matrix()
 
   pmx3 <- crm$trace_paths(root_dose = start.dose.level,
                           cohort_sizes = rep(3, 7),
-                          impl = 'rusti', unroll = 3)$path_matrix()
+                          unroll = 3)$path_matrix()
 
   pmx4 <- crm$trace_paths(root_dose = start.dose.level,
                           cohort_sizes = rep(3, 7),
-                          impl = 'rusti', unroll = 4)$path_matrix()
+                          unroll = 4)$path_matrix()
 
   expect_equal(dim(pmx2), dim(pmx1))
   expect_equal(dim(pmx3), dim(pmx1))
@@ -121,8 +120,7 @@ test_that("Crm-class path_matrix can be recovered from path_array", {
     global_coherent_esc(TRUE)
 
   crm$trace_paths(root_dose = start.dose.level,
-                  cohort_sizes = rep(3, 7),
-                  impl = 'rusti')
+                  cohort_sizes = rep(3, 7))
 
   pmx <- crm$path_matrix()
   Tv <- crm$path_array(condense=FALSE)

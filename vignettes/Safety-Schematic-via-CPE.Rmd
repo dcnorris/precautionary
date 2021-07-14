@@ -139,8 +139,7 @@ crm <- Crm$new(skeleton = prior.DLT,
 
 crm$trace_paths(
       root_dose = start.dose.level,
-      cohort_sizes = rep(3, 7),
-      impl = 'rusti')
+      cohort_sizes = rep(3, 7))
 
 proc.time() - t0 # ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1
 ```

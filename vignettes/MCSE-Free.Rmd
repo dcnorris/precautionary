@@ -87,8 +87,8 @@ system.time({
         x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
         x
       })$trace_paths(root_dose = 1,
-                     cohort_sizes = rep(2, 15), # ==> N=30
-                     impl = 'rusti') # fast Rust implementations of CRM integrands
+                     cohort_sizes = rep(2, 15) # ==> N=30
+                     )
   
   T <- calmod$path_array()
 })

@@ -414,18 +414,19 @@ server <- function(input, output, session) {
              })$
              no_skip_esc(TRUE)$
              no_skip_deesc(FALSE)$
-             global_coherent_esc(TRUE)$
-             trace_paths(root_dose=1
-                       , cohort_sizes=cohort_sizes
-                       , impl = 'rusti')
+             global_coherent_esc(TRUE)
          , BOIN = Boin$new(target = 0.01*input$ttr
                           ,cohort_max = cohort_max()
                           ,enroll_max = enroll_max())$
-             max_dose(num_doses())$
-             trace_paths(root_dose=1
-                       , cohort_sizes=cohort_sizes
-                         )
-
+             max_dose(num_doses())
+           ) -> model
+    plan(multicore)
+    progressr::withProgressShiny(
+      model$trace_paths(root_dose = 1
+                      , cohort_sizes = cohort_sizes
+                      , future.scheduling = TRUE
+                        )
+    , message = "Running CPE..."
     )
   })
 

@@ -223,7 +223,7 @@ Crm <- R6Class("Crm",
                  #' object is returned to save execution time. If FALSE, a complete object is
                  #' returned, suitable for regression testing against package \CRANpkg{dfcrm}.
                  #' @return An object of class `mtd` as per package \CRANpkg{dfcrm}
-                 est = function(impl, abbrev=TRUE){
+                 est = function(impl='rusti', abbrev=TRUE){
                    private$evals <- private$evals + 1
                    t0 <- proc.time()
                    scale <- private$scale
@@ -324,12 +324,11 @@ Crm <- R6Class("Crm",
                  #' @param last_dose The most recently given dose, as required to implement
                  #' the `global_coherent_esc=TRUE` behavior
                  #' @param max_dose Unused; included for compatibility with superclass method
-                 #' @param ... Parameters passed to `Crm$esc()`, enabling passthru
                  #' of required `impl` parameter and optional `abbrev` flag.
                  #' @return An object of class `mtd` as per package \CRANpkg{dfcrm},
                  #' or possibly an abbreviated version of such object as returned by
                  #' method `Crm$est()`.
-                 applied = function(x, o, last_dose = NA, max_dose = NULL, ...){
+                 applied = function(x, o, last_dose = NA, max_dose = NULL){
                    if (!is.null(private$cache)) {
                      key <- paste(x, (x+o), sep='/', collapse='-') # human-readable to aid analysis
                      if (private$.global_coherent_esc)
@@ -340,7 +339,7 @@ Crm <- R6Class("Crm",
                      }
                    }
                    level <- which((x+o) > 0) # vector of levels that have been tried
-                   est <- self$tally(x, o)$est(...)
+                   est <- self$tally(x, o)$est()
                    if (private$.no_skip_esc) {
                      est$mtd <- min(est$mtd, max(level) + 1)
                    }
