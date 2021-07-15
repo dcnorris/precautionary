@@ -75,11 +75,16 @@ Cpe <- R6Class("Cpe",
                  #' @param root_dose The starting dose for tree of paths
                  #' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  #' its length being the maximum number of cohorts to look ahead.
-                 #' @param ... Parameters passed ultimately to `future.apply::future_lapply()`,
-                 #' enabling experimentation with various scheduling schemes.
+                 #' @param ... Parameters passed ultimately to `parallel::mclapply()`
+                 #' or `future.apply::future_lapply()`, with approach to parallelism
+                 #' being chosen according to parameter names used. Thus, if any of
+                 #' these parameters looks like `mc.*`, then `mclapply` is used;
+                 #' otherwise `future_lapply` is used by default. This liberalism
+                 #' enables experimentation with various scheduling schemes.
                  #' @param unroll Integer; how deep to unroll path tree for parallelism
                  #' @return Self, invisibly
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
+                 #' @importFrom parallel mclapply
                  #' @importFrom future.apply future_lapply
                  #' @importFrom progressr progressor
                  trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
@@ -133,7 +138,10 @@ Cpe <- R6Class("Cpe",
                    ppe <- ppe[order(names(ppe))]
                    ## ..and parallelize over the pending partial paths:
                    prog <- progressor(along = ppe)
-                   cpe_parts <- future_lapply(ppe, function(ppe_) {
+                   parallelize <- ifelse(any(grepl("mc.", names(list(...))))
+                                       , mclapply
+                                       , future_lapply)
+                   cpe_parts <- parallelize(ppe, function(ppe_) {
                      prog()
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      ## Let's be sure to skip the stopped paths, tho!
