@@ -137,10 +137,13 @@ Cpe <- R6Class("Cpe",
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
                    ## ..and parallelize over the pending partial paths:
-                   prog <- progressor(along = ppe)
-                   parallelize <- ifelse(any(grepl("mc.", names(list(...))))
-                                       , mclapply
-                                       , future_lapply)
+                   if (any(grepl("mc.", names(list(...))))) {
+                     parallelize <- mclapply
+                     prog <- function(...) invisible(NULL) # noop
+                   } else {
+                     parallelize <- future_lapply
+                     prog <- progressor(along = ppe)
+                   }
                    cpe_parts <- parallelize(ppe, function(ppe_) {
                      prog()
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
