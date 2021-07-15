@@ -75,7 +75,7 @@ Crm <- R6Class("Crm",
                      return(exp(private$ln_skel))
                    ## When *setting* the skeleton, we invalidate the cache:
                    private$cache <- new.env(hash = TRUE, size = 10000L)
-                   private$skips <- NA
+                   private$skips <- 0
                    private$ln_skel <- log(skeleton)
                    super$max_dose(length(skeleton)) # TODO: Delete super's private$.max_dose?
                    invisible(self)
