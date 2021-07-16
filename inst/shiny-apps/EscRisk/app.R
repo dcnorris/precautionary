@@ -16,6 +16,7 @@ library(shiny)
 library(shinyjs)
 library(precautionary)
 library(kableExtra)
+library(parallelly)
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
@@ -420,14 +421,12 @@ server <- function(input, output, session) {
                           ,enroll_max = enroll_max())$
              max_dose(num_doses())
            ) -> model
-    plan(multicore)
-    progressr::withProgressShiny(
       model$trace_paths(root_dose = 1
                       , cohort_sizes = cohort_sizes
-                      , future.scheduling = TRUE
-                        )
-    , message = "Running CPE..."
-    )
+                      , mc.cores = parallelly::availableCores(omit = 2)
+                        ) -> cpe
+    print(model$performance[order(t)])
+    cpe
   })
 
   output$J <- renderText({

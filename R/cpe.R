@@ -60,8 +60,9 @@ Cpe <- R6Class("Cpe",
                  #' @details
                  #' Hook for concrete subclasses to implement for performance reporting
                  #' from method `Cpe$trace_paths`
+                 #' @param ... Optional columns to add to report
                  #' @return NULL
-                 report = function() {
+                 report = function(...) {
                    return(NULL)
                  },
                  #' @field performance A vector used for vetting performance
@@ -94,7 +95,7 @@ Cpe <- R6Class("Cpe",
                    ##     $path_array() uses a constant n = max(T) in choose(n,T).
                    private$T <- private$b <- private$U <- NULL # force recalc by $path_array()
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
-                   paths. <- function(n, x, coh, path_m, cohort_sizes){
+                   paths. <- function(n, x, coh, path_m, cohort_sizes, par_t0 = NA){
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
                      paths_ <- function(n, x, coh, path_m, max_dose, cohort_sizes){
                        ## This recursive accessory function manages PATH BRANCHING at the
@@ -126,7 +127,10 @@ Cpe <- R6Class("Cpe",
                      ## Regarding performant nature of the following as.list(env), see
                      ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
                      path_list <- as.list(path_hash, sorted = FALSE)
-                     attr(path_list,'performance') <- self$report()
+                     par_elapsed <- difftime(Sys.time(), par_t0, units = "secs")
+                     attr(path_list,'performance') <- self$report(J = length(path_list)
+                                                                , t = round(par_elapsed, 3)
+                                                                  )
                      return(path_list)
                    } #</paths.>
                    ## 'Unroll' the first few levels of the tree recursion..
@@ -136,6 +140,10 @@ Cpe <- R6Class("Cpe",
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
+                   ## TODO: Strip off (and tally to the fifo) any stopped paths in 'ppe',
+                   ##       thereby restricting parallelization to only nontrivial chunks.
+                   ##       Note that this will also simplify the parallelized function,
+                   ##       which can assume it has received nontrivial work.
                    ## ..and parallelize over the pending partial paths:
                    if (any(grepl("mc.", names(list(...))))) {
                      parallelize <- mclapply
@@ -144,18 +152,35 @@ Cpe <- R6Class("Cpe",
                      parallelize <- future_lapply
                      prog <- progressor(along = ppe)
                    }
+                   ## h/t @fotNelton for the following trick, see
+                   ## https://stackoverflow.com/a/27729791/3338147
+                   f <- fifo(tempfile(), open="w+b", blocking=TRUE); on.exit(close(f))
+                   if (inherits(parallel:::mcfork(), "masterProcess")) {
+                     J <- 0L
+                     while (!isIncomplete(f)) {
+                       dJ <- readBin(f, "integer")
+                       J <- J + as.integer(dJ)
+                       cat(sprintf("So far J = %d\n", J))
+                     }
+                     parallel:::mcexit()
+                   }
+                   par_t0 <- Sys.time() # to report thread-wise times since parallelization
                    cpe_parts <- parallelize(ppe, function(ppe_) {
                      prog()
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      ## Let's be sure to skip the stopped paths, tho!
-                     if (any(path_m["D",] <= 0, na.rm=TRUE))
+                     if (any(path_m["D",] <= 0, na.rm=TRUE)) {
+                       writeBin(1L, f) # TODO: Better to count stopped paths all at once?
                        return(list(ppe_))
+                     }
                      level <- factor(path_m["D",1:unroll], levels=1:self$max_dose())
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
-                     paths.(n, x, unroll+1, path_m, cohort_sizes)
+                     paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0) -> pp
+                     writeBin(length(pp), f)
+                     pp
                    }
                    , ...)
                    cpe <- do.call(c, cpe_parts)

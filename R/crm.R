@@ -92,10 +92,12 @@ Crm <- R6Class("Crm",
                  #' @details
                  #' Report lifetime duty & performance statistics
                  #'
+                 #' @param ... Optional arguments specifying columns to add to report
                  #' @return A named vector summarizing lifetime duty and performance
-                 report = function() {
+                 report = function(...) {
                    data.table(
                      pid = Sys.getpid(),
+                     ...,
                      cached = if (!is.null(private$cache))
                                 sum(env.profile(private$cache)$counts)
                               else
