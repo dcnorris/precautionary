@@ -16,4 +16,8 @@ $(function() {
 	editing_skeleton = editing_skeleton + 1;
     });
 
+    const outputJ = document.getElementById('J');
+    Shiny.addCustomMessageHandler('watch-J', function(J) {
+        outputJ.innerHTML = J;
+    });
 });

@@ -150,27 +150,14 @@ Cpe <- R6Class("Cpe",
                      prog <- function(...) invisible(NULL) # noop
                    } else {
                      parallelize <- future_lapply
-                     prog <- progressor(along = ppe)
-                   }
-                   ## h/t @fotNelton for the following trick, see
-                   ## https://stackoverflow.com/a/27729791/3338147
-                   f <- fifo(tempfile(), open="w+b", blocking=TRUE); on.exit(close(f))
-                   if (inherits(parallel:::mcfork(), "masterProcess")) {
-                     J <- 0L
-                     while (!isIncomplete(f)) {
-                       dJ <- readBin(f, "integer")
-                       J <- J + as.integer(dJ)
-                       cat(sprintf("So far J = %d\n", J))
-                     }
-                     parallel:::mcexit()
+                     prog <- progressor(1000000)
                    }
                    par_t0 <- Sys.time() # to report thread-wise times since parallelization
                    cpe_parts <- parallelize(ppe, function(ppe_) {
-                     prog()
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      ## Let's be sure to skip the stopped paths, tho!
                      if (any(path_m["D",] <= 0, na.rm=TRUE)) {
-                       writeBin(1L, f) # TODO: Better to count stopped paths all at once?
+                       prog(amount = 1L, message = sprintf("dJ = %d", 1L))
                        return(list(ppe_))
                      }
                      level <- factor(path_m["D",1:unroll], levels=1:self$max_dose())
@@ -179,13 +166,11 @@ Cpe <- R6Class("Cpe",
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
                      paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0) -> pp
-                     writeBin(length(pp), f)
+                     prog(amount = length(pp), message = sprintf("dJ = %d", length(pp)))
                      pp
                    }
                    , ...)
                    cpe <- do.call(c, cpe_parts)
-                   ## attr(cpe,'performance') <- do.call(rbind, lapply(cpe_parts, attr,
-                   ##                                                  which='performance'))
                    private$path_list <- cpe[order(names(cpe))]
                    self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
                    invisible(self)

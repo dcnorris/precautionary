@@ -17,6 +17,8 @@ library(shinyjs)
 library(precautionary)
 library(kableExtra)
 library(parallelly)
+library(progressr)
+future::plan("multicore", workers=availableCores(omit = 2))
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
@@ -178,6 +180,23 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+
+  ## Define a simple (!) progression handler to report cumulative progress.
+  ## (Adapted from progressr::handler_shiny)
+  handler_cumul <- function(intrusiveness = getOption("progressr.intrusiveness.gui", 1),
+                            target = "gui", inputs = list(message = NULL, detail = "message"),
+                            ...) {
+    reporter <- local({
+      list(
+        update = function(config, state, progression, ...) {
+          cat(sprintf("Cumulative J = %d so far\n", state$step))
+          session$sendCustomMessage('watch-J', state$step)
+        }
+      )
+    })
+
+    make_progression_handler("cumul", reporter, intrusiveness = intrusiveness, target = target, ...)
+  }
 
   observeEvent(input$startHelp,{
     session$sendCustomMessage(type = 'startHelp', message = list(""))
@@ -388,13 +407,15 @@ server <- function(input, output, session) {
 
   ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
 
-  cpe <- reactive({
-    cat("\n[REACTIVE:cpe] input$design =", input$design, "\n")
+  cpe <- reactiveVal(NULL)
+  observe({
+    cat("\n[OBSERVE->cpe] input$design =", input$design, "\n")
     if (input$design != "CRM") # TODO: It doesn't feel entirely right to be managing
       crm_skeleton(NULL)       #       crm_skeleton() here, although it does work.
     isolate(MTDi_gen())$skeleton(crm_skeleton())
     if (input$design == "3 + 3")
-      return(Cpe3_3$new(D = num_doses()))
+      cpe(Cpe3_3$new(D = num_doses()))
+    else {
     cohort_sizes <- rep(cohort_size(), enroll_max()/cohort_size())
     switch(input$design
          , CRM = Crm$new(skeleton = crm_skeleton()
@@ -421,12 +442,16 @@ server <- function(input, output, session) {
                           ,enroll_max = enroll_max())$
              max_dose(num_doses())
            ) -> model
+      progressr::with_progress(
       model$trace_paths(root_dose = 1
                       , cohort_sizes = cohort_sizes
-                      , mc.cores = parallelly::availableCores(omit = 2)
-                        ) -> cpe
-    print(model$performance[order(t)])
-    cpe
+                      #, mc.cores = parallelly::availableCores(omit = 2)
+                        ),
+      handlers = c(cumul = handler_cumul)
+      ) -> cpe
+    if (input$design == "CRM") print(model$performance[order(t)])
+    cpe(cpe)
+    }
   })
 
   output$J <- renderText({
