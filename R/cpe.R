@@ -140,10 +140,13 @@ Cpe <- R6Class("Cpe",
                    path_m["D",1] <- as.integer(root_dose)
                    ppe <- paths.(n, x, 1, path_m, cohort_sizes[1:unroll])
                    ppe <- ppe[order(names(ppe))]
-                   ## TODO: Strip off (and tally to the fifo) any stopped paths in 'ppe',
-                   ##       thereby restricting parallelization to only nontrivial chunks.
-                   ##       Note that this will also simplify the parallelized function,
-                   ##       which can assume it has received nontrivial work.
+                   ## ..set aside any stopped paths..
+                   stopped <- sapply(ppe, function(ppe_) {
+                     path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
+                     any(path_m["D",] <= 0, na.rm=TRUE)
+                   })
+                   cpe_stopped <- ppe[stopped]
+                   ppe <- ppe[!stopped]
                    ## ..and parallelize over the pending partial paths:
                    if (any(grepl("mc.", names(list(...))))) {
                      parallelize <- mclapply
@@ -152,14 +155,10 @@ Cpe <- R6Class("Cpe",
                      parallelize <- future_lapply
                      prog <- progressor(1000000)
                    }
+                   prog(amount = sum(stopped))
                    par_t0 <- Sys.time() # to report thread-wise times since parallelization
                    cpe_parts <- parallelize(ppe, function(ppe_) {
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
-                     ## Let's be sure to skip the stopped paths, tho!
-                     if (any(path_m["D",] <= 0, na.rm=TRUE)) {
-                       prog(amount = 1L, message = sprintf("dJ = %d", 1L))
-                       return(list(ppe_))
-                     }
                      level <- factor(path_m["D",1:unroll], levels=1:self$max_dose())
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
@@ -170,7 +169,7 @@ Cpe <- R6Class("Cpe",
                      pp
                    }
                    , ...)
-                   cpe <- do.call(c, cpe_parts)
+                   cpe <- c(cpe_stopped, do.call(c, cpe_parts))
                    private$path_list <- cpe[order(names(cpe))]
                    self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
                    invisible(self)
