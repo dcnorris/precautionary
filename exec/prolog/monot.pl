@@ -50,6 +50,62 @@
 % and that left clpz unable to 'tidy up loose ends' during constraint
 % propagation?
 
+% I appreciate now the distinction between an ANSWER and SOLUTIONS.
+% What clpz gives now is a more 'diffuse' answer, but whether that
+% answer contains any solutions that could be produced upon labeling
+% is a different matter.
+
+% It's hard for me to believe that clpz could possibly yield such a
+% false 'solution'. It seems that most of the nonmonotonicity here
+% arises out of the unhelpful/distracting REPRESENTATION (N = X + O)
+% which I have suggested to clpz. Surely, no actual LABELING of the
+% variables here could sneak past the constraints!
+
+% Let me at least try to demonstrate (or refute!) this by labeling.
+
+% The first step in labeling is restricting the variables to finite
+% domains:
+
+%?- N = X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6, N in 1..24.
+%@ caught: error(type_error(integer,_1384253+_1384255),unknown(_1384253+_1384255)-1)
+
+%?- N = X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6, N #> 0.
+%@    N = X+O, clpz:(_A#=max(0,_B)), clpz:(_C#=max(0,_D)), clpz:(_B+_E#=6), clpz:(_D+6#=_F), clpz:(T+_A#=_G), clpz:(X+O#=_E), clpz:(X+O#=_F), clpz:(X+O#=_H), clpz:(X+O#=_I), clpz:(1+_C#=_J), clpz:(T#=<X+O), clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_J#>=T), clpz:(_A in 0..sup), clpz:(_C in 0..sup), clpz:(_J in 2..sup), clpz:(_G in 2..sup), clpz:(T in 2..sup), clpz:(_H in inf..5), clpz:(_I in 1..sup).
+
+% ANOTHER SURPRISE! Adding superfluous constraints N in 1..24 or N #> 0
+% had distinct effects. Is (N in 1..24) NOT same as (N #> 0, N #=< 24)? 
+
+%?- N = X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6, #N #> 0.
+%@ caught: error(type_error(integer,_1384251+_1384253),must_be/2)
+
+% How do I reflect on this, AS A USER of Prolog? It looks to me
+% as if (N = X + O) represented a 'typo', which clpz was able to
+% detect under the more stringent syntactical demands it imposes.
+
+%     ,---- oops! forgot to type the '#'
+%     v
+%?- N = X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6.
+%@    N = X+O, clpz:(_A#=max(0,_B)), clpz:(_C#=max(0,_D)), clpz:(_B+_E#=6), clpz:(_D+6#=_F), clpz:(T+_A#=_G), clpz:(X+O#=_E), clpz:(X+O#=_F), clpz:(X+O#=_H), clpz:(1+_C#=_I), clpz:(T#=<X+O), clpz:(_A#>=_B), clpz:(_C#>=_D), clpz:(_I#>=T), clpz:(_A in 0..sup), clpz:(_C in 0..sup), clpz:(_I in 2..sup), clpz:(_G in 2..sup), clpz:(T in 2..sup), clpz:(_H in inf..5).
+
+%     ,---- phew! I remembered it this time
+%     v
+%?- N #= X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6.
+%@ false.
+
+%?- N #= X + O.
+%@    clpz:(X+O#=N).
+
+
+% My 'conjecture' is that the PRACTICAL effect of clpz:monotonic
+% is to impose unpleasant syntactical demands on the programmer,
+% merely in order to detect typos.
+
+% One way to operationalize this conjecture would be to demonstrate
+% that syntactical analysis of such programs would suffice to flag
+% all such typos. Why can't clpz recognize that N appears on LHS of
+% a #=/2, and 'put a # on it' automatically? What *legitimate* goal
+% would thereby be made impossible to write?
+
 
 %?- assertz(clpz:monotonic).
 %@    true.
@@ -59,11 +115,12 @@
 %?- N = X + O, T/N ~~ 1/6, T #> 1, N #>= T, N #< 6.
 %@ caught: error(instantiation_error,instantiation_error(unknown(_1384246),1))
 
-%?- #N = X + O, #T/ #N ~~ 1/6, #T #> 1, #N #>= #T, #N #< 6.
-%@ false.
-
-%?- #N = #X + #O, #T/ #N ~~ 1/6, #T #> 1, #N #>= #T, #N #< 6.
-%@ false.
-
 %?- #N #= #X + #O, #T/ #N ~~ 1/6, #T #> 1, #N #>= #T, #N #< 6.
 %@ false.
+
+% But what about those first queries?
+%?- N = X + O.
+%@    N = X+O.
+
+%?- #N #= #X + #O.
+%@    clpz:(#X+ #O#= #N).
