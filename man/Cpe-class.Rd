@@ -120,7 +120,7 @@ Integer number of paths
 \if{latex}{\out{\hypertarget{method-applied}{}}}
 \subsection{Method \code{applied()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Cpe$applied(x, o, last_dose, max_dose, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$applied(x, o, last_dose, max_dose)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -134,9 +134,6 @@ Integer number of paths
 cumulative-cohort-based escalation decisions.}
 
 \item{\code{max_dose}}{An upper limit on future dose levels}
-
-\item{\code{...}}{Parameters passed to \code{Crm$esc()}, enabling passthru
-of required \code{impl} parameter and optional \code{abbrev} flag.}
 }
 \if{html}{\out{</div>}}
 }
@@ -158,9 +155,16 @@ An object with components:
 \if{latex}{\out{\hypertarget{method-report}{}}}
 \subsection{Method \code{report()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Cpe$report()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$report(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Optional columns to add to report}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Details}{
 Hook for concrete subclasses to implement for performance reporting
 from method \code{Cpe$trace_paths}
@@ -186,8 +190,12 @@ NULL
 \item{\code{cohort_sizes}}{Integer vector giving sizes of future cohorts,
 its length being the maximum number of cohorts to look ahead.}
 
-\item{\code{...}}{Parameters passed ultimately to \code{Crm$esc()},
-enabling passthru of its required \code{impl} parameter.}
+\item{\code{...}}{Parameters passed ultimately to \code{parallel::mclapply()}
+or \code{future.apply::future_lapply()}, with approach to parallelism
+being chosen according to parameter names used. Thus, if any of
+these parameters looks like \verb{mc.*}, then \code{mclapply} is used;
+otherwise \code{future_lapply} is used by default. This liberalism
+enables experimentation with various scheduling schemes.}
 
 \item{\code{unroll}}{Integer; how deep to unroll path tree for parallelism}
 }

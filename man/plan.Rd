@@ -7,18 +7,17 @@
 \description{
 Plan
 }
-\section{Version 0.2.4-1}{
-
-\itemize{
-\item BOIN recs via isotonic regression
-\item Test comparing CPE vs BOIN::get.oc() sim
-}
-}
-
 \section{Version 0.2.5}{
 
 \itemize{
 \item Convert EscRisk to MCSE-free CPE
+}
+}
+
+\section{Version 0.2.5-1}{
+
+\itemize{
+\item Update pkgdown site if CRAN accepts submission
 }
 }
 
@@ -37,7 +36,15 @@ CPE problem size.
 \section{Version 0.2.7}{
 
 \itemize{
+\item BOIN recs via isotonic regression
+\item Test comparing CPE vs BOIN::get.oc() sim
 \item Implement logistic model
+}
+}
+
+\section{Version 0.2.8}{
+
+\itemize{
 \item Implement TITE CRM?
 \itemize{
 \item Is TITE even amenable to path enumeration?
@@ -55,9 +62,6 @@ for enumerable designs in context.
 \itemize{
 \item Demote \pkg{escalation} to a 'Suggests'
 \item Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
-\itemize{
-\item Ideally 100\% sim-free via integration over the hyperprior!
-}
 \item Stop exposing the \code{impl} parameter
 }
 }

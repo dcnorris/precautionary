@@ -200,9 +200,16 @@ Self, invisibly
 \if{latex}{\out{\hypertarget{method-report}{}}}
 \subsection{Method \code{report()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Crm$report()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Crm$report(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Optional arguments specifying columns to add to report}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Details}{
 Report lifetime duty & performance statistics
 }
@@ -382,7 +389,7 @@ Self, invisibly
 \if{latex}{\out{\hypertarget{method-est}{}}}
 \subsection{Method \code{est()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Crm$est(impl, abbrev = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Crm$est(impl = "rusti", abbrev = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -410,7 +417,7 @@ An object of class \code{mtd} as per package \CRANpkg{dfcrm}
 \if{latex}{\out{\hypertarget{method-applied}{}}}
 \subsection{Method \code{applied()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Crm$applied(x, o, last_dose = NA, max_dose = NULL, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Crm$applied(x, o, last_dose = NA, max_dose = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -423,9 +430,7 @@ An object of class \code{mtd} as per package \CRANpkg{dfcrm}
 \item{\code{last_dose}}{The most recently given dose, as required to implement
 the \code{global_coherent_esc=TRUE} behavior}
 
-\item{\code{max_dose}}{Unused; included for compatibility with superclass method}
-
-\item{\code{...}}{Parameters passed to \code{Crm$esc()}, enabling passthru
+\item{\code{max_dose}}{Unused; included for compatibility with superclass method
 of required \code{impl} parameter and optional \code{abbrev} flag.}
 }
 \if{html}{\out{</div>}}
