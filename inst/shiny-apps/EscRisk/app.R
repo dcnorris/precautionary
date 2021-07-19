@@ -20,6 +20,18 @@ library(parallelly)
 library(progressr)
 future::plan("multicore", workers=availableCores(omit = 2))
 
+like.mc.preschedule <- function(w = availableCores(omit = 2))
+  function(n) {
+    N <- ((n+w-1) %/% w) * w # smallest multiple of w at least as big as n
+    ## The implementation reveals that the essence of mc.prescheduled
+    ## is the TRANSPOSITION of default chunking by future_lapply.
+    ix <- t(matrix(1:N, nrow=w))
+    colnames(ix) <- paste0('w',1:w)
+    ix[ix > n] <- NA
+    print(ix)
+    ix[!is.na(ix)]
+  }
+
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   shinyFeedback::useShinyFeedback(),
@@ -445,6 +457,7 @@ server <- function(input, output, session) {
       progressr::with_progress(
       model$trace_paths(root_dose = 1
                       , cohort_sizes = cohort_sizes
+                      , future.scheduling = structure(TRUE, ordering = like.mc.preschedule())
                       #, mc.cores = parallelly::availableCores(omit = 2)
                         ),
       handlers = c(cumul = handler_cumul)
