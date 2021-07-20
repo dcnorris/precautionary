@@ -96,6 +96,7 @@ Cpe <- R6Class("Cpe",
                    private$T <- private$b <- private$U <- NULL # force recalc by $path_array()
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
                    paths. <- function(n, x, coh, path_m, cohort_sizes, par_t0 = NA){
+                     t1. <- Sys.time()
                      path_hash <- new.env(hash = TRUE, size = 100000L) # to collect paths
                      paths_ <- function(n, x, coh, path_m, max_dose, cohort_sizes){
                        ## This recursive accessory function manages PATH BRANCHING at the
@@ -127,9 +128,16 @@ Cpe <- R6Class("Cpe",
                      ## Regarding performant nature of the following as.list(env), see
                      ## https://stackoverflow.com/a/29482211/3338147 by Gabor Csardi.
                      path_list <- as.list(path_hash, sorted = FALSE)
-                     par_elapsed <- difftime(Sys.time(), par_t0, units = "secs")
+                     t2. <- Sys.time()
+                     ## Now render t1. and t2. relative to a single event (parallelization)
+                     t1 <- 1000*difftime(t1., par_t0, units = "secs") # ~ started
+                     attributes(t1)$units = "ms"
+                     t2 <- 1000*difftime(t2., par_t0, units = "secs") # ~ finished
+                     attributes(t2)$units = "ms"
                      attr(path_list,'performance') <- self$report(J = length(path_list)
-                                                                , t = round(par_elapsed, 3)
+                                                                , t1 = round(t1)
+                                                                , t2 = round(t2)
+                                                                , Δt = round(t2 - t1)
                                                                   )
                      return(path_list)
                    } #</paths.>

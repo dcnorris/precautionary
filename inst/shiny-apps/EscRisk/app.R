@@ -462,7 +462,10 @@ server <- function(input, output, session) {
                         ),
       handlers = c(cumul = handler_cumul)
       ) -> cpe
-    if (input$design == "CRM") print(model$performance[order(t)])
+    if (input$design == "CRM") {
+      perftab <<- model$performance[order(t1)]
+      print(perftab)
+    }
     cpe(cpe)
     }
   })
