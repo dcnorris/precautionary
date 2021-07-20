@@ -15,17 +15,19 @@ plot.dutycycle <- function(perftab) {
     m[,pid] <- m[,pid] | (jpt$t1[j] < T & T < jpt$t2[j])
   }
 
-  ## Reshape this matrix to 'tall' form yielding series to plot
-  active <- as.vector(m)
-  pid <- rep(levels(jpt$pid), each=nrow(jpt))
+  ## Add an 'avg' column
+  m <- addmargins(m, margin = 2, FUN = c(avg = mean))
 
+  ## Reshape this matrix to 'tall' form yielding series to plot
   dt <- data.table(t = T
                  , active = 1.0 * as.vector(m)
-                 , pid = factor(rep(levels(jpt$pid), each=nrow(m)))
+                 , pid = factor(rep(colnames(m), each=nrow(m)))
                    )
 
-  ## Here's one option for the plot
-  xyplot(active ~ t, groups = pid, data = dt, type='l'
-       , auto.key=list(points=FALSE, lines=TRUE) #, columns=6)
+  xyplot(active ~ t | pid, data = dt, type='l'
+       , layout=c(1, NA), as.table=TRUE
+       , ylab = ""
+       , xlab = "Sys.time() since parallelization [ms]"
+       , scales = list(y = list(at = NULL))
          )
 }
