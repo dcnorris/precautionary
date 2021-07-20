@@ -158,10 +158,10 @@ Cpe <- R6Class("Cpe",
                    ## ..and parallelize over the pending partial paths:
                    if (any(grepl("mc.", names(list(...))))) {
                      parallelize <- mclapply
-                     prog <- function(...) invisible(NULL) # noop
+                     prog <- progressor(Inf, enable = FALSE) # noop
                    } else {
                      parallelize <- future_lapply
-                     prog <- progressor(1000000)
+                     prog <- progressor(Inf)
                    }
                    prog(amount = sum(stopped))
                    par_t0 <- Sys.time() # to report thread-wise times since parallelization
@@ -173,7 +173,7 @@ Cpe <- R6Class("Cpe",
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
                      paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0) -> pp
-                     prog(amount = length(pp), message = sprintf("dJ = %d", length(pp)))
+                     prog(amount = length(pp))
                      pp
                    }
                    , ...)
