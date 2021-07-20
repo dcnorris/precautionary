@@ -1,6 +1,6 @@
 ## A pair of plots for parallel performance
 
-plot.dutycycle <- function(perftab) {
+plot.dutycycle <- function(perftab, ...) {
   jpt <- perftab
   jpt$job <- seq(nrow(jpt)) # TODO: Better if perftab supplies names
 
@@ -29,5 +29,6 @@ plot.dutycycle <- function(perftab) {
        , ylab = ""
        , xlab = "Sys.time() since parallelization [ms]"
        , scales = list(y = list(at = NULL))
+       , ...
          )
 }
