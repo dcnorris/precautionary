@@ -179,7 +179,8 @@ Cpe <- R6Class("Cpe",
                    , ...)
                    cpe <- c(cpe_stopped, do.call(c, cpe_parts))
                    private$path_list <- cpe[order(names(cpe))]
-                   self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance'))
+                   self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance')
+                                               , idcol = 'job')
                    invisible(self)
                  }, # </trace_paths>
                  #' @details

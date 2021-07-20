@@ -98,10 +98,6 @@ Crm <- R6Class("Crm",
                    data.table(
                      pid = Sys.getpid(),
                      ...,
-                     cached = if (!is.null(private$cache))
-                                sum(env.profile(private$cache)$counts)
-                              else
-                                NA,
                      evals = private$evals,
                      skips = private$skips,
                      calc.ms = as.integer(1000*sum(private$user)),
