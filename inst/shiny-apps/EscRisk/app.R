@@ -454,16 +454,11 @@ server <- function(input, output, session) {
                           ,enroll_max = enroll_max())$
              max_dose(num_doses())
            ) -> model
-      progressr::with_progress(
-                   model$trace_paths(
-                           root_dose = 1
-                         , cohort_sizes = cohort_sizes
-                         , future.scheduling = structure(TRUE, ordering = like.mc.preschedule())
-                         #, mc.cores = parallelly::availableCores(omit = 2)
-                         )
-                 #, handlers = c(cumul = handler_cumul)
-                 , handlers = NULL
-                 ) -> cpe
+    model$trace_paths(
+            root_dose = 1
+          , cohort_sizes = cohort_sizes
+          , handler = function(p) session$sendCustomMessage('watch-J', p)
+          ) -> cpe
     if (input$design == "CRM") {
       perftab <<- model$performance[order(t1)]
       print(perftab)
