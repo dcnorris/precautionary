@@ -160,7 +160,7 @@ Cpe <- R6Class("Cpe",
                      parallelize <- mclapply
                      prog <- progressor(Inf, enable = FALSE) # noop
                    } else {
-                     parallelize <- future_lapply
+                     parallelize <- proglapply
                      prog <- progressor(Inf)
                    }
                    prog(amount = sum(stopped))

@@ -2,6 +2,31 @@
 
 library(parallel)
 
+## Let's have a test using the target computation!
+crm_b2020 <- function() {
+  d1_maxn <- 5
+  cum_maxn <- 10
+  calmod <- Crm$new(skeleton = c(0.03, 0.11, 0.25, 0.42, 0.58, 0.71),
+                  scale = 0.85, # aka 'sigma'
+                  target = 0.25)$
+    no_skip_esc(TRUE)$    # compare Braun's 'restrict = T'
+    no_skip_deesc(FALSE)$
+      stop_func(function(x) {
+        enrolled <- tabulate(x$level, nbins = length(x$prior))
+        x$stop <- enrolled[1] >= d1_maxn || max(enrolled) >= cum_maxn
+        x
+      })
+}
+
+testprog <- function(C = 13, ...) {
+  mod <- crm_b2020()
+  mod$trace_paths(1, rep(2, C), unroll = 4, ...)
+  mod.look <<- mod
+  cat("Done.\n")
+  mod$performance
+}
+
+
 ## This design begins to look promising. But I need a clear nomenclature!
 ## Let me say that a body of 'work' is parallelized into 'tasks' that are
 ## 'parceled' into 'jobs', and that these jobs are 'assigned' to 'workers'.
@@ -20,7 +45,7 @@ library(parallel)
 proglapply <- function(X, FUN
                      , parcellator = NULL # use default defined in body
                      , metric = length # progress metric on task results
-                     , handler = NULL # use body's default progress handler
+                     , handler = \(p) cat(sprintf("progress so far: %d\n", p))
                      , ... # arguments to pass to progress reporting?
                      , workers = parallelly::availableCores(omit = 2)
                        ) {
@@ -35,7 +60,7 @@ proglapply <- function(X, FUN
       result <- FUN(x)
       parallel:::sendMaster(metric(result), raw.asis=FALSE)
       result
-    }), name = w))
+    })))
   rownames(m) <- sapply(jobs, function(.).$pid)
 
   cat("Work was parcelled out as follows:\n")
@@ -48,32 +73,30 @@ proglapply <- function(X, FUN
   print(progressReportsDue)
 
   cat("Watching progress notifications...\n")
+  progress <- 0L # TODO: Do I commit to progress always being an integer?
   while (sum(progressReportsDue) > 0) {
-    dueToReport = as.integer(names(progressReportsDue)[progressReportsDue > 0])
+    dueToReport = names(progressReportsDue)[progressReportsDue > 0]
     ## TODO: The following is not restricting polling to the desired values!
-    pids <- parallel:::selectChildren(dueToReport)
+    pids <- parallel:::selectChildren(as.integer(dueToReport))
     if (!is.integer(pids))
       next
     msg <- parallel:::readChild(pids[1])
     if (is.raw(msg)) {
-      pid <- attr(msg,'pid')
+      pid <- as.character(attr(msg,'pid'))
       if (!(pid %in% dueToReport)) {
         cat("ERROR!\n")
         print(dueToReport)
       }
-      pid <- as.character(attr(msg,'pid'))
-      cat("Received message from pid", pid, "\n")
-      cat("Message says:", unserialize(msg), "\n")
-      ##cat(sprintf("Sum: %d\n", sum)) # Here's where I'd do Shiny UI update!
       progressReportsDue[pid] <- progressReportsDue[pid] - 1
-      print(progressReportsDue)
+      progress <- progress + unserialize(msg)
+      handler(progress)
     } else { # this branch should never happen now
       if (is.integer(msg))
         stop("Received notice from exiting pid:", msg, "\n")
     }
   }
 
-  mccollect(jobs)
+  do.call(c, unname(mccollect(jobs))) # unname() to strips pids
 }
 
 ## Can I now do same as above, only with fewer, composite jobs?
