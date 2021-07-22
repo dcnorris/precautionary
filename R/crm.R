@@ -101,7 +101,7 @@ Crm <- R6Class("Crm",
                      evals = private$evals,
                      skips = private$skips,
                      calc.ms = as.integer(1000*sum(private$user)),
-                     'us/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
+                     'μs/calc' = as.integer(1000000*sum(private$user)/private$evals,3)
                      )
                  },
                  #' @details
