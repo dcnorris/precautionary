@@ -76,19 +76,16 @@ Cpe <- R6Class("Cpe",
                  #' @param root_dose The starting dose for tree of paths
                  #' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  #' its length being the maximum number of cohorts to look ahead.
-                 #' @param ... Parameters passed ultimately to `parallel::mclapply()`
-                 #' or `future.apply::future_lapply()`, with approach to parallelism
-                 #' being chosen according to parameter names used. Thus, if any of
-                 #' these parameters looks like `mc.*`, then `mclapply` is used;
-                 #' otherwise `future_lapply` is used by default. This liberalism
-                 #' enables experimentation with various scheduling schemes.
+                 #' @param ... Parameters passed ultimately to `parallel::mclapply`
+                 #' or (when `prog` is not missing) to an similar internal function
+                 #' that implements progress reporting.
+                 #' @param prog A function of a single integer, the current cumulative
+                 #' path count, to be used for progress reporting
                  #' @param unroll Integer; how deep to unroll path tree for parallelism
                  #' @return Self, invisibly
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @importFrom parallel mclapply
-                 #' @importFrom future.apply future_lapply
-                 #' @importFrom progressr progressor
-                 trace_paths = function(root_dose, cohort_sizes, ..., unroll = 4){
+                 trace_paths = function(root_dose, cohort_sizes, ..., prog = NULL, unroll = 4){
                    stopifnot("Only constant cohorts_sizes are supported currently" =
                                length(unique(cohort_sizes))==1)
                    ## NT: The reason cohort_sizes must be a constant vector is that
@@ -156,25 +153,20 @@ Cpe <- R6Class("Cpe",
                    cpe_stopped <- ppe[stopped]
                    ppe <- ppe[!stopped]
                    ## ..and parallelize over the pending partial paths:
-                   if (any(grepl("mc.", names(list(...))))) {
-                     parallelize <- mclapply
-                   } else {
-                     parallelize <- proglapply
-                   }
-                   ## TODO: Pass progress handler thru `...` and use here:
-                   ##prog(amount = sum(stopped))
                    par_t0 <- Sys.time() # to report thread-wise times since parallelization
-                   cpe_parts <- parallelize(ppe, function(ppe_) {
+                   FUN <- function(ppe_) {
                      path_m <- matrix(ppe_, nrow=2, dimnames=list(c("D","T")))
                      level <- factor(path_m["D",1:unroll], levels=1:self$max_dose())
                      tox <- path_m["T",1:unroll]
                      enr <- cohort_sizes[1:unroll]
                      n <- as.vector(xtabs(enr ~ level))
                      x <- as.vector(xtabs(tox ~ level))
-                     paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0) -> pp
-                     pp
+                     paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0)
                    }
-                   , ...)
+                   if (!is.null(prog))
+                     cpe_parts <- proglapply(ppe, FUN, init = sum(stopped), prog = prog, ...)
+                   else
+                     cpe_parts <- mclapply(ppe, FUN, ...)
                    cpe <- c(cpe_stopped, do.call(c, cpe_parts))
                    private$path_list <- cpe[order(names(cpe))]
                    self$performance <- rbindlist(lapply(cpe_parts, attr, which='performance')

@@ -16,21 +16,6 @@ library(shiny)
 library(shinyjs)
 library(precautionary)
 library(kableExtra)
-library(parallelly)
-library(progressr)
-future::plan("multicore", workers=availableCores(omit = 2))
-
-like.mc.preschedule <- function(w = availableCores(omit = 2))
-  function(n) {
-    N <- ((n+w-1) %/% w) * w # smallest multiple of w at least as big as n
-    ## The implementation reveals that the essence of mc.prescheduled
-    ## is the TRANSPOSITION of default chunking by future_lapply.
-    ix <- t(matrix(1:N, nrow=w))
-    colnames(ix) <- paste0('w',1:w)
-    ix[ix > n] <- NA
-    print(ix)
-    ix[!is.na(ix)]
-  }
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
@@ -192,23 +177,6 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-
-  ## Define a simple (!) progression handler to report cumulative progress.
-  ## (Adapted from progressr::handler_shiny)
-  handler_cumul <- function(intrusiveness = getOption("progressr.intrusiveness.gui", 1),
-                            target = "gui", inputs = list(message = NULL, detail = "message"),
-                            ...) {
-    reporter <- local({
-      list(
-        update = function(config, state, progression, ...) {
-          cat(sprintf("Cumulative J = %d so far\n", state$step))
-          session$sendCustomMessage('watch-J', state$step)
-        }
-      )
-    })
-
-    make_progression_handler("cumul", reporter, intrusiveness = intrusiveness, target = target, ...)
-  }
 
   observeEvent(input$startHelp,{
     session$sendCustomMessage(type = 'startHelp', message = list(""))
@@ -457,7 +425,7 @@ server <- function(input, output, session) {
     model$trace_paths(
             root_dose = 1
           , cohort_sizes = cohort_sizes
-          , handler = function(p) session$sendCustomMessage('watch-J', p)
+          , prog = function(p) session$sendCustomMessage('watch-J', p)
           ) -> cpe
     if (input$design == "CRM") {
       perftab <<- model$performance[order(t1)]
