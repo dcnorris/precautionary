@@ -134,7 +134,7 @@ Cpe <- R6Class("Cpe",
                      attr(path_list,'performance') <- self$report(J = length(path_list)
                                                                 , t1 = round(t1)
                                                                 , t2 = round(t2)
-                                                                , Δt = round(t2 - t1)
+                                                                , '\u0394t' = round(t2 - t1) # Δt
                                                                   )
                      return(path_list)
                    } #</paths.>
