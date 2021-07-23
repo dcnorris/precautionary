@@ -24,7 +24,7 @@ plot.dutycycle <- function(perftab, ...) {
                  , pid = factor(rep(colnames(m), each=nrow(m)))
                    )
 
-  xyplot(active ~ t | pid, data = dt, type='l'
+  lattice::xyplot(active ~ t | pid, data = dt, type='l'
        , layout=c(1, NA), as.table=TRUE
        , ylab = ""
        , xlab = "Sys.time() since parallelization [ms]"

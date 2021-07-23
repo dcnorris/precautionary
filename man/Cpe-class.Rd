@@ -179,7 +179,7 @@ NULL
 \if{latex}{\out{\hypertarget{method-trace_paths}{}}}
 \subsection{Method \code{trace_paths()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Cpe$trace_paths(root_dose, cohort_sizes, ..., unroll = 4)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$trace_paths(root_dose, cohort_sizes, ..., prog = NULL, unroll = 4)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -190,12 +190,12 @@ NULL
 \item{\code{cohort_sizes}}{Integer vector giving sizes of future cohorts,
 its length being the maximum number of cohorts to look ahead.}
 
-\item{\code{...}}{Parameters passed ultimately to \code{parallel::mclapply()}
-or \code{future.apply::future_lapply()}, with approach to parallelism
-being chosen according to parameter names used. Thus, if any of
-these parameters looks like \verb{mc.*}, then \code{mclapply} is used;
-otherwise \code{future_lapply} is used by default. This liberalism
-enables experimentation with various scheduling schemes.}
+\item{\code{...}}{Parameters passed ultimately to \code{parallel::mclapply}
+or (when \code{prog} is not missing) to an similar internal function
+that implements progress reporting.}
+
+\item{\code{prog}}{A function of a single integer, the current cumulative
+path count, to be used for progress reporting}
 
 \item{\code{unroll}}{Integer; how deep to unroll path tree for parallelism}
 }

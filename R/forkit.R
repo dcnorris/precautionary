@@ -21,7 +21,6 @@ crm_b2020 <- function() {
 testprog <- function(C = 13, ...) {
   mod <- crm_b2020()
   mod$trace_paths(1, rep(2, C), unroll = 4, ...)
-  mod.look <<- mod
   cat("Done.\n")
   mod$performance
 }
@@ -43,13 +42,20 @@ testprog <- function(C = 13, ...) {
 ## to represent and compute with the parcellation.
 
 #' @importFrom stats na.exclude
+#' @importFrom parallel mcparallel mccollect
+#' @importFrom utils getFromNamespace
 proglapply <- function(X, FUN
                      , parcellator = NULL # use default defined in body
                      , metric = length # progress metric on task results
                      , init = 0L
-                     , prog = \(p) cat(sprintf("progress so far: %d\n", p))
+                     , prog = function(p) cat(sprintf("progress so far: %d\n", p))
                      , workers = parallelly::availableCores(omit = 2)
                        ) {
+
+  sendMaster <- getFromNamespace('sendMaster', 'parallel')
+  selectChildren <- getFromNamespace('selectChildren', 'parallel')
+  readChild <- getFromNamespace('readChild', 'parallel')
+
   ## Parcel out the work to the workers
   N <- ((length(X) + workers - 1) %/% workers) * workers
   m <- matrix(1:N, nrow = workers)
@@ -59,7 +65,7 @@ proglapply <- function(X, FUN
   jobs <- lapply(1:workers, function(w)
     mcparallel(lapply(X[na.exclude(m[w,])], function(x) {
       result <- FUN(x)
-      parallel:::sendMaster(metric(result), raw.asis=FALSE)
+      sendMaster(metric(result), raw.asis=FALSE)
       result
     })))
   rownames(m) <- sapply(jobs, function(.).$pid)
@@ -78,10 +84,10 @@ proglapply <- function(X, FUN
   while (sum(progressReportsDue) > 0) {
     dueToReport = names(progressReportsDue)[progressReportsDue > 0]
     ## TODO: The following is not restricting polling to the desired values!
-    pids <- parallel:::selectChildren(as.integer(dueToReport))
+    pids <- selectChildren(as.integer(dueToReport))
     if (!is.integer(pids))
       next
-    msg <- parallel:::readChild(pids[1])
+    msg <- readChild(pids[1])
     if (is.raw(msg)) {
       pid <- as.character(attr(msg,'pid'))
       if (!(pid %in% dueToReport)) {
