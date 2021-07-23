@@ -20,8 +20,7 @@ Depends:
     data.table,
     R6,
     R (>= 4.0.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN,
-	 future.apply, progressr
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
 Suggests: 
     dtpcrm,
     rmarkdown,
