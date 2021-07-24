@@ -43,6 +43,7 @@ testprog <- function(C = 13, ...) {
 
 #' @importFrom stats na.exclude
 #' @importFrom parallel mcparallel mccollect
+#' @importFrom parallelly availableCores
 #' @importFrom utils getFromNamespace
 proglapply <- function(X, FUN
                      , parcellator = NULL # use default defined in body

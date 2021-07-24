@@ -1,3 +1,5 @@
+# -*- ess-indent-offset: 4 -*-
+
 ## https://raw.githubusercontent.com/wch/r-source/trunk/src/library/parallel/R/unix/mclapply.R
 #  File src/library/parallel/R/unix/mclapply.R
 #  Part of the R package, https://www.R-project.org
@@ -19,11 +21,38 @@
 
 ### Derived from multicore version 0.1-6 by Simon Urbanek
 
+##  Modified by David C. Norris, for progress reporting
 mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      mc.silent = FALSE, mc.cores = getOption("mc.cores", 2L),
                      mc.cleanup = TRUE, mc.allow.recursive = TRUE,
+                     progreport = NULL,
+                     progmetric = length,
+                     proginit = 0L,
                      affinity.list = NULL)
 {
+    .check_ncores <- getFromNamespace('.check_ncores', 'parallel')
+    isChild <- getFromNamespace('isChild', 'parallel')
+    mcaffinity <- parallel::mcaffinity
+    prepareCleanup <- getFromNamespace('prepareCleanup', 'parallel')
+    processID <- getFromNamespace('processID', 'parallel')
+    mcfork <- getFromNamespace('mcfork', 'parallel')
+    mcexit <- getFromNamespace('mcexit', 'parallel')
+    sendMaster <- getFromNamespace('sendMaster', 'parallel')
+    selectChildren <- getFromNamespace('selectChildren', 'parallel')
+    readChild <- getFromNamespace('readChild', 'parallel')
+    cleanup <- getFromNamespace('cleanup', 'parallel')
+    mc.reset.stream <- parallel::mc.reset.stream
+    mc.advance.stream <- getFromNamespace('mc.advance.stream', 'parallel')
+    mc.set.stream <- getFromNamespace('mc.set.stream', 'parallel')
+    closeStdout <- getFromNamespace('closeStdout', 'parallel')
+
+    ## As a convenience, allow client code to omit `mc.preschedule = FALSE`
+    ## when requesting progress reporting. (Typically, we will be requesting
+    ## progress reports only in those circumstances where the workload lacks
+    ## the uniformity & predictability needed for efficient prescheduling.)
+    if (missing(mc.preschedule) && !is.null(progreport))
+      mc.preschedule <- FALSE
+
     cores <- as.integer(mc.cores)
     if((is.na(cores) || cores < 1L) && is.null(affinity.list))
         stop("'mc.cores' must be >= 1")
@@ -57,6 +86,10 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     if (!mc.preschedule) {              # sequential (non-scheduled)
         FUN <- match.fun(FUN)
         if (length(X) <= cores && is.null(affinity.list)) { # we can use one-shot parallel
+            ## TODO: Implement progress reporting in this case, too. This is reasonable
+            ##       because the jobs might have varying durations, and it will be nice
+            ##       to get confirmation of progress from the moment earliest results
+            ##       become available.
             jobs <- lapply(seq_along(X),
                            function(i) mcparallel(FUN(X[[i]], ...),
                                                   name = names(X)[i],
@@ -111,6 +144,7 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
             jobsp <- processID(jobs)
             has.errors <- 0L
             delivered.result <- 0L
+            prog.sofar <- proginit
             while (!all(fin)) {
                 s <- selectChildren(jobs[!is.na(jobsp)], -1)
                 if (is.null(s)) break   # no children -> no hope (should not happen)
@@ -129,6 +163,11 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                             ## assignment would remove it from the list
                             if (!is.null(child.res)) res[[ci]] <- child.res
                             delivered.result <- delivered.result + 1L
+                            if(!is.null(progreport)) {
+                                prog <- progmetric(child.res)
+                                prog.sofar <- prog.sofar + prog
+                                progreport(prog.sofar)
+                            }
                         } else {
                             fin[ci] <- TRUE
                             ## the job has finished, so we must not run
@@ -166,6 +205,8 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     }
 
     ## mc.preschedule = TRUE from here on.
+    if(!is.null(progreport))
+        warning("'mc.preschedule' must be false if progress reporting is used")
     if(!is.null(affinity.list))
         warning("'mc.preschedule' must be false if 'affinity.list' is used")
     sindex <- lapply(seq_len(cores),

@@ -1,12 +1,14 @@
 #' Plot duty cycle from performance report on a parallel computation
 #'
 #' This is intended for application to the tables which get attached
-#' to `Cpe` instances after invocation the `$trace_paths()` method.
+#' to `Cpe` instances after invocation of the `$trace_paths()` method.
 #' But any table with columns named `pid`, `t1` and `t2` suffices.
 #' @param perftab A performance table with columns:
 #' * `pid` An integer, character or factor with process ids
 #' * `t1`, `t2` Task start and end times, in milliseconds
 #' @param ... Optional parameters passed along to `lattice::xyplot`
+#' @param FUN A function for summarizing all workers' duty cycles
+#' @param layout Trellis layout, passed to `xyplot`
 #' @return An `xyplot` with a duty-cycle panel for each worker,
 #' plus an overall average
 #' @examples
@@ -30,7 +32,7 @@
 #'   plot_dutycycle(mod$performance)
 #' }
 #' @export
-plot_dutycycle <- function(perftab, ...) {
+plot_dutycycle <- function(perftab, ..., FUN = c(workers = sum), layout = c(1, NA)) {
   jpt <- perftab
   jpt$job <- seq(nrow(jpt)) # TODO: Better if perftab supplies names
 
@@ -45,8 +47,8 @@ plot_dutycycle <- function(perftab, ...) {
     m[,pid] <- m[,pid] | (jpt$t1[j] < T & T < jpt$t2[j])
   }
 
-  ## Add an 'avg' column
-  m <- addmargins(m, margin = 2, FUN = c(avg = mean))
+  ## Add a summary column
+  m <- addmargins(m, margin = 2, FUN = FUN)
 
   ## Reshape this matrix to 'tall' form yielding series to plot
   dt <- data.table(t = T
@@ -55,10 +57,11 @@ plot_dutycycle <- function(perftab, ...) {
                    )
 
   lattice::xyplot(active ~ t | pid, data = dt, type='l'
-       , layout=c(1, NA), as.table=TRUE
+       , layout=layout, as.table=TRUE
        , ylab = ""
        , xlab = "Sys.time() since parallelization [ms]"
        , scales = list(y = list(at = NULL))
+       , par.strip.text = list(cex = 0.6)
        , ...
          )
 }

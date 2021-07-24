@@ -2,7 +2,7 @@ Package: precautionary
 Type: Package
 Title: Safety Diagnostics for Dose-Escalation Trial Designs
 Version: 0.2.6
-Date: 2021-07-15
+Date: 2021-07-24
 Authors@R: c(person("David C.", "Norris"
                    , role = c("aut", "cre", "cph")
                    , email = "david@precisionmethods.guru"
@@ -20,7 +20,8 @@ Depends:
     data.table,
     R6,
     R (>= 4.0.0)
-Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN
+Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN,
+	 parallelly
 Suggests: 
     dtpcrm,
     rmarkdown,
@@ -55,12 +56,13 @@ Collate:
     'crm.R'
     'data.R'
     'dtp.R'
+    'dutycycle.R'
     'enhance.R'
     'exact.R'
     'extendr-wrappers.R'
     'forkit.R'
     'hyperprior.R'
-    'paraplot.R'
+    'mclapply.R'
     'precautionary-package.R'
     'toxicity_generators.R'
     'simulate_trials.R'

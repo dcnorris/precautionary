@@ -76,15 +76,17 @@ Cpe <- R6Class("Cpe",
                  #' @param root_dose The starting dose for tree of paths
                  #' @param cohort_sizes Integer vector giving sizes of future cohorts,
                  #' its length being the maximum number of cohorts to look ahead.
-                 #' @param ... Parameters passed ultimately to `parallel::mclapply`
-                 #' or (when `prog` is not missing) to an similar internal function
+                 #' @param ... Parameters passed ultimately to `mclapply`, presently
+                 #' an unexported, specially adapted version of `parallel::mclapply`
                  #' that implements progress reporting.
                  #' @param prog A function of a single integer, the current cumulative
                  #' path count, to be used for progress reporting
                  #' @param unroll Integer; how deep to unroll path tree for parallelism
                  #' @return Self, invisibly
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
-                 #' @importFrom parallel mclapply
+                 #' @note If the `parallel` package were to incorporate the necessary
+                 #' changes to `mclapply`, I could restore the following import!
+                 #' #@importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., prog = NULL, unroll = 4){
                    stopifnot("Only constant cohorts_sizes are supported currently" =
                                length(unique(cohort_sizes))==1)
@@ -164,7 +166,7 @@ Cpe <- R6Class("Cpe",
                      paths.(n, x, unroll+1, path_m, cohort_sizes, par_t0 = par_t0)
                    }
                    if (!is.null(prog))
-                     cpe_parts <- proglapply(ppe, FUN, init = sum(stopped), prog = prog, ...)
+                     cpe_parts <- mclapply(ppe, FUN, proginit = sum(stopped), progreport = prog, ...)
                    else
                      cpe_parts <- mclapply(ppe, FUN, ...)
                    cpe <- c(cpe_stopped, do.call(c, cpe_parts))

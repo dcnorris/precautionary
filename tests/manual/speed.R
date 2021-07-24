@@ -467,7 +467,11 @@ parallax <- function(C = 11:16, unroll = 4, ...) {
     C <- kraken$C[i]
     calmod$skeleton(calmod$skeleton()) # reset skeleton to clear cache for honest timing
     time <- system.time(
-      cpe.look <<- calmod$trace_paths(1, rep(2,C), unroll = unroll, ...))
+      cpe.look <<- calmod$trace_paths(1, rep(2,C), unroll = unroll
+                                    , progreport = function(p) NULL
+                                      ##cat(sprintf("J = %d so far.\n", p))
+                                    , ...)
+    )
     kraken$elapsed[i] <- time['elapsed']
     kraken$J[i] <- dim(calmod$path_matrix())[1]
     print(kraken)

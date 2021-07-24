@@ -21,6 +21,10 @@ do not implement this safety feature may clarify this fact
 by overriding (TODO: or deleting?) this method.
 
 Concrete subclasses must implement this abstract method.
+
+If the \code{parallel} package were to incorporate the necessary
+changes to \code{mclapply}, I could restore the following import!
+#@importFrom parallel mclapply
 }
 \references{
 Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -190,8 +194,8 @@ NULL
 \item{\code{cohort_sizes}}{Integer vector giving sizes of future cohorts,
 its length being the maximum number of cohorts to look ahead.}
 
-\item{\code{...}}{Parameters passed ultimately to \code{parallel::mclapply}
-or (when \code{prog} is not missing) to an similar internal function
+\item{\code{...}}{Parameters passed ultimately to \code{mclapply}, presently
+an unexported, specially adapted version of \code{parallel::mclapply}
 that implements progress reporting.}
 
 \item{\code{prog}}{A function of a single integer, the current cumulative
