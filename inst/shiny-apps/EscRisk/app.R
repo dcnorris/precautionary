@@ -375,15 +375,16 @@ server <- function(input, output, session) {
     }
   })
 
-  MTDi_gen <- reactive(
+  MTDi_gen <- reactive({
     HyperMTDi_lognormal$new(CV = 0.01*sigma_CV()
                           , median_mtd = median_mtd()
                           , median_sdlog = 0.01*sigma_median()
                           , units = input$dose_units
                           , n = 1000)$
-      doses(dose_levels())$
-        skeleton(isolate(crm_skeleton()))
-  )
+      doses(dose_levels()) -> hyperprior
+    hyperprior$skeleton() # auto-skeleton
+    hyperprior
+  })
 
   ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
 
