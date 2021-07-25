@@ -22,6 +22,7 @@
 ### Derived from multicore version 0.1-6 by Simon Urbanek
 
 ##  Modified by David C. Norris, for progress reporting
+#' @importFrom utils getFromNamespace
 mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      mc.silent = FALSE, mc.cores = getOption("mc.cores", 2L),
                      mc.cleanup = TRUE, mc.allow.recursive = TRUE,
@@ -41,6 +42,8 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     selectChildren <- getFromNamespace('selectChildren', 'parallel')
     readChild <- getFromNamespace('readChild', 'parallel')
     cleanup <- getFromNamespace('cleanup', 'parallel')
+    mcparallel <- parallel::mcparallel
+    mccollect <- parallel::mccollect
     mc.reset.stream <- parallel::mc.reset.stream
     mc.advance.stream <- getFromNamespace('mc.advance.stream', 'parallel')
     mc.set.stream <- getFromNamespace('mc.set.stream', 'parallel')
