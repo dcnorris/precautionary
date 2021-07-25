@@ -90,7 +90,7 @@ Cpe <- R6Class("Cpe",
                  trace_paths = function(root_dose, cohort_sizes, ..., prog = NULL, unroll = 4){
                    stopifnot("Only constant cohorts_sizes are supported currently" =
                                length(unique(cohort_sizes))==1)
-                   ## NT: The reason cohort_sizes must be a constant vector is that
+                   ## NB: The reason cohort_sizes must be a constant vector is that
                    ##     $path_array() uses a constant n = max(T) in choose(n,T).
                    private$T <- private$b <- private$U <- NULL # force recalc by $path_array()
                    stopifnot(unroll > 0) # TODO: Handle unroll=0 case gracefully!
@@ -219,30 +219,35 @@ Cpe <- R6Class("Cpe",
                  #' @seealso `trace_paths`, which must already have been invoked
                  #' if this method is to return a result.
                  path_array = function(condense=TRUE) {
+                   t0 <- Sys.time()
                    if (is.null(private$T)) {
-                   pmx <- self$path_matrix()
-                   C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
-                   D <- self$max_dose() # dose levels range 1:D
-                   ## (Note how the stopping-rec dose<=0 idiom works smoothly here.)
-                   I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
-                   I[I] <- 1L
-                   I[!I] <- NA_integer_
-                   ## Now I[,,] is a J*C*D indicator array that we may use
-                   ## in the manner of a bitmask, to select the toxicities
-                   ## into their proper positions within T[j,c,d]:
-                   T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
-                   dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
-                   dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
-                   ## Save {T, b, Y, U} to avoid costly recalculation
-                   private$T <- T
-                   n <- max(T, na.rm=TRUE) # TODO: Handle non-constant cohorts size
-                   private$b <- apply(log(choose(n, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
-                   Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   Z <- apply(n-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
-                   private$U <- cbind(Y, Z)
-                   } else { T <- private$T } # TODO: Simply trade 'T' for 'private$T' below
+                     pmx <- self$path_matrix()
+                     C <- (ncol(pmx) - 1L)/2L # max number of cohorts enrolled
+                     D <- self$max_dose() # dose levels range 1:D
+                     ## (Note how the stopping-rec dose<=0 idiom works smoothly here.)
+                     I <- outer(pmx[,paste0("D",0:(C-1))], 1:D, FUN = "==")
+                     I[I] <- 1L
+                     I[!I] <- NA_integer_
+                     ## Now I[,,] is a J*C*D indicator array that we may use
+                     ## in the manner of a bitmask, to select the toxicities
+                     ## into their proper positions within T[j,c,d]:
+                     T <- I * outer(pmx[,paste0("T",1:C)], rep(1,D))
+                     dimnames(T)[[2]] <- paste0("C",1:C) # cohort number
+                     dimnames(T)[[3]] <- paste0("D",1:dim(T)[3]) # dose levels
+                     ## Save {T, b, Y, U} to avoid costly recalculation
+                     private$T <- T
+                     n <- max(T, na.rm=TRUE) # TODO: Handle non-constant cohorts size
+                     private$b <- apply(log(choose(n, T)), MARGIN = 1, FUN = sum, na.rm = TRUE)
+                     Y <- apply(T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                     Z <- apply(n-T, MARGIN = c(1,3), FUN = sum, na.rm = TRUE)
+                     private$U <- cbind(Y, Z)
+                   }
+                   t1 <- Sys.time()
+                   Tdims <- dim(private$T)
+                   cat(sprintf("T (%d\u00D7%d\u00D7%d) constructed in %5.3f sec\n",
+                               Tdims[1], Tdims[2], Tdims[3], t1 - t0))
                    if (!condense)
-                     return(T)
+                     return(private$T)
                    ## T is at this point larger (sparser) than necessary for the
                    ## matrix computations which it is intended to support.
                    ## Specifically, the cohorts are now indexed within the whole trial,
@@ -254,20 +259,23 @@ Cpe <- R6Class("Cpe",
                    ## reduction is not necessarily achieved here, although with
                    ## the absolute size of these T arrays being potentially quite
                    ## large, a 50% reduction could be worthwhile.
-                   c_dim <- max(apply(apply(T, MARGIN=c(1,3), FUN=function(x) sum(!is.na(x))),
+                   c_dim <- max(apply(apply(private$T, MARGIN=c(1,3),
+                                            FUN=function(x) sum(!is.na(x))),
                                       MARGIN=2, max))
-                   dim_ <- dim(T); dim_[2] <- c_dim
+                   dim_ <- dim(private$T); dim_[2] <- c_dim
                    T_ <- array(NA_integer_, dim = dim_)
-                   for (j in 1:dim(T)[1]) {
-                     for (d in 1:dim(T)[3]) {
-                       x <- T[j,,d]
+                   for (j in 1:dim(private$T)[1]) {
+                     for (d in 1:dim(private$T)[3]) {
+                       x <- private$T[j,,d]
                        x <- x[!is.na(x)]
                        if (length(x) > 0)
                          T_[j,1:length(x),d] <- x
                      }
                    }
-                   dimnames(T_)[[3]] <- dimnames(T)[[3]]
+                   dimnames(T_)[[3]] <- dimnames(private$T)[[3]]
                    dimnames(T_)[[2]] <- paste0("c", 1:dim(T_)[2]) # NB: little-c
+                   t2 <- Sys.time()
+                   cat(sprintf("T condensed in %5.3f sec\n", t2 - t1))
                    T_
                  }, # </path_array>
                  #' @details
