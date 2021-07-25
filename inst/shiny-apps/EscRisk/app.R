@@ -215,14 +215,14 @@ server <- function(input, output, session) {
       updateManagedNumericInput(session, "maxcohs_perdose", 2L)
       updateNumericInput(session, inputId = "enroll_max", value = NA)
     } else if (input$design == "BOIN") {
-      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateManagedNumericInput(session, "maxcohs_perdose", max(maxcohs_perdose(), 3L))
       updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
       shinyjs::enable("cohort_size")
       shinyjs::disable("crm_skeleton")
     } else if (input$design == "CRM") {
-      updateManagedNumericInput(session, "maxcohs_perdose", 3L)
+      updateManagedNumericInput(session, "maxcohs_perdose", max(maxcohs_perdose(), 3L))
       updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
