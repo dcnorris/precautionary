@@ -1,3 +1,10 @@
+# precautionary 0.2.6
+
+## Changes
+
+* EscRisk app displays CPE progress via 'odometer'
+* EscRisk app lets user set max enrollment in range 20:30
+
 # precautionary 0.2.5
 
 ## Changes

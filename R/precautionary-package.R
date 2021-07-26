@@ -73,24 +73,22 @@ NULL
 
 #' Plan
 #'
-#' @section Version 0.2.5:
-#' * Convert EscRisk to MCSE-free CPE
-#'
-#' @section Version 0.2.5-1:
-#' * Update pkgdown site if CRAN accepts submission
-#'
-#' @section Version 0.2.6:
-#' * Progress bar for long CPE runs
-#'   - Note that this is an opportunity/inducement to analyze the
-#'     parallelism of CPE, and find principles for anticipating
-#'     CPE problem size.
+#' @section Version 0.2.6-1:
+#' * Improve feedback during long calculations
+#'   - Set J = '...' pending first progress report
+#'   - Analyze where `Cpe$path_array()` spends time
+#'   - Give suitable feedback on `path_array` progress
 #'
 #' @section Version 0.2.7:
-#' * BOIN recs via isotonic regression
-#' * Test comparing CPE vs BOIN::get.oc() sim
-#' * Implement logistic model
+#' * Demote \pkg{escalation} to a 'Suggests'
+#' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 #'
 #' @section Version 0.2.8:
+#' * BOIN recs via isotonic regression
+#' * Testthat CPE matches BOIN::get.oc() sim
+#' * Implement CRM logistic model
+#'
+#' @section Version 0.2.9:
 #' * Implement TITE CRM?
 #'   - Is TITE even amenable to path enumeration?
 #'   - If not, there may be little sense in implementing it here!
@@ -100,8 +98,6 @@ NULL
 #'     for enumerable designs in context.
 #'
 #' @section Version 0.3.0:
-#' * Demote \pkg{escalation} to a 'Suggests'
-#' * Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 #' * Stop exposing the `impl` parameter
 #'
 #' @section Version 0.3.1:

@@ -7,28 +7,14 @@
 \description{
 Plan
 }
-\section{Version 0.2.5}{
+\section{Version 0.2.6-1}{
 
 \itemize{
-\item Convert EscRisk to MCSE-free CPE
-}
-}
-
-\section{Version 0.2.5-1}{
-
+\item Improve feedback during long calculations
 \itemize{
-\item Update pkgdown site if CRAN accepts submission
-}
-}
-
-\section{Version 0.2.6}{
-
-\itemize{
-\item Progress bar for long CPE runs
-\itemize{
-\item Note that this is an opportunity/inducement to analyze the
-parallelism of CPE, and find principles for anticipating
-CPE problem size.
+\item Set J = '...' pending first progress report
+\item Analyze where \code{Cpe$path_array()} spends time
+\item Give suitable feedback on \code{path_array} progress
 }
 }
 }
@@ -36,13 +22,21 @@ CPE problem size.
 \section{Version 0.2.7}{
 
 \itemize{
-\item BOIN recs via isotonic regression
-\item Test comparing CPE vs BOIN::get.oc() sim
-\item Implement logistic model
+\item Demote \pkg{escalation} to a 'Suggests'
+\item Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 }
 }
 
 \section{Version 0.2.8}{
+
+\itemize{
+\item BOIN recs via isotonic regression
+\item Testthat CPE matches BOIN::get.oc() sim
+\item Implement CRM logistic model
+}
+}
+
+\section{Version 0.2.9}{
 
 \itemize{
 \item Implement TITE CRM?
@@ -60,8 +54,6 @@ for enumerable designs in context.
 \section{Version 0.3.0}{
 
 \itemize{
-\item Demote \pkg{escalation} to a 'Suggests'
-\item Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes
 \item Stop exposing the \code{impl} parameter
 }
 }
