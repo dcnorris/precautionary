@@ -88,7 +88,7 @@ more realistic toxicity-distribution generators." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.6</span>
       </span>
     </div>
 
@@ -265,7 +265,7 @@ without the nuisance of nested progress bars.</p>
     num_sims <span class='op'>=</span> <span class='va'>num_sims</span>
   , true_prob_tox <span class='op'>=</span> <span class='va'>mtdi_gen</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>hsims</span>, ordinalizer<span class='op'>=</span><span class='cn'>NULL</span><span class='op'>)</span> <span class='co'># vanilla summary with binary toxicity</span>
-</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 7 x 7</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 7 × 7</span>
 #&gt;   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer
 #&gt;   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
 #&gt; <span style='color: #BCBCBC;'>1</span> NoDose            0   0       0               0         0               0     
@@ -278,7 +278,7 @@ without the nuisance of nested progress bars.</p>
   <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='va'>dose</span><span class='op'>/</span><span class='va'>r0</span><span class='op'>^</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='va'>dose</span><span class='op'>/</span><span class='va'>r0</span>, Gr3<span class='op'>=</span><span class='va'>dose</span>, Gr4<span class='op'>=</span><span class='va'>dose</span><span class='op'>*</span><span class='va'>r0</span>, Gr5<span class='op'>=</span><span class='va'>dose</span><span class='op'>*</span><span class='va'>r0</span><span class='op'>^</span><span class='fl'>2</span><span class='op'>)</span>
 <span class='op'>)</span>
 </div><div class='output co'>#&gt; $escalation
-#&gt; <span style='color: #949494;'># A tibble: 7 x 7</span>
+#&gt; <span style='color: #949494;'># A tibble: 7 × 7</span>
 #&gt;   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer
 #&gt;   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
 #&gt; <span style='color: #BCBCBC;'>1</span> NoDose            0   0       0               0         0               0     
@@ -333,7 +333,7 @@ without the nuisance of nested progress bars.</p>
     <span class='va'>MTDi</span> <span class='op'>*</span> <span class='va'>r0</span><span class='op'>^</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='op'>-</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='op'>-</span><span class='fl'>1</span>, Gr3<span class='op'>=</span><span class='fl'>0</span>, Gr4<span class='op'>=</span><span class='fl'>1</span>, Gr5<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
 <span class='op'>)</span>
 </div><div class='output co'>#&gt; $escalation
-#&gt; <span style='color: #949494;'># A tibble: 7 x 7</span>
+#&gt; <span style='color: #949494;'># A tibble: 7 × 7</span>
 #&gt;   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer
 #&gt;   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
 #&gt; <span style='color: #BCBCBC;'>1</span> NoDose            0    0     0                0           0             0     
@@ -374,7 +374,7 @@ without the nuisance of nested progress bars.</p>
 <span class='op'>}</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>sims</span>, r0<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; $escalation
-#&gt; <span style='color: #949494;'># A tibble: 7 x 7</span>
+#&gt; <span style='color: #949494;'># A tibble: 7 × 7</span>
 #&gt;   dose   `dose (ng/kg/week)`   tox     n true_prob_tox prob_recommend
 #&gt;   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>                <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
 #&gt; <span style='color: #BCBCBC;'>1</span> NoDose                   0   0     0        0   <span style='color: #949494;'> </span>               0  
@@ -416,7 +416,7 @@ without the nuisance of nested progress bars.</p>
     <span class='va'>MTDi</span> <span class='op'>*</span> <span class='va'>r0</span><span class='op'>^</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='op'>-</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='op'>-</span><span class='fl'>1</span>, Gr3<span class='op'>=</span><span class='fl'>0</span>, Gr4<span class='op'>=</span><span class='fl'>1</span>, Gr5<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
 <span class='op'>)</span>
 </div><div class='output co'>#&gt; $escalation
-#&gt; <span style='color: #949494;'># A tibble: 7 x 7</span>
+#&gt; <span style='color: #949494;'># A tibble: 7 × 7</span>
 #&gt;   dose   `dose (ng/kg/week)`   tox     n true_prob_tox prob_recommend
 #&gt;   <span style='color: #949494; font-style: italic;'>&lt;ord&gt;</span>                <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>         <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>          <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
 #&gt; <span style='color: #BCBCBC;'>1</span> NoDose                   0  0     0         0   <span style='color: #949494;'> </span>                 0

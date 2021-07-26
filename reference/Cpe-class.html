@@ -85,7 +85,7 @@ An R6 base class for designs requiring Complete Path Enumeration" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.6</span>
       </span>
     </div>
 
@@ -172,6 +172,9 @@ as for example with BOIN's dose elimination. (Designs which
 do not implement this safety feature may clarify this fact
 by overriding (TODO: or deleting?) this method.</p>
 <p>Concrete subclasses must implement this abstract method.</p>
+<p>If the <code>parallel</code> package were to incorporate the necessary
+changes to <code>mclapply</code>, I could restore the following import!
+#@importFrom parallel mclapply</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -251,7 +254,7 @@ in which case the top dose, an integer, is returned.</p>
 <a id="method-applied"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>applied()</code></h3>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, <span class='va'>last_dose</span>, <span class='va'>max_dose</span>, <span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, <span class='va'>last_dose</span>, <span class='va'>max_dose</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -263,9 +266,6 @@ in which case the top dose, an integer, is returned.</p>
 cumulative-cohort-based escalation decisions.</p></dd>
 
 <dt><code>max_dose</code></dt><dd><p>An upper limit on future dose levels</p></dd>
-
-<dt><code>...</code></dt><dd><p>Parameters passed to <code>Crm$esc()</code>, enabling passthru
-of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
@@ -282,8 +282,13 @@ of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</
 <a id="method-report"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>report()</code></h3>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre><p></div></p>
 
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>...</code></dt><dd><p>Optional columns to add to report</p></dd>
+
+</dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
 <p>Hook for concrete subclasses to implement for performance reporting
 from method <code>Cpe$trace_paths</code></p>
@@ -294,7 +299,7 @@ from method <code>Cpe$trace_paths</code></p>
 <a id="method-trace_paths"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>trace_paths()</code></h3>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='va'>root_dose</span>, <span class='va'>cohort_sizes</span>, <span class='va'>...</span>, unroll <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='va'>root_dose</span>, <span class='va'>cohort_sizes</span>, <span class='va'>...</span>, prog <span class='op'>=</span> <span class='cn'>NULL</span>, unroll <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -303,8 +308,12 @@ from method <code>Cpe$trace_paths</code></p>
 <dt><code>cohort_sizes</code></dt><dd><p>Integer vector giving sizes of future cohorts,
 its length being the maximum number of cohorts to look ahead.</p></dd>
 
-<dt><code>...</code></dt><dd><p>Parameters passed ultimately to <code>Crm$esc()</code>,
-enabling passthru of its required <code>impl</code> parameter.</p></dd>
+<dt><code>...</code></dt><dd><p>Parameters passed ultimately to <code>mclapply</code>, presently
+an unexported, specially adapted version of <code><a href='https://rdrr.io/r/parallel/mclapply.html'>parallel::mclapply</a></code>
+that implements progress reporting.</p></dd>
+
+<dt><code>prog</code></dt><dd><p>A function of a single integer, the current cumulative
+path count, to be used for progress reporting</p></dd>
 
 <dt><code>unroll</code></dt><dd><p>Integer; how deep to unroll path tree for parallelism</p></dd>
 

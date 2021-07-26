@@ -84,7 +84,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.6</span>
       </span>
     </div>
 
@@ -158,32 +158,15 @@
 
 
 
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.4-1</h2>
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.6-1</h2>
 
     
 
 <ul>
-<li><p>BOIN recs via isotonic regression</p></li>
-<li><p>Test comparing CPE vs BOIN::get.oc() sim</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.5</h2>
-
-    
-
-<ul>
-<li><p>Convert EscRisk to MCSE-free CPE</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.6</h2>
-
-    
-
-<ul>
-<li><p>Progress bar for long CPE runs</p><ul>
-<li><p>Note that this is an opportunity/inducement to analyze the
-parallelism of CPE, and find principles for anticipating
-CPE problem size.</p></li>
+<li><p>Improve feedback during long calculations</p><ul>
+<li><p>Set J = '...' pending first progress report</p></li>
+<li><p>Analyze where <code>Cpe$path_array()</code> spends time</p></li>
+<li><p>Give suitable feedback on <code>path_array</code> progress</p></li>
 </ul></li>
 </ul>
 
@@ -192,7 +175,25 @@ CPE problem size.</p></li>
     
 
 <ul>
-<li><p>Implement logistic model</p></li>
+<li><p>Demote <span class="pkg">escalation</span> to a 'Suggests'</p></li>
+<li><p>Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.8</h2>
+
+    
+
+<ul>
+<li><p>BOIN recs via isotonic regression</p></li>
+<li><p>Testthat CPE matches BOIN::get.oc() sim</p></li>
+<li><p>Implement CRM logistic model</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="version-"><a class="anchor" href="#version-"></a>Version 0.2.9</h2>
+
+    
+
+<ul>
 <li><p>Implement TITE CRM?</p><ul>
 <li><p>Is TITE even amenable to path enumeration?</p></li>
 <li><p>If not, there may be little sense in implementing it here!</p></li>
@@ -208,10 +209,6 @@ for enumerable designs in context.</p></li>
     
 
 <ul>
-<li><p>Demote <span class="pkg">escalation</span> to a 'Suggests'</p></li>
-<li><p>Thoroughly rewrite 'Intro' and 'FDA Clinical Hold' vignettes</p><ul>
-<li><p>Ideally 100% sim-free via integration over the hyperprior!</p></li>
-</ul></li>
 <li><p>Stop exposing the <code>impl</code> parameter</p></li>
 </ul>
 
