@@ -106,6 +106,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(reif)).
 :- use_module(library(format)).
 :- use_module(library(lambda)).
+:- use_module(library(iso_ext)).
 :- use_module(tally).
 :- use_module(benchmarking).
 
@@ -696,18 +697,21 @@ ccd_d_pathvector(CCD, D, Pathvector) :-
 ccd_d_tabfile(CCD, D, Filename) :-
     atom_chars(File, Filename),
     format("Opening file ~q...~n", [File]), % feedback to console
-    open(File, write, OS),
-    format("Writing path vectors ..", []),
-    Ncols #= 2*D + 1,
-    phrase(columns_format(Ncols), Format) ->
-	'$cpu_now'(T0),
-	(   ccd_d_pathvector(CCD, D, Pathvector),
-	    format(OS, Format, Pathvector),
-	    fail % exhaust all Pathvector solutions
-	;   close(OS),
-	    minutes_since(Minutes, T0),
-	    format(".. done (~2f minutes).~n", [Minutes])
-	).
+    '$cpu_now'(T0),
+    setup_call_cleanup(open(File, write, OS),
+		       (   format("Writing path vectors ..", []),
+			   Ncols #= 2*D + 1,
+			   phrase(columns_format(Ncols), Format) ->
+			   (   ccd_d_pathvector(CCD, D, Pathvector),
+			       format(OS, Format, Pathvector),
+			       fail % exhaust all Pathvector solutions
+			   ;   true
+			   )
+		       ),
+		       close(OS)
+		      ),
+    minutes_since(Minutes, T0),
+    format(".. done (~2f minutes).~n", [Minutes]).
 
 % Copied from 'esc.pl'
 columns_format(1) --> "~w~n".
