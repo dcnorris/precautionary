@@ -8,7 +8,7 @@
               op(900, xfx, ~>),
 	      ccd_d_matrix/3,
 	      ccd_d_pathvector/3,
-	      ccd_d_nmax_tabfile/4
+	      ccd_d_tabfile/3
 	  ]).
 
 
@@ -693,15 +693,11 @@ ccd_d_pathvector(CCD, D, Pathvector) :-
     phrase(ccd_decisions(CCD, []^Tallies^[]), Path),
     phrase(recdose_ccs, Path, [Pathvector]).
 
-ccd_d_nmax_tabfile(CCD, D, EnrollMax, Filename) :-
+ccd_d_tabfile(CCD, D, Filename) :-
     atom_chars(File, Filename),
     format("Opening file ~q...~n", [File]), % feedback to console
     open(File, write, OS),
     format("Writing path vectors ..", []),
-    (	retract(enroll_max(_)),
-	fail
-    ;	asserta(enroll_max(EnrollMax))
-    ),
     Ncols #= 2*D + 1,
     phrase(columns_format(Ncols), Format) ->
 	'$cpu_now'(T0),
@@ -820,26 +816,17 @@ regression :-
     nth0(D, J0s, J0),
     J #\= J0.
 
-%?- asserta(ccd:cohort_max(6)), asserta(ccd:enroll_max(24)), ccd:regression.
-%@  D = 1 ...   % CPU time: 1.089 seconds
-%@    % CPU time: 1.093 seconds
+%?- ccd:regression.
+%@  D = 1 ...   % CPU time: 1.344 seconds
+%@    % CPU time: 1.348 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 13.192 seconds
-%@    % CPU time: 13.196 seconds
+%@  D = 2 ...   % CPU time: 15.983 seconds
+%@    % CPU time: 15.987 seconds
 %@  J(2) = 212.
-%@ false.
-
-%?- regression.
-%@  D = 1 ...   % CPU time: 0.880 seconds
-%@    % CPU time: 0.884 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.709 seconds
-%@    % CPU time: 10.713 seconds
-%@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 66.203 seconds
-%@    % CPU time: 66.208 seconds
+%@  D = 3 ...   % CPU time: 96.758 seconds
+%@    % CPU time: 96.762 seconds
 %@  J(3) = 1151.
-%@  D = 4 ...   % CPU time: 404.087 seconds
-%@    % CPU time: 404.091 seconds
+%@  D = 4 ...   % CPU time: 607.297 seconds
+%@    % CPU time: 607.301 seconds
 %@  J(4) = 6718.
 %@ false.

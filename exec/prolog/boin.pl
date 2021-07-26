@@ -206,8 +206,8 @@ write_T(TargetPct, D, CohortMax, EnrollMax) :-
     phrase(format_("BOIN~d-~d-~d-~d.tab",
 		   [TargetPct, D, CohortMax, EnrollMax]),
 	   Filename),
-    boin_targetpct_nmax(BOIN, TargetPct, EnrollMax),
-    ccd_d_cmax_nmax_tabfile(BOIN, D, CohortMax, EnrollMax, Filename).
+    boin_targetpct_cmax_nmax(BOIN, TargetPct, CohortMax, EnrollMax),
+    ccd_d_tabfile(BOIN, D, Filename).
 
 %?- write_T(25, 2, 6, 24).
 %@ Opening file 'BOIN25-2-6-24.tab'...
