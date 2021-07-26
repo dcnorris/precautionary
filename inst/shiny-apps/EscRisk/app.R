@@ -126,14 +126,12 @@ ui <- fluidPage(
                         ,min = 3
                         ,max = 6
                         ,step = 1)
-          , disabled(
-              numericInput(inputId = "enroll_max"
-                          ,label = HTML("Max enrollment")
-                          ,value = NA
-                          ,min = 24
-                          ,max = 24
-                          ,step = 1)
-            )
+          , numericInput(inputId = "enroll_max"
+                        ,label = HTML("Max enrollment")
+                        ,value = NA
+                        ,min = 20
+                        ,max = 30
+                        ,step = 1)
           )
         , cellWidths = c("20%","55%","25%")
       )
@@ -210,23 +208,28 @@ server <- function(input, output, session) {
       shinyjs::disable("ttr")
       shinyjs::disable("maxcohs_perdose")
       shinyjs::disable("cohort_size")
+      shinyjs::disable("enroll_max")
       shinyjs::disable("crm_skeleton")
       updateNumericInput(session, inputId = "cohort_size", value = 3)
       updateManagedNumericInput(session, "maxcohs_perdose", 2L)
-      updateNumericInput(session, inputId = "enroll_max", value = NA)
+      updateNumericInput(session, inputId = "enroll_max", value = NA_integer_)
     } else if (input$design == "BOIN") {
       updateManagedNumericInput(session, "maxcohs_perdose", max(maxcohs_perdose(), 3L))
-      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
+      if (is.na(input$enroll_max))
+        updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX_DEFAULT)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
       shinyjs::enable("cohort_size")
+      shinyjs::enable("enroll_max")
       shinyjs::disable("crm_skeleton")
     } else if (input$design == "CRM") {
       updateManagedNumericInput(session, "maxcohs_perdose", max(maxcohs_perdose(), 3L))
-      updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX)
+      if (is.na(input$enroll_max))
+        updateNumericInput(session, inputId = "enroll_max", value = ENROLL_MAX_DEFAULT)
       shinyjs::enable("ttr")
       shinyjs::enable("maxcohs_perdose")
       shinyjs::enable("cohort_size")
+      shinyjs::enable("enroll_max")
       shinyjs::enable("crm_skeleton")
     } else
       stop() # all cases exhausted
@@ -335,16 +338,25 @@ server <- function(input, output, session) {
     toohigh <- cohort_max * cohort_size > max_enroll
     shinyFeedback::feedbackWarning("maxcohs_perdose", toolow
                                  , "Should be &ge; 3")
-    shinyFeedback::feedbackWarning("maxcohs_perdose", toohigh
-                                 , paste0("Enroll/dose > ", max_enroll)
-                                   )
+    if (!toolow)
+      shinyFeedback::feedbackWarning("maxcohs_perdose", toohigh
+                                   , paste0("Enroll/dose > ", max_enroll)
+                                     )
     req(!toolow && !toohigh)
     cohort_max * cohort_size
   })
 
-  enroll_max <- reactive(
-    ifelse(input$design == "3 + 3", NA_integer_, ENROLL_MAX)
-  )
+  enroll_max <- reactive({
+    if (input$design == "3 + 3")
+      return(NA_integer_)
+    n_max <- as.integer(input$enroll_max)
+    toolow <- n_max < 20
+    toohigh <- n_max > 30
+    shinyFeedback::feedbackWarning("enroll_max", toolow || toohigh
+                                 , "Should be 20-30")
+    req(!toolow && !toohigh)
+    return(n_max)
+  })
 
   ## Like the 'managed input' maxcohs_perdose(), this crm_skeleton()
   ## serves as a dependency buffer between the input$P_ text inputs
@@ -386,7 +398,7 @@ server <- function(input, output, session) {
     hyperprior
   })
 
-  ENROLL_MAX <- 24 # TODO: Allow some user control (easier than explaining!)
+  ENROLL_MAX_DEFAULT <- 24
 
   cpe <- reactiveVal(NULL)
   observe({
@@ -397,7 +409,7 @@ server <- function(input, output, session) {
     if (input$design == "3 + 3")
       cpe(Cpe3_3$new(D = num_doses()))
     else {
-    cohort_sizes <- rep(cohort_size(), enroll_max()/cohort_size())
+    cohort_sizes <- rep(cohort_size(), as.integer(enroll_max()/cohort_size()))
     switch(input$design
          , CRM = Crm$new(skeleton = crm_skeleton()
                        , target = 0.01*input$ttr)$
