@@ -44,7 +44,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.6</span>
       </span>
     </div>
 
@@ -214,26 +214,28 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 
 <span class="va">crm</span><span class="op">$</span><span class="fu">trace_paths</span><span class="op">(</span>
       root_dose <span class="op">=</span> <span class="va">start.dose.level</span>,
-      cohort_sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span>,
-      impl <span class="op">=</span> <span class="st">'rusti'</span><span class="op">)</span></code></pre></div>
+      cohort_sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## Registered S3 method overwritten by 'dtpcrm':
 ##   method    from 
 ##   print.mtd dfcrm</code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   2.885   0.253   1.707</code></pre>
+##   3.059   0.247   1.840</code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>## T (4693×7×7) constructed in 0.358 sec
+## T condensed in 0.340 sec</code></pre>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693    4    7</code></pre>
 </div>
 <div id="compute-mathbfb-sum_c-n-choose-t_cd" class="section level2">
 <h2 class="hasAnchor">
 <a href="#compute-mathbfb-sum_c-n-choose-t_cd" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Special.html" class="external-link">choose</a></span><span class="op">(</span><span class="fl">3</span>, <span class="cn">T</span><span class="op">)</span><span class="op">)</span>, MARGIN <span class="op">=</span> <span class="fl">1</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693</code></pre>
@@ -242,7 +244,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <h2 class="hasAnchor">
 <a href="#compute-mathrmu-and-mathrmy" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span>
 </h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fl">3</span><span class="op">-</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">U</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Y</span>, <span class="va">Z</span><span class="op">)</span>
@@ -253,7 +255,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <h2 class="hasAnchor">
 <a href="#derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1" class="anchor" aria-hidden="true"></a>Derive <span class="math inline">\(\mathbf{\pi}\)</span> from the CRM skeleton, to check that <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">prior.DLT</span><span class="op">)</span>
 <span class="va">log_q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span>
 <span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">log_p</span>, <span class="va">log_q</span><span class="op">)</span>
@@ -264,7 +266,7 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <h2 class="hasAnchor">
 <a href="#comparison-with-the-dtp-formulation" class="anchor" aria-hidden="true"></a>Comparison with the DTP formulation</h2>
 <p>With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation of <code>dtpcrm</code> lists a total of <span class="math inline">\(4^7 = 16384\)</span> paths. These are not all distinct paths, however, since early stopping results in path degeneracy.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> For example, we can see that paths 1005–1008 all terminate at the 6th cohort, resulting in a <span class="math inline">\(4\times\)</span> degeneracy:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">)</span> <span class="co"># as originally generated by 'dtpcrm:calculate_dtps'</span>
 <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">[</span><span class="fl">1000</span><span class="op">:</span><span class="fl">1010</span>,<span class="op">]</span><span class="op">)</span></code></pre></div>
 <table class="table">
@@ -871,12 +873,12 @@ NA
 </tbody>
 </table>
 <p>Paths terminating at the 5th cohort would be listed 16 times, and those terminating at the 4th cohort 64 times, etc. The net degeneracy indeed proves to be quite substantial, inflating the DTP table by a factor of <code>3.5</code>:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">viola_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/as.matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/duplicated.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">viola_paths</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693   15</code></pre>
 <p>To distinguish it from the degenerate DTP table returned by <code><a href="https://rdrr.io/pkg/dtpcrm/man/calculate_dtps.html" class="external-link">dtpcrm::calculate_dtps</a></code>, we will refer to the unique listing as the <em>path matrix</em>. Note that in <code>precautionary</code> this is available straightaway from the <code>Crm</code> object <code>crm</code> after having invoked <code>$trace_paths</code> on it above:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pmx</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_matrix</span><span class="op">(</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pmx</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693   15</code></pre>
@@ -886,7 +888,7 @@ NA
 <h1 class="hasAnchor">
 <a href="#fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton" class="anchor" aria-hidden="true"></a>Fitting a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> to VIOLA’s CRM skeleton</h1>
 <p>Whereas the analysis of <span class="citation">Norris (2020b)</span> was carried forth under a thoroughly logarithmic scaling of <em>dose</em>, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling—at least for the nonzero doses:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">viola_dosing</span> <span class="op">&lt;-</span>
   <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Label <span class="op">=</span> <span class="op">-</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span> <span class="co"># VIOLA dose designations -2,...,4</span>
             ,Level <span class="op">=</span>  <span class="fl">1</span><span class="op">:</span><span class="fl">7</span>  <span class="co"># We use integer dose indexes here</span>
@@ -905,7 +907,7 @@ NA
      <span class="op">)</span></code></pre></div>
 <p><img src="Safety-Schematic-via-CPE_files/figure-html/VIOLA-dose-scaling-1.png" width="576"></p>
 <p>Indeed, the CRM skeleton looks quite close to a normal distribution under this scaling:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">sqrt_dose</span>, data <span class="op">=</span> <span class="va">viola_dosing</span>
      , type <span class="op">=</span> <span class="st">'b'</span>
      , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
@@ -920,7 +922,7 @@ CRM skeleton probabilities vs <span class="math inline">\(\sqrt{\mathrm{Dose}}\)
 </p>
 </div>
 <p>Nevertheless, the treatment of zero dose under this scaling is pharmacologically problematic, if not outright homeopathic, so we will proceed instead using a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution fitted to the CRM skeleton.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">skeleton</span> <span class="op">~</span> <span class="va">log_dose</span>, data <span class="op">=</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/subset.data.table.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">viola_dosing</span>, <span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">log_dose</span><span class="op">)</span><span class="op">)</span>
      , type <span class="op">=</span> <span class="st">'b'</span>
      , xlab <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">Dose</span><span class="op">[</span><span class="va">mg</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
@@ -950,7 +952,7 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 <h1 class="hasAnchor">
 <a href="#viola-safety" class="anchor" aria-hidden="true"></a>VIOLA safety</h1>
 <p>Taking this CRM skeleton fit as a modal expectation of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution, we may employ Equations @ref(eq:fatalfraction)–@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of <span class="math inline">\(\kappa\)</span>:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">kappa</span>, <span class="va">mu</span><span class="op">=</span><span class="va">mu_opt</span>, <span class="va">sigma</span><span class="op">=</span><span class="va">sigma_opt</span>, <span class="va">X</span><span class="op">=</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span> <span class="op">{</span>
   <span class="co"># For ease of use, this function is VECTORIZED over kappa,</span>
   <span class="co"># generally returning a length(X) x length(kappa) MATRIX</span>
@@ -984,20 +986,20 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 <p>The development of CRM methods has left the status of the <em>skeleton</em> somewhat ambiguous. While evading its realistic interpretation as an <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution,<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. <span class="citation">Braun (2020)</span>, for example, develops an approach which “hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton.”</p>
 <p>Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in <span class="citation">Norris (2020b)</span> provides one approach.</p>
 <p>To enable parameter departures from our lognormal skeleton fit, we require <span class="math inline">\(\log \boldsymbol{\pi}\)</span> as a <em>function</em> of <span class="math inline">\((\mu, \sigma)\)</span>:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mu</span>, <span class="va">sigma</span><span class="op">)</span><span class="op">{</span>
   <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span>, meanlog <span class="op">=</span> <span class="va">mu</span>, sdlog <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span>
   <span class="va">log_pq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>
   <span class="va">log_pi</span> <span class="op">=</span> <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">log_pq</span>, <span class="op">-</span><span class="fl">500</span><span class="op">)</span> <span class="co"># clamping -Inf to -500 avoids NaN's  </span>
 <span class="op">}</span></code></pre></div>
 <p>This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters <span class="math inline">\((\mu, \sigma, \kappa)\)</span>. But again as in <span class="citation">Norris (2020b)</span> we employ a minimax framing of our safety question, to achieve a dimension reduction:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mu_minimax</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># dose 3 is 2nd-highest *nonzero* dose</span></code></pre></div>
 <p>The irregularly spaced doses of VIOLA don’t yield a unique delta, but the <span class="math inline">\(2\times\)</span> mulipliers either side of dose level 3 (our <code>mu_minimax</code>) allow us to select <span class="math inline">\(\delta = \log 2\)</span> as a local approximation:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>We may now generate a grid of values, and plot contours:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">focustab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/J.html" class="external-link">CJ</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="va">mu_minimax</span>
               , K <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.65</span> , <span class="fl">0.01</span><span class="op">)</span> <span class="co"># K = kappa / sigma</span>
               , sigma <span class="op">=</span> <span class="va">delta</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">2.2</span>, <span class="fl">0.01</span><span class="op">)</span>

@@ -103,7 +103,7 @@ efficient Rust implementations of some numerical routines." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">precautionary</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.5</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="Unreleased version">0.2.6</span>
       </span>
     </div>
 
@@ -387,8 +387,13 @@ in which case the skeleton, a numeric vector, is returned.</p>
 <a id="method-report"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>report()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></code></pre><p></div></p>
 
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>...</code></dt><dd><p>Optional arguments specifying columns to add to report</p></dd>
+
+</dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Report lifetime duty &amp; performance statistics</p>
 
@@ -397,8 +402,13 @@ in which case the skeleton, a numeric vector, is returned.</p>
 <h3 class='hasAnchor' id='list-report-'><a class='anchor' aria-hidden='true' href='#list-report-'></a>Method <code>report()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>report</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></code></pre><p></div></p>
 
+<h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>...</code></dt><dd><p>Optional arguments specifying columns to add to report</p></dd>
+
+</dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
 <p>Report lifetime duty &amp; performance statistics</p>
 
@@ -635,7 +645,7 @@ attaching suitable stopping information</p></dd>
 <a id="method-est"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>est()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span><span class='va'>impl</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span>impl <span class='op'>=</span> <span class='st'>"rusti"</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></code></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -655,7 +665,7 @@ returned, suitable for regression testing against package <a href='https://CRAN.
 <h3 class='hasAnchor' id='list-est-'><a class='anchor' aria-hidden='true' href='#list-est-'></a>Method <code>est()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span><span class='va'>impl</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>est</span><span class='op'>(</span>impl <span class='op'>=</span> <span class='st'>"rusti"</span>, abbrev <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></code></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -676,7 +686,7 @@ returned, suitable for regression testing against package <a href='https://CRAN.
 <a id="method-applied"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>applied()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, max_dose <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, max_dose <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></code></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -687,9 +697,7 @@ returned, suitable for regression testing against package <a href='https://CRAN.
 <dt><code>last_dose</code></dt><dd><p>The most recently given dose, as required to implement
 the <code>global_coherent_esc=TRUE</code> behavior</p></dd>
 
-<dt><code>max_dose</code></dt><dd><p>Unused; included for compatibility with superclass method</p></dd>
-
-<dt><code>...</code></dt><dd><p>Parameters passed to <code>Crm$esc()</code>, enabling passthru
+<dt><code>max_dose</code></dt><dd><p>Unused; included for compatibility with superclass method
 of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</p></dd>
 
 </dl><p></div></p>
@@ -705,7 +713,7 @@ method <code>Crm$est()</code>.</p>
 <h3 class='hasAnchor' id='list-applied-'><a class='anchor' aria-hidden='true' href='#list-applied-'></a>Method <code>applied()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
-<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, max_dose <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span></code></pre><p></div></p>
+<p><div class="r"></p><pre class='sourceCode r'><code><span class='va'>Crm</span><span class='op'>$</span><span class='fu'>applied</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>o</span>, last_dose <span class='op'>=</span> <span class='cn'>NA</span>, max_dose <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></code></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -716,9 +724,7 @@ method <code>Crm$est()</code>.</p>
 <dt><code>last_dose</code></dt><dd><p>The most recently given dose, as required to implement
 the <code>global_coherent_esc=TRUE</code> behavior</p></dd>
 
-<dt><code>max_dose</code></dt><dd><p>Unused; included for compatibility with superclass method</p></dd>
-
-<dt><code>...</code></dt><dd><p>Parameters passed to <code>Crm$esc()</code>, enabling passthru
+<dt><code>max_dose</code></dt><dd><p>Unused; included for compatibility with superclass method
 of required <code>impl</code> parameter and optional <code>abbrev</code> flag.</p></dd>
 
 </dl><p></div></p>

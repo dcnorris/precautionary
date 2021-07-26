@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Visualize n samples from an mtdi_generator object — plot,mtdi_generator,ANY-method • precautionary</title>
+<title>Plot duty cycle from performance report on a parallel computation — plot_dutycycle • precautionary</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,10 @@
 
 
 
-<meta property="og:title" content="Visualize n samples from an mtdi_generator object — plot,mtdi_generator,ANY-method" />
-<meta property="og:description" content="Visualize n samples from an mtdi_generator object" />
+<meta property="og:title" content="Plot duty cycle from performance report on a parallel computation — plot_dutycycle" />
+<meta property="og:description" content="This is intended for application to the tables which get attached
+to Cpe instances after invocation of the $trace_paths() method.
+But any table with columns named pid, t1 and t2 suffices." />
 <meta property="og:image" content="https://github.com/dcnorris/precautionary/raw/main/docs/card.png" />
 <meta property="og:image:alt" content="Logo for precautionary package" />
 <meta name="twitter:card" content="summary" />
@@ -149,52 +151,68 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Visualize n samples from an <code>mtdi_generator</code> object</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dcnorris/precautionary/blob/master/R/toxicity_generators.R'><code>R/toxicity_generators.R</code></a></small>
-    <div class="hidden name"><code>plot-mtdi_generator-ANY-method.Rd</code></div>
+    <h1>Plot duty cycle from performance report on a parallel computation</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dcnorris/precautionary/blob/master/R/dutycycle.R'><code>R/dutycycle.R</code></a></small>
+    <div class="hidden name"><code>plot_dutycycle.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Visualize n samples from an <code>mtdi_generator</code> object</p>
+    <p>This is intended for application to the tables which get attached
+to <code>Cpe</code> instances after invocation of the <code>$trace_paths()</code> method.
+But any table with columns named <code>pid</code>, <code>t1</code> and <code>t2</code> suffices.</p>
     </div>
 
-    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='co'># S4 method for mtdi_generator,ANY</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, y <span class='op'>=</span> <span class='cn'>NULL</span>, n <span class='op'>=</span> <span class='fl'>20</span>, col <span class='op'>=</span> <span class='st'>"gray"</span>, <span class='va'>...</span><span class='op'>)</span></code></pre></div>
+    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>plot_dutycycle</span><span class='op'>(</span><span class='va'>perftab</span>, <span class='va'>...</span>, FUN <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>workers <span class='op'>=</span> <span class='va'>sum</span><span class='op'>)</span>, layout <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='cn'>NA</span><span class='op'>)</span><span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>An <code>mtdi_generator</code> object</p></td>
-    </tr>
-    <tr>
-      <th>y</th>
-      <td><p>Included for compatibility with generic signature</p></td>
-    </tr>
-    <tr>
-      <th>n</th>
-      <td><p>Number of samples to draw from hyperprior for visualization</p></td>
-    </tr>
-    <tr>
-      <th>col</th>
-      <td><p>Color of lines used to depict samples</p></td>
+      <th>perftab</th>
+      <td><p>A performance table with columns:</p><ul>
+<li><p><code>pid</code> An integer, character or factor with process ids</p></li>
+<li><p><code>t1</code>, <code>t2</code> Task start and end times, in milliseconds</p></li>
+</ul></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Additional arguments passed onward to <code>plot</code></p></td>
+      <td><p>Optional parameters passed along to <code><a href='https://rdrr.io/pkg/lattice/man/xyplot.html'>lattice::xyplot</a></code></p></td>
+    </tr>
+    <tr>
+      <th>FUN</th>
+      <td><p>A function for summarizing all workers' duty cycles</p></td>
+    </tr>
+    <tr>
+      <th>layout</th>
+      <td><p>Trellis layout, passed to <code>xyplot</code></p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>An <code>xyplot</code> with a duty-cycle panel for each worker,
+plus an overall average</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <div class="ref-examples sourceCode"><pre class='sourceCode r'><code><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='va'>mtdi_gen</span> <span class='op'>&lt;-</span> <span class='fu'><a href='hyper_mtdi_lognormal-class.html'>hyper_mtdi_lognormal</a></span><span class='op'>(</span>CV <span class='op'>=</span> <span class='fl'>1</span></span>
-<span class='r-in'>                                ,median_mtd <span class='op'>=</span> <span class='fl'>5</span></span>
-<span class='r-in'>                                ,median_sdlog <span class='op'>=</span> <span class='fl'>0.5</span></span>
-<span class='r-in'>                                ,units<span class='op'>=</span><span class='st'>"mg/kg"</span><span class='op'>)</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>mtdi_gen</span>, n<span class='op'>=</span><span class='fl'>100</span>, col<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/grDevices/adjustcolor.html'>adjustcolor</a></span><span class='op'>(</span><span class='st'>"red"</span>, alpha<span class='op'>=</span><span class='fl'>0.5</span><span class='op'>)</span><span class='op'>)</span></span>
-<span class='r-in'><span class='op'>}</span> </span>
+<span class='r-in'>  <span class='co'>## Example from Braun2020</span></span>
+<span class='r-in'>  <span class='va'>d1_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>5</span></span>
+<span class='r-in'>  <span class='va'>cum_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>10</span></span>
+<span class='r-in'>  <span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='va'><a href='Crm-class.html'>Crm</a></span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.03</span>, <span class='fl'>0.11</span>, <span class='fl'>0.25</span>, <span class='fl'>0.42</span>, <span class='fl'>0.58</span>, <span class='fl'>0.71</span><span class='op'>)</span>,</span>
+<span class='r-in'>                 scale <span class='op'>=</span> <span class='fl'>0.85</span>, <span class='co'># aka 'sigma'</span></span>
+<span class='r-in'>                 target <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>    <span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>$</span>    <span class='co'># compare Braun's 'restrict = T'</span></span>
+<span class='r-in'>    <span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>      <span class='fu'>stop_func</span><span class='op'>(</span><span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>        <span class='va'>enrolled</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tabulate.html'>tabulate</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>level</span>, nbins <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>prior</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>        <span class='va'>x</span><span class='op'>$</span><span class='va'>stop</span> <span class='op'>&lt;-</span> <span class='va'>enrolled</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>&gt;=</span> <span class='va'>d1_maxn</span> <span class='op'>||</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>enrolled</span><span class='op'>)</span> <span class='op'>&gt;=</span> <span class='va'>cum_maxn</span></span>
+<span class='r-in'>        <span class='va'>x</span></span>
+<span class='r-in'>      <span class='op'>}</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='va'>mod</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>13</span><span class='op'>)</span>, unroll <span class='op'>=</span> <span class='fl'>4</span></span>
+<span class='r-in'>                , mc.cores <span class='op'>=</span> <span class='fu'>parallelly</span><span class='fu'>::</span><span class='fu'><a href='https://parallelly.futureverse.org/reference/availableCores.html'>availableCores</a></span><span class='op'>(</span>omit<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'>plot_dutycycle</span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
 </code></pre></div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
