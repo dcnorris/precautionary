@@ -141,11 +141,11 @@ phipct_lambda1_lambda2(30, 18648/78853, 1172/3269).
 %% From these 'slopes', I need to obtain floors & ceilings.
 slope_floor(Y/X, T/N) :-
     N in 1..12, indomain(N),
-    T #= (N * Y) // X.
+    #T #= (#N * #Y) // #X.
 
 slope_ceiling(Y/X, T/N) :-
     N in 1..12, indomain(N),
-    T #= 1 + (N * Y) // X.
+    #T #= 1 + (#N * #Y) // #X.
 
 %?- slope_floor(1/3, T/6).
 %@    T = 2.
@@ -168,7 +168,7 @@ elim_boundary(T/N, PhiPct) :-
     T in 1..N,
     post05_tally(Qupper, T/N),
     ratless(PhiPct/100, Qupper),
-    Tminus1 #= T - 1,
+    #Tminus1 #= #T - 1,
     post05_tally(Qlower, Tminus1/N),
     ratless(Qlower, PhiPct/100).
 
@@ -187,7 +187,7 @@ elim_boundary(T/N, PhiPct) :-
 
 %% Less-than relation on rationals
 ratless(X1/Y1, X2/Y2) :-
-    X1 * Y2 #< X2 * Y1. % 'cross-multiply'
+    #X1 * #Y2 #< #X2 * #Y1. % 'cross-multiply'
 
 %% Greater-than relation on rationals
 ratmore(X1/Y1, X2/Y2) :- ratless(X2/Y2, X1/Y1).
@@ -195,8 +195,8 @@ ratmore(X1/Y1, X2/Y2) :- ratless(X2/Y2, X1/Y1).
 %% The 5% quantile of posterior probability of toxicity,
 %% after observing toxicity tally T/N
 post05_tally(P, T/N) :-
-    Alpha #= T + 1,
-    Beta #= N - T + 1,
+    #Alpha #= #T + 1,
+    #Beta #= #N - #T + 1,
     qbeta05_alpha_beta(P, Alpha, Beta).
 
 
@@ -209,17 +209,29 @@ write_T(TargetPct, D, CohortMax, EnrollMax) :-
     boin_targetpct_cmax_nmax(BOIN, TargetPct, CohortMax, EnrollMax),
     ccd_d_tabfile(BOIN, D, Filename).
 
+%?- assertz(clpz:monotonic).
+%@    true.
+
 %?- write_T(25, 2, 6, 24).
+%@ Opening file 'BOIN25-2-6-24.tab'...
+%@ Writing path vectors .... done (0.31 minutes).
+%@    true.
 %@ Opening file 'BOIN25-2-6-24.tab'...
 %@ Writing path vectors .... done (0.20 minutes). J = 170
 %@    true.
 
 %?- write_T(25, 3, 6, 24).
 %@ Opening file 'BOIN25-3-6-24.tab'...
+%@ Writing path vectors .... done (1.89 minutes).
+%@    true.
+%@ Opening file 'BOIN25-3-6-24.tab'...
 %@ Writing path vectors .... done (1.22 minutes). J = 949
 %@    true.
 
 %?- write_T(25, 4, 6, 24).
+%@ Opening file 'BOIN25-4-6-24.tab'...
+%@ Writing path vectors .... done (16.29 minutes).
+%@    true.
 %@ Opening file 'BOIN25-4-6-24.tab'...
 %@ Writing path vectors .... done (10.37 minutes).
 %@    true.
