@@ -1,5 +1,7 @@
 % Tallies T/N counting Toxicities per Number enrolled
 
+:- initialization(assertz(clpz:monotonic)).
+
 :- module(tally, [
 	      qcompare/4, % reified versions only should suffice
 	      op(900, xfx, &=<),
