@@ -8,7 +8,7 @@
               op(900, xfx, ~>),
 	      ccd_d_matrix/3,
 	      ccd_d_pathvector/3,
-	      ccd_d_nmax_tabfile/4
+	      ccd_d_tabfile/3
 	  ]).
 
 
@@ -106,6 +106,7 @@ albeit with elimination of overly-toxic doses which departs from strict CCD form
 :- use_module(library(reif)).
 :- use_module(library(format)).
 :- use_module(library(lambda)).
+:- use_module(library(iso_ext)).
 :- use_module(tally).
 :- use_module(benchmarking).
 
@@ -227,11 +228,11 @@ listing only their (outer) vertices.
 
 ceiling_vertex_t(Qs, T/N, Truth) :-
     memberd_t(T/N, Qs, true),
-    N1 #= N + 1,
+    #N1 #= #N + 1,
     if_(hit_ceiling_t(T/N1, Qs)
 	, Truth = false
-	, ( Tminus1 #= T - 1,
-	    Nminus1 #= N - 1,
+	, ( #Tminus1 #= #T - 1,
+	    #Nminus1 #= #N - 1,
 	    if_(hit_ceiling_t(Tminus1/Nminus1, Qs)
 		, Truth = false
 		, Truth = true
@@ -268,11 +269,11 @@ ceiling_vertex_t(Qs, T/N, Truth) :-
 
 floor_vertex_t(Qs, T/N, Truth) :-
     memberd_t(T/N, Qs, true),
-    Nminus1 #= N - 1,
+    #Nminus1 #= #N - 1,
     if_(hit_floor_t(T/Nminus1, Qs)
 	, Truth = false
-	, ( T1 #= T + 1,
-	    N1 #= N + 1,
+	, ( #T1 #= #T + 1,
+	    #N1 #= #N + 1,
 	    if_(hit_floor_t(T1/N1, Qs)
 		, Truth = false
 		, Truth = true
@@ -297,8 +298,7 @@ floor_vertex_t(Qs, T/N, Truth) :-
 %@ ;  false.
 
 %?- tfilter(floor_vertex_t([0/3,1/5,4/8,5/12]), [0/3,1/5,4/8,5/12], Vs).
-%@    Vs = [0/3,4/8,5/12]
-%@ ;  false.
+%@    Vs = [0/3,4/8,5/12].
 
 %% It will help to have unique, minimal ('canonical') representations
 %% for floor- and ceiling-type boundaries.
@@ -310,20 +310,17 @@ ceiling_canonical(Qs, Ks) :-
     sort(Ks_, Ks).
 
 %?- ceiling_canonical([3/3,3/4,3/5,4/6,4/7,4/8,5/9,5/10,6/11,6/12], K).
-%@    K = [3/5,4/8,5/10,6/12]
-%@ ;  false.
+%@    K = [3/5,4/8,5/10,6/12].
 
 %?- ceiling_canonical([6/12,4/8,3/3,3/4,3/5,4/6,4/7,5/9,5/10,6/11], K).
-%@    K = [3/5,4/8,5/10,6/12]
-%@ ;  false.
+%@    K = [3/5,4/8,5/10,6/12].
 
 floor_canonical(Qs, Ks) :-
     tfilter(floor_vertex_t(Qs), Qs, Ks_),
     sort(Ks_, Ks).
 
 %?- floor_canonical([0/1, 0/2, 0/3, 0/4, 0/5, 0/6, 0/7, 1/8, 1/9, 1/10, 1/11, 1/12], K).
-%@    K = [0/1,1/8]
-%@ ;  false.
+%@    K = [0/1,1/8].
 
 %% tally_decision_ccd(?Q, ?Decision, +CCD) relates tallies Q to Decisions,
 %% for a GIVEN ground cumulative-cohort design (CCD) which takes the form
@@ -388,10 +385,10 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :
 enroll(Check, T0/N0, T1/N1, Truth) :-
     if_(call(Check, N0)
        , Truth = false
-       , ( N1 #= N0 + 1,
+       , ( #N1 #= #N0 + 1,
            T in 0..1, % T is the pending tox assessment of newly-enrolled patient
            indomain(T), % TODO: Would it ever be useful to defer labeling?
-           T1 #= T0 + T,
+           #T1 #= #T0 + T,
            Truth = true
          )
        ).
@@ -405,7 +402,7 @@ enroll(Check, T0/N0, T1/N1, Truth) :-
 
 length_plus_1(Ls, MTD) :-
     length(Ls, MTDminus1),
-    MTD #= MTDminus1 + 1.
+    #MTD #= #MTDminus1 + 1.
 
 stay(Check, Ls ^ [R | Rs] ^ Es, State) :-
     if_(enroll(Check, R, R1)
@@ -469,7 +466,7 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
     foldl(append, [Ls, Rs, Es], [], Cohorts),
     %% TODO: Maybe faster to sum each list, then sum the sums?
     maplist(\Q^N^(Q=_/N), Cohorts, Ns),
-    sum(Ns, #=, Ntotal).
+    sum(Ns, #=, #Ntotal).
 
 %?- ccd:state0_enrollment([] ^ [] ^ [], Ntot).
 %@    Ntot = 0.
@@ -512,9 +509,10 @@ ccd_decisions(CCD, S0) --> [(S0->A->S)],
 
 %% Examine the smallest possible trial -- a trial with just 1 dose!
 %?- Trial+\(default_ccd(CCD), phrase(ccd_decisions(CCD, []^[0/0]^[]), Trial)).
-%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
-%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->[]^[... / ...]^[]),([]^[...]^[]->escalate->[]^ ... ^[]),([]^ ... ^ ... ->escalate-> ... ^ ...),(... -> ...)|...]
+%@    Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[0/6]^[]),([]^[0/6]^[]->escalate->declare_mtd(1))]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[0/5]^[]),([]^[0/5]^[]->escalate->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[1/6]^[]),([]^[1/6]^[]->stay->declare_mtd(1))]
+%@ ;  Trial = [([]^[0/0]^[]->stay->[]^[0/1]^[]),([]^[0/1]^[]->escalate->[]^[0/2]^[]),([]^[0/2]^[]->escalate->[]^[0/3]^[]),([]^[0/3]^[]->escalate->[]^[0/4]^[]),([]^[0/4]^[]->escalate->[]^[1/5]^[]),([]^[1/5]^[]->stay->[]^[2/6]^[]),([]^[2/6]^[]->stay->declare_mtd(1))]
 %@ ;  ...
 
 %% TODO: If this base case has (as I suspect) a 'closed-form' solution,
@@ -693,25 +691,24 @@ ccd_d_pathvector(CCD, D, Pathvector) :-
     phrase(ccd_decisions(CCD, []^Tallies^[]), Path),
     phrase(recdose_ccs, Path, [Pathvector]).
 
-ccd_d_nmax_tabfile(CCD, D, EnrollMax, Filename) :-
+ccd_d_tabfile(CCD, D, Filename) :-
     atom_chars(File, Filename),
     format("Opening file ~q...~n", [File]), % feedback to console
-    open(File, write, OS),
-    format("Writing path vectors ..", []),
-    (	retract(enroll_max(_)),
-	fail
-    ;	asserta(enroll_max(EnrollMax))
-    ),
-    Ncols #= 2*D + 1,
-    phrase(columns_format(Ncols), Format) ->
-	'$cpu_now'(T0),
-	(   ccd_d_pathvector(CCD, D, Pathvector),
-	    format(OS, Format, Pathvector),
-	    fail % exhaust all Pathvector solutions
-	;   close(OS),
-	    minutes_since(Minutes, T0),
-	    format(".. done (~2f minutes).~n", [Minutes])
-	).
+    '$cpu_now'(T0),
+    setup_call_cleanup(open(File, write, OS),
+		       (   format("Writing path vectors ..", []),
+			   #Ncols #= 2 * #D + 1,
+			   phrase(columns_format(Ncols), Format) ->
+			   (   ccd_d_pathvector(CCD, D, Pathvector),
+			       format(OS, Format, Pathvector),
+			       fail % exhaust all Pathvector solutions
+			   ;   true
+			   )
+		       ),
+		       close(OS)
+		      ),
+    minutes_since(Minutes, T0),
+    format(".. done (~2f minutes).~n", [Minutes]).
 
 % Copied from 'esc.pl'
 columns_format(1) --> "~w~n".
@@ -820,26 +817,20 @@ regression :-
     nth0(D, J0s, J0),
     J #\= J0.
 
-%?- asserta(ccd:cohort_max(6)), asserta(ccd:enroll_max(24)), ccd:regression.
-%@  D = 1 ...   % CPU time: 1.089 seconds
-%@    % CPU time: 1.093 seconds
-%@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 13.192 seconds
-%@    % CPU time: 13.196 seconds
-%@  J(2) = 212.
-%@ false.
+%?- assertz(clpz:monotonic).
+%@    true.
 
-%?- regression.
-%@  D = 1 ...   % CPU time: 0.880 seconds
-%@    % CPU time: 0.884 seconds
+%?- ccd:regression.
+%@  D = 1 ...   % CPU time: 1.720 seconds
+%@    % CPU time: 1.724 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 10.709 seconds
-%@    % CPU time: 10.713 seconds
+%@  D = 2 ...   % CPU time: 21.383 seconds
+%@    % CPU time: 21.387 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 66.203 seconds
-%@    % CPU time: 66.208 seconds
+%@  D = 3 ...   % CPU time: 131.774 seconds
+%@    % CPU time: 131.778 seconds
 %@  J(3) = 1151.
-%@  D = 4 ...   % CPU time: 404.087 seconds
-%@    % CPU time: 404.091 seconds
+%@  D = 4 ...   % CPU time: 816.016 seconds
+%@    % CPU time: 816.020 seconds
 %@  J(4) = 6718.
 %@ false.

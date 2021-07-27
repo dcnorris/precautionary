@@ -97,30 +97,30 @@ properties of these relations, such as their transitivity.
 %% Note also that we implement these comparisons on all of ℕ × ℕ, so that
 %% queries about tallies must assert the simplex constraint themselves.
 qcompare(=<, T1/N1, T2/N2) :-
-    T1 + max(0, N2 - N1) #=< T2.
+    #T1 + max(0, #N2 - #N1) #=< #T2.
 
 qcompare(<, T1/N1, T2/N2) :-
-    T1 + max(0, N2 - N1) #< T2.
+    #T1 + max(0, #N2 - #N1) #< #T2.
 
 qcompare(>=, T1/N1, T2/N2) :-
-    T1 #>= T2 + max(0, N1 - N2).
+    #T1 #>= #T2 + max(0, #N1 - #N2).
 
 qcompare(>, T1/N1, T2/N2) :-
-    T1 #> T2 + max(0, N1 - N2).
+    #T1 #> #T2 + max(0, #N1 - #N2).
 
 %% Reified versions of the above, as done at bottom of clpz.pl
 qcompare(=<, T1/N1, T2/N2, Truth) :-
-    T1 + max(0, N2 - N1) #=< T2 #<==> B,
+    #T1 + max(0, #N2 - #N1) #=< #T2 #<==> B,
     zo_t(B, Truth).
 
 qcompare(<, T1/N1, T2/N2, Truth) :-
-    T1 + max(0, N2 - N1) #< T2 #<==> B,
+    #T1 + max(0, #N2 - #N1) #< #T2 #<==> B,
     zo_t(B, Truth).
 	
 qcompare(>=, Q1, Q2, Truth) :- qcompare(=<, Q2, Q1, Truth).
 
 qcompare(>, T1/N1, T2/N2, Truth) :-
-    T1 #> T2 + max(0, N1 - N2) #<==> B,
+    #T1 #> #T2 + max(0, #N1 - #N2) #<==> B,
     zo_t(B, Truth).
 
 zo_t(0, false).
@@ -149,8 +149,8 @@ zo_t(1, true).
 %% This is intended to be invoked with (Size in Min..Max), as e.g.
 %% by inconceivable/3.
 tally_pair(T1/N1, T2/N2, Size) :-
-    Size #> 0,
-    N1 #= Size, % NB: naive (N1 in 1..Size) would duplicate pairs
+    #Size #> 0,
+    #N1 #= #Size, % NB: naive (N1 in 1..Size) would duplicate pairs
     N2 in 1..N1, indomain(N2),
     T1 in 0..N1,
     T2 in 0..N2,
@@ -198,3 +198,81 @@ test :-
     ;	inconceivable(violate_transitivity(=<, Q1, Q2, Q3, Size), Size, 1..12)
     ).
 
+%?- tally:test.
+%@ Show that =< and >= hold simultaneously only in case of equivalence:
+%@  % A = 1 ...   % CPU time: 0.028 seconds
+%@  % A = 2 ...   % CPU time: 0.071 seconds
+%@  % A = 3 ...   % CPU time: 0.145 seconds
+%@  % A = 4 ...   % CPU time: 0.231 seconds
+%@  % A = 5 ...   % CPU time: 0.369 seconds
+%@  % A = 6 ...   % CPU time: 0.556 seconds
+%@  % A = 7 ...   % CPU time: 0.802 seconds
+%@  % A = 8 ...   % CPU time: 1.125 seconds
+%@  % A = 9 ...   % CPU time: 1.453 seconds
+%@  % A = 10 ...   % CPU time: 1.911 seconds
+%@  % A = 11 ...   % CPU time: 2.427 seconds
+%@  % A = 12 ...   % CPU time: 3.027 seconds
+%@ Demonstrate that strict inequalities are exclusive of ~ ...
+%@  % A = 1 ...   % CPU time: 0.026 seconds
+%@  % A = 2 ...   % CPU time: 0.063 seconds
+%@  % A = 3 ...   % CPU time: 0.129 seconds
+%@  % A = 4 ...   % CPU time: 0.228 seconds
+%@  % A = 5 ...   % CPU time: 0.353 seconds
+%@  % A = 6 ...   % CPU time: 0.553 seconds
+%@  % A = 7 ...   % CPU time: 0.781 seconds
+%@  % A = 8 ...   % CPU time: 1.096 seconds
+%@  % A = 9 ...   % CPU time: 1.412 seconds
+%@  % A = 10 ...   % CPU time: 1.860 seconds
+%@  % A = 11 ...   % CPU time: 2.396 seconds
+%@  % A = 12 ...   % CPU time: 2.988 seconds
+%@  % A = 1 ...   % CPU time: 0.025 seconds
+%@  % A = 2 ...   % CPU time: 0.066 seconds
+%@  % A = 3 ...   % CPU time: 0.134 seconds
+%@  % A = 4 ...   % CPU time: 0.224 seconds
+%@  % A = 5 ...   % CPU time: 0.362 seconds
+%@  % A = 6 ...   % CPU time: 0.544 seconds
+%@  % A = 7 ...   % CPU time: 0.780 seconds
+%@  % A = 8 ...   % CPU time: 1.078 seconds
+%@  % A = 9 ...   % CPU time: 1.437 seconds
+%@  % A = 10 ...   % CPU time: 1.876 seconds
+%@  % A = 11 ...   % CPU time: 2.407 seconds
+%@  % A = 12 ...   % CPU time: 3.008 seconds
+%@ Show that =< and >= hold simultaneously only in case of equivalence:
+%@  % A = 1 ...   % CPU time: 0.031 seconds
+%@  % A = 2 ...   % CPU time: 0.069 seconds
+%@  % A = 3 ...   % CPU time: 0.138 seconds
+%@  % A = 4 ...   % CPU time: 0.233 seconds
+%@  % A = 5 ...   % CPU time: 0.380 seconds
+%@  % A = 6 ...   % CPU time: 0.565 seconds
+%@  % A = 7 ...   % CPU time: 0.796 seconds
+%@  % A = 8 ...   % CPU time: 1.087 seconds
+%@  % A = 9 ...   % CPU time: 1.464 seconds
+%@  % A = 10 ...   % CPU time: 1.897 seconds
+%@  % A = 11 ...   % CPU time: 2.437 seconds
+%@  % A = 12 ...   % CPU time: 3.009 seconds
+%@ Demonstrate transitivity of =< and >= ...
+%@  % A = 1 ...   % CPU time: 0.138 seconds
+%@  % A = 2 ...   % CPU time: 0.612 seconds
+%@  % A = 3 ...   % CPU time: 1.697 seconds
+%@  % A = 4 ...   % CPU time: 3.906 seconds
+%@  % A = 5 ...   % CPU time: 7.643 seconds
+%@  % A = 6 ...   % CPU time: 13.768 seconds
+%@  % A = 7 ...   % CPU time: 22.877 seconds
+%@  % A = 8 ...   % CPU time: 36.325 seconds
+%@  % A = 9 ...   % CPU time: 55.229 seconds
+%@  % A = 10 ...   % CPU time: 83.390 seconds
+%@  % A = 11 ...   % CPU time: 119.826 seconds
+%@  % A = 12 ...   % CPU time: 154.304 seconds
+%@  % A = 1 ...   % CPU time: 0.072 seconds
+%@  % A = 2 ...   % CPU time: 0.318 seconds
+%@  % A = 3 ...   % CPU time: 0.932 seconds
+%@  % A = 4 ...   % CPU time: 2.203 seconds
+%@  % A = 5 ...   % CPU time: 4.155 seconds
+%@  % A = 6 ...   % CPU time: 7.499 seconds
+%@  % A = 7 ...   % CPU time: 12.519 seconds
+%@  % A = 8 ...   % CPU time: 19.985 seconds
+%@  % A = 9 ...   % CPU time: 30.496 seconds
+%@  % A = 10 ...   % CPU time: 44.771 seconds
+%@  % A = 11 ...   % CPU time: 62.799 seconds
+%@  % A = 12 ...   % CPU time: 87.063 seconds
+%@ false.
