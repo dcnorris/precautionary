@@ -4,6 +4,7 @@
 
 * EscRisk app displays CPE progress via 'odometer'
 * EscRisk app lets user set max enrollment in range 20:30
+* Restrict to OS_type: unix, as feasible CPE demands fork-based parallelism
 
 # precautionary 0.2.5
 
