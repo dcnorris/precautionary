@@ -40,7 +40,8 @@ adopt the recommended values 𝜙1 = 0.6𝜙, and 𝜙2 = 1.4𝜙.
 
 */
 
-boin_targetpct_cmax_nmax(ccd(Elim, Deesc, Esc, FullCoh, Nmax), TargetPct, FullCoh, Nmax) :-
+boin_targetpct_cinc_cmax_nmax(ccd(Elim, Deesc, Esc, New, FullCoh, Nmax),
+			      TargetPct, New, FullCoh, Nmax) :-
     phipct_lambda1_lambda2(TargetPct, Lambda1, Lambda2),
     findall(E, slope_floor(Lambda1, E), Esc_),
     findall(D, slope_ceiling(Lambda2, D), Deesc_),
@@ -49,14 +50,14 @@ boin_targetpct_cmax_nmax(ccd(Elim, Deesc, Esc, FullCoh, Nmax), TargetPct, FullCo
     ceiling_canonical(Deesc_, Deesc),
     floor_canonical(Esc_, Esc).
 
-%?- boin_targetpct_cmax_nmax(BOIN, 25, 6, 12).
-%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],6,12).
+%?- boin_targetpct_cinc_cmax_nmax(BOIN, 25, 1, 6, 12).
+%@    BOIN = ccd([3/5,4/8,5/10,6/12],[1/3,2/6,3/10,4/12],[0/1,1/6,2/11],1,6,12).
 
-boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
-    boin_targetpct_cmax_nmax(BOIN, TargetPct, CohortMax, EnrollMax),
+boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortIncr, CohortMax, EnrollMax, Matrix) :-
+    boin_targetpct_cinc_cmax_nmax(BOIN, TargetPct, CohortIncr, CohortMax, EnrollMax),
     ccd_d_matrix(BOIN, D, Matrix).
 
-%?- Matrix+\(boin_targetpct_d_cmax_nmax_matrix(25, 3, 6, 24, Matrix)).
+%?- Matrix+\(boin_targetpct_d_cmax_nmax_matrix(25, 3, 1, 6, 24, Matrix)).
 %@    Matrix = ([0/1,0/1]^[0/6]^[]~>3)
 %@ ;  Matrix = ([0/1,0/1]^[1/6]^[]~>3)
 %@ ;  Matrix = ([0/1,0/1]^[1/6]^[]~>3)
@@ -64,12 +65,15 @@ boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
 %@ ;  Matrix = ([0/3]^[1/6,2/6]^[]~>2)
 %@ ;  ...
 
-%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.619 seconds
-%@    % CPU time: 0.623 seconds
+%?- J+\(boin_targetpct_cinc_cmax_nmax(BOIN, 25, 1, 6, 12), D=1, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 0.910 seconds
+%@    % CPU time: 0.915 seconds
 %@    J = 10.
 
-%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cinc_cmax_nmax(BOIN, 25, 1, 6, 12), D=2, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 16.276 seconds
+%@    % CPU time: 16.280 seconds
+%@    J = 170.
 %@    % CPU time: 11.246 seconds
 %@    % CPU time: 11.250 seconds
 %@    J = 170.
@@ -91,7 +95,10 @@ boin_targetpct_d_cmax_nmax_matrix(TargetPct, D, CohortMax, EnrollMax, Matrix) :-
 %@    % CPU time: 1.616 seconds
 %@    J = 170.
 
-%?- J+\(boin_targetpct_cmax_nmax(BOIN, 25, 6, 24), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%?- J+\(boin_targetpct_cinc_cmax_nmax(BOIN, 25, 1, 6, 24), D=3, time(findall(M, ccd_d_matrix(BOIN, D, M), Ms)), length(Ms, J)).
+%@    % CPU time: 107.845 seconds
+%@    % CPU time: 107.852 seconds
+%@    J = 949.
 %@    % CPU time: 73.365 seconds
 %@    % CPU time: 73.370 seconds
 %@    J = 949.
@@ -202,17 +209,23 @@ post05_tally(P, T/N) :-
 
 %% Write out tab-delimited BOIN path matrices BOIN<TgtPct>_<D>_<CohortMax>_<EnrollMax>.tab
 
-write_T(TargetPct, D, CohortMax, EnrollMax) :-
+write_T(TargetPct, D, CohortIncr, CohortMax, EnrollMax) :-
     phrase(format_("BOIN~d-~d-~d-~d.tab",
-		   [TargetPct, D, CohortMax, EnrollMax]),
+		   [TargetPct, D, CohortMax, EnrollMax]), % let CohortIncr=1 be 'understood'
 	   Filename),
-    boin_targetpct_cmax_nmax(BOIN, TargetPct, CohortMax, EnrollMax),
+    boin_targetpct_cinc_cmax_nmax(BOIN, TargetPct, CohortIncr, CohortMax, EnrollMax),
     ccd_d_tabfile(BOIN, D, Filename).
 
 %?- assertz(clpz:monotonic).
 %@    true.
 
-%?- write_T(25, 2, 6, 24).
+%?- write_T(25, 2, 1, 6, 24).
+%@ Opening file 'BOIN25-2-6-24.tab'...
+%@ Writing path vectors .... done (0.32 minutes).
+%@    true.
+%@ Opening file 'BOIN25-2-6-24.tab'...
+%@ Writing path vectors .... done (0.32 minutes).
+%@    true.
 %@ Opening file 'BOIN25-2-6-24.tab'...
 %@ Writing path vectors .... done (0.31 minutes).
 %@    true.
@@ -220,7 +233,10 @@ write_T(TargetPct, D, CohortMax, EnrollMax) :-
 %@ Writing path vectors .... done (0.20 minutes). J = 170
 %@    true.
 
-%?- write_T(25, 3, 6, 24).
+%?- write_T(25, 3, 1, 6, 24).
+%@ Opening file 'BOIN25-3-6-24.tab'...
+%@ Writing path vectors .... done (1.96 minutes).
+%@    true.
 %@ Opening file 'BOIN25-3-6-24.tab'...
 %@ Writing path vectors .... done (1.89 minutes).
 %@    true.

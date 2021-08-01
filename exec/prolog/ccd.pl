@@ -332,7 +332,7 @@ floor_canonical(Qs, Ks) :-
 %% NB: Interestingly, while threading the 'Check' predicate through enroll/4
 %%     (formerly enroll/3), I see that CCD already knew about full cohorts!
 %%     Does this mean I had coded this single idea in 2 places?
-tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :-
+tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, _, FullCoh, _)) :-
     Q = T/N,
     N in 0..FullCoh, indomain(N),
     T in 0..N,
@@ -380,23 +380,25 @@ tally_decision_ccd(Q, Decision, ccd(RemovalBdy, DeescBdy, EscBdy, FullCoh, _)) :
 %% So Check = (#<(11))/2 for example would yield #<(11, N0, Truth)
 %% so that N0 in 12..sup => Truth==true, telling us the cohort is
 %% already full.
-:- meta_predicate enroll(2, ?, ?, ?).
+%% The 2nd argument is a positive integer, the cohort increment.
+:- meta_predicate enroll(2, +, ?, ?, ?).
 
-enroll(Check, T0/N0, T1/N1, Truth) :-
+enroll(Check, New, T0/N0, T1/N1, Truth) :-
+    #New #> 0,
     if_(call(Check, N0)
        , Truth = false
-       , ( #N1 #= #N0 + 1,
-           T in 0..1, % T is the pending tox assessment of newly-enrolled patient
+       , ( #N1 #= #N0 + #New,
+           T in 0..New, % T is the pending tox assessment for newly-enrolled patients
            indomain(T), % TODO: Would it ever be useful to defer labeling?
            #T1 #= #T0 + T,
            Truth = true
          )
        ).
 
-%?- enroll(#<(11), 2/19, T1/N1, Truth).
+%?- enroll(#<(11), 1, 2/19, T1/N1, Truth).
 %@    Truth = false.
 
-%?- enroll(#<(11), 2/9, T1/N1, Truth).
+%?- enroll(#<(11), 1, 2/9, T1/N1, Truth).
 %@    Truth = true, T1 = 2, N1 = 10
 %@ ;  Truth = true, T1 = 3, N1 = 10.
 
@@ -404,8 +406,8 @@ length_plus_1(Ls, MTD) :-
     length(Ls, MTDminus1),
     #MTD #= #MTDminus1 + 1.
 
-stay(Check, Ls ^ [R | Rs] ^ Es, State) :-
-    if_(enroll(Check, R, R1)
+stay(Check, New, Ls ^ [R | Rs] ^ Es, State) :-
+    if_(enroll(Check, New, R, R1)
 	, State = Ls ^ [R1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
@@ -425,11 +427,11 @@ stay(Check, Ls ^ [R | Rs] ^ Es, State) :-
 %%       rules 'slice' a trial, where the paths are 'solutions'?
 %%       Does this analogy advise AGAINST introducing an complicating
 %%       logic like abovementioned "special escape clause"?
-escalate(Check, Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
-    stay(Check, Ls ^ [R] ^ Es, State).
+escalate(Check, New, Ls ^ [R] ^ Es, State) :- % NB: this is a 'clamped' situation
+    stay(Check, New, Ls ^ [R] ^ Es, State).
 
-escalate(Check, Ls ^ [Q, R | Rs] ^ Es, State) :-
-    if_(enroll(Check, R, R1)
+escalate(Check, New, Ls ^ [Q, R | Rs] ^ Es, State) :-
+    if_(enroll(Check, New, R, R1)
 	, State = [Q | Ls] ^ [R1 | Rs] ^ Es
 	%% If the next dose up (R) cannot be enrolled, that's because
 	%% it's already full. What's more, it must have recommended
@@ -448,19 +450,19 @@ escalate(Check, Ls ^ [Q, R | Rs] ^ Es, State) :-
 %%       But OTOH this effectively turns an initial toxicity into a
 %%       dose-removing event, blurring what otherwise ought to be a
 %%       clear distinction between de-escalation and removal.
-deescalate(_, [] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
+deescalate(_, _, [] ^ _ ^ _, declare_mtd(0)). % deescalate from already-lowest dose
 
-deescalate(Check, [L | Ls] ^ Rs ^ Es, State) :-
-    if_(enroll(Check, L, L1)
+deescalate(Check, New, [L | Ls] ^ Rs ^ Es, State) :-
+    if_(enroll(Check, New, L, L1)
 	, State = Ls ^ [L1 | Rs] ^ Es
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
 	  )
        ).
 
-remove(Check, Ls ^ Rs ^ Es, State) :-
+remove(Check, New, Ls ^ Rs ^ Es, State) :-
     append(Rs, Es, RsEs),
-    deescalate(Check, Ls ^ [] ^ RsEs, State).
+    deescalate(Check, New, Ls ^ [] ^ RsEs, State).
 
 state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
     foldl(append, [Ls, Rs, Es], [], Cohorts),
@@ -475,17 +477,19 @@ state0_enrollment(Ls ^ Rs ^ Es, Ntotal) :-
 
 ccd_state0_decision_state(CCD, Ls ^ [R | Rs] ^ Es, Decision, State) :-
     state0_enrollment(Ls ^ [R | Rs] ^ Es, Ntotal),
-    CCD = ccd(_, _, _, _, Nmax), % extract Nmax from CCD
+    CCD = ccd(_, _, _, New, _, Nmax), % extract New and Nmax from CCD
     %% TODO: Given that this if_ is the only place where Nmax get used,
     %%       might there be a case for separating it from the CCD term?
-    if_(Ntotal #< Nmax
+    #NewTotal #= #Ntotal + #New,
+    #NmaxPlus1 #= #Nmax + 1,
+    if_(NewTotal #< NmaxPlus1 % NB: an exported clpz:(#=<)/3 would help here
 	, ( tally_decision_ccd(R, Decision, CCD),
-	    CCD = ccd(_, _, _, FullCoh, _), % extract FullCoh known by the CCD
+	    CCD = ccd(_, _, _, _, FullCoh, _), % extract FullCoh known by the CCD
 	    %% NB: If clpz exported a (#=<)/3, that would spare us
 	    %%     the extra trouble of calculating MaxEnrollableCoh.
-	    MaxEnrollableCoh #= FullCoh - 1,
+	    #MaxEnrollableCoh #= #FullCoh - #New,
 	    Check = #<(MaxEnrollableCoh), % note this will be reified version, Check/2
-	    call(Decision, Check, Ls ^ [R | Rs] ^ Es, State)
+	    call(Decision, Check, New, Ls ^ [R | Rs] ^ Es, State)
 	  )
 	, ( length_plus_1(Ls, MTD),
 	    State = declare_mtd(MTD)
@@ -713,8 +717,8 @@ ccd_d_tabfile(CCD, D, Filename) :-
 % Copied from 'esc.pl'
 columns_format(1) --> "~w~n".
 columns_format(N) --> "~w\t",
-		      { N #> 1,
-			N1 #= N - 1 },
+		      { #N #> 1,
+			#N1 #= #N - 1 },
 		      columns_format(N1).
 
 :- op(900, xfx, ~>).
@@ -723,13 +727,16 @@ columns_format(N) --> "~w\t",
 path_matrix, [S ~> MTD] --> [ (S->_->declare_mtd(MTD)) ].
 path_matrix, [] --> [(_->_->_^_^_)], path_matrix. % 'skip to end'
 
-default_ccd(CCD) :- default_ccd_cmax_nmax(CCD, 6, 24).
+default_ccd(CCD) :- default_ccd_cinc_cmax_nmax(CCD, 1, 6, 24).
 
-default_ccd_cmax_nmax(ccd([3/5, 4/8, 5/10, 6/12],		
-			  [1/1, 2/4, 3/6, 4/8, 5/11],
-			  [0/1, 1/8],
-			  Cmax, Nmax),
-		      Cmax, Nmax).
+default_ccd_cinc_cmax_nmax(ccd([3/5, 4/8, 5/10, 6/12],
+			       [1/1, 2/4, 3/6, 4/8, 5/11],
+			       [0/1, 1/8],
+			       Cinc, Cmax, Nmax),
+			   Cinc, Cmax, Nmax) :-
+    #Cinc #> 0,
+    #Cinc #=< #Cmax,
+    #Cmax #=< #Nmax.
 
 %% I've implemented this predicate to more clearly exhibit the
 %% sharing of arguments with ccd_state0_decision_state/4.
@@ -743,70 +750,9 @@ ccd_d_matrix(CCD, D, Matrix) :-
     length(Tallies, D), maplist(=(0/0), Tallies),
     ccd_state0_matrix(CCD, []^Tallies^[], [Matrix]).
 
-%?- Matrix+\(default_ccd_cmax_nmax(CCD, 6, 24), ccd_d_matrix(CCD, 2, Matrix)).
-%@ false.
-%@ false.
-%@ caught: error(existence_error(procedure,default_ccd_cmax/3),default_ccd_cmax/3)
-%@    Matrix = ([0/1]^[0/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[1/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
-%@ ;  Matrix = ([0/1]^[2/6]^[]~>2)
-%@ ;  Matrix = ([]^[0/2,3/6]^[]~>1)
-%@ ;  Matrix = ([]^[1/6,3/6]^[]~>1)
-%@ ;  Matrix = ([]^[2/6,3/6]^[]~>1)
-%@ ;  ...
-
-%?- J+\(ccd:default_ccd(CCD), D=1, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 0.797 seconds
-%@    % CPU time: 0.802 seconds
-%@    J = 20.
-%@    % CPU time: 0.549 seconds
-%@    % CPU time: 0.554 seconds
-%@    J = 20. % ^ PURE BASELINE
-%@    % CPU time: 0.187 seconds
-%@    % CPU time: 0.191 seconds
-%@    J = 20.
-
-%?- J+\(ccd:default_ccd(CCD), D=2, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 10.606 seconds
-%@    % CPU time: 10.612 seconds
-%@    J = 212.
-%@    % CPU time: 5.878 seconds
-%@    % CPU time: 5.882 seconds
-%@    J = 212. % ^ PURE BASELINE
-%@    % CPU time: 1.972 seconds
-%@    % CPU time: 1.976 seconds
-%@    J = 212.
-
-%?- J+\(ccd:default_ccd(CCD), D=3, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 59.797 seconds
-%@    % CPU time: 59.801 seconds
-%@    J = 1151.
-%@    % CPU time: 32.408 seconds
-%@    % CPU time: 32.413 seconds
-%@    J = 1151. % ^ PURE BASELINE
-%@    % CPU time: 10.686 seconds
-%@    % CPU time: 10.690 seconds
-%@    J = 1151.
-
-%?- J+\(ccd:default_ccd(CCD), D=4, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 388.514 seconds
-%@    % CPU time: 388.518 seconds
-%@    J = 6718.
-%@    % CPU time: 62.763 seconds
-%@    % CPU time: 62.767 seconds
-%@    J = 6718.
-
-%?- J+\(default_ccd(CCD), D=5, time(findall(M, ccd_d_matrix(CCD, D, M), Ms)), length(Ms, J)).
-%@    % CPU time: 370.651 seconds
-%@    % CPU time: 370.655 seconds
-%@    J = 39289.
 
 regression :-
-    default_ccd_cmax_nmax(CCD, 6, 24),
+    default_ccd_cinc_cmax_nmax(CCD, 1, 6, 24),
     J0s = [0, 20, 212, 1151, 6718, 26131], % 0-based list of values up to D=5
     D in 1..4, % 1..5,
     indomain(D),
@@ -817,20 +763,17 @@ regression :-
     nth0(D, J0s, J0),
     J #\= J0.
 
-%?- assertz(clpz:monotonic).
-%@    true.
-
 %?- ccd:regression.
-%@  D = 1 ...   % CPU time: 1.720 seconds
-%@    % CPU time: 1.724 seconds
+%@  D = 1 ...   % CPU time: 1.769 seconds
+%@    % CPU time: 1.773 seconds
 %@  J(1) = 20.
-%@  D = 2 ...   % CPU time: 21.383 seconds
-%@    % CPU time: 21.387 seconds
+%@  D = 2 ...   % CPU time: 22.089 seconds
+%@    % CPU time: 22.093 seconds
 %@  J(2) = 212.
-%@  D = 3 ...   % CPU time: 131.774 seconds
-%@    % CPU time: 131.778 seconds
+%@  D = 3 ...   % CPU time: 130.884 seconds
+%@    % CPU time: 130.888 seconds
 %@  J(3) = 1151.
-%@  D = 4 ...   % CPU time: 816.016 seconds
-%@    % CPU time: 816.020 seconds
+%@  D = 4 ...   % CPU time: 842.215 seconds
+%@    % CPU time: 842.219 seconds
 %@  J(4) = 6718.
 %@ false.

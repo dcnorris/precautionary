@@ -1,7 +1,5 @@
 % Tallies T/N counting Toxicities per Number enrolled
 
-:- initialization(assertz(clpz:monotonic)).
-
 :- module(tally, [
 	      qcompare/4, % reified versions only should suffice
 	      op(900, xfx, &=<),
@@ -199,6 +197,8 @@ test :-
 	inconceivable(violate_transitivity(>=, Q1, Q2, Q3, Size), Size, 1..12)
     ;	inconceivable(violate_transitivity(=<, Q1, Q2, Q3, Size), Size, 1..12)
     ).
+
+:- initialization(assertz(clpz:monotonic)).
 
 %?- tally:test.
 %@ Show that =< and >= hold simultaneously only in case of equivalence:
