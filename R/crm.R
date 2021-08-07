@@ -30,7 +30,7 @@ Crm <- R6Class("Crm",
                  #' @param skeleton CRM skeleton
                  #' @param scale Sigma parameter of prior on beta parameter
                  #' @param target Target toxicity rate
-                 #' @return A Crm object.
+                 #' @return A `Crm` object.
                  #'
                  #' @examples
                  #' # An example verbatim from dfcrm::crm()
@@ -52,7 +52,7 @@ Crm <- R6Class("Crm",
                    private$x <- private$o <- integer(length(private$ln_skel))
                  },
                  #' @details
-                 #' Return number of pre-specified doses
+                 #' Return number of prespecified doses
                  #' @note This specializes the superclass set/get method, consistent
                  #' with the non-mutable number of doses of CRM with fixed skeleton.
                  #'
@@ -401,12 +401,12 @@ Crm <- R6Class("Crm",
 ## s: A (scalar) scale factor
 
 
-#' A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().
+#' A package-local (as-yet, unexported) test harness adapted from `dfcrm::crm()`.
 #'
-#' for various performance tuning experiments. The 'impl' arg allows selection
+#' for various performance tuning experiments. The `impl` arg allows selection
 #' of various alternative implementations:
-#' - rusti substitutes integrands crmh, crmht, crmht2 written in Rust
-#' - dfcrm is the original as implemented in package `dfcrm`.
+#' - `'rusti'` substitutes integrands `crmh`, `crmht`, `crmht2` written in Rust
+#' - `'dfcrm'` is the original as implemented in package `dfcrm`.
 #' @param prior The CRM skeleton: dose-wise prior probabilities of toxicity
 #' @param target Target toxicity rate
 #' @param tox A patient-wise vector of toxicity counts
@@ -415,23 +415,24 @@ Crm <- R6Class("Crm",
 #' @param dosename Optional designators for the doses
 #' @param include Index of patients to include
 #' @param pid Vector of patient ID labels
-#' @param conf.level Used to assign upper and lower bounds on predicted ptox,
-#' which in turn may be referenced in (de)escalation and stopping decisions.
+#' @param conf.level Used to assign upper and lower bounds on predicted probability
+#' of toxicity, which in turn may be referenced in escalation, deescalation and
+#' stopping decisions.
 #' @param method Estimation method:
 #' @param model Presently, only the \sQuote{empiric} (or \sQuote{power}) model
 #' has a Rust likelihood implementation.
 #' @param intcpt Intercept for \sQuote{logistic} model
 #' @param scale  Sigma parameter of prior on beta parameter
-#' @param model.detail If FALSE, the model content of an ‘"mtd"’ object will not
+#' @param model.detail If FALSE, the model content of an `mtd` object will not
 #' be displayed.  Default is TRUE.
-#' @param patient.detail If FALSE, patient summary of an ‘"mtd"’ object will not
+#' @param patient.detail If FALSE, patient summary of an `mtd` object will not
 #' be displayed.  Default is TRUE.
 #' @param var.est If TRUE, variance of the estimate of the model parameter and
 #' probability/confidence interval for the dose-toxicity curve will be computed
 #' @param impl Switch between `'rusti'` and `'dfcrm'` implementations.
 #' Currently the `'rusti'` option is implemented only for the Bayes method
 #' of the empirical (\sQuote{power}) model. An experimental `'ruste'`
-#' implementaton is in the works.
+#' implementation is in the works.
 #' @importFrom stats integrate optimize qnorm
 #' @importFrom dfcrm crmhlgt crmhtlgt crmht2lgt
 #' @importFrom dfcrm lcrm lcrmlgt

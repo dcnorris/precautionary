@@ -24,7 +24,6 @@ Concrete subclasses must implement this abstract method.
 
 If the \code{parallel} package were to incorporate the necessary
 changes to \code{mclapply}, I could restore the following import!
-#@importFrom parallel mclapply
 }
 \references{
 Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -263,8 +262,8 @@ Return computed trial paths in a 3D array
 }
 
 \subsection{Returns}{
-For the \code{j}'th path, the C*D matrix \code{T[j,,]} gives
-the number of toxicities \code{T[j,c,d]} occurring in the \code{c}'th
+For the \code{j}th path, the C*D matrix \code{T[j,,]} gives
+the number of toxicities \code{T[j,c,d]} occurring in the \code{c}th
 cohort for dose d. In case \code{condense=FALSE}, see above.
 }
 }
@@ -280,12 +279,12 @@ cohort for dose d. In case \code{condense=FALSE}, see above.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{probs.DLT}}{Numeric vector of DLT probabilities for the design's
-pre-specified doses.}
+prespecified doses.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-Path probabilities for given dose-wise DLT probs
+Path probabilities for given dose-wise DLT probabilities
 
 The design's paths must already have been completely enumerated by
 \code{trace_paths}.

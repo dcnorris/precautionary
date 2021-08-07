@@ -35,7 +35,7 @@ install.package("precautionary")
 ```
 
 To date, those features of `precautionary` which depend on the Prolog code
-in `exec/prolog/` have been pre-built into the package, for example as the
+in `exec/prolog/` have been prebuilt into the package, for example as the
 arrays `T[,,,]` written into `R/sysdata.rda` by `exec/make_sysdata_TUb.R`.
 Methodologists who wish to examine, recompute and verify these arrays are
 advised to install [Scryer Prolog](https://github.com/mthom/scryer-prolog).

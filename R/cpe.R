@@ -86,7 +86,6 @@ Cpe <- R6Class("Cpe",
                  #' @seealso `path_matrix`, `path_table`, `path_array`.
                  #' @note If the `parallel` package were to incorporate the necessary
                  #' changes to `mclapply`, I could restore the following import!
-                 #' #@importFrom parallel mclapply
                  trace_paths = function(root_dose, cohort_sizes, ..., prog = NULL, unroll = 4){
                    stopifnot("Only constant cohorts_sizes are supported currently" =
                                length(unique(cohort_sizes))==1)
@@ -208,8 +207,8 @@ Cpe <- R6Class("Cpe",
                  #' already by summation), but enables the sequence of events along a path
                  #' to be read off directly if this is required e.g. for visualization or
                  #' debugging. Default is TRUE.
-                 #' @return For the `j`'th path, the C*D matrix `T[j,,]` gives
-                 #' the number of toxicities `T[j,c,d]` occurring in the `c`'th
+                 #' @return For the `j`th path, the C*D matrix `T[j,,]` gives
+                 #' the number of toxicities `T[j,c,d]` occurring in the `c`th
                  #' cohort for dose d. In case `condense=FALSE`, see above.
                  #'
                  #' @references
@@ -279,12 +278,12 @@ Cpe <- R6Class("Cpe",
                    T_
                  }, # </path_array>
                  #' @details
-                 #' Path probabilities for given dose-wise DLT probs
+                 #' Path probabilities for given dose-wise DLT probabilities
                  #'
                  #' The design's paths must already have been completely enumerated by
                  #' `trace_paths`.
                  #' @param probs.DLT Numeric vector of DLT probabilities for the design's
-                 #' pre-specified doses.
+                 #' prespecified doses.
                  #' @return A vector of probabilities for the enumerated paths
                  path_probs = function(probs.DLT) {
                    if (is.null(private$b) || is.null(private$U))

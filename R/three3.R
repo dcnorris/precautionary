@@ -1,13 +1,13 @@
 #' @name Cpe3_3-class
-#' @title An R6 class encapsulating pre-calculated CPE for 3+3 design
+#' @title An R6 class encapsulating precalculated CPE for 3+3 design
 #'
 #' @details
 #' TODO: Explain the hierarchy of model classes, including connections
-#'       with the executable specifications set forth in exec/prolog/ccd.pl.
+#'       with the executable specifications set forth in `exec/prolog/ccd.pl`.
 #' @references
 #' 1. Korn EL, Midthune D, Chen TT, Rubinstein LV, Christian MC, Simon RM.
 #'    A comparison of two phase I trial designs. *Stat Med*. 1994;13(18):1799-1806.
-#'    doi:10.1002/sim.4780131802
+#'    \doi{10.1002/sim.4780131802}
 #' @importFrom R6 R6Class
 #' @export
 Cpe3_3 <- R6Class("Cpe3_3",
@@ -16,7 +16,7 @@ Cpe3_3 <- R6Class("Cpe3_3",
                  #' @details
                  #' Create a new `Cpe3_3` object.
                  #'
-                 #' @param D number of pre-specified doses
+                 #' @param D number of prespecified doses
                  #' @return A `Cpe3_3` object.
                  #'
                  #' @examples
@@ -30,10 +30,9 @@ Cpe3_3 <- R6Class("Cpe3_3",
                  },
                  #' @details
                  #' Query number of doses
-                 #' @note This specializes the generic method of Cpe superclass,
+                 #' @note This specializes the generic method of `Cpe` superclass,
                  #' removing the possibility of updating the state.
                  #'
-                 #' #param D A positive integer, the highest permissible dose.
                  #' @return Self (invisibly), unless `D` is missing,
                  #' in which case the top dose, an integer, is returned.
                  max_dose = function() {

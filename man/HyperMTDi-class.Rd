@@ -15,7 +15,8 @@ the opportunity arises for a more encapsulated treatment of MTDi scenario
 generators ('hyperpriors') and their sampling. Specifically, individual
 sampled scenarios need only yield two functions:
 \itemize{
-\item A CDF taking a dose vector X = (X1,...,Xd) to probabilities p = (p1,...,pd)
+\item A CDF taking a dose vector \deqn{X = (X_1,...,X_d)} to probabilities
+\deqn{p = (p_1,...,p_d)}
 \item A function F(X,kappa) yielding a fractionation matrix $F = [0 G; H 0]$.
 Crucially, this class actually represents an APPROXIMATION to the hyperprior,
 via a finite set of samples from it. The use of reference classes enables us
@@ -171,7 +172,7 @@ Self, invisibly
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-Set or query the vector of pre-specified dose levels
+Set or query the vector of prespecified dose levels
 }
 
 \subsection{Returns}{
@@ -190,7 +191,7 @@ in which case the dose vector is returned.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{p}}{A vector of probabilities, one for each pre-specified dose}
+\item{\code{p}}{A vector of probabilities, one for each prespecified dose}
 }
 \if{html}{\out{</div>}}
 }
@@ -245,7 +246,7 @@ Get average toxicity probabilities over the sample
 }
 
 \subsection{Returns}{
-Toxicity probabilites at fixed doses, averaged over sample
+Toxicity probabilities at fixed doses, averaged over sample
 }
 }
 \if{html}{\out{<hr>}}
@@ -259,7 +260,7 @@ Toxicity probabilites at fixed doses, averaged over sample
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{cpe}}{An obect of class \code{Cpe}}
+\item{\code{cpe}}{An object of class \code{Cpe}}
 
 \item{\code{kappa}}{A log-therapeutic index as in Eq (5) of Norris2020c}
 }

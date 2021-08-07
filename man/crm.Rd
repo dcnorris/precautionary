@@ -2,7 +2,7 @@
 % Please edit documentation in R/crm.R
 \name{crm}
 \alias{crm}
-\title{A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().}
+\title{A package-local (as-yet, unexported) test harness adapted from \code{dfcrm::crm()}.}
 \usage{
 crm(
   prior,
@@ -41,8 +41,9 @@ crm(
 
 \item{pid}{Vector of patient ID labels}
 
-\item{conf.level}{Used to assign upper and lower bounds on predicted ptox,
-which in turn may be referenced in (de)escalation and stopping decisions.}
+\item{conf.level}{Used to assign upper and lower bounds on predicted probability
+of toxicity, which in turn may be referenced in escalation, deescalation and
+stopping decisions.}
 
 \item{method}{Estimation method:}
 
@@ -53,10 +54,10 @@ has a Rust likelihood implementation.}
 
 \item{scale}{Sigma parameter of prior on beta parameter}
 
-\item{model.detail}{If FALSE, the model content of an ‘"mtd"’ object will not
+\item{model.detail}{If FALSE, the model content of an \code{mtd} object will not
 be displayed.  Default is TRUE.}
 
-\item{patient.detail}{If FALSE, patient summary of an ‘"mtd"’ object will not
+\item{patient.detail}{If FALSE, patient summary of an \code{mtd} object will not
 be displayed.  Default is TRUE.}
 
 \item{var.est}{If TRUE, variance of the estimate of the model parameter and
@@ -65,14 +66,14 @@ probability/confidence interval for the dose-toxicity curve will be computed}
 \item{impl}{Switch between \code{'rusti'} and \code{'dfcrm'} implementations.
 Currently the \code{'rusti'} option is implemented only for the Bayes method
 of the empirical (\sQuote{power}) model. An experimental \code{'ruste'}
-implementaton is in the works.}
+implementation is in the works.}
 }
 \description{
-for various performance tuning experiments. The 'impl' arg allows selection
+for various performance tuning experiments. The \code{impl} arg allows selection
 of various alternative implementations:
 \itemize{
-\item rusti substitutes integrands crmh, crmht, crmht2 written in Rust
-\item dfcrm is the original as implemented in package \code{dfcrm}.
+\item \code{'rusti'} substitutes integrands \code{crmh}, \code{crmht}, \code{crmht2} written in Rust
+\item \code{'dfcrm'} is the original as implemented in package \code{dfcrm}.
 }
 }
 \author{

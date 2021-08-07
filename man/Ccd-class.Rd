@@ -11,7 +11,7 @@ An R6 class encapsulating Cumulative-Cohort Designs
 }
 \details{
 TODO: Explain the hierarchy of model classes, including connections
-with the executable specifications set forth in exec/prolog/ccd.pl.
+with the executable specifications set forth in \code{exec/prolog/ccd.pl}.
 }
 \examples{
 
@@ -25,9 +25,9 @@ with the executable specifications set forth in exec/prolog/ccd.pl.
 \enumerate{
 \item Ivanova A, Flournoy N, Chung Y. Cumulative cohort design for dose-finding.
 Journal of Statistical Planning and Inference. 2007;137(7):2316-2327.
-doi:10.1016/j.jspi.2006.07.009
+\doi{10.1016/j.jspi.2006.07.009}
 \item Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
-J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089
+J R Stat Soc C. 2015;64(3):507-523. \doi{10.1111/rssc.12089}
 }
 }
 \section{Super class}{
@@ -84,7 +84,7 @@ Create a new \code{Ccd} object.
 }
 
 \subsection{Returns}{
-A Ccd object.
+A \code{Ccd} object.
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}

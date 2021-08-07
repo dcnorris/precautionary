@@ -3,13 +3,13 @@
 #'
 #' @details
 #' TODO: Explain the hierarchy of model classes, including connections
-#'       with the executable specifications set forth in exec/prolog/ccd.pl.
+#'       with the executable specifications set forth in `exec/prolog/ccd.pl`.
 #' @references
 #' 1. Ivanova A, Flournoy N, Chung Y. Cumulative cohort design for dose-finding.
 #'    Journal of Statistical Planning and Inference. 2007;137(7):2316-2327.
-#'    doi:10.1016/j.jspi.2006.07.009
+#'    \doi{10.1016/j.jspi.2006.07.009}
 #' 2. Liu S, Yuan Y. Bayesian optimal interval designs for phase I clinical trials.
-#'    J R Stat Soc C. 2015;64(3):507-523. doi:10.1111/rssc.12089
+#'    J R Stat Soc C. 2015;64(3):507-523. \doi{10.1111/rssc.12089}
 #' @importFrom R6 R6Class
 #' @export
 Ccd <- R6Class("Ccd",
@@ -23,7 +23,7 @@ Ccd <- R6Class("Ccd",
                  #' @param eliminate Elimination boundary
                  #' @param cohort_max Upper bound on dose-wise enrollment
                  #' @param enroll_max Upper bound on total enrollment
-                 #' @return A Ccd object.
+                 #' @return A `Ccd` object.
                  #'
                  #' @examples
                  #' # TODO
