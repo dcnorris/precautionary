@@ -168,7 +168,8 @@ An R6 base class for hyperpriors over MTDi distributions" />
 the opportunity arises for a more encapsulated treatment of MTDi scenario
 generators ('hyperpriors') and their sampling. Specifically, individual
 sampled scenarios need only yield two functions:</p><ul>
-<li><p>A CDF taking a dose vector X = (X1,...,Xd) to probabilities p = (p1,...,pd)</p></li>
+<li><p>A CDF taking a dose vector $$X = (X_1,...,X_d)$$ to probabilities
+$$p = (p_1,...,p_d)$$</p></li>
 <li><p>A function F(X,kappa) yielding a fractionation matrix $F = [0 G; H 0]$.
 Crucially, this class actually represents an APPROXIMATION to the hyperprior,
 via a finite set of samples from it. The use of reference classes enables us
@@ -347,7 +348,7 @@ TODO: Investigate how much variance reduction QRNG yields.</p>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
-<p>Set or query the vector of pre-specified dose levels</p>
+<p>Set or query the vector of prespecified dose levels</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self (invisibly), unless <code>x</code> is missing,
@@ -363,7 +364,7 @@ in which case the dose vector is returned.</p>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
-<p>Set or query the vector of pre-specified dose levels</p>
+<p>Set or query the vector of prespecified dose levels</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
 <p>Self (invisibly), unless <code>x</code> is missing,
@@ -376,7 +377,7 @@ in which case the dose vector is returned.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>p</code></dt><dd><p>A vector of probabilities, one for each pre-specified dose</p></dd>
+<dt><code>p</code></dt><dd><p>A vector of probabilities, one for each prespecified dose</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
@@ -393,7 +394,7 @@ sample if not already set explicitly).</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>p</code></dt><dd><p>A vector of probabilities, one for each pre-specified dose</p></dd>
+<dt><code>p</code></dt><dd><p>A vector of probabilities, one for each prespecified dose</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
@@ -454,7 +455,7 @@ TODO: Consider taking this method private.</p>
 <p>Get average toxicity probabilities over the sample</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
-<p>Toxicity probabilites at fixed doses, averaged over sample</p>
+<p>Toxicity probabilities at fixed doses, averaged over sample</p>
 <h3 class='hasAnchor' id='list-avg-tox-probs-'><a class='anchor' aria-hidden='true' href='#list-avg-tox-probs-'></a>Method <code>avg_tox_probs()</code></h3>
 
 <h4 class='hasAnchor' id='usage'><a class='anchor' aria-hidden='true' href='#usage'></a>Usage</h4>
@@ -464,7 +465,7 @@ TODO: Consider taking this method private.</p>
 <p>Get average toxicity probabilities over the sample</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
-<p>Toxicity probabilites at fixed doses, averaged over sample</p>
+<p>Toxicity probabilities at fixed doses, averaged over sample</p>
 <p><hr>
 <a id="method-fractionate"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>fractionate()</code></h3>
 
@@ -473,7 +474,7 @@ TODO: Consider taking this method private.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>cpe</code></dt><dd><p>An obect of class <code>Cpe</code></p></dd>
+<dt><code>cpe</code></dt><dd><p>An object of class <code>Cpe</code></p></dd>
 
 <dt><code>kappa</code></dt><dd><p>A log-therapeutic index as in Eq (5) of Norris2020c</p></dd>
 
@@ -491,7 +492,7 @@ for toxicity grades 0 through 5, at one sampled scenario.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>cpe</code></dt><dd><p>An obect of class <code>Cpe</code></p></dd>
+<dt><code>cpe</code></dt><dd><p>An object of class <code>Cpe</code></p></dd>
 
 <dt><code>kappa</code></dt><dd><p>A log-therapeutic index as in Eq (5) of Norris2020c</p></dd>
 

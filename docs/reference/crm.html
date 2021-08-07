@@ -47,10 +47,10 @@
 
 
 <meta property="og:title" content="A package-local (as-yet, unexported) test harness adapted from dfcrm::crm(). — crm" />
-<meta property="og:description" content="for various performance tuning experiments. The 'impl' arg allows selection
+<meta property="og:description" content="for various performance tuning experiments. The impl arg allows selection
 of various alternative implementations:
-rusti substitutes integrands crmh, crmht, crmht2 written in Rust
-dfcrm is the original as implemented in package dfcrm.
+'rusti' substitutes integrands crmh, crmht, crmht2 written in Rust
+'dfcrm' is the original as implemented in package dfcrm.
 
 " />
 <meta property="og:image" content="https://github.com/dcnorris/precautionary/raw/main/docs/card.png" />
@@ -154,16 +154,16 @@ dfcrm is the original as implemented in package dfcrm.
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>A package-local (as-yet, unexported) test harness adapted from dfcrm::crm().</h1>
+    <h1>A package-local (as-yet, unexported) test harness adapted from <code>dfcrm::crm()</code>.</h1>
     <small class="dont-index">Source: <a href='https://github.com/dcnorris/precautionary/blob/master/R/crm.R'><code>R/crm.R</code></a></small>
     <div class="hidden name"><code>crm.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>for various performance tuning experiments. The 'impl' arg allows selection
+    <p>for various performance tuning experiments. The <code>impl</code> arg allows selection
 of various alternative implementations:</p><ul>
-<li><p>rusti substitutes integrands crmh, crmht, crmht2 written in Rust</p></li>
-<li><p>dfcrm is the original as implemented in package <code>dfcrm</code>.</p></li>
+<li><p><code>'rusti'</code> substitutes integrands <code>crmh</code>, <code>crmht</code>, <code>crmht2</code> written in Rust</p></li>
+<li><p><code>'dfcrm'</code> is the original as implemented in package <code>dfcrm</code>.</p></li>
 </ul>
 
     </div>
@@ -225,8 +225,9 @@ of various alternative implementations:</p><ul>
     </tr>
     <tr>
       <th>conf.level</th>
-      <td><p>Used to assign upper and lower bounds on predicted ptox,
-which in turn may be referenced in (de)escalation and stopping decisions.</p></td>
+      <td><p>Used to assign upper and lower bounds on predicted probability
+of toxicity, which in turn may be referenced in escalation, deescalation and
+stopping decisions.</p></td>
     </tr>
     <tr>
       <th>method</th>
@@ -247,12 +248,12 @@ has a Rust likelihood implementation.</p></td>
     </tr>
     <tr>
       <th>model.detail</th>
-      <td><p>If FALSE, the model content of an ‘"mtd"’ object will not
+      <td><p>If FALSE, the model content of an <code>mtd</code> object will not
 be displayed.  Default is TRUE.</p></td>
     </tr>
     <tr>
       <th>patient.detail</th>
-      <td><p>If FALSE, patient summary of an ‘"mtd"’ object will not
+      <td><p>If FALSE, patient summary of an <code>mtd</code> object will not
 be displayed.  Default is TRUE.</p></td>
     </tr>
     <tr>
@@ -265,7 +266,7 @@ probability/confidence interval for the dose-toxicity curve will be computed</p>
       <td><p>Switch between <code>'rusti'</code> and <code>'dfcrm'</code> implementations.
 Currently the <code>'rusti'</code> option is implemented only for the Bayes method
 of the empirical (&#8216;power&#8217;) model. An experimental <code>'ruste'</code>
-implementaton is in the works.</p></td>
+implementation is in the works.</p></td>
     </tr>
     </table>
 

@@ -175,8 +175,7 @@ do not implement this safety feature may clarify this fact
 by overriding (TODO: or deleting?) this method.</p>
 <p>Concrete subclasses must implement this abstract method.</p>
 <p>If the <code>parallel</code> package were to incorporate the necessary
-changes to <code>mclapply</code>, I could restore the following import!
-#@importFrom parallel mclapply</p>
+changes to <code>mclapply</code>, I could restore the following import!</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -487,8 +486,8 @@ debugging. Default is TRUE.</p></dd>
 <p>Return computed trial paths in a 3D array</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
-<p>For the <code>j</code>'th path, the C*D matrix <code>T[j,,]</code> gives
-the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>'th
+<p>For the <code>j</code>th path, the C*D matrix <code>T[j,,]</code> gives
+the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>th
 cohort for dose d. In case <code>condense=FALSE</code>, see above.</p>
 <h3 class='hasAnchor' id='list-path-array-'><a class='anchor' aria-hidden='true' href='#list-path-array-'></a>Method <code>path_array()</code></h3>
 
@@ -510,8 +509,8 @@ debugging. Default is TRUE.</p></dd>
 <p>Return computed trial paths in a 3D array</p>
 
 <h4 class='hasAnchor' id='returns'><a class='anchor' aria-hidden='true' href='#returns'></a>Returns</h4>
-<p>For the <code>j</code>'th path, the C*D matrix <code>T[j,,]</code> gives
-the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>'th
+<p>For the <code>j</code>th path, the C*D matrix <code>T[j,,]</code> gives
+the number of toxicities <code>T[j,c,d]</code> occurring in the <code>c</code>th
 cohort for dose d. In case <code>condense=FALSE</code>, see above.</p>
 <p><hr>
 <a id="method-path_probs"></a></p><h3 class='hasAnchor' id='method-'><a class='anchor' aria-hidden='true' href='#method-'></a>Method <code>path_probs()</code></h3>
@@ -522,11 +521,11 @@ cohort for dose d. In case <code>condense=FALSE</code>, see above.</p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>probs.DLT</code></dt><dd><p>Numeric vector of DLT probabilities for the design's
-pre-specified doses.</p></dd>
+prespecified doses.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
-<p>Path probabilities for given dose-wise DLT probs</p>
+<p>Path probabilities for given dose-wise DLT probabilities</p>
 <p>The design's paths must already have been completely enumerated by
 <code>trace_paths</code>.</p>
 
@@ -540,11 +539,11 @@ pre-specified doses.</p></dd>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' aria-hidden='true' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>probs.DLT</code></dt><dd><p>Numeric vector of DLT probabilities for the design's
-pre-specified doses.</p></dd>
+prespecified doses.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='details'><a class='anchor' aria-hidden='true' href='#details'></a>Details</h4>
-<p>Path probabilities for given dose-wise DLT probs</p>
+<p>Path probabilities for given dose-wise DLT probabilities</p>
 <p>The design's paths must already have been completely enumerated by
 <code>trace_paths</code>.</p>
 
