@@ -185,7 +185,7 @@
 
 <ul>
 <li><p>BOIN recs via isotonic regression</p></li>
-<li><p>Testthat CPE matches BOIN::get.oc() sim</p></li>
+<li><p>Test-that CPE matches <code><a href='https://rdrr.io/pkg/BOIN/man/get.oc.html'>BOIN::get.oc()</a></code> sim</p></li>
 <li><p>Implement CRM logistic model</p></li>
 </ul>
 
@@ -225,22 +225,22 @@ for enumerable designs in context.</p></li>
     
 
 <ul>
-<li><p>Eliminate dependence on/adherence to dtpcrm layout</p><ul>
-<li><p>Package dtpcrm makes many design decisions unsuited to
+<li><p>Eliminate dependence on/adherence to <code>dtpcrm</code> layout</p><ul>
+<li><p>Package <code>dtpcrm</code> makes many design decisions unsuited to
 comprehensive enumeration of whole trials.</p></li>
-<li><p>Allowing the Crm class to evolve along now-'natural' lines
+<li><p>Allowing the <code>Crm</code> class to evolve along now-'natural' lines
 probably makes a suitable 'plan' for now.</p></li>
 <li><p>Expunging superseded code/dependencies ASAP will facilitate
 this evolution.</p></li>
 <li><p>Even the term 'DTP' seems not quite right anymore for a complete
 path enumeration (CPE?), and should be abandoned.</p></li>
 </ul></li>
-<li><p>Eliminate dependence on 'escalation' and 'dfcrm'</p><ul>
+<li><p>Eliminate dependence on <code>escalation</code> and <code>dfcrm</code></p><ul>
 <li><p>With the special emphasis on <em>speed</em> created by CPE,
 I now must implement all underlying trial designs in Rust.</p></li>
 </ul></li>
 <li><p>What may be retained in each case are 'Suggests:'-type relations,
-wherever regression tests are helpful -- esp. wrt dfcrm.</p></li>
+wherever regression tests are helpful -- esp. wrt <code>dfcrm</code>.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="fast-crm"><a class="anchor" href="#fast-crm"></a>Fast CRM</h2>
@@ -248,7 +248,7 @@ wherever regression tests are helpful -- esp. wrt dfcrm.</p></li>
     
 
 <ul>
-<li><p>Benchmark; try mul_add()'s</p></li>
+<li><p>Benchmark; try <code>mul_add()</code>s</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="document"><a class="anchor" href="#document"></a>Document</h2>
@@ -293,7 +293,7 @@ of this software design.</p></li>
 </ul></li>
 </ul>
 
-    <h2 class="hasAnchor" id="robustify"><a class="anchor" href="#robustify"></a>Robustify</h2>
+    <h2 class="hasAnchor" id="robustness"><a class="anchor" href="#robustness"></a>Robustness</h2>
 
     
 

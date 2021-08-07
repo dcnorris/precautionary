@@ -137,11 +137,11 @@ q_d &amp;= 1 - p_d\\
 \]</span></p>
 <p>Again as in <span class="citation">Norris (2020b)</span>, taking logs in @ref(eq:pi) we find:</p>
 <p><span class="math display">\[
-\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + \mathrm{U}\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + \mathrm{U}\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:log-pi)
 \]</span> where the <span class="math inline">\(J \times 2D\)</span> matrix <span class="math inline">\(U\)</span> and the <span class="math inline">\(J\)</span>-vector <span class="math inline">\(\mathbf{b}\)</span> are characteristic <em>constants</em> of the given dose-escalation design.</p>
 <p>Finally, we may as previously introduce the log-therapeutic index <span class="math inline">\(\kappa\)</span>, enabling us to write the fatal (grade-5) fraction <span class="math inline">\(f_d\)</span> of DLTs as:</p>
 <p><span class="math display">\[
-f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, (\#eq:fatalfraction)
+f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, (\#eq:fatal-fraction)
 \]</span></p>
 <p>in terms of which the expected number of fatal toxicities is:</p>
 <p><span class="math display">\[
@@ -225,12 +225,12 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   3.016   0.323   2.317</code></pre>
+##   2.871   0.230   1.737</code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>## T (4693×7×7) constructed in 0.493 sec
-## T condensed in 0.356 sec</code></pre>
+<pre><code>## T (4693×7×7) constructed in 0.328 sec
+## T condensed in 0.328 sec</code></pre>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693    4    7</code></pre>
@@ -955,7 +955,7 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 <div id="viola-safety" class="section level1">
 <h1 class="hasAnchor">
 <a href="#viola-safety" class="anchor"></a>VIOLA safety</h1>
-<p>Taking this CRM skeleton fit as a modal expectation of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution, we may employ Equations @ref(eq:fatalfraction)–@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of <span class="math inline">\(\kappa\)</span>:</p>
+<p>Taking this CRM skeleton fit as a modal expectation of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution, we may employ Equations @ref(eq:fatal-fraction)–@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of <span class="math inline">\(\kappa\)</span>:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">kappa</span>, <span class="va">mu</span><span class="op">=</span><span class="va">mu_opt</span>, <span class="va">sigma</span><span class="op">=</span><span class="va">sigma_opt</span>, <span class="va">X</span><span class="op">=</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span> <span class="op">{</span>
   <span class="co"># For ease of use, this function is VECTORIZED over kappa,</span>
@@ -999,7 +999,7 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 <p>This enables us to compute expected fatalities as a scalar field on a 3-dimensional space defined by parameters <span class="math inline">\((\mu, \sigma, \kappa)\)</span>. But again as in <span class="citation">Norris (2020b)</span> we employ a minimax framing of our safety question, to achieve a dimension reduction:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mu_minimax</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># dose 3 is 2nd-highest *nonzero* dose</span></code></pre></div>
-<p>The irregularly spaced doses of VIOLA don’t yield a unique delta, but the <span class="math inline">\(2\times\)</span> mulipliers either side of dose level 3 (our <code>mu_minimax</code>) allow us to select <span class="math inline">\(\delta = \log 2\)</span> as a local approximation:</p>
+<p>The irregularly spaced doses of VIOLA don’t yield a unique delta, but the <span class="math inline">\(2\times\)</span> multipliers either side of dose level 3 (our <code>mu_minimax</code>) allow us to select <span class="math inline">\(\delta = \log 2\)</span> as a local approximation:</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html">diff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>We may now generate a grid of values, and plot contours:</p>
