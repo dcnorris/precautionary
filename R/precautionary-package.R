@@ -23,7 +23,7 @@
 #'    <https://www.biorxiv.org/content/10.1101/240846v1>
 #'
 #' 4. Norris DC. One-size-fits-all dosing in oncology wastes money, innovation
-#'    and lives. *Drug Discov Today*. 2018;23(1):4-6.
+#'    and lives. *Drug Discovery Today*. 2018;23(1):4-6.
 #'    \doi{10.1016/j.drudis.2017.11.008}.
 #'    <https://www.sciencedirect.com/science/article/pii/S1359644617303586>
 #'
@@ -85,7 +85,7 @@ NULL
 #'
 #' @section Version 0.2.8:
 #' * BOIN recs via isotonic regression
-#' * Testthat CPE matches BOIN::get.oc() sim
+#' * Test-that CPE matches `BOIN::get.oc()` sim
 #' * Implement CRM logistic model
 #'
 #' @section Version 0.2.9:
@@ -104,23 +104,23 @@ NULL
 #' * Native Rust CPE
 #'
 #' @section Dependencies:
-#' * Eliminate dependence on/adherence to dtpcrm layout
-#'   - Package dtpcrm makes many design decisions unsuited to
+#' * Eliminate dependence on/adherence to `dtpcrm` layout
+#'   - Package `dtpcrm` makes many design decisions unsuited to
 #'     comprehensive enumeration of whole trials.
-#'   - Allowing the Crm class to evolve along now-'natural' lines
+#'   - Allowing the `Crm` class to evolve along now-'natural' lines
 #'     probably makes a suitable 'plan' for now.
 #'   - Expunging superseded code/dependencies ASAP will facilitate
 #'     this evolution.
 #'   - Even the term 'DTP' seems not quite right anymore for a complete
 #'     path enumeration (CPE?), and should be abandoned.
-#' * Eliminate dependence on 'escalation' and 'dfcrm'
+#' * Eliminate dependence on `escalation` and `dfcrm`
 #'   - With the special emphasis on *speed* created by CPE,
 #'     I now must implement all underlying trial designs in Rust.
 #' * What may be retained in each case are 'Suggests:'-type relations,
-#'   wherever regression tests are helpful -- esp. wrt dfcrm.
+#'   wherever regression tests are helpful -- esp. wrt `dfcrm`.
 #'
 #' @section Fast CRM:
-#' * Benchmark; try mul_add()'s
+#' * Benchmark; try `mul_add()`s
 #'
 #' @section Document:
 #' * Add examples to the documented Rust functions
@@ -146,7 +146,7 @@ NULL
 #' * Index `sims$fits` to exact outcomes in `A[[D]]` where appropriate
 #'   - See the `haystack` function in `exact.R`
 #'
-#' @section Robustify:
+#' @section Robustness:
 #' * Tests comparing results from multiple CRAN packages
 #'
 #' @name plan

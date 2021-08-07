@@ -24,7 +24,7 @@ in pharmacokinetics and pharmacodynamics.
 \emph{bioRxiv}. December 2017:240846. \doi{10.1101/240846}.
 \url{https://www.biorxiv.org/content/10.1101/240846v1}
 \item Norris DC. One-size-fits-all dosing in oncology wastes money, innovation
-and lives. \emph{Drug Discov Today}. 2018;23(1):4-6.
+and lives. \emph{Drug Discovery Today}. 2018;23(1):4-6.
 \doi{10.1016/j.drudis.2017.11.008}.
 \url{https://www.sciencedirect.com/science/article/pii/S1359644617303586}
 \item Norris DC. Costing \sQuote{the} MTD ... in 2-D. \emph{bioRxiv}. July 2018:370817.

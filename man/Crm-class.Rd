@@ -110,7 +110,7 @@ Create a new \code{Crm} object.
 }
 
 \subsection{Returns}{
-A Crm object.
+A \code{Crm} object.
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
@@ -148,7 +148,7 @@ It is an error to call this method with non-missing \code{D} parameter.}
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-Return number of pre-specified doses
+Return number of prespecified doses
 }
 
 \subsection{Returns}{

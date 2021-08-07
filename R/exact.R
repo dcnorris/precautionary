@@ -3,16 +3,16 @@
 setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory","selector_factory"))
 
 #' A wrapper function supporting exact simulation of dose-escalation trials.
-#' 
+#'
 #' Implemented currently only for the (most?) common variant of the 3+3 design,
 #' which requires that at least 6 patients be treated at a dose before it may be
 #' declared as \sQuote{the} MTD.
-#' 
+#'
 #' @param selector_factory An object of type
 #'  \code{\link[escalation:get_three_plus_three]{three_plus_three_selector_factory}},
 #'  with `allow_deescalation = TRUE`.
 #'
-#' @details 
+#' @details
 #' In any given realization of a 3+3 design, each of the \eqn{D} prespecified doses
 #' will enroll 0, 1 or 2 cohorts, each with 3 patients. Each cohort will result in
 #' a tally of 0--3 dose-limiting toxicities (DLTs), and these may be recorded in a
@@ -34,12 +34,12 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' (Indeed, as you may verify at the R prompt, the above matrix is the 262nd of 442
 #' such paths enumerated comprehensively in the \eqn{2 \times 4 \times 442}{2 x 4 x 442}
 #' array `precautionary:::T[[4]]`.)
-#' 
+#'
 #' As detailed in Norris 2020c (below), these matrices may be used to construct simple
 #' matrix computations that altogether eliminate the need for discrete-event simulation
 #' of the 3+3 design. For each \eqn{D = 2,...,8}, the `precautionary` package has
 #' pretabulated a \eqn{J \times 2D}{J x 2D} matrix `precautionary:::U[[D]]` and
-#' \eqn{J}-vector `precautionary:::b[[D]]` such that the eqn{J}-vector \eqn{\pi}
+#' \eqn{J}-vector `precautionary:::b[[D]]` such that the \eqn{J}-vector \eqn{\pi}
 #' of path probabilities is given by:
 #' \deqn{
 #' log(\pi) = b + U [log(p), log(q)]',
@@ -47,14 +47,14 @@ setOldClass(c("exact","three_plus_three_selector_factory","tox_selector_factory"
 #' where \eqn{p} is the \eqn{D}-vector of DLT probabilities at the prespecified
 #' doses, and \eqn{q \equiv 1-p}{q := 1-p} is its complement. See Eq. (4) of
 #' Norris (2020c).
-#' 
+#'
 #' For details on the enumeration itself, please see the Prolog code in directory
 #' `exec/` of the installed package.
-#' @references 
+#' @references
 #' Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
 #' of 3+3 dose-escalation design. arXiv:2012.05301 \[stat.ME\]. December 2020.
 #' <https://arxiv.org/abs/2012.05301>
-#' @examples 
+#' @examples
 #' # Run an exact version of the simulation from FDA-proactive vignette
 #' design <- get_three_plus_three(
 #'   num_doses = 6
@@ -150,33 +150,33 @@ prob_administer.exact <- function(x, ...) {
 #'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.exact <- function(x, ...) {
-  
+
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
-  
+
   cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
-  
+
   cat('True probability of toxicity:\n')
   print(x$true_prob_tox, digits = 3)
   cat('\n')
-  
+
   cat('Probability of recommendation:\n')
   print(prob_recommend(x), digits = 3)
   cat('\n')
-  
+
   cat('Probability of administration:\n')
   print(prob_administer(x), digits = 3)
   cat('\n')
-  
+
   cat('Sample size:\n')
   print(summary(num_patients(x)))
   cat('\n')
-  
+
   cat('Total toxicities:\n')
   print(summary(num_tox(x)))
   cat('\n')
-  
+
   cat('Trial duration:\n')
   print(summary(trial_duration(x)))
   cat('\n')
@@ -191,33 +191,33 @@ print.exact <- function(x, ...) {
 #'
 #' @importFrom escalation num_patients num_tox trial_duration
 print.hyper <- function(x, ...) {
-  
+
   cat('Number of iterations:', length(x$fits), '\n')
   cat('\n')
-  
+
   cat('Number of doses:', length(x$dose_levels), '\n')
   cat('\n')
-  
+
   cat('Average probability of toxicity:\n')
   print(x$avg_prob_tox, digits = 3)
   cat('\n')
-  
+
   cat('Probability of recommendation:\n')
   print(prob_recommend(x), digits = 3)
   cat('\n')
-  
+
   cat('Probability of administration:\n')
   print(prob_administer(x), digits = 3)
   cat('\n')
-  
+
   cat('Sample size:\n')
   print(summary(num_patients(x)))
   cat('\n')
-  
+
   cat('Total toxicities:\n')
   print(summary(num_tox(x)))
   cat('\n')
-  
+
   cat('Trial duration:\n')
   print(summary(trial_duration(x)))
   cat('\n')
@@ -268,12 +268,12 @@ as.data.table.exact <- function(x, keep.rownames = FALSE
 }
 
 #' Summarize an exact treatment of a dose-escalation design
-#' 
+#'
 #' Algorithmic (or 'rule-based') dose-escalation designs admit exact computation
 #' of their outcomes. This method summarizes such an exact treatment in a manner
 #' roughly parallel to that of `summary.precautionary`.
-#' 
-#' @param object An object of class 'exact' 
+#'
+#' @param object An object of class 'exact'
 #'
 #' @param ordinalizer An ordinalizer function
 #' @param ... Additional parameters passed to the ordinalizer

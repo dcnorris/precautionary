@@ -55,14 +55,14 @@ $$
 Again as in @norris_what_2020, taking logs in \@ref(eq:pi) we find:
 
 $$
-\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + \mathrm{U}\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:logpi)
+\log \boldsymbol{\pi} = \sum_{c,d} \log {n \choose T_{c,d}} + \sum_c [T_{c,d},n-T_{c,d}]\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right] = \mathbf{b} + \mathrm{U}\left[{ \log \mathbf{p} \atop \log \mathbf{q}} \right], (\#eq:log-pi)
 $$
 where the $J \times 2D$ matrix $U$ and the $J$-vector $\mathbf{b}$ are characteristic *constants* of the given dose-escalation design.
 
 Finally, we may as previously introduce the log-therapeutic index $\kappa$, enabling us to write the fatal (grade-5) fraction $f_d$ of DLTs as:
 
 $$
-f_d = \frac{P(e^{2\kappa} \MTDi <  X_d)}{P(\MTDi < X_d)}, (\#eq:fatalfraction)
+f_d = \frac{P(e^{2\kappa} \MTDi <  X_d)}{P(\MTDi < X_d)}, (\#eq:fatal-fraction)
 $$
 
 in terms of which the expected number of fatal toxicities is:
@@ -259,7 +259,7 @@ lines(y ~ x, lty = 2)
 
 # VIOLA safety
 
-Taking this CRM skeleton fit as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatalfraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
+Taking this CRM skeleton fit as a modal expectation of the $\MTDi$ distribution, we may employ Equations \@ref(eq:fatal-fraction)--\@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of $\kappa$:
 
 ```{r fatalities-vs-kappa}
 f <- function(kappa, mu=mu_opt, sigma=sigma_opt, X=viola_dosing$Dose_mg) {
@@ -312,7 +312,7 @@ This enables us to compute expected fatalities as a scalar field on a 3-dimensio
 mu_minimax <- log(viola_dosing$Dose_mg)[3] # dose 3 is 2nd-highest *nonzero* dose
 ```
 
-The irregularly spaced doses of VIOLA don't yield a unique delta, but the $2\times$ mulipliers either side of dose level 3 (our `mu_minimax`) allow us to select $\delta = \log 2$ as a local approximation:
+The irregularly spaced doses of VIOLA don't yield a unique delta, but the $2\times$ multipliers either side of dose level 3 (our `mu_minimax`) allow us to select $\delta = \log 2$ as a local approximation:
 
 ```{r delta}
 delta <- mean(diff(log(viola_dosing$Dose_mg)[2:4]))

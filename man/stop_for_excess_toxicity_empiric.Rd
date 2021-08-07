@@ -2,7 +2,7 @@
 % Please edit documentation in R/dtp.R
 \name{stop_for_excess_toxicity_empiric}
 \alias{stop_for_excess_toxicity_empiric}
-\title{A supremely faster version of a function from 'dtpcrm' v0.1.1}
+\title{A supremely faster version of a function from \code{dtpcrm} v0.1.1}
 \usage{
 stop_for_excess_toxicity_empiric(
   x,
@@ -28,11 +28,11 @@ trial stop is recommended.}
 The \code{mtd} object x, with stop decision annotated
 }
 \description{
-Originally, the sampling in stats::rnorm() (see inline comments in code)
+Originally, the sampling in \code{stats::rnorm()} (see inline comments in code)
 consumed 53\% of run-time in a 6-cohort VIOLA DTP. After this change, it
 doesn't even show up! More importantly, the consumption is now dominated
 by (at 75\%) by the objective function 'f' in integrate().
 }
 \author{
-Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
+Adapted by David C. Norris from original \code{dtpcrm::stop_for_excess_toxicity_empiric}
 }

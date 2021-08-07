@@ -13,7 +13,8 @@
 #' the opportunity arises for a more encapsulated treatment of MTDi scenario
 #' generators ('hyperpriors') and their sampling. Specifically, individual
 #' sampled scenarios need only yield two functions:
-#' * A CDF taking a dose vector X = (X1,...,Xd) to probabilities p = (p1,...,pd)
+#' * A CDF taking a dose vector \deqn{X = (X_1,...,X_d)} to probabilities
+#'   \deqn{p = (p_1,...,p_d)}
 #' * A function F(X,kappa) yielding a fractionation matrix $F = \[0 G; H 0\]$.
 #' Crucially, this class actually represents an APPROXIMATION to the hyperprior,
 #' via a finite set of samples from it. The use of reference classes enables us
@@ -79,7 +80,7 @@ HyperMTDi_lognormal <- R6Class(
       invisible(self)
     },
     #' @details
-    #' Set or query the vector of pre-specified dose levels
+    #' Set or query the vector of prespecified dose levels
     #'
     #' @param x A vector of dose levels
     #' @return Self (invisibly), unless `x` is missing,
@@ -94,7 +95,7 @@ HyperMTDi_lognormal <- R6Class(
     #' @details
     #' Set or query a 'skeleton' probability vector
     #'
-    #' @param p A vector of probabilities, one for each pre-specified dose
+    #' @param p A vector of probabilities, one for each prespecified dose
     #' @return Self (invisibly), unless `p` is missing, in which case the
     #' skeleton probabilities are returned (after being calculated from the
     #' sample if not already set explicitly).
@@ -126,7 +127,7 @@ HyperMTDi_lognormal <- R6Class(
     },
     #' @details
     #' Get average toxicity probabilities over the sample
-    #' @return Toxicity probabilites at fixed doses, averaged over sample
+    #' @return Toxicity probabilities at fixed doses, averaged over sample
     avg_tox_probs = function() {
       self$apply(function(CV, median)
         function() {
@@ -137,7 +138,7 @@ HyperMTDi_lognormal <- R6Class(
     #' @details
     #' Return expected counts of ordinal toxicities
     #'
-    #' @param cpe An obect of class `Cpe`
+    #' @param cpe An object of class `Cpe`
     #' @param kappa A log-therapeutic index as in Eq (5) of Norris2020c
     #' @return An `nsamples`-by-6 matrix, each row being the expected counts
     #' for toxicity grades 0 through 5, at one sampled scenario.

@@ -31,7 +31,7 @@ Plan
 
 \itemize{
 \item BOIN recs via isotonic regression
-\item Testthat CPE matches BOIN::get.oc() sim
+\item Test-that CPE matches \code{BOIN::get.oc()} sim
 \item Implement CRM logistic model
 }
 }
@@ -68,31 +68,31 @@ for enumerable designs in context.
 \section{Dependencies}{
 
 \itemize{
-\item Eliminate dependence on/adherence to dtpcrm layout
+\item Eliminate dependence on/adherence to \code{dtpcrm} layout
 \itemize{
-\item Package dtpcrm makes many design decisions unsuited to
+\item Package \code{dtpcrm} makes many design decisions unsuited to
 comprehensive enumeration of whole trials.
-\item Allowing the Crm class to evolve along now-'natural' lines
+\item Allowing the \code{Crm} class to evolve along now-'natural' lines
 probably makes a suitable 'plan' for now.
 \item Expunging superseded code/dependencies ASAP will facilitate
 this evolution.
 \item Even the term 'DTP' seems not quite right anymore for a complete
 path enumeration (CPE?), and should be abandoned.
 }
-\item Eliminate dependence on 'escalation' and 'dfcrm'
+\item Eliminate dependence on \code{escalation} and \code{dfcrm}
 \itemize{
 \item With the special emphasis on \emph{speed} created by CPE,
 I now must implement all underlying trial designs in Rust.
 }
 \item What may be retained in each case are 'Suggests:'-type relations,
-wherever regression tests are helpful -- esp. wrt dfcrm.
+wherever regression tests are helpful -- esp. wrt \code{dfcrm}.
 }
 }
 
 \section{Fast CRM}{
 
 \itemize{
-\item Benchmark; try mul_add()'s
+\item Benchmark; try \code{mul_add()}s
 }
 }
 
@@ -138,7 +138,7 @@ of this software design.
 }
 }
 
-\section{Robustify}{
+\section{Robustness}{
 
 \itemize{
 \item Tests comparing results from multiple CRAN packages

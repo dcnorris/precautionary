@@ -1,6 +1,6 @@
-#' A supremely faster version of a function from 'dtpcrm' v0.1.1
+#' A supremely faster version of a function from `dtpcrm` v0.1.1
 #'
-#' Originally, the sampling in stats::rnorm() (see inline comments in code)
+#' Originally, the sampling in `stats::rnorm()` (see inline comments in code)
 #' consumed 53% of run-time in a 6-cohort VIOLA DTP. After this change, it
 #' doesn't even show up! More importantly, the consumption is now dominated
 #' by (at 75%) by the objective function 'f' in integrate().
@@ -12,7 +12,7 @@
 #' trial stop is recommended.
 #' @return
 #' The `mtd` object x, with stop decision annotated
-#' @author Adapted by David C. Norris from original dtpcrm::stop_for_excess_toxicity_empiric
+#' @author Adapted by David C. Norris from original `dtpcrm::stop_for_excess_toxicity_empiric`
 #' @importFrom stats pnorm
 #' @export
 stop_for_excess_toxicity_empiric <- function (x, tox_lim, prob_cert, dose = 1,

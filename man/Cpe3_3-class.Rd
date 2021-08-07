@@ -3,21 +3,19 @@
 \name{Cpe3_3-class}
 \alias{Cpe3_3-class}
 \alias{Cpe3_3}
-\title{An R6 class encapsulating pre-calculated CPE for 3+3 design}
+\title{An R6 class encapsulating precalculated CPE for 3+3 design}
 \description{
-An R6 class encapsulating pre-calculated CPE for 3+3 design
+An R6 class encapsulating precalculated CPE for 3+3 design
 
-An R6 class encapsulating pre-calculated CPE for 3+3 design
+An R6 class encapsulating precalculated CPE for 3+3 design
 }
 \details{
 TODO: Explain the hierarchy of model classes, including connections
-with the executable specifications set forth in exec/prolog/ccd.pl.
+with the executable specifications set forth in \code{exec/prolog/ccd.pl}.
 }
 \note{
-This specializes the generic method of Cpe superclass,
+This specializes the generic method of \code{Cpe} superclass,
 removing the possibility of updating the state.
-
-#param D A positive integer, the highest permissible dose.
 }
 \examples{
 
@@ -31,7 +29,7 @@ removing the possibility of updating the state.
 \enumerate{
 \item Korn EL, Midthune D, Chen TT, Rubinstein LV, Christian MC, Simon RM.
 A comparison of two phase I trial designs. \emph{Stat Med}. 1994;13(18):1799-1806.
-doi:10.1002/sim.4780131802
+\doi{10.1002/sim.4780131802}
 }
 }
 \section{Super class}{
@@ -71,7 +69,7 @@ doi:10.1002/sim.4780131802
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{D}}{number of pre-specified doses}
+\item{\code{D}}{number of prespecified doses}
 }
 \if{html}{\out{</div>}}
 }
