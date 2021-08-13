@@ -5,8 +5,8 @@ PKG_LIBS = -L$(LIBDIR) -lprecautionary
 #all: clean
 $(SHLIB): $(STATLIB)
 
-# CRAN bs forbids writing $HOME and mandates wiping .cargo after each use
-export CARGO_HOME=$(PWD)/.cargo
+# CRAN forbids writing $HOME and mandates wiping .cargo after each use
+CARGO_HOME = $(PWD)/.cargo
 
 # TODO: Do I need 'cargo build --lib --release ...' below (i.e., should I add '--lib')?
 #       OR.. is it possible that my earlier build efforts were stumbling on this point?
