@@ -47,7 +47,7 @@ Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
 Encoding: UTF-8
 NeedsCompilation: yes
-OS_type: unix
+SystemRequirements: cargo
 RoxygenNote: 7.1.1
 Collate: 
     'bench.R'
