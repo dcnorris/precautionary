@@ -21,7 +21,7 @@ Depends:
     R6,
     R (>= 4.0.0)
 Imports: methods, dplyr, rlang, stringr, knitr, kableExtra, microbenchmark, dfcrm, BOIN,
-	 parallelly
+	 parallelly, utils
 Suggests: 
     dtpcrm,
     rmarkdown,
@@ -47,9 +47,9 @@ Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr, rmarkdown
 Encoding: UTF-8
 NeedsCompilation: yes
-SystemRequirements: cargo
+SystemRequirements: Cargo (rustc package manager)
 RoxygenNote: 7.1.1
-Collate: 
+Collate:
     'bench.R'
     'boin.R'
     'ccd.R'
@@ -63,6 +63,24 @@ Collate:
     'extendr-wrappers.R'
     'hyperprior.R'
     'mclapply.R'
+    'precautionary-package.R'
+    'toxicity_generators.R'
+    'simulate_trials.R'
+    'three3.R'
+Collate.windows:
+    'bench.R'
+    'boin.R'
+    'ccd.R'
+    'cpe.R'
+    'crm.R'
+    'data.R'
+    'dtp.R'
+    'dutycycle.R'
+    'enhance.R'
+    'exact.R'
+    'extendr-wrappers.R'
+    'hyperprior.R'
+    'windows/mclapply.R'
     'precautionary-package.R'
     'toxicity_generators.R'
     'simulate_trials.R'
