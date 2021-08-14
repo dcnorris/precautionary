@@ -1,3 +1,10 @@
+# precautionary 0.2.6-1
+
+## Changes
+
+* Restored Windows build via passthru implementation of `precautionary:::mclapply`
+* Refactored non-portable Makevars one-liner `export CARGO_HOME = ...`
+
 # precautionary 0.2.6
 
 ## Changes
