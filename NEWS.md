@@ -4,6 +4,7 @@
 
 * Restored Windows build via passthru implementation of `precautionary:::mclapply`
 * Refactored non-portable Makevars one-liner `export CARGO_HOME = ...`
+* Added vignette on MCSE-Free CRM Performance & Safety Evaluation
 
 # precautionary 0.2.6
 
