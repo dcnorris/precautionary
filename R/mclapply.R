@@ -32,7 +32,7 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      affinity.list = NULL)
 {
     if (.Platform$OS.type == "windows") # On Windows, which lacks fork(),
-        lapply(X, FUN, ...)             # mclapply is just lapply.
+        return(lapply(X, FUN, ...))     # mclapply is just lapply.
 
     .check_ncores <- getFromNamespace('.check_ncores', 'parallel')
     isChild <- getFromNamespace('isChild', 'parallel')
