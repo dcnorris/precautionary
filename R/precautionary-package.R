@@ -74,10 +74,16 @@ NULL
 #' Plan
 #'
 #' @section Version 0.2.6-1:
-#' * Improve feedback during long calculations
+#' * Improve EscRisk app feedback during long calculations
 #'   - Set J = '...' pending first progress report
 #'   - Analyze where `Cpe$path_array()` spends time
 #'   - Give suitable feedback on `path_array` progress
+#' * Correct Rust-related complaints from CRAN
+#' * Restore Windows build & check on 'main' branch
+#' * Add citations to CPE vignette(s)
+#'   - Lin & Shih 2001
+#'   - Reiner, Paoletti & O'Quigley 1999
+#'   - ?others as referenced in the above?
 #'
 #' @section Version 0.2.7:
 #' * Demote \pkg{escalation} to a 'Suggests'
