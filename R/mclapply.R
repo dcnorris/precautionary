@@ -31,6 +31,9 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      proginit = 0L,
                      affinity.list = NULL)
 {
+    if (.Platform$OS.type == "windows") # On Windows, which lacks fork(),
+        lapply(X, FUN, ...)             # mclapply is just lapply.
+
     .check_ncores <- getFromNamespace('.check_ncores', 'parallel')
     isChild <- getFromNamespace('isChild', 'parallel')
     mcaffinity <- parallel::mcaffinity
@@ -48,9 +51,6 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     mc.advance.stream <- getFromNamespace('mc.advance.stream', 'parallel')
     mc.set.stream <- getFromNamespace('mc.set.stream', 'parallel')
     closeStdout <- getFromNamespace('closeStdout', 'parallel')
-
-    if (.Platform$OS.type == "windows") # On Windows, which lacks fork(),
-        lapply(X, FUN, ...)             # mclapply is just lapply.
 
     ## As a convenience, allow client code to omit `mc.preschedule = FALSE`
     ## when requesting progress reporting. (Typically, we will be requesting
