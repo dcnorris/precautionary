@@ -67,24 +67,6 @@ Collate:
     'toxicity_generators.R'
     'simulate_trials.R'
     'three3.R'
-Collate.windows:
-    'bench.R'
-    'boin.R'
-    'ccd.R'
-    'cpe.R'
-    'crm.R'
-    'data.R'
-    'dtp.R'
-    'dutycycle.R'
-    'enhance.R'
-    'exact.R'
-    'extendr-wrappers.R'
-    'hyperprior.R'
-    'windows/mclapply.R'
-    'precautionary-package.R'
-    'toxicity_generators.R'
-    'simulate_trials.R'
-    'three3.R'
 LazyData: true
 ByteCompile: true
 Config/testthat/edition: 3

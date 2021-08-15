@@ -49,6 +49,9 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     mc.set.stream <- getFromNamespace('mc.set.stream', 'parallel')
     closeStdout <- getFromNamespace('closeStdout', 'parallel')
 
+    if (.Platform$OS.type == "windows") # On Windows, which lacks fork(),
+        lapply(X, FUN, ...)             # mclapply is just lapply.
+
     ## As a convenience, allow client code to omit `mc.preschedule = FALSE`
     ## when requesting progress reporting. (Typically, we will be requesting
     ## progress reports only in those circumstances where the workload lacks
