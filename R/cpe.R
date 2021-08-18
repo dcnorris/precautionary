@@ -154,7 +154,7 @@ Cpe <- R6Class("Cpe",
                      any(path_m["D",] <= 0, na.rm=TRUE)
                    })
                    cpe_stopped <- ppe[stopped]
-                   ppe <- ppe[!stopped]
+                   ppe <- unname(ppe[!stopped]) # NB: unname avoids prefix dup by mclapply
                    ## ..and parallelize over the pending partial paths:
                    par_t0 <- Sys.time() # to report thread-wise times since parallelization
                    FUN <- function(ppe_) {
