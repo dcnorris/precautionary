@@ -293,7 +293,7 @@ Cpe <- R6Class("Cpe",
                    log_p <- log(probs.DLT)
                    log_q <- log(1 - probs.DLT)
                    log_pi <- private$b + private$U %*% c(log_p, log_q)
-                   exp(log_pi)
+                   as.vector(exp(log_pi))
                  }, # </path_probs>
                  #' @details
                  #' Vector of path-wise final dose recommendations
