@@ -52,6 +52,7 @@ A comparison of two phase I trial designs. \emph{Stat Med}. 1994;13(18):1799-180
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="applied">}\href{../../precautionary/html/Cpe.html#method-applied}{\code{precautionary::Cpe$applied()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="decision_array">}\href{../../precautionary/html/Cpe.html#method-decision_array}{\code{precautionary::Cpe$decision_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_array">}\href{../../precautionary/html/Cpe.html#method-path_array}{\code{precautionary::Cpe$path_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_probs">}\href{../../precautionary/html/Cpe.html#method-path_probs}{\code{precautionary::Cpe$path_probs()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="report">}\href{../../precautionary/html/Cpe.html#method-report}{\code{precautionary::Cpe$report()}}\out{</span>}

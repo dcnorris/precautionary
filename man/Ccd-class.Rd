@@ -46,6 +46,7 @@ J R Stat Soc C. 2015;64(3):507-523. \doi{10.1111/rssc.12089}
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="J">}\href{../../precautionary/html/Cpe.html#method-J}{\code{precautionary::Cpe$J()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="bU">}\href{../../precautionary/html/Cpe.html#method-bU}{\code{precautionary::Cpe$bU()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="decision_array">}\href{../../precautionary/html/Cpe.html#method-decision_array}{\code{precautionary::Cpe$decision_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="max_dose">}\href{../../precautionary/html/Cpe.html#method-max_dose}{\code{precautionary::Cpe$max_dose()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_array">}\href{../../precautionary/html/Cpe.html#method-path_array}{\code{precautionary::Cpe$path_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_matrix">}\href{../../precautionary/html/Cpe.html#method-path_matrix}{\code{precautionary::Cpe$path_matrix()}}\out{</span>}

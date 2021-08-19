@@ -78,6 +78,7 @@ new <- Crm$new(skeleton = prior, target = target)$
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="J">}\href{../../precautionary/html/Cpe.html#method-J}{\code{precautionary::Cpe$J()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="bU">}\href{../../precautionary/html/Cpe.html#method-bU}{\code{precautionary::Cpe$bU()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="decision_array">}\href{../../precautionary/html/Cpe.html#method-decision_array}{\code{precautionary::Cpe$decision_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_array">}\href{../../precautionary/html/Cpe.html#method-path_array}{\code{precautionary::Cpe$path_array()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_matrix">}\href{../../precautionary/html/Cpe.html#method-path_matrix}{\code{precautionary::Cpe$path_matrix()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="precautionary" data-topic="Cpe" data-id="path_probs">}\href{../../precautionary/html/Cpe.html#method-path_probs}{\code{precautionary::Cpe$path_probs()}}\out{</span>}

@@ -307,7 +307,78 @@ Cpe <- R6Class("Cpe",
                    pmx <- self$path_matrix()
                    rxcol <- max.col(!is.na(pmx), ties.method="last")
                    rxdose <- abs(pmx[cbind(seq.int(nrow(pmx)),rxcol)])
-                 } # </path_recs>
+                 }, # </path_recs>
+                 #' @details
+                 #' Sparse array indexing decisions by current tally
+                 #'
+                 #' This *very* sparse array may be useful for investigating global properties
+                 #' of dose-finding designs. The design's paths should already have been
+                 #' completely enumerated by `trace_paths` before this method is invoked.
+                 #' @param probs.DLT Numeric vector of DLT probabilities for the design's
+                 #' prespecified doses; if provided, this is used to calculate `path_probs`
+                 #' by which the returned array is weighted.
+                 #' @return A 6-dimensional indicator array indexed by current-dose tally
+                 #' numerator `T` and denominator `N`, current dose `D`, escalation decision
+                 #' `E` with mapping `c(des=1, sta=2, esc=3)`, current cohort number `C`,
+                 #' and path index `J`. If `probs.DLT` is `NULL` (the default), the matrix
+                 #' entries are drawn from 0, 1 or (for confluences of factors which did not
+                 #' occur, and for which no decision was made) `NA`. When `probs.DLT` is
+                 #' specified, these entries are weighted by their path probabilities.
+                 #' @note This method might not work in case of non-constant cohort size.
+                 decision_array = function(probs.DLT=NULL) {
+                   Tdims <- dim(private$T)
+                   J <- Tdims[1]
+                   C <- Tdims[2]
+                   D <- Tdims[3]
+                   ## Calculate a [C,D,J] permutation of private$T with zeros for NA's
+                   TZ <- aperm(private$T, c(2,3,1)) # TZ is C,D,J array
+                   TZ[is.na(TZ)] <- 0
+                   ## Cumulative toxicities, indexed by Cohort and Dose
+                   Tc <- apply(TZ, MARGIN=2:3, FUN=cumsum)
+                   ## Cumulative N's by Cohort & Dose ...
+                   ## TODO: Generalize to case where cohort_size varies with c
+                   cohort_size <- max(private$T, na.rm=TRUE)
+                   Cc <- apply(!is.na(aperm(private$T, c(2,3,1))), MARGIN=2:3, FUN=cumsum)
+                   Nc <- Cc * cohort_size
+                   ## Size an empty result array `E`
+                   Tmax <- max(Tc)
+                   Nmax <- max(Nc)
+                   E <- array(0, dim=c(Tmax+1, Nmax, D, 3, C, J))
+                   dimnames(E) <- list(T=0:Tmax, N=1:Nmax, D=1:D
+                                     , E=c('des','sta','esc')
+                                     , C=1:C, J=NULL
+                                       )
+                   ## We now adopt a C*J storage-order perspective in preparing
+                   ## an indicator index I that will be used to set the 1's of E.
+                   ## Henceforth, we will be constructing C,J indexed matrices,
+                   ## understanding that these will vectorize in column-major order
+                   ## of cohorts-within-paths.
+                   ## Obtain the (possibly NA) dose index on each of J*C cohorts
+                   Dx <- sapply(private$path_list, function(x) matrix(x, nrow=2)[1,]) # (C+1)*J
+                   ## From this, calculate the DECISIONS
+                   DE <- apply(abs(Dx), 2, diff) # C*J
+                   ## Develop some columns of I matrix with nrows = C*J decisions
+                   Dcj <- Dx[1:C,]
+                   Dcj[Dcj <= 0] <- NA # now Dcj[c,j] is dose in cohort c of path j
+                   Dix <- cbind(seq_len(C*J), as.vector(Dcj)) # a dose-indexing matrix
+                   Tcj <- aperm(Tc, c(1,3,2)); dim(Tcj) <- c(C*J, D)
+                   Ncj <- aperm(Nc, c(1,3,2)); dim(Ncj) <- c(C*J, D)
+                   ## (Now Tcj[c,j]/Ncj[c,j] is the (D-vector) tally for cohort c, path j.)
+                   I <- cbind(T = Tcj[Dix] + 1, # shift 0-based tox counts to 1-based indices
+                              N = Ncj[Dix],
+                              D = as.vector(Dcj),
+                              E = as.integer(2L + DE), # shift -1:1 to usable indexes 1:3
+                              C = 1:C,             # Note how these last 2 columns acknowledge
+                              J = rep(1:J, each=C) # our cohorts-within-paths convention.
+                              )
+                   ## And now, the calculation we've all been waiting for...
+                   E[I] <- 1
+                   if (is.null(probs.DLT))
+                     return(E)
+                   Ej <- aperm(E, c(6,1:5)) # Move J index to front..
+                   ## ..to exploit vector auto-recycle for multiplication,
+                   aperm(Ej * self$path_probs(probs.DLT), c(2:6,1)) # then restore indexing.
+                 } # </decision_array>
                ), # </public>
                private = list(
                  .max_dose = NA

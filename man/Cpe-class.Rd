@@ -24,6 +24,8 @@ Concrete subclasses must implement this abstract method.
 
 If the \code{parallel} package were to incorporate the necessary
 changes to \code{mclapply}, I could restore the following import!
+
+This method might not work in case of non-constant cohort size.
 }
 \references{
 Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -59,6 +61,7 @@ if this method is to return a result.
 \item \href{#method-path_array}{\code{Cpe$path_array()}}
 \item \href{#method-path_probs}{\code{Cpe$path_probs()}}
 \item \href{#method-path_rx}{\code{Cpe$path_rx()}}
+\item \href{#method-decision_array}{\code{Cpe$decision_array()}}
 \item \href{#method-clone}{\code{Cpe$clone()}}
 }
 }
@@ -313,6 +316,41 @@ a \code{data.table} where the dose recs would be a column.
 
 \subsection{Returns}{
 Integer vector of final dose recs on the enumerated paths
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-decision_array"></a>}}
+\if{latex}{\out{\hypertarget{method-decision_array}{}}}
+\subsection{Method \code{decision_array()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cpe$decision_array(probs.DLT = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{probs.DLT}}{Numeric vector of DLT probabilities for the design's
+prespecified doses; if provided, this is used to calculate \code{path_probs}
+by which the returned array is weighted.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+Sparse array indexing decisions by current tally
+
+This \emph{very} sparse array may be useful for investigating global properties
+of dose-finding designs. The design's paths should already have been
+completely enumerated by \code{trace_paths} before this method is invoked.
+}
+
+\subsection{Returns}{
+A 6-dimensional indicator array indexed by current-dose tally
+numerator \code{T} and denominator \code{N}, current dose \code{D}, escalation decision
+\code{E} with mapping \code{c(des=1, sta=2, esc=3)}, current cohort number \code{C},
+and path index \code{J}. If \code{probs.DLT} is \code{NULL} (the default), the matrix
+entries are drawn from 0, 1 or (for confluences of factors which did not
+occur, and for which no decision was made) \code{NA}. When \code{probs.DLT} is
+specified, these entries are weighted by their path probabilities.
 }
 }
 \if{html}{\out{<hr>}}

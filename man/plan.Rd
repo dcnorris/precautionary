@@ -10,11 +10,19 @@ Plan
 \section{Version 0.2.6-1}{
 
 \itemize{
-\item Improve feedback during long calculations
+\item Improve EscRisk app feedback during long calculations
 \itemize{
 \item Set J = '...' pending first progress report
 \item Analyze where \code{Cpe$path_array()} spends time
 \item Give suitable feedback on \code{path_array} progress
+}
+\item Correct Rust-related complaints from CRAN
+\item Restore Windows build & check on 'main' branch
+\item Add citations to CPE vignette(s)
+\itemize{
+\item Lin & Shih 2001
+\item Reiner, Paoletti & O'Quigley 1999
+\item ?others as referenced in the above?
 }
 }
 }
