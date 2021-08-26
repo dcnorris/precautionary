@@ -174,6 +174,7 @@ by overriding (TODO: or deleting?) this method.</p>
 <p>Concrete subclasses must implement this abstract method.</p>
 <p>If the <code>parallel</code> package were to incorporate the necessary
 changes to <code>mclapply</code>, I could restore the following import!</p>
+<p>This method might not work in case of non-constant cohort size.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Norris DC. What Were They Thinking? Pharmacologic priors implicit in
@@ -208,6 +209,7 @@ if this method is to return a result.</p></div>
 <li><p><a href='#method-path_array'><code>Cpe$path_array()</code></a></p></li>
 <li><p><a href='#method-path_probs'><code>Cpe$path_probs()</code></a></p></li>
 <li><p><a href='#method-path_rx'><code>Cpe$path_rx()</code></a></p></li>
+<li><p><a href='#method-decision_array'><code>Cpe$decision_array()</code></a></p></li>
 <li><p><a href='#method-clone'><code>Cpe$clone()</code></a></p></li>
 </ul>
 <p><hr>
@@ -398,6 +400,33 @@ a <code>data.table</code> where the dose recs would be a column.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer vector of final dose recs on the enumerated paths</p>
+<p><hr>
+<a id="method-decision_array"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>decision_array()</code></h3>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>Cpe</span><span class='op'>$</span><span class='fu'>decision_array</span><span class='op'>(</span>probs.DLT <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>probs.DLT</code></dt><dd><p>Numeric vector of DLT probabilities for the design's
+prespecified doses; if provided, this is used to calculate <code>path_probs</code>
+by which the returned array is weighted.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Details</h4>
+<p>Sparse array indexing decisions by current tally</p>
+<p>This <em>very</em> sparse array may be useful for investigating global properties
+of dose-finding designs. The design's paths should already have been
+completely enumerated by <code>trace_paths</code> before this method is invoked.</p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>A 6-dimensional indicator array indexed by current-dose tally
+numerator <code>T</code> and denominator <code>N</code>, current dose <code>D</code>, escalation decision
+<code>E</code> with mapping <code><a href='https://rdrr.io/r/base/c.html'>c(des=1, sta=2, esc=3)</a></code>, current cohort number <code>C</code>,
+and path index <code>J</code>. If <code>probs.DLT</code> is <code>NULL</code> (the default), the matrix
+entries are drawn from 0, 1 or (for confluences of factors which did not
+occur, and for which no decision was made) <code>NA</code>. When <code>probs.DLT</code> is
+specified, these entries are weighted by their path probabilities.</p>
 <p><hr>
 <a id="method-clone"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>clone()</code></h3>
 <p>The objects of this class are cloneable with this method.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
