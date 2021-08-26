@@ -11,8 +11,13 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
                      progmetric = length,
                      proginit = 0L,
                      affinity.list = NULL)
+{
+    if (.Platform$OS.type == "windows") # On Windows, which lacks fork(),
+        return(lapply(X, FUN, ...))     # mclapply is just lapply.
+
     parallel::mclapply(X, FUN, ..., mc.preschedule = mc.preschedule,
                        mc.set.seed = mc.set.seed, mc.silent = mc.silent,
                        mc.cores = mc.cores, mc.cleanup = mc.cleanup,
                        mc.allow.recursive = mc.allow.recursive,
                        affinity.list = affinity.list)
+}
