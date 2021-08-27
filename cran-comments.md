@@ -19,7 +19,7 @@ There was 1 NOTE about sub-directory sizes:
 This reflects that the package includes compiled code, and that
 its vignettes are substantial.
 
-## Comments on v0.2.6, addressed below:
+## Actions pursuant to comments on v0.2.6, addressed below:
 
 > "Package authors should make all reasonable efforts to provide
 > cross-platform portable code."
@@ -30,10 +30,9 @@ its vignettes are substantial.
 > for it.  And your Makevars is using GNU make extensions without checking
 > for them.
 
-* Added `SystemRequirements: Cargo` to DESCRIPTION
-
 * Removed `OS_type: unix` from DESCRIPTION
-
+* Added `SystemRequirements: Cargo` to DESCRIPTION
+* Added a `configure` script that tests for cargo and rustc
 * Rectified non-portable usage `export CARGO_HOME=...` in Makevars,
   expressing the export on a separate line from the var definition.
 
@@ -41,22 +40,25 @@ its vignettes are substantial.
 > does about make extensions).  It is not something that should be added
 > to an existing package, and most definitely not in a patch-level update.
 
-* I have used Rust here simply to speed up computations of integrands,
-  an enhancement that is incidental to the *concept* of this package,
-  but essential for feasible Complete Path Enumeration (CPE) of the
-  important Continual Reassessment Method (CRM) class of dose-escalation
-  designs.
+* I have used Rust here to speed up computations of certain integrands,
+  an enhancement that is incidental to the conception of this package
+  (and so most definitely does not indicate starting a fresh package),
+  but is essential for feasible realization of Complete Path Enumeration
+  (CPE) for the important Continual Reassessment Method (CRM) class of
+  dose-escalation designs.
 
-* Rust's widely celebrated support for safe concurrency in fact opens up
-  *new* technical opportunities for me to extend multicore CPE to Windows
-  users in the future, bypassing R's deficiencies on that platform. Thus,
-  my introduction of Rust serves the interests of a pragmatic and relevant
-  cross-platform support for key package features on those platforms which
-  retain greatest utility in the academic & pharmaceutical contexts where
+* Rust's widely celebrated support for safe concurrency in fact creates
+  new technical opportunities for me to extend multicore CPE to Windows
+  users in the future, bypassing disadvantages R suffers on that platform.
+  Thus, my introduction of Rust will serve the interests of a pragmatic,
+  relevant cross-platform support for valuable package features, on major
+  platforms represented in the academic & pharmaceutical contexts where
   `precautionary` will be of greatest interest.
 
-* I have adopted a conservative versioning scheme that is in step with
+* The versioning scheme I have adopted is a conservative one, in step with
   typical academic culture in this field, such that several related CRAN
   packages have 0.1.x versions. This serves to emphasize the experimental
   and provisional status of the underlying ideas, as well as the lengthy
-  anticipated course of their future development.
+  anticipated course of their future development. I am using a `-<patch>`
+  suffix to indicate patches, such as the present 'v0.2.6-1' addressing
+  the above comments.
