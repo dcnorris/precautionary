@@ -203,17 +203,6 @@ PLAN from morning walk 8/28 ...
 % What is the proper STATUS of statements like regret/2?
 % Are these actually to be implemented differently?
 
-regret(sta, 0/6).
-regret(sta, 5/6).
-
-tally0_tally(T0/N0, T1/N1, true) :-
-    #N1 - #N0 #= 3,
-    #T1 - #T0 in 0..3.
-tally0_tally(T0/N0, T1/N1, false) :-
-    (	#N1 - #N0 #\= 3
-    ;	#\(#T1 - #T0 in 0..3)
-    ). % would #\/ be preferable to ';' on any criterion other than style?
-
 /*
 
 I need to think 'from a logical point of view' at this point.
@@ -267,6 +256,14 @@ regret(sta, [T/6|_]) :- T in 0..6,
 
 regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
 			    #T0 #> 0 #/\ #T #= 3.
+
+%% This regret expresses that we regret ANY toxicities after
+%% having escalated from a dose with less than N=3 assessments.
+regret(esc, [T/3, _/N0]) :- T in 0..3, N0 #>= 0,
+			    #T #> 0 #/\ #N #< 3.
+
+%% TODO: Can I simply 'regret' allowing the trial to go on too long?
+%%       Would that provide the basis for HALTING?
 
 %?- regret(sta, [T/N|_]), indomain(T).
 %@    T = 0, N = 6
@@ -356,25 +353,30 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
 %@ ;  false.
 
-%?- length(Path, _), phrase(path([0/0]-[0/0, 0/0]), Path).
+%?- length(Path, _), phrase(path([]-[0/0, 0/0]), Path).
 %@    Path = []
-%@ ;  Path = [esc,[0/3,0/0]-[0/0]] % NB: Need a constraint to avoid 'esc' from 0/0 tally!
-%@ ;  Path = [esc,[1/3,0/0]-[0/0]]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0]]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0]]
-%@ ;  Path = [esc,[0/3,0/0]-[0/0],esc,[0/3,0/3,0/0]-[]]
-%@ ;  Path = [esc,[0/3,0/0]-[0/0],esc,[1/3,0/3,0/0]-[]]
-%@ ;  Path = [esc,[0/3,0/0]-[0/0],esc,[2/3,0/3,0/0]-[]]
-%@ ;  Path = [esc,[0/3,0/0]-[0/0],esc,[3/3,0/3,0/0]-[]]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0],sta,[1/6,0/0]-[0/0]]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0],sta,[2/6,0/0]-[0/0]]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0],sta,[3/6,0/0]-[0/0]]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0],sta,[4/6,0/0]-[0/0]]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0],des,[0/3]-[2/3,0/0]]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0],des,[1/3]-[2/3,0/0]]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0],des,[2/3]-[2/3,0/0]]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0],des,[3/3]-[2/3,0/0]]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0],des,[0/3]-[3/3,0/0]]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0],des,[1/3]-[3/3,0/0]]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0],des,[2/3]-[3/3,0/0]]
+%@ ;  Path = [esc,[0/3]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0]]
+%@ ;  Path = [esc,[2/3]-[0/0]]
+%@ ;  Path = [esc,[3/3]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % Why repeated?
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % Now a 3rd ..
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % ..and 4th time!
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[1/9]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[2/9]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[3/9]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[4/9]-[0/0]]
 %@ ;  ...
