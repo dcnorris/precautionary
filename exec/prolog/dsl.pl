@@ -283,6 +283,8 @@ state0_decision_regrettable(S0, A, true) :-
     regret(A, [T/N, T0/N0]).
 
 %% Here's where I have hidden the all-solutions thinking...
+%% TODO: Try list_si to ensure groundness in S0. Must avoid silently omitting.
+%% Be prepared to DETECT when there is a problem, even if it can't be avoided.
 state0_decision_regrettable(S0, A, false) :-
     (	state0_decision_regrettable(S0, A, true) -> fail % IMPURE!
     ;	true
@@ -319,6 +321,8 @@ state0_decision_regrettable(S0, A, false) :-
 %@ ;  S = [3/6]-[0/0,0/0], Truth = false
 %@ ;  S = [4/6]-[0/0,0/0], Truth = false
 %@ ;  false.
+
+%% NB: can usee reified conjuntion from library(reif)
 
 path(_) --> []. % a convenience for testing; path can stop at any time
 %% Q: Do I need distinct vars {Sesc, Ssta, Sdes}? Could I just use same 'S' for all of them?
