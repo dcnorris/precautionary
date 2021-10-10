@@ -174,7 +174,7 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.13
+0.11
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -185,19 +185,19 @@ NoDose
 1
 </td>
 <td style="text-align:right;">
-0.47
+0.44
 </td>
 <td style="text-align:right;">
-3.87
+3.78
 </td>
 <td style="text-align:right;">
 0.12
 </td>
 <td style="text-align:right;">
-0.41
+0.35
 </td>
 <td style="text-align:right;">
-0.3805310
+0.3559322
 </td>
 </tr>
 <tr>
@@ -205,19 +205,19 @@ NoDose
 2
 </td>
 <td style="text-align:right;">
-1.06
+1.02
 </td>
 <td style="text-align:right;">
-3.81
+3.87
 </td>
 <td style="text-align:right;">
 0.27
 </td>
 <td style="text-align:right;">
-0.34
+0.38
 </td>
 <td style="text-align:right;">
-0.3746313
+0.3644068
 </td>
 </tr>
 <tr>
@@ -225,19 +225,19 @@ NoDose
 3
 </td>
 <td style="text-align:right;">
-0.89
+0.98
 </td>
 <td style="text-align:right;">
-1.95
+2.37
 </td>
 <td style="text-align:right;">
 0.44
 </td>
 <td style="text-align:right;">
-0.12
+0.16
 </td>
 <td style="text-align:right;">
-0.1917404
+0.2231638
 </td>
 </tr>
 <tr>
@@ -245,10 +245,10 @@ NoDose
 4
 </td>
 <td style="text-align:right;">
-0.31
+0.37
 </td>
 <td style="text-align:right;">
-0.54
+0.60
 </td>
 <td style="text-align:right;">
 0.53
@@ -257,7 +257,7 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.0530973
+0.0564972
 </td>
 </tr>
 <tr>
@@ -282,7 +282,7 @@ NoDose
 </tr>
 </tbody>
 </table>
-<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 10.17, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 10.62, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>But simulations such as these cannot answer crucial questions about <strong>trial safety</strong>, mainly because the simulation machinery recognizes no notion of <em>graded toxicity</em>. The binary (yes/no) toxicities in the simulation machinery of <code>escalation</code> regard Grade 5 (fatal) toxicities no differently from Grade 3.</p>
 <div id="introducing-realistic-pharmacologic-thinking" class="section level2">
 <h2 class="hasAnchor">
@@ -421,10 +421,10 @@ NoDose
 0.0347613
 </td>
 <td style="text-align:right;">
-0.10
+0.05
 </td>
 <td style="text-align:right;">
-0.2349138
+0.2210953
 </td>
 </tr>
 <tr>
@@ -435,19 +435,19 @@ NoDose
 1.0
 </td>
 <td style="text-align:right;">
-0.41
+0.33
 </td>
 <td style="text-align:right;">
-3.81
+3.78
 </td>
 <td style="text-align:right;">
 0.1022854
 </td>
 <td style="text-align:right;">
-0.32
+0.30
 </td>
 <td style="text-align:right;">
-0.2737069
+0.2555781
 </td>
 </tr>
 <tr>
@@ -458,19 +458,19 @@ NoDose
 2.0
 </td>
 <td style="text-align:right;">
-0.91
+0.94
 </td>
 <td style="text-align:right;">
-3.72
+4.35
 </td>
 <td style="text-align:right;">
 0.2350660
 </td>
 <td style="text-align:right;">
-0.40
+0.49
 </td>
 <td style="text-align:right;">
-0.2672414
+0.2941176
 </td>
 </tr>
 <tr>
@@ -481,10 +481,10 @@ NoDose
 4.0
 </td>
 <td style="text-align:right;">
-1.03
+1.19
 </td>
 <td style="text-align:right;">
-2.43
+2.82
 </td>
 <td style="text-align:right;">
 0.4301892
@@ -493,7 +493,7 @@ NoDose
 0.16
 </td>
 <td style="text-align:right;">
-0.1745690
+0.1906694
 </td>
 </tr>
 <tr>
@@ -504,19 +504,19 @@ NoDose
 6.0
 </td>
 <td style="text-align:right;">
-0.38
+0.39
 </td>
 <td style="text-align:right;">
-0.69
+0.57
 </td>
 <td style="text-align:right;">
 0.5571371
 </td>
 <td style="text-align:right;">
-0.02
+0.00
 </td>
 <td style="text-align:right;">
-0.0495690
+0.0385396
 </td>
 </tr>
 </tbody>
@@ -577,7 +577,7 @@ Total
 7
 </td>
 <td style="text-align:right;">
-2
+3
 </td>
 <td style="text-align:right;">
 2
@@ -586,13 +586,13 @@ Total
 1.6
 </td>
 <td style="text-align:right;">
-0.7
+0.8
 </td>
 <td style="text-align:right;">
-0.5
+0.6
 </td>
 <td style="text-align:right;">
-14
+15
 </td>
 </tr></tbody>
 </table>
@@ -732,7 +732,7 @@ Total
 </thead>
 <tbody><tr>
 <td style="text-align:right;">
-8
+9
 </td>
 <td style="text-align:right;">
 1.7
@@ -744,7 +744,7 @@ Total
 1.1
 </td>
 <td style="text-align:right;">
-0.6
+0.7
 </td>
 <td style="text-align:right;">
 0.7
@@ -813,25 +813,25 @@ Total
 1.25
 </td>
 <td style="text-align:right;">
-9.99
+10.32
 </td>
 <td style="text-align:right;">
-0.88
+0.97
 </td>
 <td style="text-align:right;">
-0.84
+0.77
 </td>
 <td style="text-align:right;">
-0.63
+0.64
 </td>
 <td style="text-align:right;">
-0.51
+0.53
 </td>
 <td style="text-align:right;">
-1.25
+1.23
 </td>
 <td style="text-align:right;">
-14.1
+14.46
 </td>
 </tr>
 <tr>
@@ -839,7 +839,7 @@ Total
 1.50
 </td>
 <td style="text-align:right;">
-8.43
+8.76
 </td>
 <td style="text-align:right;">
 1.73
@@ -848,16 +848,16 @@ Total
 1.56
 </td>
 <td style="text-align:right;">
-1.07
+1.08
 </td>
 <td style="text-align:right;">
-0.62
+0.66
 </td>
 <td style="text-align:right;">
-0.70
+0.67
 </td>
 <td style="text-align:right;">
-14.1
+14.46
 </td>
 </tr>
 <tr>
@@ -865,25 +865,25 @@ Total
 1.75
 </td>
 <td style="text-align:right;">
-7.05
+7.47
 </td>
 <td style="text-align:right;">
-2.48
+2.34
 </td>
 <td style="text-align:right;">
-2.18
+2.24
 </td>
 <td style="text-align:right;">
-1.32
+1.39
 </td>
 <td style="text-align:right;">
-0.65
+0.62
 </td>
 <td style="text-align:right;">
-0.42
+0.40
 </td>
 <td style="text-align:right;">
-14.1
+14.46
 </td>
 </tr>
 <tr>
@@ -891,25 +891,25 @@ Total
 2.00
 </td>
 <td style="text-align:right;">
-6.00
+6.38
 </td>
 <td style="text-align:right;">
-2.94
+2.87
 </td>
 <td style="text-align:right;">
-2.78
+2.80
 </td>
 <td style="text-align:right;">
-1.52
+1.61
 </td>
 <td style="text-align:right;">
-0.61
+0.55
 </td>
 <td style="text-align:right;">
-0.26
+0.24
 </td>
 <td style="text-align:right;">
-14.1
+14.46
 </td>
 </tr>
 </tbody>
@@ -969,19 +969,19 @@ Total
 12
 </td>
 <td style="text-align:right;">
-4
+3
 </td>
 <td style="text-align:right;">
 3
 </td>
 <td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-1.5
+2.4
 </td>
 <td style="text-align:right;">
 1.4
+</td>
+<td style="text-align:right;">
+1.3
 </td>
 <td style="text-align:right;">
 24.0
@@ -1050,7 +1050,7 @@ Total
 1.1
 </td>
 <td style="text-align:right;">
-1.1
+1.0
 </td>
 <td style="text-align:right;">
 24.0
