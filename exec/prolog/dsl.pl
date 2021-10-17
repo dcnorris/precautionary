@@ -283,15 +283,15 @@ state0_decision_regrettable(S0, A, true) :-
     S  = [T /N |_] - _, %       into a regret/3 predicate?
     %% I introduce the (->) below to avert backtracking over
     %% possibly multiple reasons for regret -- one is enough!
-    regret(A, [T/N, T0/N0]) -> true. % how is this different from cut/0?
+    (	regret(A, [T/N, T0/N0]) -> true
+    ;	false
+    ).
 
 state0_decision_regrettable(S0, A, false) :-
     %% For 'safe inference' in this predicate, we need
     %% a sufficiently instantiated state for the trial.
     state_si(S0),
-    (	state0_decision_regrettable(S0, A, true) -> fail % IMPURE!
-    ;	true
-    ).
+    \+ state0_decision_regrettable(S0, A, true). % IMPURE!
     
 %% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
 %%       Without it, I'm left with unsightly extra choice points.
