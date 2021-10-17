@@ -116,6 +116,7 @@ No, it's https://en.wikipedia.org/wiki/Inductive_programming!
 :- use_module(library(lists)).
 :- use_module(library(clpz)).
 :- use_module(library(reif)).
+:- use_module(library(si)).
 :- use_module(library(dcgs)).
 :- use_module(tally).
 
@@ -280,12 +281,32 @@ state0_decision_regrettable(S0, A, true) :-
     state0_decision_state(S0, A, S),
     S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
     S  = [T /N |_] - _, %       into a regret/3 predicate?
-    regret(A, [T/N, T0/N0]).
+    %% I introduce the '-> true' below to avert backtracking over
+    %% possibly multiple reasons for regret -- one is enough!
+    regret(A, [T/N, T0/N0]) -> true. % how is this different from cut/0?
+
+%% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
+%%       Without it, I'm left with unsightly extra choice points.
+state_si(L - R) :-
+    %% TODO: Should I also insist that all entries in L & R
+    %%       are tallies T/N, with T and N being integers?
+    %%       (NB: list_si/1 does sort/2, which implies visiting
+    %%       every element of the list anyway.)
+    (	list_si(L) -> list_si(R)
+    ;	false
+    ).
+
+%?- state_si([]-[0/0,0/0]).
+%@    true.
+
+%?- state_si([1/3]-[0/0,0/0]).
+%@    true.
 
 %% Here's where I have hidden the all-solutions thinking...
-%% TODO: Try list_si to ensure groundness in S0. Must avoid silently omitting.
-%% Be prepared to DETECT when there is a problem, even if it can't be avoided.
 state0_decision_regrettable(S0, A, false) :-
+    %% For 'safe inference' in this predicate, we need
+    %% a sufficiently instantiated state for the trial.
+    state_si(S0),
     (	state0_decision_regrettable(S0, A, true) -> fail % IMPURE!
     ;	true
     ).
@@ -307,8 +328,13 @@ state0_decision_regrettable(S0, A, false) :-
 %@ ;  false.
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, true).
-%@    S = [3/3,1/3]-[0/0]
-%@ ;  false.
+%@ false.
+
+%?- state0_decision_regrettable([1/3]-[0/0, 0/0], sta, true).
+%@ false.
+
+%?- state0_decision_regrettable([2/3]-[0/0, 0/0], sta, true).
+%@ false.
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, Truth).
 %@    S = [0/3,1/3]-[0/0], Truth = false
@@ -363,24 +389,21 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  Path = [esc,[1/3]-[0/0]]
 %@ ;  Path = [esc,[2/3]-[0/0]]
 %@ ;  Path = [esc,[3/3]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % Why repeated?
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % Now a 3rd ..
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]] % ..and 4th time!
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[1/9]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[2/9]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[3/9]-[0/0]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],sta,[4/9]-[0/0]]
-%@ ;  ...
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[]]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[]]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[]]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],esc,[0/3,1/3]-[]] % should not escalate in this case!
+%@ ;  Path = [esc,[1/3]-[0/0],esc,[1/3,1/3]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],esc,[2/3,1/3]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],esc,[3/3,1/3]-[]]
+%@ ;  Path = [esc,[2/3]-[0/0],esc,[0/3,2/3]-[]]
+%@ ;  Path = [esc,[2/3]-[0/0],esc,[1/3,2/3]-[]]
+%@ ;  Path = [esc,[2/3]-[0/0],esc,[2/3,2/3]-[]]
+%@ ;  Path = [esc,[2/3]-[0/0],esc,[3/3,2/3]-[]]
+%@ ;  Path = [esc,[3/3]-[0/0],esc,[0/3,3/3]-[]]
+%@ ;  Path = [esc,[3/3]-[0/0],esc,[1/3,3/3]-[]]
+%@ ;  Path = [esc,[3/3]-[0/0],esc,[2/3,3/3]-[]]
+%@ ;  Path = [esc,[3/3]-[0/0],esc,[3/3,3/3]-[]]
+%@ ;  %% Why nontermination here? A flaw in the study spec, or the interpreter?
+%@ caught: error('$interrupt_thrown',repl)
