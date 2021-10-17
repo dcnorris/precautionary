@@ -255,36 +255,44 @@ But the price to pay for this is REIFICATION. I need to *reify* regret.
 regret(sta, [T/6|_]) :- T in 0..6,
 			#T #= 0 #\/ #T #>= 5.
 
+regret(sta, [_/N|_]) :- #N #> 6. % regret enrolling too many at one dose
+
+%?- regret(sta, [T/N|_]).
+%@    N = 6, clpz:(#T#=0#<==> #_A), clpz:(#T#>=5#<==> #_B), clpz:(#_A#\/ #_B#<==>1), clpz:(T in 0..6), clpz:(_A in 0..1), clpz:(_B in 0..1)
+%@ ;  clpz:(N in 7..sup).
+
 regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
 			    #T0 #> 0 #/\ #T #= 3.
 
-%% This regret expresses that we regret ANY toxicities after
-%% having escalated from a dose with less than N=3 assessments.
-regret(esc, [T/3, _/N0]) :- T in 0..3, N0 #>= 0,
-			    #T #> 0 #/\ #N #< 3.
+%% This clause expresses that we regret ANY toxicities after
+%% having escalated from a dose with fewer than N=3 assessments.
+regret(esc, [T/3, T0/N0]) :- T in 0..3, #N0 #>= 0, #T0 #>= 0,
+			    #T #> 0 #/\ #N0 #< 3.
 
-%% TODO: Can I simply 'regret' allowing the trial to go on too long?
-%%       Would that provide the basis for HALTING?
-
-%?- regret(sta, [T/N|_]), indomain(T).
-%@    T = 0, N = 6
-%@ ;  T = 5, N = 6
-%@ ;  T = 6, N = 6. 
+%?- regret(esc, [T/N, T0/N0]).
+%@    T = 3, N = 3, N0 = 3, clpz:(T0 in 1..3)
+%@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(T0 in 0..sup), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2).
 
 %?- regret(esc, Qs).
-%@    Qs = [3/3,_A/3], clpz:(_A in 1..3).
-
-%% TODO: Try using this accessory predicate regret_/2 that unwraps the states?
-regret_(A, [[T/N|_]-_, [T0/N0|_]-_]) :- regret(A, [T/N, T0/N0]). 
+%@    Qs = [3/3,_A/3], clpz:(_A in 1..3)
+%@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2).
 
 state0_decision_regrettable(S0, A, true) :-
     state0_decision_state(S0, A, S),
     S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
     S  = [T /N |_] - _, %       into a regret/3 predicate?
-    %% I introduce the '-> true' below to avert backtracking over
+    %% I introduce the (->) below to avert backtracking over
     %% possibly multiple reasons for regret -- one is enough!
     regret(A, [T/N, T0/N0]) -> true. % how is this different from cut/0?
 
+state0_decision_regrettable(S0, A, false) :-
+    %% For 'safe inference' in this predicate, we need
+    %% a sufficiently instantiated state for the trial.
+    state_si(S0),
+    (	state0_decision_regrettable(S0, A, true) -> fail % IMPURE!
+    ;	true
+    ).
+    
 %% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
 %%       Without it, I'm left with unsightly extra choice points.
 state_si(L - R) :-
@@ -302,16 +310,6 @@ state_si(L - R) :-
 %?- state_si([1/3]-[0/0,0/0]).
 %@    true.
 
-%% Here's where I have hidden the all-solutions thinking...
-state0_decision_regrettable(S0, A, false) :-
-    %% For 'safe inference' in this predicate, we need
-    %% a sufficiently instantiated state for the trial.
-    state_si(S0),
-    (	state0_decision_regrettable(S0, A, true) -> fail % IMPURE!
-    ;	true
-    ).
-    
-
 %?- state0_decision_state([1/3]-[0/0, 0/0], A, S).
 %@    A = esc, S = [0/3,1/3]-[0/0]
 %@ ;  A = esc, S = [1/3,1/3]-[0/0]
@@ -323,12 +321,22 @@ state0_decision_regrettable(S0, A, false) :-
 %@ ;  A = sta, S = [4/6]-[0/0,0/0]
 %@ ;  false.
 
-%?- state0_decision_state([1/3]-[0/0, 0/0], A, [T/N|_]-_), regret(A, [T/N,1/3]).
+%?- state0_decision_state([1/3]-[0/0], A, [T/N|_]-_), regret(A, [T/N,1/3]).
 %@    A = esc, T = 3, N = 3
 %@ ;  false.
 
-%?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, true).
-%@ false.
+%?- state0_decision_regrettable([1/3]-[0/0], esc, true).
+%@ false. % WRONG!
+
+%?- E=esc, state0_decision_state([1/3]-[0/0], E, [T/N|_]-_), regret(E, [T/N,1/3]) -> true.
+%@    E = esc, T = 3, N = 3.
+%@    E = esc, T = 3, N = 3
+%@ ;  false.
+%@    T = 0, N = 3
+%@ ;  T = 1, N = 3
+%@ ;  T = 2, N = 3
+%@ ;  T = 3, N = 3
+%@ ;  false.
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], sta, true).
 %@ false.
@@ -377,10 +385,10 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 	     path(S). % TODO: Implement declare_mtd possibility
 
 %?- length(Path, 2), phrase(path([0/0]-[0/0, 0/0]), Path), Path = [A,S].
-%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
+%@    Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
+%@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
+%@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
+%@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
 %@ ;  false.
 
 %?- length(Path, _), phrase(path([]-[0/0, 0/0]), Path).
@@ -393,17 +401,28 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[]]
 %@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[]]
 %@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],esc,[0/3,1/3]-[]] % should not escalate in this case!
-%@ ;  Path = [esc,[1/3]-[0/0],esc,[1/3,1/3]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],esc,[2/3,1/3]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],esc,[3/3,1/3]-[]]
-%@ ;  Path = [esc,[2/3]-[0/0],esc,[0/3,2/3]-[]]
-%@ ;  Path = [esc,[2/3]-[0/0],esc,[1/3,2/3]-[]]
-%@ ;  Path = [esc,[2/3]-[0/0],esc,[2/3,2/3]-[]]
-%@ ;  Path = [esc,[2/3]-[0/0],esc,[3/3,2/3]-[]]
-%@ ;  Path = [esc,[3/3]-[0/0],esc,[0/3,3/3]-[]]
-%@ ;  Path = [esc,[3/3]-[0/0],esc,[1/3,3/3]-[]]
-%@ ;  Path = [esc,[3/3]-[0/0],esc,[2/3,3/3]-[]]
-%@ ;  Path = [esc,[3/3]-[0/0],esc,[3/3,3/3]-[]]
-%@ ;  %% Why nontermination here? A flaw in the study spec, or the interpreter?
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[0/3,2/6]-[]] % SHOULD HALT
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[1/3,2/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[2/3,2/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[3/3,2/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[0/3,3/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[1/3,3/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[2/3,3/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[3/3,3/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[0/3,4/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[1/3,4/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[2/3,4/6]-[]]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[3/3,4/6]-[]]
+%% ... NONTERMINATION
+%@ ;  caught: error('$interrupt_thrown',repl)
 %@ caught: error('$interrupt_thrown',repl)
+%@ caught: error('$interrupt_thrown',repl)
+%@ 
