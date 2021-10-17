@@ -269,13 +269,20 @@ regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
 regret(esc, [T/3, T0/N0]) :- T in 0..3, #N0 #>= 0, #T0 #>= 0,
 			    #T #> 0 #/\ #N0 #< 3.
 
+%% The above is not quite sufficient, however, since we also
+%% ought to regret ANY toxicities after escalating from >= 2/6.
+regret(esc, [_, T/6]) :- T in 0..6,
+			 #T #> 1.
+
 %?- regret(esc, [T/N, T0/N0]).
 %@    T = 3, N = 3, N0 = 3, clpz:(T0 in 1..3)
-%@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(T0 in 0..sup), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2).
+%@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(T0 in 0..sup), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2)
+%@ ;  N0 = 6, clpz:(T0 in 2..6).
 
 %?- regret(esc, Qs).
 %@    Qs = [3/3,_A/3], clpz:(_A in 1..3)
-%@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2).
+%@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2)
+%@ ;  Qs = [_B,_A/6], clpz:(_A in 2..6).
 
 state0_decision_regrettable(S0, A, true) :-
     state0_decision_state(S0, A, S),
@@ -409,20 +416,5 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[]]
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[]]
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[0/3,2/6]-[]] % SHOULD HALT
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[1/3,2/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[2/3,2/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],esc,[3/3,2/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[0/3,3/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[1/3,3/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[2/3,3/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],esc,[3/3,3/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[0/3,4/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[1/3,4/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[2/3,4/6]-[]]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],esc,[3/3,4/6]-[]]
-%% ... NONTERMINATION
-%@ ;  caught: error('$interrupt_thrown',repl)
+%@ ; ... NONTERMINATION
 %@ caught: error('$interrupt_thrown',repl)
-%@ caught: error('$interrupt_thrown',repl)
-%@ 
