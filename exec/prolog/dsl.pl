@@ -252,14 +252,21 @@ But the price to pay for this is REIFICATION. I need to *reify* regret.
 %% TODO: Consider whether this list 'trick' is a bad thing. Should I just
 %%       create an extra argument, invoking with _ in don't-care cases?
 
-regret(sta, [T/6|_]) :- T in 0..6,
-			#T #= 0 #\/ #T #>= 5.
-
-regret(sta, [_/N|_]) :- #N #> 6. % regret enrolling too many at one dose
+regret(sta, [T/N|_]) :-
+    (	#N #> 6; % regret enrolling too many at any one dose
+	#N #= 6 #/\ #T #= 0; % regret staying at a too-low dose
+	#N #= 6 #/\ #T #>= 5 % regret excess toxitiy
+    ).
 
 %?- regret(sta, [T/N|_]).
-%@    N = 6, clpz:(#T#=0#<==> #_A), clpz:(#T#>=5#<==> #_B), clpz:(#_A#\/ #_B#<==>1), clpz:(T in 0..6), clpz:(_A in 0..1), clpz:(_B in 0..1)
-%@ ;  clpz:(N in 7..sup).
+%@    clpz:(N in 7..sup)
+%@ ;  T = 0, N = 6
+%@ ;  N = 6, clpz:(T in 5..sup).
+
+%?- regret(sta, [5/6]).
+%@    true.
+
+%% Maybe the multiple clauses cause this nuisance?
 
 regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
 			    #T0 #> 0 #/\ #T #= 3.
@@ -326,16 +333,6 @@ state0_decision_state_regrettable(S0, A, S, true) :-
     ;	false
     ).
 
-stop_trial(S, true) :-
-    MTD = bogus,
-    declare_mtd(MTD). % TODO: Actually compute the MTD properly!
-
-%?- lists:member(X, [1,2,3]).
-%@    X = 1
-%@ ;  X = 2
-%@ ;  X = 3
-%@ ;  false.
-
 %% Should I feel suspicious about the _ here?
 state0_decision_state_regrettable(S0, A, _, false) :-
     state_si(S0),
@@ -364,7 +361,7 @@ state0_decision_state_regrettable(S0, A, _, false) :-
 %@ ;  false.
 
 %?- state0_decision_regrettable([1/3]-[0/0], esc, true).
-%@ false. % WRONG!
+%@    true.
 
 %?- E=esc, state0_decision_state([1/3]-[0/0], E, [T/N|_]-_), regret(E, [T/N,1/3]) -> true.
 %@    E = esc, T = 3, N = 3.
@@ -379,8 +376,18 @@ state0_decision_state_regrettable(S0, A, _, false) :-
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], sta, true).
 %@ false.
 
+%?- state0_decision_state_regrettable([1/3]-[0/0, 0/0], sta, S, true).
+%@ false.
+
 %?- state0_decision_regrettable([2/3]-[0/0, 0/0], sta, true).
 %@    true.
+
+%?- state0_decision_state_regrettable([2/3]-[0/0, 0/0], sta, S, true).
+%@    S = [5/6]-[0/0,0/0].
+
+%?- state0_decision_state_regrettable([2/3]-[0/0, 0/0], sta, [5/6]-[0/0, 0/0], true).
+%@    true.
+
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, Truth).
 %@    Truth = true
@@ -433,14 +440,14 @@ repath(_) --> []. % a convenience for testing; path can stop at any time
 %% The intention of ','/3 seems to be to thread Truth thru monadically?
 repath(S0) --> { if_((E = esc, state0_decision_state_regrettable(S0, E, S), % might I regret escalating?
 		      E = sta, state0_decision_state_regrettable(S0, E, S), % might I regret staying?
-		      E = des, state0_decision_state_regrettable(S0, E, S) % (does 'regret' even apply to des?)
+		      E = des, state0_decision_state_regrettable(S0, E, S) % might I 'regret' de-escalating?
 		     )
-		     %% Whichever of those regrets we 'escape', becomes the next decision:
-		     , Next = [E, S]
-		     %% But if I'd regret EVERY ONE OF THE ABOVE decisions, then STOP
+		     %% If I'd regret EVERY ONE OF THE ABOVE decisions, then only decision left is to STOP
 		     , (MTD = todo, % TODO: Actually obtain the MTD properly from S0!
-			Next = [halt, declare_mtd(MTD)]
+			Next = [stop, declare_mtd(MTD)]
 		       )
+		     %% But if we escape one of those clauses w/o regret, that defines our next decision:
+		     , Next = [E, S]
 		    )
 	       },
 	       Next,
@@ -454,7 +461,7 @@ repath(S0) --> { if_((E = esc, state0_decision_state_regrettable(S0, E, S), % mi
 %@ ;  false.
 
 %?- length(Path, 2), phrase(repath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
-%@    Path = [halt,declare_mtd(todo)], A = halt, S = declare_mtd(todo)
+%@    Path = [A,S], dif:dif(A,esc)
 %@ ;  caught: error(instantiation_error,sort/2)
 
 %?- N in 1..8, indomain(N), length(Path, N), phrase(path([]-[0/0, 0/0]), Path).
