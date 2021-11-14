@@ -191,36 +191,38 @@ themselves to misinterpretation as <em>confidence bounds</em> on the number
 of patients who will experience each toxicity grade <em>in any given trial</em>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>mtdi_gen</span> <span class='op'>&lt;-</span> <span class='fu'><a href='hyper_mtdi_lognormal-class.html'>hyper_mtdi_lognormal</a></span><span class='op'>(</span>CV <span class='op'>=</span> <span class='fl'>1</span>
-                                ,median_mtd <span class='op'>=</span> <span class='fl'>5</span>
-                                ,median_sdlog <span class='op'>=</span> <span class='fl'>0.5</span>
-                                ,units<span class='op'>=</span><span class='st'>"mg/kg"</span><span class='op'>)</span>
-<span class='va'>ordinalizer</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>MTDi</span>, <span class='va'>r0</span> <span class='op'>=</span> <span class='fl'>1.5</span><span class='op'>)</span>
-  <span class='va'>MTDi</span> <span class='op'>*</span> <span class='va'>r0</span> <span class='op'>^</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='op'>-</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='op'>-</span><span class='fl'>1</span>, Gr3<span class='op'>=</span><span class='fl'>0</span>, Gr4<span class='op'>=</span><span class='fl'>1</span>, Gr5<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
-<span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>dose_levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>4</span>, <span class='fl'>6</span><span class='op'>)</span>
-              ,ordinalizer <span class='op'>=</span> <span class='va'>ordinalizer</span><span class='op'>)</span>
-<span class='fu'>get_boin</span><span class='op'>(</span>num_doses <span class='op'>=</span> <span class='fl'>5</span>, target <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
-  <span class='fu'>stop_at_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>24</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
-  <span class='fu'><a href='simulate_trials.html'>simulate_trials</a></span><span class='op'>(</span>
-    num_sims <span class='op'>=</span> <span class='fl'>60</span>
-  , true_prob_tox <span class='op'>=</span> <span class='va'>mtdi_gen</span><span class='op'>)</span> <span class='op'>-&gt;</span> <span class='va'>boin_hsims</span>
-<span class='va'>safety</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>boin_hsims</span><span class='op'>)</span><span class='op'>$</span><span class='va'>safety</span>
-<span class='va'>safety</span> <span class='co'># The print method invokes 'format.safetytab' ..</span>
-</div><div class='output co'>#&gt;   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total
-#&gt;     13    3    3    2    1    1   24.0</div><div class='input'><span class='co'># .. but we can also inspect the underlying matrix by indexing:</span>
-<span class='va'>safety</span><span class='op'>[</span>,<span class='op'>]</span>  <span class='co'># indexing strips 'safetytab' class, returning plain matrix</span>
-</div><div class='output co'>#&gt;                             None       Gr1      Gr2       Gr3       Gr4
-#&gt; Expected participants 13.4000000 3.4166667 2.650000 2.0666667 1.3166667
-#&gt; MCSE                   0.3921547 0.1949818 0.224017 0.1609763 0.1333863
-#&gt;                             Gr5 Total
-#&gt; Expected participants 1.1500000    24
-#&gt; MCSE                  0.1382395     0</div><div class='input'><span class='co'># Note that, by extend()ing the simulation we can increase precision:</span>
-<span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='co'># may run a bit too long for CRAN servers' taste</span>
-  <span class='va'>boin_hsims</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='extend.html'>extend</a></span><span class='op'>(</span>target_mcse <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span> <span class='op'>-&gt;</span> <span class='va'>boin_hsimsX</span>
-  <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>boin_hsimsX</span><span class='op'>)</span><span class='op'>$</span><span class='va'>safety</span>
-<span class='op'>}</span>
-<span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span><span class='va'>old</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>mtdi_gen</span> <span class='op'>&lt;-</span> <span class='fu'><a href='hyper_mtdi_lognormal-class.html'>hyper_mtdi_lognormal</a></span><span class='op'>(</span>CV <span class='op'>=</span> <span class='fl'>1</span></span>
+<span class='r-in'>                                ,median_mtd <span class='op'>=</span> <span class='fl'>5</span></span>
+<span class='r-in'>                                ,median_sdlog <span class='op'>=</span> <span class='fl'>0.5</span></span>
+<span class='r-in'>                                ,units<span class='op'>=</span><span class='st'>"mg/kg"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>ordinalizer</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>MTDi</span>, <span class='va'>r0</span> <span class='op'>=</span> <span class='fl'>1.5</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='va'>MTDi</span> <span class='op'>*</span> <span class='va'>r0</span> <span class='op'>^</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Gr1<span class='op'>=</span><span class='op'>-</span><span class='fl'>2</span>, Gr2<span class='op'>=</span><span class='op'>-</span><span class='fl'>1</span>, Gr3<span class='op'>=</span><span class='fl'>0</span>, Gr4<span class='op'>=</span><span class='fl'>1</span>, Gr5<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>dose_levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>4</span>, <span class='fl'>6</span><span class='op'>)</span></span>
+<span class='r-in'>              ,ordinalizer <span class='op'>=</span> <span class='va'>ordinalizer</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>get_boin</span><span class='op'>(</span>num_doses <span class='op'>=</span> <span class='fl'>5</span>, target <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
+<span class='r-in'>  <span class='fu'>stop_at_n</span><span class='op'>(</span>n <span class='op'>=</span> <span class='fl'>24</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
+<span class='r-in'>  <span class='fu'><a href='simulate_trials.html'>simulate_trials</a></span><span class='op'>(</span></span>
+<span class='r-in'>    num_sims <span class='op'>=</span> <span class='fl'>60</span></span>
+<span class='r-in'>  , true_prob_tox <span class='op'>=</span> <span class='va'>mtdi_gen</span><span class='op'>)</span> <span class='op'>-&gt;</span> <span class='va'>boin_hsims</span></span>
+<span class='r-in'><span class='va'>safety</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>boin_hsims</span><span class='op'>)</span><span class='op'>$</span><span class='va'>safety</span></span>
+<span class='r-in'><span class='va'>safety</span> <span class='co'># The print method invokes 'format.safetytab' ..</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>     13    3    3    2    1    1   24.0</span>
+<span class='r-in'><span class='co'># .. but we can also inspect the underlying matrix by indexing:</span></span>
+<span class='r-in'><span class='va'>safety</span><span class='op'>[</span>,<span class='op'>]</span>  <span class='co'># indexing strips 'safetytab' class, returning plain matrix</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>                             None       Gr1      Gr2       Gr3       Gr4</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Expected participants 13.4000000 3.4166667 2.650000 2.0666667 1.3166667</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> MCSE                   0.3921547 0.1949818 0.224017 0.1609763 0.1333863</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>                             Gr5 Total</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Expected participants 1.1500000    24</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> MCSE                  0.1382395     0</span>
+<span class='r-in'><span class='co'># Note that, by extend()ing the simulation we can increase precision:</span></span>
+<span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='co'># may run a bit too long for CRAN servers' taste</span></span>
+<span class='r-in'>  <span class='va'>boin_hsims</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='extend.html'>extend</a></span><span class='op'>(</span>target_mcse <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span> <span class='op'>-&gt;</span> <span class='va'>boin_hsimsX</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>boin_hsimsX</span><span class='op'>)</span><span class='op'>$</span><span class='va'>safety</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span><span class='va'>old</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

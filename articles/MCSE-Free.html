@@ -164,10 +164,10 @@
   
   <span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">calmod</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
-<pre><code>## T (22041×15×6) constructed in 2.255 sec
-## T condensed in 1.572 sec</code></pre>
+<pre><code>## T (22041×15×6) constructed in 2.226 sec
+## T condensed in 1.560 sec</code></pre>
 <pre><code>##    user  system elapsed 
-##  10.218   0.571   9.269</code></pre>
+##   9.948   0.391   8.955</code></pre>
 <p>The 3-dimensional array <code>T[j,c,d]</code> has the same structure and function as in <span class="citation">Norris (2020)</span>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
@@ -201,7 +201,7 @@
 <code class="sourceCode R"><span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">prob.DLT</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="va">prob.DLT</span><span class="op">)</span>
   <span class="va">log_q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prob.DLT</span><span class="op">)</span>
-  <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op">%*%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">log_p</span>, <span class="va">log_q</span><span class="op">)</span>
+  <span class="va">b</span> <span class="op">+</span> <span class="va">U</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">log_p</span>, <span class="va">log_q</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>Note in particular that <span class="math inline">\(\mathbf{\pi}(\mathbf{p})\)</span> is a function of the DLT probabilities at the design’s prespecified doses, and so is defined on the <em>simplex</em> <span class="math inline">\(0 &lt; p_1 &lt; p_2 &lt; ... &lt; p_D &lt; 1\)</span>. To demonstrate that the constraint <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span> holds over this domain, let us check the identity at a randomly chosen point:<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">

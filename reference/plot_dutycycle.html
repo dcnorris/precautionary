@@ -192,26 +192,26 @@ But any table with columns named <code>pid</code>, <code>t1</code> and <code>t2<
 plus an overall average</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span>
-  <span class='co'>## Example from Braun2020</span>
-  <span class='va'>d1_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>5</span>
-  <span class='va'>cum_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>10</span>
-  <span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='va'><a href='Crm-class.html'>Crm</a></span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.03</span>, <span class='fl'>0.11</span>, <span class='fl'>0.25</span>, <span class='fl'>0.42</span>, <span class='fl'>0.58</span>, <span class='fl'>0.71</span><span class='op'>)</span>,
-                 scale <span class='op'>=</span> <span class='fl'>0.85</span>, <span class='co'># aka 'sigma'</span>
-                 target <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span><span class='op'>$</span>
-    <span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>$</span>    <span class='co'># compare Braun's 'restrict = T'</span>
-    <span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span>
-      <span class='fu'>stop_func</span><span class='op'>(</span><span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span>
-        <span class='va'>enrolled</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tabulate.html'>tabulate</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>level</span>, nbins <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>prior</span><span class='op'>)</span><span class='op'>)</span>
-        <span class='va'>x</span><span class='op'>$</span><span class='va'>stop</span> <span class='op'>&lt;-</span> <span class='va'>enrolled</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>&gt;=</span> <span class='va'>d1_maxn</span> <span class='op'>||</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>enrolled</span><span class='op'>)</span> <span class='op'>&gt;=</span> <span class='va'>cum_maxn</span>
-        <span class='va'>x</span>
-      <span class='op'>}</span><span class='op'>)</span>
-  <span class='va'>mod</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>13</span><span class='op'>)</span>, unroll <span class='op'>=</span> <span class='fl'>4</span>
-                , mc.cores <span class='op'>=</span> <span class='fu'>parallelly</span><span class='fu'>::</span><span class='fu'><a href='https://parallelly.futureverse.org/reference/availableCores.html'>availableCores</a></span><span class='op'>(</span>omit<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
-  <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span>
-  <span class='fu'>plot_dutycycle</span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>  <span class='co'>## Example from Braun2020</span></span>
+<span class='r-in'>  <span class='va'>d1_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>5</span></span>
+<span class='r-in'>  <span class='va'>cum_maxn</span> <span class='op'>&lt;-</span> <span class='fl'>10</span></span>
+<span class='r-in'>  <span class='va'>mod</span> <span class='op'>&lt;-</span> <span class='va'><a href='Crm-class.html'>Crm</a></span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span>skeleton <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.03</span>, <span class='fl'>0.11</span>, <span class='fl'>0.25</span>, <span class='fl'>0.42</span>, <span class='fl'>0.58</span>, <span class='fl'>0.71</span><span class='op'>)</span>,</span>
+<span class='r-in'>                 scale <span class='op'>=</span> <span class='fl'>0.85</span>, <span class='co'># aka 'sigma'</span></span>
+<span class='r-in'>                 target <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>    <span class='fu'>no_skip_esc</span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>$</span>    <span class='co'># compare Braun's 'restrict = T'</span></span>
+<span class='r-in'>    <span class='fu'>no_skip_deesc</span><span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>$</span></span>
+<span class='r-in'>      <span class='fu'>stop_func</span><span class='op'>(</span><span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>        <span class='va'>enrolled</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tabulate.html'>tabulate</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>level</span>, nbins <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>$</span><span class='va'>prior</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>        <span class='va'>x</span><span class='op'>$</span><span class='va'>stop</span> <span class='op'>&lt;-</span> <span class='va'>enrolled</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span> <span class='op'>&gt;=</span> <span class='va'>d1_maxn</span> <span class='op'>||</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>enrolled</span><span class='op'>)</span> <span class='op'>&gt;=</span> <span class='va'>cum_maxn</span></span>
+<span class='r-in'>        <span class='va'>x</span></span>
+<span class='r-in'>      <span class='op'>}</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='va'>mod</span><span class='op'>$</span><span class='fu'>trace_paths</span><span class='op'>(</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>13</span><span class='op'>)</span>, unroll <span class='op'>=</span> <span class='fl'>4</span></span>
+<span class='r-in'>                , mc.cores <span class='op'>=</span> <span class='fu'>parallelly</span><span class='fu'>::</span><span class='fu'><a href='https://parallelly.futureverse.org/reference/availableCores.html'>availableCores</a></span><span class='op'>(</span>omit<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'>plot_dutycycle</span><span class='op'>(</span><span class='va'>mod</span><span class='op'>$</span><span class='va'>performance</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

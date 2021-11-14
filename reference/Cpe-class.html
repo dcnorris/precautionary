@@ -422,7 +422,7 @@ completely enumerated by <code>trace_paths</code> before this method is invoked.
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A 6-dimensional indicator array indexed by current-dose tally
 numerator <code>T</code> and denominator <code>N</code>, current dose <code>D</code>, escalation decision
-<code>E</code> with mapping <code><a href='https://rdrr.io/r/base/c.html'>c(des=1, sta=2, esc=3)</a></code>, current cohort number <code>C</code>,
+<code>E</code> with mapping <code>c(des=1, sta=2, esc=3)</code>, current cohort number <code>C</code>,
 and path index <code>J</code>. If <code>probs.DLT</code> is <code>NULL</code> (the default), the matrix
 entries are drawn from 0, 1 or (for confluences of factors which did not
 occur, and for which no decision was made) <code>NA</code>. When <code>probs.DLT</code> is
