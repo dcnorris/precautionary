@@ -285,12 +285,12 @@ regret(esc, [_, T/6]) :- T in 0..6,
 %@ ;  Qs = [_B,_A/6], clpz:(_A in 2..6).
 
 state0_decision_regrettable(S0, A, true) :-
-    state0_decision_state(S0, A, S),
-    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
-    S  = [T /N |_] - _, %       into a regret/3 predicate?
-    %% I introduce the (->) below to avert backtracking over
-    %% possibly multiple reasons for regret -- one is enough!
-    (	regret(A, [T/N, T0/N0]) -> true
+    (	state0_decision_state(S0, A, S),
+	S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
+	S  = [T /N |_] - _, %       into a regret/3 predicate?
+	%% I introduce the (->) below to avert backtracking over
+	%% possibly multiple scenarios for regret -- one is enough!
+    	regret(A, [T/N, T0/N0]) -> true
     ;	false
     ).
 
@@ -349,9 +349,11 @@ state_si(L - R) :-
 %@ false.
 
 %?- state0_decision_regrettable([2/3]-[0/0, 0/0], sta, true).
-%@ false.
+%@    true.
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, Truth).
+%@    Truth = true
+%@ ;  false.
 %@    S = [0/3,1/3]-[0/0], Truth = false
 %@ ;  S = [1/3,1/3]-[0/0], Truth = false
 %@ ;  S = [2/3,1/3]-[0/0], Truth = false
@@ -363,7 +365,7 @@ state_si(L - R) :-
 %@ ;  S = [4/6]-[0/0,0/0], Truth = false
 %@ ;  false.
 
-%% NB: can usee reified conjuntion from library(reif)
+%% NB: can use reified conjunction from library(reif)
 
 path(_) --> []. % a convenience for testing; path can stop at any time
 %% Q: Do I need distinct vars {Sesc, Ssta, Sdes}? Could I just use same 'S' for all of them?
@@ -416,5 +418,5 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[]]
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[]]
 %@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[]]
-%@ ; ... NONTERMINATION
-%@ caught: error('$interrupt_thrown',repl)
+%@ ;  caught: error('$interrupt_thrown',repl)
+%% NONTERMINATION
