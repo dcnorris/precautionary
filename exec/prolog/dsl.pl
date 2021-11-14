@@ -313,6 +313,35 @@ state_si(L - R) :-
     ;	false
     ).
 
+%% These predicates need to package the question of regrettability,
+%% together with an outcome state S that (when Truth==false) can be
+%% used as the next state on a valid path.
+state0_decision_state_regrettable(S0, A, S, true) :-
+    (	state0_decision_state(S0, A, S),
+	S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
+	S  = [T /N |_] - _, %       into a regret/3 predicate?
+	%% I introduce the (->) below to avert backtracking over
+	%% possibly multiple scenarios for regret -- one is enough!
+    	regret(A, [T/N, T0/N0]) -> true
+    ;	false
+    ).
+
+stop_trial(S, true) :-
+    MTD = bogus,
+    declare_mtd(MTD). % TODO: Actually compute the MTD properly!
+
+%?- lists:member(X, [1,2,3]).
+%@    X = 1
+%@ ;  X = 2
+%@ ;  X = 3
+%@ ;  false.
+
+%% Should I feel suspicious about the _ here?
+state0_decision_state_regrettable(S0, A, _, false) :-
+    state_si(S0),
+    member(A, [esc,sta,des]), % these are the 3 allowable actions
+    \+ state0_decision_regrettable(S0, A, true). % IMPURE!
+
 %?- state_si([]-[0/0,0/0]).
 %@    true.
 
@@ -370,7 +399,6 @@ state_si(L - R) :-
 %% NB: can use reified conjunction from library(reif)
 
 path(_) --> []. % a convenience for testing; path can stop at any time
-%% Q: Do I need distinct vars {Sesc, Ssta, Sdes}? Could I just use same 'S' for all of them?
 path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escalating?
 		   if_(state0_decision_regrettable(S0, sta), % might I regret staying?
 		       if_(state0_decision_regrettable(S0, des), % (does 'regret' even apply to des?)
@@ -395,12 +423,39 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 	     [E, S],
 	     path(S). % TODO: Implement declare_mtd possibility
 
+%% Let's try a syntactically more elegant version of the above,
+%% exploiting reified conjunction ','/3 from library(reif).
+
+repath(_) --> []. % a convenience for testing; path can stop at any time
+%% My intention here is that (E = *, state0_decision_state_regrettable)
+%% should itself act like a reified predicate, and so be conjoinable via
+%% ','/3. I'm trying to depend on reif:(=)/3 for this.
+%% The intention of ','/3 seems to be to thread Truth thru monadically?
+repath(S0) --> { if_((E = esc, state0_decision_state_regrettable(S0, E, S), % might I regret escalating?
+		      E = sta, state0_decision_state_regrettable(S0, E, S), % might I regret staying?
+		      E = des, state0_decision_state_regrettable(S0, E, S) % (does 'regret' even apply to des?)
+		     )
+		     %% Whichever of those regrets we 'escape', becomes the next decision:
+		     , Next = [E, S]
+		     %% But if I'd regret EVERY ONE OF THE ABOVE decisions, then STOP
+		     , (MTD = todo, % TODO: Actually obtain the MTD properly from S0!
+			Next = [halt, declare_mtd(MTD)]
+		       )
+		    )
+	       },
+	       Next,
+	       path(S). % TODO: Implement declare_mtd possibility
+
 %?- length(Path, 2), phrase(path([0/0]-[0/0, 0/0]), Path), Path = [A,S].
 %@    Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
 %@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
 %@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
 %@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
 %@ ;  false.
+
+%?- length(Path, 2), phrase(repath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
+%@    Path = [halt,declare_mtd(todo)], A = halt, S = declare_mtd(todo)
+%@ ;  caught: error(instantiation_error,sort/2)
 
 %?- N in 1..8, indomain(N), length(Path, N), phrase(path([]-[0/0, 0/0]), Path).
 %@    N = 2, Path = [esc,[0/3]-[0/0]]
