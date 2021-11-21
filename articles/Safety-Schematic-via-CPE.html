@@ -225,12 +225,12 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   3.453   0.288   2.089</code></pre>
+##   3.009   0.267   1.839</code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>## T (4693×7×7) constructed in 0.391 sec
-## T condensed in 0.407 sec</code></pre>
+<pre><code>## T (4693×7×7) constructed in 0.335 sec
+## T condensed in 0.352 sec</code></pre>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 4693    4    7</code></pre>
