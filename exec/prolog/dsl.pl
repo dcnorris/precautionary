@@ -321,6 +321,10 @@ state_si(L - R) :-
 %% These predicates need to package the question of regrettability,
 %% together with an outcome state S that (when Truth==false) can be
 %% used as the next state on a valid path.
+%% TODO: Because of the '->', this predicate DOES NOT backtrack to yield
+%%       all possible regrettable states S. Therefore, it might be best
+%%       to remove this variable from the signature. Why 'leak' variables
+%%       about which we can't reason in the customary fashion?
 state0_decision_state_regrettable(S0, A, S, true) :-
     (	state0_decision_state(S0, A, S),
 	S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
@@ -428,32 +432,6 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 	     [E, S],
 	     path(S). % TODO: Implement declare_mtd possibility
 
-%% Let's try a syntactically more elegant version of the above,
-%% exploiting reified conjunction ','/3 from library(reif).
-
-stop_trial(S0, E, declare_mtd(MTD), true) :-
-    E = stop,
-    S0 = D - _,
-    length(D, MTD). % TODO: Correct this mere placeholder calculation of MTD
-
-repath(declare_mtd(_)) --> [].
-%% My intention here is that (E = *, state0_decision_state_regrettable)
-%% should itself act like a reified predicate, and so be conjoinable via
-%% ','/3. I'm trying to depend on reif:(=)/3 for this.
-%% The intention of ','/3 seems to be to thread Truth thru monadically?
-repath(S0) --> { if_((E = esc, state0_decision_state_regrettable(S0, E, S), % might I regret escalating?
-		      E = sta, state0_decision_state_regrettable(S0, E, S), % might I regret staying?
-		      E = des, state0_decision_state_regrettable(S0, E, S), % might I regret de-escalating?
-		     ) % If I'd regret EVERY ONE OF THE ABOVE decisions, then only decision left is to STOP
-		     , (MTD = todo, % TODO: Actually obtain the MTD properly from S0!
-			Next = [stop, declare_mtd(MTD)]
-		       ) % But if we escape one of those clauses w/o regret, that defines our next decision:
-		     , Next = [E, S]
-		    )
-	       },
-	       Next,
-	       repath(S).
-
 %?- length(Path, 2), phrase(path([0/0]-[0/0, 0/0]), Path), Path = [A,S].
 %@    Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
 %@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
@@ -461,13 +439,66 @@ repath(S0) --> { if_((E = esc, state0_decision_state_regrettable(S0, E, S), % mi
 %@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
 %@ ;  false.
 
+%% Let's try a syntactically more elegant version of the above,
+%% exploiting reified conjunction ','/3 from library(reif).
+
+repath(debug(_)) --> []. % enable termination with debug info
+repath(_) --> []. % a convenience for testing; path can stop at any time
+repath(declare_mtd(_)) --> [].
+%% TODO: Try to retain the clarity of the following (contrast with
+%%       the spaghetti-nesting of multiple if_/3's as above!), but
+%%       exploit the efficiencies of early failures.
+%%       To this end, revisit reified conjunction.
+repath(S0) --> { tpartition(state0_decision_regrettable(S0), [esc,sta,des], _, WontRegret),
+		 (   WontRegret = [E|_], % NB: The ordering of [esc,sta,des] is *essential*
+		     state0_decision_state(S0, E, S)
+		 ;   WontRegret = [], % There aren't any non-regrettable decisions..
+		     E = stop,        % ..other than STOP.
+		     MTD = todo, % TODO: Actually obtain the MTD
+		     S = declare_mtd(MTD)
+		 )
+	       }, [E, S],
+	       repath(S).
+
 %?- length(Path, 2), phrase(repath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
-%@ caught: error(existence_error(procedure,length/2),length/2)
-%@ caught: error(existence_error(procedure,length/2),length/2)
-%@ caught: error(existence_error(procedure,state0_decision_state_regrettable/4),state0_decision_state_regrettable/4)
-%@    Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0]
-%@ ;  Path = [A,S], dif:dif(A,esc)
-%@ ;  caught: error(instantiation_error,sort/2)
+%@    Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
+%@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
+%@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
+%@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
+%@ ;  false.
+
+%?- state0_decision_state_regrettable([0/0]-[0/0,0/0], esc, S, T).
+%@    S = [1/3,0/0]-[0/0], T = true
+%@ ;  false.
+
+%?- state0_decision_state_regrettable([0/0]-[0/0,0/0], sta, S, T).
+%@    T = false
+%@ ;  false.
+
+%?- length(Path, 2), phrase(repath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
+%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0]
+%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0]
+%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0]
+%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
+%@ ;  Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
+%@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
+%@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
+%@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
+%@ ;  false.
+%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0]
+%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0] % yet this is regrettable! (see below)
+%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0]
+%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
+%@ ;  Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
+%@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
+%@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
+%@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
+%@ ;  false.
+
+%% How did the above 'pass', given that esc from [0/0]-[0/0,0/0] is truly regrettable?
+%?- state0_decision_regrettable([0/0]-[0/0,0/0], esc, T).
+%@    T = true
+%@ ;  false.
 
 %% But shouldn't I have anticipated possible regret upon escalating from 0/0?
 %?- regret(esc, [1/3,0/0]).
