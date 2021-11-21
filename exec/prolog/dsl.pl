@@ -463,6 +463,46 @@ repath(S0) --> { tpartition(state0_decision_regrettable(S0), [esc,sta,des], _, W
 %@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
 %@ ;  false.
 
+%% TODO: Explore the goals inside cpath//2's {...}
+%% The lesson here is that Prolog is not Python!
+onestep(S0, E, S) :-
+    if_(( % I believe this constructs a reified conjunction of reified conjunctions..
+	       %(state0_decision_regrettable(S0, esc), E = esc), % G_esc
+	       (state0_decision_regrettable(S0, sta), E = sta), % G_sta
+	       (state0_decision_regrettable(S0, des), E = des)  % G_des
+	   ),
+	%% If all of [esc,sta,des] are regrettable, we STOP:
+	(   E = stop,
+	    MTD = todo, % TODO: Actually obtain the MTD
+	    S = declare_mtd(MTD)
+	),
+	%% If any of the goals G_* above reified to FALSE,
+	%% then I am hoping this branch will be entered
+	%% with E instantiated to the first of [esc,sta,des]
+	%% that is non-regrettable.
+	(   ground(E),
+	    state0_decision_state(S0, E, S)
+	)
+       ).
+
+%?- onestep([0/0]-[0/0, 0/0], E, S).
+%@ false.
+%@    E = esc, S = [0/3,0/0]-[0/0]
+%@ ;  E = esc, S = [1/3,0/0]-[0/0]
+%@ ;  E = esc, S = [2/3,0/0]-[0/0]
+%@ ;  E = esc, S = [3/3,0/0]-[0/0]
+%@ ;  false.
+%@ false. % AHA! So E wasn't instantiated on entry to false-branch
+%@    E = esc, S = [0/3,0/0]-[0/0]
+%@ ;  E = esc, S = [1/3,0/0]-[0/0]
+%@ ;  E = esc, S = [2/3,0/0]-[0/0]
+%@ ;  E = esc, S = [3/3,0/0]-[0/0]
+%@ ;  E = sta, S = [0/3]-[0/0,0/0]
+%@ ;  E = sta, S = [1/3]-[0/0,0/0]
+%@ ;  E = sta, S = [2/3]-[0/0,0/0]
+%@ ;  E = sta, S = [3/3]-[0/0,0/0]
+%@ ;  false.
+
 %% TODO: Try to retain the clarity of repath//1 (contrast with path//1's
 %%       spaghetti-nesting of multiple if_/3's!), but using reified conjunction,
 %%       to exploit the efficiencies of early failures.
