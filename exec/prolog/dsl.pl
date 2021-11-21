@@ -445,10 +445,6 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 repath(debug(_)) --> []. % enable termination with debug info
 repath(_) --> []. % a convenience for testing; path can stop at any time
 repath(declare_mtd(_)) --> [].
-%% TODO: Try to retain the clarity of the following (contrast with
-%%       the spaghetti-nesting of multiple if_/3's as above!), but
-%%       exploit the efficiencies of early failures.
-%%       To this end, revisit reified conjunction.
 repath(S0) --> { tpartition(state0_decision_regrettable(S0), [esc,sta,des], _, WontRegret),
 		 (   WontRegret = [E|_], % NB: The ordering of [esc,sta,des] is *essential*
 		     state0_decision_state(S0, E, S)
@@ -467,28 +463,36 @@ repath(S0) --> { tpartition(state0_decision_regrettable(S0), [esc,sta,des], _, W
 %@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
 %@ ;  false.
 
-%?- state0_decision_state_regrettable([0/0]-[0/0,0/0], esc, S, T).
-%@    S = [1/3,0/0]-[0/0], T = true
-%@ ;  false.
+%% TODO: Try to retain the clarity of repath//1 (contrast with path//1's
+%%       spaghetti-nesting of multiple if_/3's!), but using reified conjunction,
+%%       to exploit the efficiencies of early failures.
+cpath(debug(_)) --> []. % enable termination with debug info
+cpath(_) --> []. % a convenience for testing; path can stop at any time
+cpath(declare_mtd(_)) --> [].
+cpath(S0) --> { if_(( % I believe this constructs a reified conjunction of reified conjunctions..
+			(E = esc, state0_decision_regrettable(S0, E)), % G_esc
+			(E = sta, state0_decision_regrettable(S0, E)), % G_sta
+			(E = des, state0_decision_regrettable(S0, E))  % G_des
+		    ),
+		    %% If all of [esc,sta,des] are regrettable, we STOP:
+		    (	E = stop,
+			MTD = todo, % TODO: Actually obtain the MTD
+			S = declare_mtd(MTD)
+		    ),
+		    %% If any of the goals G_* above reified to FALSE,
+		    %% then I am hoping this branch will be entered
+		    %% with E instantiated to the first of [esc,sta,des]
+		    %% that is non-regrettable.
+		    state0_decision_state(S0, E, S)
+		   ) % end of if/3
+	       }, [E, S],
+	       cpath(S).
 
-%?- state0_decision_state_regrettable([0/0]-[0/0,0/0], sta, S, T).
-%@    T = false
-%@ ;  false.
-
-%?- length(Path, 2), phrase(repath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
-%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0]
-%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
-%@ ;  Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
-%@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
-%@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
-%@ ;  Path = [sta,[3/3]-[0/0,0/0]], A = sta, S = [3/3]-[0/0,0/0]
-%@ ;  false.
-%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0]
-%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0] % yet this is regrettable! (see below)
-%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0]
-%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0]
+%?- length(Path, 2), phrase(cpath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
+%@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0] % <- These
+%@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0] % <- solutions
+%@ ;  Path = [esc,[2/3,0/0]-[0/0]], A = esc, S = [2/3,0/0]-[0/0] % <- are
+%@ ;  Path = [esc,[3/3,0/0]-[0/0]], A = esc, S = [3/3,0/0]-[0/0] % <- wrong.
 %@ ;  Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
 %@ ;  Path = [sta,[1/3]-[0/0,0/0]], A = sta, S = [1/3]-[0/0,0/0]
 %@ ;  Path = [sta,[2/3]-[0/0,0/0]], A = sta, S = [2/3]-[0/0,0/0]
