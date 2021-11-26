@@ -292,22 +292,27 @@ regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0
 %@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2)
 %@ ;  Qs = [_B,_A/6], clpz:(_A in 2..6).
 
-state0_decision_regrettable(S0, A, true) :-
+%% This holds when decision A is a dose-escalation decision
+%% that is FEASIBLE from state S0, and for which 'regret'
+%% is an applicable concept. The Truth-value reifies whether
+%% the action might (under some realization of toxicities)
+%% be judged regrettable, or not. Note that this goal simply
+%% fails when A is infeasible ('inconceivable') from S0,
+%% for example when A=esc and S0=_-[] (such that there is no
+%% higher dose to escalate into).
+state0_decision_regrettable(S0, A, Truth) :-
+    state_si(S0),
+    member(A, [esc,sta]), % these are the decisions to which 'regret' applies
     (	state0_decision_state(S0, A, S),
 	S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
 	S  = [T /N |_] - _, %       into a regret/3 predicate?
 	%% I introduce the (->) below to avert backtracking over
 	%% possibly multiple scenarios for regret -- one is enough!
-    	regret(A, [T/N, T0/N0]) -> true
-    ;	false
+    	regret(A, [T/N, T0/N0]) -> Truth = true
+    ;	state0_decision_state(S0, A, S) -> % ensure A is feasible, but don't re-check this
+	Truth = false
     ).
 
-state0_decision_regrettable(S0, A, false) :-
-    %% For 'safe inference' in this predicate, we need
-    %% a sufficiently instantiated state for the trial.
-    state_si(S0),
-    \+ state0_decision_regrettable(S0, A, true). % IMPURE!
-    
 %% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
 %%       Without it, I'm left with unsightly extra choice points.
 state_si(L - R) :-
@@ -319,73 +324,32 @@ state_si(L - R) :-
     ;	false
     ).
 
-%?- state_si([]-[0/0,0/0]).
-%@    true.
-
-%?- state_si([1/3]-[0/0,0/0]).
-%@    true.
-
-%?- state0_decision_state([1/3]-[0/0, 0/0], A, S).
-%@    A = esc, S = [0/3,1/3]-[0/0]
-%@ ;  A = esc, S = [1/3,1/3]-[0/0]
-%@ ;  A = esc, S = [2/3,1/3]-[0/0]
-%@ ;  A = esc, S = [3/3,1/3]-[0/0]
-%@ ;  A = sta, S = [1/6]-[0/0,0/0]
-%@ ;  A = sta, S = [2/6]-[0/0,0/0]
-%@ ;  A = sta, S = [3/6]-[0/0,0/0]
-%@ ;  A = sta, S = [4/6]-[0/0,0/0]
+%?- state0_decision_regrettable([1/3]-[0/0], E, T).
+%@    E = esc, T = true
+%@ ;  E = sta, T = false
 %@ ;  false.
 
-%?- state0_decision_state([1/3]-[0/0], A, [T/N|_]-_), regret(A, [T/N,1/3]).
-%@    A = esc, T = 3, N = 3
+%?- state0_decision_regrettable([0/3]-[0/0], E, T).
+%@    E = esc, T = false
+%@ ;  E = sta, T = true
 %@ ;  false.
-
-%?- state0_decision_regrettable([1/3]-[0/0], esc, true).
-%@    true.
-
-%?- E=esc, state0_decision_state([1/3]-[0/0], E, [T/N|_]-_), regret(E, [T/N,1/3]) -> true.
-%@    E = esc, T = 3, N = 3.
-%@    E = esc, T = 3, N = 3
-%@ ;  false.
-%@    T = 0, N = 3
-%@ ;  T = 1, N = 3
-%@ ;  T = 2, N = 3
-%@ ;  T = 3, N = 3
-%@ ;  false.
-
-%?- state0_decision_regrettable([1/3]-[0/0, 0/0], sta, true).
-%@ false.
-
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, Truth).
-%@    Truth = true
-%@ ;  false.
-%@    S = [0/3,1/3]-[0/0], Truth = false
-%@ ;  S = [1/3,1/3]-[0/0], Truth = false
-%@ ;  S = [2/3,1/3]-[0/0], Truth = false
-%@ ;  S = [3/3,1/3]-[0/0], Truth = true
-%@ ;  false.
-%@    S = [1/6]-[0/0,0/0], Truth = false
-%@ ;  S = [2/6]-[0/0,0/0], Truth = false
-%@ ;  S = [3/6]-[0/0,0/0], Truth = false
-%@ ;  S = [4/6]-[0/0,0/0], Truth = false
-%@ ;  false.
+%@    Truth = true.
 
-%% NB: can use reified conjunction from library(reif)
+%% Even if the nesting here feels a bit difficult to read, this code reflects
+%% the primacy of REGRET as the crucial user-level concept shaping these designs.
 
-path(_) --> []. % a convenience for testing; path can stop at any time
+%path(_) --> []. % a convenience for testing; path can stop at any time
+path(declare_mtd(_)) --> [].
 path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escalating?
 		   if_(state0_decision_regrettable(S0, sta), % might I regret staying?
-		       if_(state0_decision_regrettable(S0, des), % (does 'regret' even apply to des?)
-			  %% TODO: Need additional concept to induce stopping trial & declaring MTD?
-			  (E = halt,
-			   MTD = todo, % TODO: Actually obtain the MTD!
+		       (   E = des, % If so, then de-escalate
+			   state0_decision_state(S0, E, S) % (if possible)
+		       ;   E = stop, % ..and otherwise, STOP.
+			   MTD = todo, % TODO: Actually obtain MTD as integer >= 0.
 			   S = declare_mtd(MTD)
-			  ),
-			  (E = des,
-			   state0_decision_state(S0, E, S)
-			  )
-			 ), % couldn't regret sta:
+		       ), % couldn't regret sta:
 		       (E = sta,
 			state0_decision_state(S0, E, S)
 		       )
@@ -397,6 +361,198 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 	     },
 	     [E, S],
 	     path(S). % TODO: Implement declare_mtd possibility
+
+%?- Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)], phrase(path([0/0]-[0/0]), Path).
+%@    Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
+%@ ;  false.
+
+%% TODO: Why are we missing sta with T=0?
+%?- phrase(path([1/3]-[0/0]), Path).
+%@    Path = [sta,[2/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[3/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[4/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  false.
+
+%?- state0_decision_state([1/3]-[0/0], sta, S).
+%@    S = [1/6]-[0/0] % the T=0 possibility does get 'seen'
+%@ ;  S = [2/6]-[0/0]
+%@ ;  S = [3/6]-[0/0]
+%@ ;  S = [4/6]-[0/0]
+%@ ;  false.
+
+%?- state0_decision_regrettable([1/3]-[0/0], E, T).
+%@    E = esc, T = true
+%@ ;  E = sta, T = false
+%@ ;  false.
+
+%% Here's the problem! The DCG somehow can't get past this point.
+%?- phrase(path([1/6]-[0/0]), Path).
+%@ false.
+
+%% TODO: Why is there no path from here?
+%?- phrase(path([0/3,1/6]-[]), Path).
+%@ false.
+
+%?- state0_decision_regrettable([0/3,1/6]-[], E, T).
+%@    E = sta, T = true
+%@ ;  false.
+
+%% AHA! HERE is the problem. The conditional clause of if_/3 must
+%% actually succeed (reifying to 'true' or 'false') in order for
+%% the if_/3 goal to succeed.
+%% By creating a 3-valued logic here, I have violated this design.
+%% So I need a different semantics!
+%?- state0_decision_regrettable([0/3,1/6]-[], esc, T).
+%@ false.
+
+%?- state0_decision_state([0/3,1/6]-[], E, S).
+%@    E = sta, S = [0/6,1/6]-[]
+%@ ;  E = sta, S = [1/6,1/6]-[]
+%@ ;  E = sta, S = [2/6,1/6]-[]
+%@ ;  E = sta, S = [3/6,1/6]-[]
+%@ ;  E = des, S = [1/9]-[0/3]
+%@ ;  E = des, S = [2/9]-[0/3]
+%@ ;  E = des, S = [3/9]-[0/3]
+%@ ;  E = des, S = [4/9]-[0/3].
+
+%% AHA. Once again, I'm caught calling a decision regrettable
+%% even when it is not feasible.
+
+%?- state0_decision_regrettable([1/6]-[0/0], E, T).
+%@    E = esc, T = false
+%@ ;  E = sta, T = true
+%@ ;  false.
+
+%?- state0_decision_state([1/6]-[0/0], esc, S).
+%@    S = [0/3,1/6]-[]
+%@ ;  S = [1/3,1/6]-[]
+%@ ;  S = [2/3,1/6]-[]
+%@ ;  S = [3/3,1/6]-[]
+%@ ;  false.
+
+%% So the problem is a failure to stop appropriately from some states?
+
+%?- phrase(path([2/3,1/6]-[]), Path).
+%@    Path = []
+%@ ;  false.
+
+%?- state0_decision_regrettable([2/3,1/6]-[], esc, true).
+%@ false.
+
+%?- state0_decision_state([2/3,1/6]-[0/0], E, S).
+%@    E = esc, S = [0/3,2/3,1/6]-[]
+%@ ;  E = esc, S = [1/3,2/3,1/6]-[]
+%@ ;  E = esc, S = [2/3,2/3,1/6]-[]
+%@ ;  E = esc, S = [3/3,2/3,1/6]-[]
+%@ ;  E = sta, S = [2/6,1/6]-[0/0]
+%@ ;  E = sta, S = [3/6,1/6]-[0/0]
+%@ ;  E = sta, S = [4/6,1/6]-[0/0]
+%@ ;  E = sta, S = [5/6,1/6]-[0/0]
+%@ ;  E = des, S = [1/9]-[2/3,0/0]
+%@ ;  E = des, S = [2/9]-[2/3,0/0]
+%@ ;  E = des, S = [3/9]-[2/3,0/0]
+%@ ;  E = des, S = [4/9]-[2/3,0/0].
+
+%?- state0_decision_state([1/6]-[0/0], E, S).
+%@    E = esc, S = [0/3,1/6]-[]
+%@ ;  E = esc, S = [1/3,1/6]-[]
+%@ ;  E = esc, S = [2/3,1/6]-[]
+%@ ;  E = esc, S = [3/3,1/6]-[]
+%@ ;  E = sta, S = [1/9]-[0/0]
+%@ ;  E = sta, S = [2/9]-[0/0]
+%@ ;  E = sta, S = [3/9]-[0/0]
+%@ ;  E = sta, S = [4/9]-[0/0]
+%@ ;  false.
+
+%?- state0_decision_regrettable([1/6]-[0/0], E, true).
+%@    E = sta.
+
+%?- state0_decision_regrettable([1/6]-[0/0], esc, Truth).
+%@    Truth = false.
+
+%% TODO: Repair this MGQ!
+%?- state0_decision_regrettable([1/6]-[0/0], E, Truth).
+%@    E = sta, Truth = true
+%@ ;  false. % Lost solution (E=esc, Truth=false)!
+
+%% Aha! So I haven't coded regret for 'des' correctly.
+%?- state0_decision_regrettable([3/3]-[0/0], des, Truth).
+%@    Truth = false.
+
+%% Or maybe the problem is that my initial intuition about the non-regrettability of 'des'
+%% was on the right track somehow. Whereas for 'esc' and 'sta' regrettability requires that
+%% the action be possible, this isn't quite what I need at the very bottom of this if_/3
+%% cascade.
+%% As the last dose-escalation decision possible, 'des' has to be 'regrettable' for slightly
+%% different reasons -- which may not even be properly termed 'regret'! Here, we need a 'true'
+%% reification where 'des' is EITHER impossible OR 'regrettable'.
+
+%?- length(Path, L), phrase(path([0/0]-[0/0,0/0]), Path).
+%@ 
+%@ caught: error('$interrupt_thrown',repl)
+%@    Path = [], L = 0
+%@ ;  Path = [sta,[0/3]-[0/0,0/0]], L = 2
+%@ ;  Path = [sta,[1/3]-[0/0,0/0]], L = 2
+%@ ;  Path = [sta,[2/3]-[0/0,0/0]], L = 2
+%@ ;  Path = [sta,[3/3]-[0/0,0/0]], L = 2
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[0/3,0/3]-[0/0]], L = 4
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0]], L = 4
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0]], L = 4
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0]], L = 4
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[1/6]-[0/0,0/0]], L = 4
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[2/6]-[0/0,0/0]], L = 4
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[3/6]-[0/0,0/0]], L = 4
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[4/6]-[0/0,0/0]], L = 4
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[0/3,0/3]-[0/0],esc,[0/3,0/3,0/3]-[]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[0/3,0/3]-[0/0],esc,[1/3,0/3,0/3]-[]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[0/3,0/3]-[0/0],esc,[2/3,0/3,0/3]-[]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[0/3,0/3]-[0/0],esc,[3/3,0/3,0/3]-[]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[1/6,0/3]-[0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[2/6,0/3]-[0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[3/6,0/3]-[0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[4/6,0/3]-[0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[0/6]-[2/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[1/6]-[2/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[2/6]-[2/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[3/6]-[2/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[0/6]-[3/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[1/6]-[3/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[2/6]-[3/3,0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[3/6]-[3/3,0/0]], L = 6
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[1/6]-[0/0,0/0],esc,[0/3,1/6]-[0/0]], L = 6
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[1/6]-[0/0,0/0],esc,[1/3,1/6]-[0/0]], L = 6
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[1/6]-[0/0,0/0],esc,[2/3,1/6]-[0/0]], L = 6
+%@ ;  Path = [sta,[1/3]-[0/0,0/0],sta,[1/6]-[0/0,0/0],esc,[3/3,1/6]-[0/0]], L = 6
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[1/6,0/3]-[0/0],esc,[0/3,...]-[]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[1/6,0/3]-[0/0],esc,[1/3,...]-[]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[1/6,0/3]-[0/0],esc,[2/3,...]-[]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[1/6,0/3]-[0/0],esc,[3/3,...]-[]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[2/6,0/3]-[0/0],des,[0/6]-[2/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[2/6,0/3]-[0/0],des,[1/6]-[2/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[2/6,0/3]-[0/0],des,[2/6]-[2/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[2/6,0/3]-[0/0],des,[3/6]-[2/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[3/6,0/3]-[0/0],des,[0/6]-[3/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[3/6,0/3]-[0/0],des,[1/6]-[3/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[3/6,0/3]-[0/0],des,[2/6]-[3/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[3/6,0/3]-[0/0],des,[3/6]-[3/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[4/6,0/3]-[0/0],des,[0/6]-[4/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[4/6,0/3]-[0/0],des,[1/6]-[4/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[4/6,0/3]-[0/0],des,[2/6]-[4/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[1/3,0/3]-[0/0],sta,[4/6,0/3]-[0/0],des,[3/6]-[4/6,...]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[0/6]-[2/3,0/0],esc,[2/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[0/6]-[2/3,0/0],esc,[3/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[0/6]-[2/3,0/0],esc,[4/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[0/6]-[2/3,0/0],esc,[5/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[1/6]-[2/3,0/0],esc,[2/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[1/6]-[2/3,0/0],esc,[3/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[1/6]-[2/3,0/0],esc,[4/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[2/3,0/3]-[0/0],des,[1/6]-[2/3,0/0],esc,[5/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[0/6]-[3/3,0/0],esc,[3/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[0/6]-[3/3,0/0],esc,[4/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[0/6]-[3/3,0/0],esc,[5/6,...]-[0/0]], L = 8
+%@ ;  Path = [sta,[0/3]-[0/0,0/0],esc,[3/3,0/3]-[0/0],des,[0/6]-[3/3,0/0],esc,[6/6,...]-[0/0]], L = 8
+%@ ;  ...
+%@ caught: error(syntax_error(incomplete_reduction),read_term/3:1)
 
 %?- length(Path, 2), phrase(path([0/0]-[0/0, 0/0]), Path), Path = [A,S].
 %@    Path = [sta,[0/3]-[0/0,0/0]], A = sta, S = [0/3]-[0/0,0/0]
