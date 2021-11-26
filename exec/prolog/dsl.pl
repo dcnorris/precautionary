@@ -130,7 +130,8 @@ enroll(T0/N0, T1/N1) :-
     #Nnew #= 3, % hard-coding cohorts of 3 for now
     #N1 #= #N0 + #Nnew,
     Tnew in 0..Nnew, indomain(Tnew),
-    #T1 #= #T0 + #Tnew.
+    #T1 #= #T0 + #Tnew,
+    #N1 #=< 6. % Maximum enrollment per cohort
     
 %?- enroll(0/0, T/n).
 %@ caught: error(existence_error(procedure,enroll/2),enroll/2)
@@ -313,6 +314,34 @@ state0_decision_regrettable(S0, A, Truth) :-
 	Truth = false
     ).
 
+%% I believe the semantics of 'regret' are untenable at the level of if_/3
+%% application. What I need is a goal that reifies to 'true' for precisely
+%% those decisions which are BOTH feasible AND non-regrettable, and otherwise
+%% reifies to 'false'.
+state0_decision_noregrets(S0, A, Truth) :-
+    state_si(S0),
+    member(A, [esc,sta]), % these are the decisions to which 'regret' applies
+    %% TODO: Are there advantages of if_/3 even at this level?
+    %%       Or would I just start an infinite regress? Is there
+    %%       always a '->' at some level (as in if_/3 definition!)
+    %%       in any code doing this sort of thing?
+    (	state0_decision_state(S0, A, _) -> % commit if feasible
+	(   state0_decision_state(S0, A, S),
+	    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
+	    S  = [T /N |_] - _, %       into a regret/3 predicate?
+	    %% I introduce the (->) below to avert backtracking over
+	    %% possibly multiple scenarios for regret -- one is enough!
+    	    regret(A, [T/N, T0/N0]) -> Truth = false
+	;   Truth = true
+	)
+    ;	Truth = false % from S0, A is not feasible
+    ).
+
+%?- state0_decision_noregrets([0/3,1/6]-[], E, Truth).
+%@    E = esc, Truth = false
+%@ ;  E = sta, Truth = false
+%@ ;  false.
+
 %% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
 %%       Without it, I'm left with unsightly extra choice points.
 state_si(L - R) :-
@@ -329,6 +358,11 @@ state_si(L - R) :-
 %@ ;  E = sta, T = false
 %@ ;  false.
 
+%?- state0_decision_noregrets([1/3]-[0/0], E, T).
+%@    E = esc, T = false
+%@ ;  E = sta, T = true
+%@ ;  false.
+
 %?- state0_decision_regrettable([0/3]-[0/0], E, T).
 %@    E = esc, T = false
 %@ ;  E = sta, T = true
@@ -342,21 +376,23 @@ state_si(L - R) :-
 
 %path(_) --> []. % a convenience for testing; path can stop at any time
 path(declare_mtd(_)) --> [].
-path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escalating?
-		   if_(state0_decision_regrettable(S0, sta), % might I regret staying?
-		       (   E = des, % If so, then de-escalate
-			   state0_decision_state(S0, E, S) % (if possible)
+path(S0) --> { if_(state0_decision_noregrets(S0, esc),
+		   (   E = esc,
+		       state0_decision_state(S0, E, S)
+		   ),
+		   if_(state0_decision_noregrets(S0, sta),
+		       (   E = sta,
+			   state0_decision_state(S0, E, S)
+		       ),
+		       (   state0_decision_state(S0, des, _) ->
+			   (   E = des,
+			       state0_decision_state(S0, E, S)
+			   )
 		       ;   E = stop, % ..and otherwise, STOP.
 			   MTD = todo, % TODO: Actually obtain MTD as integer >= 0.
 			   S = declare_mtd(MTD)
-		       ), % couldn't regret sta:
-		       (E = sta,
-			state0_decision_state(S0, E, S)
 		       )
-		      ), % couldn't regret esc:
-		   (E = esc,
-		    state0_decision_state(S0, E, S)
-		   )
+		      )
 		  )
 	     },
 	     [E, S],
@@ -366,11 +402,65 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@    Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
 %@ ;  false.
 
-%% TODO: Why are we missing sta with T=0?
-%?- phrase(path([1/3]-[0/0]), Path).
-%@    Path = [sta,[2/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[3/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[4/6]-[0/0],stop,declare_mtd(todo)]
+%?- phrase(path([]-[0/0,0/0]), Path).
+%@    Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[0/6]-[0/3],esc,[0/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[0/6]-[0/3],esc,[1/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[0/6]-[0/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[0/6]-[0/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[1/6]-[0/3],esc,[0/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[1/6]-[0/3],esc,[1/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[1/6]-[0/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[1/6]-[0/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[2/6]-[0/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],des,[3/6]-[0/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],des,[0/6]-[1/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],des,[1/6]-[1/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],des,[2/6]-[1/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],des,[3/6]-[1/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[0/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[1/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[2/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[3/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[2/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[3/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[6/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[6/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[2/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[3/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[2/3]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [esc,[3/3]-[0/0],stop,declare_mtd(todo)]
 %@ ;  false.
 
 %?- state0_decision_state([1/3]-[0/0], sta, S).
@@ -380,18 +470,10 @@ path(S0) --> { if_(state0_decision_regrettable(S0, esc), % might I regret escala
 %@ ;  S = [4/6]-[0/0]
 %@ ;  false.
 
-%?- state0_decision_regrettable([1/3]-[0/0], E, T).
-%@    E = esc, T = true
-%@ ;  E = sta, T = false
+%?- state0_decision_noregrets([1/3]-[0/0], E, T).
+%@    E = esc, T = false
+%@ ;  E = sta, T = true
 %@ ;  false.
-
-%% Here's the problem! The DCG somehow can't get past this point.
-%?- phrase(path([1/6]-[0/0]), Path).
-%@ false.
-
-%% TODO: Why is there no path from here?
-%?- phrase(path([0/3,1/6]-[]), Path).
-%@ false.
 
 %?- state0_decision_regrettable([0/3,1/6]-[], E, T).
 %@    E = sta, T = true
