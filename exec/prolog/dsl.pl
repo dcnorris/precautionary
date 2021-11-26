@@ -118,6 +118,7 @@ No, it's https://en.wikipedia.org/wiki/Inductive_programming!
 :- use_module(library(reif)).
 :- use_module(library(si)).
 :- use_module(library(dcgs)).
+:- use_module(library(error)).
 :- use_module(tally).
 
 %% Switching to a tidier representation of state that does not
@@ -318,29 +319,6 @@ state_si(L - R) :-
     ;	false
     ).
 
-%% These predicates need to package the question of regrettability,
-%% together with an outcome state S that (when Truth==false) can be
-%% used as the next state on a valid path.
-%% TODO: Because of the '->', this predicate DOES NOT backtrack to yield
-%%       all possible regrettable states S. Therefore, it might be best
-%%       to remove this variable from the signature. Why 'leak' variables
-%%       about which we can't reason in the customary fashion?
-state0_decision_state_regrettable(S0, A, S, true) :-
-    (	state0_decision_state(S0, A, S),
-	S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
-	S  = [T /N |_] - _, %       into a regret/3 predicate?
-	%% I introduce the (->) below to avert backtracking over
-	%% possibly multiple scenarios for regret -- one is enough!
-    	regret(A, [T/N, T0/N0]) -> true
-    ;	false
-    ).
-
-%% Should I feel suspicious about the _ here?
-state0_decision_state_regrettable(S0, A, _, false) :-
-    state_si(S0),
-    member(A, [esc,sta,des]), % these are the 3 allowable actions
-    \+ state0_decision_regrettable(S0, A, true). % IMPURE!
-
 %?- state_si([]-[0/0,0/0]).
 %@    true.
 
@@ -377,18 +355,6 @@ state0_decision_state_regrettable(S0, A, _, false) :-
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], sta, true).
 %@ false.
-
-%?- state0_decision_state_regrettable([1/3]-[0/0, 0/0], sta, S, true).
-%@ false.
-
-%?- state0_decision_regrettable([2/3]-[0/0, 0/0], sta, true).
-%@    true.
-
-%?- state0_decision_state_regrettable([2/3]-[0/0, 0/0], sta, S, true).
-%@    S = [5/6]-[0/0,0/0].
-
-%?- state0_decision_state_regrettable([2/3]-[0/0, 0/0], sta, [5/6]-[0/0, 0/0], true).
-%@    true.
 
 
 %?- state0_decision_regrettable([1/3]-[0/0, 0/0], esc, Truth).
@@ -480,28 +446,15 @@ onestep(S0, E, S) :-
 	%% then I am hoping this branch will be entered
 	%% with E instantiated to the first of [esc,sta,des]
 	%% that is non-regrettable.
-	(   ground(E),
+	(   must_be(atom, E),
 	    state0_decision_state(S0, E, S)
 	)
        ).
 
 %?- onestep([0/0]-[0/0, 0/0], E, S).
-%@ false.
-%@    E = esc, S = [0/3,0/0]-[0/0]
-%@ ;  E = esc, S = [1/3,0/0]-[0/0]
-%@ ;  E = esc, S = [2/3,0/0]-[0/0]
-%@ ;  E = esc, S = [3/3,0/0]-[0/0]
-%@ ;  false.
-%@ false. % AHA! So E wasn't instantiated on entry to false-branch
-%@    E = esc, S = [0/3,0/0]-[0/0]
-%@ ;  E = esc, S = [1/3,0/0]-[0/0]
-%@ ;  E = esc, S = [2/3,0/0]-[0/0]
-%@ ;  E = esc, S = [3/3,0/0]-[0/0]
-%@ ;  E = sta, S = [0/3]-[0/0,0/0]
-%@ ;  E = sta, S = [1/3]-[0/0,0/0]
-%@ ;  E = sta, S = [2/3]-[0/0,0/0]
-%@ ;  E = sta, S = [3/3]-[0/0,0/0]
-%@ ;  false.
+%@ caught: error(instantiation_error,must_be/2)
+
+%% I honestly think there's a good reason to introduce a 
 
 %% TODO: Try to retain the clarity of repath//1 (contrast with path//1's
 %%       spaghetti-nesting of multiple if_/3's!), but using reified conjunction,
@@ -528,6 +481,10 @@ cpath(S0) --> { if_(( % I believe this constructs a reified conjunction of reifi
 	       }, [E, S],
 	       cpath(S).
 
+%?- maplist(#=(3), [3,3]).
+%@    true.
+%@ false.
+
 %?- length(Path, 2), phrase(cpath([0/0]-[0/0, 0/0]), Path), Path = [A,S].
 %@    Path = [esc,[0/3,0/0]-[0/0]], A = esc, S = [0/3,0/0]-[0/0] % <- These
 %@ ;  Path = [esc,[1/3,0/0]-[0/0]], A = esc, S = [1/3,0/0]-[0/0] % <- solutions
@@ -547,10 +504,6 @@ cpath(S0) --> { if_(( % I believe this constructs a reified conjunction of reifi
 %% But shouldn't I have anticipated possible regret upon escalating from 0/0?
 %?- regret(esc, [1/3,0/0]).
 %@    true
-%@ ;  false.
-
-%?- state0_decision_state_regrettable([0/0]-[0/0], esc, S, Regrettable).
-%@    S = [1/3,0/0]-[], Regrettable = true
 %@ ;  false.
 
 %?- N in 1..8, indomain(N), length(Path, N), phrase(path([]-[0/0, 0/0]), Path).
