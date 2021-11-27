@@ -119,6 +119,7 @@ No, it's https://en.wikipedia.org/wiki/Inductive_programming!
 :- use_module(library(si)).
 :- use_module(library(dcgs)).
 :- use_module(library(error)).
+:- use_module(library(lambda)).
 :- use_module(tally).
 
 %% Switching to a tidier representation of state that does not
@@ -291,6 +292,15 @@ regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0
 			    #T #> 0,
 			    #T0 #> 1.
 
+%% Ah, but even this is not sufficient. What if we escalated from 0/6 up to a dose
+%% where we have already recorded 2/3 toxicities, and got a further 3/3?
+%?- regret(esc, [5/6, 0/6]).
+%@ false.
+%% Need another clause!
+regret(esc, [5/6,_]).
+%?- regret(esc, [5/6, 0/6]).
+%@    true.
+
 %?- regret(esc, [T/N, T0/N0]).
 %@    T = 3, N = 3, N0 = 3, clpz:(T0 in 1..3)
 %@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(#N0#>= #T0), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2), clpz:(T0 in 0..2)
@@ -308,10 +318,6 @@ regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0
 state0_decision_noregrets(S0, A, Truth) :-
     state_si(S0),
     regrettable_decision(A),
-    %% TODO: Are there advantages of if_/3 even at this level?
-    %%       Or would I just start an infinite regress? Is there
-    %%       always a '->' at some level (as in if_/3 definition!)
-    %%       in any code doing this sort of thing?
     if_(state0_decision_feasible(S0, A),
 	(   state0_decision_state(S0, A, S),
 	    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
@@ -412,129 +418,65 @@ path(S0) --> { if_(state0_decision_noregrets(S0, esc),
 %@    Truth = false
 %@ ;  false.
 
-%?- phrase(path([]-[0/0,0/0]), Path).
-%@    Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[0/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[0/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[1/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[2/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[3/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[2/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[3/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],esc,[6/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[5/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],esc,[6/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[2/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[3/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[0/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[2/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[3/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[1/3]-[0/0],sta,[4/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[2/3]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [esc,[3/3]-[0/0],stop,declare_mtd(todo)]
-%@ ;  false.
+%?- phrase(path([0/0]-[0/0]), Path).
+%@    Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[0/6,0/3]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[0/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[1/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[2/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[3/6]-[4/6],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[2/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[3/6]-[2/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[2/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[3/6]-[3/3],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[0/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[4/6,...]-[],stop,declare_mtd(...)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[2/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[3/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[4/6]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[2/3]-[0/0],stop,declare_mtd(todo)]
+%@ ;  Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
+%@ ;  false. % J=46 paths!
 
-%?- state0_decision_state([1/3]-[0/0], sta, S).
-%@    S = [1/6]-[0/0] % the T=0 possibility does get 'seen'
-%@ ;  S = [2/6]-[0/0]
-%@ ;  S = [3/6]-[0/0]
-%@ ;  S = [4/6]-[0/0]
-%@ ;  false.
-
-%?- state0_decision_noregrets([1/3]-[0/0], E, T).
-%@    E = esc, T = false
-%@ ;  E = sta, T = true
-%@ ;  false.
-
-%?- state0_decision_state([0/3,1/6]-[], E, S).
-%@    E = sta, S = [0/6,1/6]-[]
-%@ ;  E = sta, S = [1/6,1/6]-[]
-%@ ;  E = sta, S = [2/6,1/6]-[]
-%@ ;  E = sta, S = [3/6,1/6]-[]
-%@ ;  E = des, S = [1/9]-[0/3]
-%@ ;  E = des, S = [2/9]-[0/3]
-%@ ;  E = des, S = [3/9]-[0/3]
-%@ ;  E = des, S = [4/9]-[0/3].
-
-%?- state0_decision_state([1/6]-[0/0], esc, S).
-%@    S = [0/3,1/6]-[]
-%@ ;  S = [1/3,1/6]-[]
-%@ ;  S = [2/3,1/6]-[]
-%@ ;  S = [3/3,1/6]-[]
-%@ ;  false.
-
-%% So the problem is a failure to stop appropriately from some states?
-
-%?- phrase(path([2/3,1/6]-[]), Path).
-%@    Path = []
-%@ ;  false.
-
-%?- state0_decision_state([2/3,1/6]-[0/0], E, S).
-%@    E = esc, S = [0/3,2/3,1/6]-[]
-%@ ;  E = esc, S = [1/3,2/3,1/6]-[]
-%@ ;  E = esc, S = [2/3,2/3,1/6]-[]
-%@ ;  E = esc, S = [3/3,2/3,1/6]-[]
-%@ ;  E = sta, S = [2/6,1/6]-[0/0]
-%@ ;  E = sta, S = [3/6,1/6]-[0/0]
-%@ ;  E = sta, S = [4/6,1/6]-[0/0]
-%@ ;  E = sta, S = [5/6,1/6]-[0/0]
-%@ ;  E = des, S = [1/9]-[2/3,0/0]
-%@ ;  E = des, S = [2/9]-[2/3,0/0]
-%@ ;  E = des, S = [3/9]-[2/3,0/0]
-%@ ;  E = des, S = [4/9]-[2/3,0/0].
-
-%?- state0_decision_state([1/6]-[0/0], E, S).
-%@    E = esc, S = [0/3,1/6]-[]
-%@ ;  E = esc, S = [1/3,1/6]-[]
-%@ ;  E = esc, S = [2/3,1/6]-[]
-%@ ;  E = esc, S = [3/3,1/6]-[]
-%@ ;  E = sta, S = [1/9]-[0/0]
-%@ ;  E = sta, S = [2/9]-[0/0]
-%@ ;  E = sta, S = [3/9]-[0/0]
-%@ ;  E = sta, S = [4/9]-[0/0]
-%@ ;  false.
-
-%% TODO: Repair this MGQ!
-%?- state0_decision_noregrets([1/6]-[0/0], E, Truth).
-%@    E = esc, Truth = true
-%@ ;  E = sta, Truth = false
-%@ ;  false.
+%?- J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 10.
+%?- J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 46.
+%?- J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 154.
+%?- J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 442.
+%?- J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 1162.
+%?- J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%@    J = 2890.
+%% Yep!
