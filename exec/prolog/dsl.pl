@@ -307,12 +307,12 @@ regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0
 %% reifies to 'false'.
 state0_decision_noregrets(S0, A, Truth) :-
     state_si(S0),
-    member(A, [esc,sta,des]), % these are the decisions to which 'regret' applies
+    regrettable_decision(A),
     %% TODO: Are there advantages of if_/3 even at this level?
     %%       Or would I just start an infinite regress? Is there
     %%       always a '->' at some level (as in if_/3 definition!)
     %%       in any code doing this sort of thing?
-    (	state0_decision_state(S0, A, _) -> % commit if feasible
+    if_(state0_decision_feasible(S0, A),
 	(   state0_decision_state(S0, A, S),
 	    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
 	    S  = [T /N |_] - _, %       into a regret/3 predicate?
@@ -320,8 +320,20 @@ state0_decision_noregrets(S0, A, Truth) :-
 	    %% possibly multiple scenarios for regret -- one is enough!
     	    regret(A, [T/N, T0/N0]) -> Truth = false
 	;   Truth = true
-	)
-    ;	Truth = false % from S0, A is not feasible
+	),
+	Truth = false
+       ).
+
+%% These are the 3 dose-escalation decisions
+%% to which the 'regret' concept applies:
+regrettable_decision(esc).
+regrettable_decision(sta).
+regrettable_decision(des).
+
+state0_decision_feasible(S0, A, Truth) :-
+    state_si(S0),
+    (	state0_decision_state(S0, A, _) -> Truth = true
+    ;	Truth = false
     ).
 
 %?- state0_decision_noregrets([0/3,1/6]-[], E, Truth).
