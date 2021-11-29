@@ -363,31 +363,23 @@ state_si(L - R) :-
 %@ ;  E = sta, T = true
 %@ ;  false.
 
-%% Even if the nesting here feels a bit difficult to read, this code reflects
-%% the primacy of REGRET as the crucial user-level concept shaping these designs.
+%% This code reflects the primacy of REGRET as the crucial user-level
+%% concept shaping these designs.
+
+cascading_decision_otherwise([], Os, _, _, _) :- maplist(call, Os).
+cascading_decision_otherwise([D|Ds], Os, E, S0, S) :-
+        if_(state0_decision_noregrets(S0, D),
+            (   E = D,
+                state0_decision_state(S0, E, S)
+            ),
+            cascading_decision_otherwise(Ds, Os, E, S0, S)).
 
 %path(_) --> []. % a convenience for testing; path can stop at any time
 path(declare_mtd(_)) --> [].
-path(S0) --> { if_(state0_decision_noregrets(S0, esc),
-		   (   E = esc,
-		       state0_decision_state(S0, E, S)
-		   ),
-		   if_(state0_decision_noregrets(S0, sta),
-		       (   E = sta,
-			   state0_decision_state(S0, E, S)
-		       ),
-		       if_(state0_decision_noregrets(S0, des),
-			   (   E = des,
-			       state0_decision_state(S0, E, S)
-			   ),
-			   (   E = stop, % ..and otherwise, STOP.
-			       MTD = todo, % TODO: Actually obtain MTD as integer >= 0.
-			       S = declare_mtd(MTD)
-			   )
-			  )
-		      )
-		  )
-	     },
+path(S0) --> { cascading_decision_otherwise([esc,sta,des],
+                                            [E = stop, % ..and otherwise, STOP.
+                                             MTD = todo, % TODO: Actually obtain MTD as integer >= 0.
+                                             S = declare_mtd(MTD)], E, S0, S) },
 	     [E, S],
 	     path(S). % TODO: Implement declare_mtd possibility
 
