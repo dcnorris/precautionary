@@ -163,6 +163,69 @@ state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- enroll(D0, D).
 %@ ;  S = [3/3]-[0/0]
 %@ ;  false.
 
+%% ~~~~~~~~~~ Abstracting the 'regrets' implicit in 3+3 ~~~~~~~~~~
+
+%% regret(A, [Q|Qs]) holds if we regret having taken action A if it
+%% results in a tally history [Q|Qs] -- which reads backwards in time.
+%% This allows for the relevant history to go back either 1 or 2 tallies,
+%% which is fully suffient for practical purposes. (Regrets based on long
+%% histories would hardly be intuitive for clinical trialists, and a key
+%% aim here is of course to capture the definitive intuitions.)
+
+%% This says that, regardless of the resulting tally, we would regret
+%% having de-escalated from an 'insufficiently toxic' tally of 1-/3+.
+regret(des, [_,T/N]) :-
+    #T #=< 1 #/\ #N #>= 3.
+%% TODO: Try to tighten this up, so that we regret 0/3 toxicities after
+%%       having de-escalated from a 1/3.
+%% TODO: Might this regret already be expressed via the preference for
+%%       'sta' when possible? Or do we need to regret 'des' in order to
+%%       trigger the 'stop' decision?
+
+%% We regret having stayed at the current dose upon seeing a 5+/6 tally.
+regret(sta, [T/N|_]) :-
+    #N #= 6 #/\ #T #>= 5. % regret excess toxicity
+
+
+%% TODO: It's vitally important to express regret(esc)/1 in the MOST
+%%       ELEGANT WAY POSSIBLE. This is precisely how we crystallize
+%%       the underlying INTUTION!
+
+regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
+			    #T0 #> 0 #/\ #T #= 3.
+
+%% This clause expresses that we regret ANY toxicities after
+%% having escalated from a dose with fewer than N=3 assessments.
+%% TODO: Does this contain the essence of a NO-DOSE-SKIPPING constraint?
+regret(esc, [T/3, T0/N0]) :- T in 0..3, N0 in 0..6, T0 in 0..6,
+			     #T0 #=< #N0,
+			     #T #> 0 #/\ #N0 #< 3.
+
+%% The above is not quite sufficient, however, since we also
+%% ought to regret ANY toxicities after escalating from >= 2/6.
+regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0..6, #T #=< #N,
+			    #T #> 0,
+			    #T0 #> 1.
+
+%% Ah, but even this is not sufficient. What if we escalated from 0/6 up to a dose
+%% where we have already recorded 2/3 toxicities, and got a further 3/3?
+%?- regret(esc, [5/6, 0/6]).
+%@ false.
+%% Need another clause!
+regret(esc, [5/6,_]).
+%?- regret(esc, [5/6, 0/6]).
+%@    true.
+
+%?- regret(esc, [T/N, T0/N0]).
+%@    T = 3, N = 3, N0 = 3, clpz:(T0 in 1..3)
+%@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(#N0#>= #T0), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2), clpz:(T0 in 0..2)
+%@ ;  N0 = 6, clpz:(#N#=3#<==> #_A), clpz:(#N#=6#<==> #_B), clpz:(#_A#\/ #_B#<==>1), clpz:(#N#>= #T), clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(N in 1..6), clpz:(T in 1..6), clpz:(T0 in 2..6).
+
+%?- regret(esc, Qs).
+%@    Qs = [3/3,_A/3], clpz:(_A in 1..3)
+%@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2)
+%@ ;  Qs = [_B,_A/6], clpz:(_A in 2..6).
+
 /*
 
 I would like to specify dose-finding intuitions in the form of
@@ -225,29 +288,6 @@ No, it's https://en.wikipedia.org/wiki/Inductive_programming!
 
 */
 
-/*
-
-PLAN from morning walk 8/28 ...
-
-1. Generate common designs from regret-constrained (RC) formulations
-(a) Standard 3+3
-(b) Less common variant
-(c) CCDs   
-
-2. Rolling enrollment
-(a) 3+3 à la Frankel &al (2020) /JAMA Open/
-(b) Rolling-6 (Skolnik &al 2008)
-
-3. Approximating CRM
-(a) Exhibit an RC design that contains all paths of the Braun2020 model.
-    Demonstrate how much larger the path set is (probably a lot!) and
-    characterize what decisional indeterminacy remains in the design.
-(b) Find a principled way to remove sets of paths by adding RCs, and
-    to characterize the path-set differences that arise along the way
-    toward a design that is contained within the CRM.
-
-*/
-
 % TODO:
 % 1. How do I exclude possibilities without not/1 or all-solutions predicates?
 %
@@ -295,68 +335,6 @@ If I understand it, YES!
 But the price to pay for this is REIFICATION. I need to *reify* regret.
 
 */
-
-%% regret(A, [Q|Qs]) holds if we regret having taken action A if it
-%% results in a tally history [Q|Qs]. Note that this allows, in practice,
-%% for the relevant history to go back 1 or 2 tallies.
-%% TODO: Consider whether this list 'trick' is a bad thing. Should I just
-%%       create an extra argument, invoking with _ in don't-care cases?
-
-regret(des, [_,T/N]) :-
-    #T #=< 1 #/\ #N #>= 3.
-
-%% TODO: Work out a proper understanding of 'regret' in the case of sta.
-%%       Regretting 'sta' when it results in excessive toxicity presents
-%%       no conceptual difficulties. But when toxicity is 'insufficient'
-%%       there seems to be no way to conceive regret except vis-à-vis
-%%       the alternative of having escalated.
-%%       But this seems already (and better!) dealt with by the ordering
-%%       of decisions from most- to least-desirable.
-
-regret(sta, [T/N|_]) :-
-    #N #= 6 #/\ #T #>= 5. % regret excess toxicity
-
-%?- regret(sta, [T/N|_]).
-%@    clpz:(N in 7..sup)
-%@ ;  T = 0, N = 6
-%@ ;  N = 6, clpz:(T in 5..sup).
-
-%?- regret(sta, [5/6]).
-%@    true.
-
-regret(esc, [T/3, T0/3]) :- T in 0..3, T0 in 0..3,
-			    #T0 #> 0 #/\ #T #= 3.
-
-%% This clause expresses that we regret ANY toxicities after
-%% having escalated from a dose with fewer than N=3 assessments.
-regret(esc, [T/3, T0/N0]) :- T in 0..3, N0 in 0..6, T0 in 0..6,
-			     #T0 #=< #N0,
-			     #T #> 0 #/\ #N0 #< 3.
-
-%% The above is not quite sufficient, however, since we also
-%% ought to regret ANY toxicities after escalating from >= 2/6.
-regret(esc, [T/N, T0/6]) :- T0 in 0..6, N in 0..6, (#N #= 3 #\/ #N #= 6), T in 0..6, #T #=< #N,
-			    #T #> 0,
-			    #T0 #> 1.
-
-%% Ah, but even this is not sufficient. What if we escalated from 0/6 up to a dose
-%% where we have already recorded 2/3 toxicities, and got a further 3/3?
-%?- regret(esc, [5/6, 0/6]).
-%@ false.
-%% Need another clause!
-regret(esc, [5/6,_]).
-%?- regret(esc, [5/6, 0/6]).
-%@    true.
-
-%?- regret(esc, [T/N, T0/N0]).
-%@    T = 3, N = 3, N0 = 3, clpz:(T0 in 1..3)
-%@ ;  N = 3, clpz:(#N0+1#= #_A), clpz:(#N0#>= #T0), clpz:(T in 1..3), clpz:(_A in 1..3), clpz:(N0 in 0..2), clpz:(T0 in 0..2)
-%@ ;  N0 = 6, clpz:(#N#=3#<==> #_A), clpz:(#N#=6#<==> #_B), clpz:(#_A#\/ #_B#<==>1), clpz:(#N#>= #T), clpz:(_A in 0..1), clpz:(_B in 0..1), clpz:(N in 1..6), clpz:(T in 1..6), clpz:(T0 in 2..6).
-
-%?- regret(esc, Qs).
-%@    Qs = [3/3,_A/3], clpz:(_A in 1..3)
-%@ ;  Qs = [_D/3,_C/_A], clpz:(#_A+1#= #_B), clpz:(_C in 0..sup), clpz:(_D in 1..3), clpz:(_B in 1..3), clpz:(_A in 0..2)
-%@ ;  Qs = [_B,_A/6], clpz:(_A in 2..6).
 
 %% I believe the semantics of 'regret' are untenable at the level of if_/3
 %% application. What I need is a goal that reifies to 'true' for precisely
@@ -519,3 +497,27 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %?- J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
 %@    J = 2890.
 %% Yep!
+
+/*
+
+PLAN of further work ...
+
+1. Generate common designs from regret-constrained (RC) formulations
+(a) Standard 3+3
+(b) Less common variant
+(c) CCDs   
+
+2. Rolling enrollment
+(a) 3+3 à la Frankel &al (2020) /JAMA Open/
+(b) Rolling-6 (Skolnik &al 2008)
+
+3. Approximating CRM
+(a) Exhibit an RC design that contains all paths of the Braun2020 model.
+    Demonstrate how much larger the path set is (probably a lot!) and
+    characterize what decisional indeterminacy remains in the design.
+(b) Find a principled way to remove sets of paths by adding RCs, and
+    to characterize the path-set differences that arise along the way
+    toward a design that is contained within the CRM.
+
+*/
+
