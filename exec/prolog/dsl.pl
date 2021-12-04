@@ -70,10 +70,18 @@ This, in turn, will be useful if this framework confers a *generalizability*
 upon these designs (and upon their analysis) similar to that enjoyed by other
 constraint-type formulations throughout mathematics and the sciences. Thus,
 one may hope that dose-escalation designs defined in regret-constraint terms
-will readily generalize to rolling enrollment---and even to dose-TITRATION
-as in the 3+3/PC design [3].
+will readily generalize to rolling enrollment [3,4] -- and perhaps even to
+dose-TITRATION as in the 3+3/PC design [5].
 
-3. Norris DC. Precautionary Coherence Unravels Dose Escalation Designs.
+3. Skolnik JM, Barrett JS, Jayaraman B, Patel D, Adamson PC. Shortening the
+   timeline of pediatric phase I trials: the rolling six design. J Clin Oncol.
+   2008;26(2):190-195. doi:10.1200/JCO.2007.12.7712
+
+4. Frankel PH, Chung V, Tuscano J, et al. Model of a Queuing Approach for
+   Patient Accrual in Phase 1 Oncology Studies. JAMA Network Open.
+   2020;3(5):e204787-e204787. doi:10.1001/jamanetworkopen.2020.4787
+
+5. Norris DC. Precautionary Coherence Unravels Dose Escalation Designs.
    bioRxiv. December 29, 2017. doi:10.1101/240846
 
 */
