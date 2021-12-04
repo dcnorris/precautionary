@@ -78,6 +78,82 @@ as in the 3+3/PC design [3].
 
 */
 
+%% What follows is a demonstration that a regret-constraint formulation can
+%% recapitulate  the common 3+3 design. Apart from using standard libraries,
+%% this program is self-contained.
+:- use_module(library(lists)).
+:- use_module(library(clpz)).
+:- use_module(library(reif)).
+:- use_module(library(si)).
+:- use_module(library(dcgs)).
+:- use_module(library(error)).
+:- use_module(library(lambda)).
+
+%% Switching to a tidier representation of state that does not
+%% carry along excluded doses...
+%% Also, adopting the convention that the current dose is the
+%% head of the left-hand list.
+
+%% During the course of a dose-escalation trial, at any given dose-level
+%% there is some current tally T/N, T,N ∈ ℕ recording T toxic responses
+%% ('toxicities') out of N participants enrolled at that dose. Enrollment
+%% of a further 'cohort' at this dose-level increases the denominator and
+%% possibly also the numerator. Initially, we constrain enrollment to
+%% cohorts of size 3, and limit total enrollment at any one dose to 6.
+%% (The 'toxicity assessment period' that must elapse before a toxicity
+%% determination can be made is NOT explicitly modeled, and is thus elided
+%% as if it were instantaneous.)
+enroll(T0/N0, T1/N1) :-
+    #Nnew #= 3, % hard-coding cohorts of 3 for now
+    #N1 #= #N0 + #Nnew,
+    Tnew in 0..Nnew, indomain(Tnew),
+    #T1 #= #T0 + #Tnew,
+    #N1 #=< 6. % Maximum enrollment per cohort
+    
+%?- enroll(0/0, T/N).
+%@    T = 0, N = 3
+%@ ;  T = 1, N = 3
+%@ ;  T = 2, N = 3
+%@ ;  T = 3, N = 3.
+
+%% We model the state of the whole trial (comprising multiple dose-levels)
+%% as a pair of lists of tallies, the left-hand list in *descending* dose
+%% order with the 'current dose' at its head, and the right-hand list in
+%% *ascending* order, with the next-higher dose at its head. Thus doses
+%% adjacent to the 'current dose' are immediately accessible. Dose-skipping
+%% is generally not done in dose-escalation trials, in which case there are
+%% 3 main dose-escalation decisions are ESCalate, STAy and DE-eScalate:
+state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :- enroll(R0, R).
+state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :- enroll(L0, L).
+state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- enroll(D0, D).
+
+%?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Rs).
+%@    Ls = [0/3,0/3,1/6], Rs = [0/0]
+%@ ;  Ls = [1/3,0/3,1/6], Rs = [0/0]
+%@ ;  Ls = [2/3,0/3,1/6], Rs = [0/0]
+%@ ;  Ls = [3/3,0/3,1/6], Rs = [0/0]
+%@ ;  false.
+
+%?- state0_decision_state([1/3, 1/6] - [0/0, 0/0], sta, Ls - Rs).
+%@    Ls = [1/6,1/6], Rs = [0/0,0/0]
+%@ ;  Ls = [2/6,1/6], Rs = [0/0,0/0]
+%@ ;  Ls = [3/6,1/6], Rs = [0/0,0/0]
+%@ ;  Ls = [4/6,1/6], Rs = [0/0,0/0]
+%@ ;  false.
+
+%?- state0_decision_state([2/3, 0/3] - [0/0, 0/0], des, Ls - Rs).
+%@    Ls = [0/6], Rs = [2/3,0/0,0/0]
+%@ ;  Ls = [1/6], Rs = [2/3,0/0,0/0]
+%@ ;  Ls = [2/6], Rs = [2/3,0/0,0/0]
+%@ ;  Ls = [3/6], Rs = [2/3,0/0,0/0].
+
+%% Note how a trial starts naturally from the obvious 'initial state':
+%?- state0_decision_state([] - [0/0, 0/0], esc, S).
+%@    S = [0/3]-[0/0]
+%@ ;  S = [1/3]-[0/0]
+%@ ;  S = [2/3]-[0/0]
+%@ ;  S = [3/3]-[0/0]
+%@ ;  false.
 
 /*
 
@@ -140,72 +216,6 @@ Am I perhaps aiming at a PROGRAMMING-BY-EXAMPLE principle?
 No, it's https://en.wikipedia.org/wiki/Inductive_programming!
 
 */
-
-%% I can start the programming, already!
-:- use_module(library(lists)).
-:- use_module(library(clpz)).
-:- use_module(library(reif)).
-:- use_module(library(si)).
-:- use_module(library(dcgs)).
-:- use_module(library(error)).
-:- use_module(library(lambda)).
-:- use_module(tally).
-
-%% Switching to a tidier representation of state that does not
-%% carry along excluded doses...
-%% Also, adopting the convention that the current dose is the
-%% head of the left-hand list.
-
-enroll(T0/N0, T1/N1) :-
-    #Nnew #= 3, % hard-coding cohorts of 3 for now
-    #N1 #= #N0 + #Nnew,
-    Tnew in 0..Nnew, indomain(Tnew),
-    #T1 #= #T0 + #Tnew,
-    #N1 #=< 6. % Maximum enrollment per cohort
-    
-%?- enroll(0/0, T/n).
-%@ caught: error(existence_error(procedure,enroll/2),enroll/2)
-%@ caught: error(existence_error(procedure,enroll/2),enroll/2)
-
-state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :-
-    enroll(R0, R).
-
-state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :-
-    enroll(L0, L).
-
-state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :-
-    enroll(D0, D).
-
-%?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Rs).
-%@    Ls = [0/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [1/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [2/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [3/3,0/3,1/6], Rs = [0/0]
-%@ ;  false.
-
-%?- state0_decision_state([1/3, 1/6] - [0/0, 0/0], sta, Ls - Rs).
-%@    Ls = [1/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [2/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [3/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [4/6,1/6], Rs = [0/0,0/0]
-%@ ;  false.
-
-%?- state0_decision_state([2/3, 0/3] - [0/0, 0/0], des, Ls - Rs).
-%@    Ls = [0/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [1/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [2/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [3/6], Rs = [2/3,0/0,0/0].
-
-%% What DCG could describe valid sequences of (Action, Tally) pairs?
-%% Is a list of such pairs really the right representation? Might a
-%% fluid, alternating sequence of tallies & decisions work better?
-
-%?- state0_decision_state([] - [0/0, 0/0], esc, S).
-%@    S = [0/3]-[0/0]
-%@ ;  S = [1/3]-[0/0]
-%@ ;  S = [2/3]-[0/0]
-%@ ;  S = [3/3]-[0/0]
-%@ ;  false.
 
 /*
 
