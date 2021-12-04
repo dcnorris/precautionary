@@ -1,6 +1,18 @@
-%% At LONG last I feel ready to sketch a DSL in this domain ...
-
 /*
+
+On the way toward a domain-specific language (DSL) for dose-escalation designs,
+we implement the rules of the classical 3+3 design [1,2], formulated in term of
+*prohibitions* on certain future events considered to be 'regrettable'.
+
+1. Korn EL, Midthune D, Chen TT, Rubinstein LV, Christian MC, Simon RM.
+   A comparison of two phase I trial designs. Stat Med. 1994;13(18):1799-1806.
+   doi:10.1002/sim.4780131802
+
+2. Norris DC. What Were They Thinking? Pharmacologic priors implicit in a choice
+   of 3+3 dose-escalation design. arXiv:201205301 [statME]. December 24, 2020.
+   https://arxiv.org/abs/2012.05301
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is a path-probability-weighted summary of des/sta/esc decisions
 happening during operation of the Braun (2020) CRM model with C=13.
@@ -47,6 +59,23 @@ T   1        2 3          4 5         6 7          8 9          10
   6 0 0.000000 0 0.00000000 0 0.0000000 0 0.00000000 0 0.000000000
 
 > 
+
+With a suitable interpreter defined, it might be possible generally to operate
+in a mode of https://en.wikipedia.org/wiki/Inductive_programming, to abstract
+approximating 'regret' rules from the paths of any dose-escalation design.
+
+If this proves possible, then the whole class of dose-escalation trial designs
+would be effectively subsumed under this regret-constraint framework.
+This, in turn, will be useful if this framework confers a *generalizability*
+upon these designs (and upon their analysis) similar to that enjoyed by other
+constraint-type formulations throughout mathematics and the sciences. Thus,
+one may hope that dose-escalation designs defined in regret-constraint terms
+will readily generalize to rolling enrollment---and even to dose-TITRATION
+as in the 3+3/PC design [3].
+
+3. Norris DC. Precautionary Coherence Unravels Dose Escalation Designs.
+   bioRxiv. December 29, 2017. doi:10.1101/240846
+
 */
 
 
