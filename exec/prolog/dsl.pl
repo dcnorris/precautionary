@@ -341,27 +341,27 @@ regrettable_decision(esc).
 regrettable_decision(sta).
 regrettable_decision(des).
 
+%% TODO: Does the (->)/2 below really engender distrust,
+%%       even though we can invoke with A uninstantiated?
 state0_decision_feasible(S0, A, Truth) :-
     state_si(S0),
+    regrettable_decision(A), % this instantiates A
     (	state0_decision_state(S0, A, _) -> Truth = true
     ;	Truth = false
     ).
 
-%?- state0_decision_noregrets([0/3,1/6]-[], E, Truth).
-%@    E = esc, Truth = false
-%@ ;  E = sta, Truth = false
-%@ ;  false.
+%?- state0_decision_feasible([1/3]-[0/0,0/0], A, Truth).
+%@    A = esc, Truth = true
+%@ ;  A = sta, Truth = true
+%@ ;  A = des, Truth = false.
 
-%% TODO: Does this (if-then) count as idiomatic usage of list_si/1?
-%%       Without it, I'm left with unsightly extra choice points.
 state_si(L - R) :-
     %% TODO: Should I also insist that all entries in L & R
     %%       are tallies T/N, with T and N being integers?
     %%       (NB: list_si/1 does sort/2, which implies visiting
     %%       every element of the list anyway.)
-    (	list_si(L) -> list_si(R)
-    ;	false
-    ).
+    list_si(L),
+    list_si(R).
 
 %?- state0_decision_noregrets([1/3]-[0/0], E, T).
 %@    E = esc, T = false
