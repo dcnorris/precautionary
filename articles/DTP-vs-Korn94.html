@@ -30,6 +30,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -48,12 +50,6 @@
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -87,7 +83,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/dcnorris/precautionary/">
+  <a href="https://github.com/dcnorris/precautionary/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -107,11 +103,11 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>DTP-vs-Korn94</h1>
-                        <h4 class="author">David C. Norris</h4>
+                        <h4 data-toc-skip class="author">David C. Norris</h4>
             
-            <h4 class="date">12/23/2020</h4>
+            <h4 data-toc-skip class="date">12/23/2020</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/master/vignettes/DTP-vs-Korn94.Rmd"><code>vignettes/DTP-vs-Korn94.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/HEAD/vignettes/DTP-vs-Korn94.Rmd" class="external-link"><code>vignettes/DTP-vs-Korn94.Rmd</code></a></small>
       <div class="hidden name"><code>DTP-vs-Korn94.Rmd</code></div>
 
     </div>
@@ -119,76 +115,76 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">escalation</span><span class="op">)</span></code></pre></div>
-<pre><code>## Loading required package: magrittr</code></pre>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">escalation</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## Loading required package: magrittr</span></code></pre>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html">get_three_plus_three</a></span><span class="op">(</span>num_doses<span class="op">=</span><span class="fl">1</span>, allow_deescalate<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
-    <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dose_paths.html">get_dose_paths</a></span><span class="op">(</span>cohort_sizes<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="co"># D=1 trial enrolls at most 2 cohorts</span>
-<span class="va">g1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/graph_paths.html">graph_paths</a></span><span class="op">(</span><span class="va">p1</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html" class="external-link">get_three_plus_three</a></span><span class="op">(</span>num_doses<span class="op">=</span><span class="fl">1</span>, allow_deescalate<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dose_paths.html" class="external-link">get_dose_paths</a></span><span class="op">(</span>cohort_sizes<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="co"># D=1 trial enrolls at most 2 cohorts</span>
+<span class="va">g1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/graph_paths.html" class="external-link">graph_paths</a></span><span class="op">(</span><span class="va">p1</span><span class="op">)</span>
 <span class="va">g1</span><span class="op">$</span><span class="va">width</span> <span class="op">&lt;-</span> <span class="va">g1</span><span class="op">$</span><span class="va">height</span> <span class="op">&lt;-</span> <span class="fl">250</span>
 <span class="va">g1</span></code></pre></div>
 <div class="figure">
-<div id="htmlwidget-696f8b8114911b126b95" style="width:250px;height:250px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-696f8b8114911b126b95">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"2\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"3\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"4\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"5\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"6\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"7\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"8\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"9\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"1\"->\"3\" [label = \"NNT\"] \n\"3\"->\"4\" [label = \"NNN\"] \n\"1\"->\"5\" [label = \"NTT\"] \n\"1\"->\"6\" [label = \"TTT\"] \n\"3\"->\"7\" [label = \"NNT\"] \n\"3\"->\"8\" [label = \"NTT\"] \n\"3\"->\"9\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><p class="caption">
+<div id="htmlwidget-6ff688b29932257c5482" style="width:250px;height:250px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6ff688b29932257c5482">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"2\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"3\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"4\" [label = \"1\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"5\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"6\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"7\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"8\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n  \"9\" [label = \"Stop\", fontcolor = \"#FDE725FF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"1\"->\"3\" [label = \"NNT\"] \n\"3\"->\"4\" [label = \"NNN\"] \n\"1\"->\"5\" [label = \"NTT\"] \n\"1\"->\"6\" [label = \"TTT\"] \n\"3\"->\"7\" [label = \"NNT\"] \n\"3\"->\"8\" [label = \"NTT\"] \n\"3\"->\"9\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><p class="caption">
 Dose transition paths computed by package <code>escalation</code> v0.1.4, for the trivial 3+3 trial with a single dose, under the <code>allow_deescalate=TRUE</code> regime which implements the “more common” variant described in <span class="citation">Korn et al. (1994, p1801)</span>, in which the “requirement is to have 6 patients treated at the MTD (if it is higher than level 0).” The top, right yellow leaf node of this graph suggests that the case ‘1NNN’ proceeds immediately to declare <span class="math inline">\(MTD=1\)</span> without enrolling a second cohort of 3.
 </p>
 </div>
 <div style="page-break-after: always;"></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html">get_three_plus_three</a></span><span class="op">(</span>num_doses<span class="op">=</span><span class="fl">2</span>, allow_deescalate<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
-    <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dose_paths.html">get_dose_paths</a></span><span class="op">(</span>cohort_sizes<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span> <span class="co"># D=2 trial enrolls at most 4 cohorts</span></code></pre></div>
-<pre><code>## You have requested 341 model evaluations. Be patient.</code></pre>
+<code class="sourceCode R"><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html" class="external-link">get_three_plus_three</a></span><span class="op">(</span>num_doses<span class="op">=</span><span class="fl">2</span>, allow_deescalate<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dose_paths.html" class="external-link">get_dose_paths</a></span><span class="op">(</span>cohort_sizes<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span> <span class="co"># D=2 trial enrolls at most 4 cohorts</span></code></pre></div>
+<pre><code><span class="co">## You have requested 341 model evaluations. Be patient.</span></code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/escalation/man/graph_paths.html">graph_paths</a></span><span class="op">(</span><span class="va">p2</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/escalation/man/graph_paths.html" class="external-link">graph_paths</a></span><span class="op">(</span><span class="va">p2</span><span class="op">)</span></code></pre></div>
 <div class="figure">
-<div id="htmlwidget-5ec4ef3e13bc27be9b42" style="width:700px;height:432.632880098888px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-5ec4ef3e13bc27be9b42">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"2\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"3\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"4\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"5\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"6\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"7\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"8\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"9\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"10\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"11\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"12\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"14\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"15\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"17\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"19\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"20\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"21\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"22\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"23\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"24\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"25\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"26\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"27\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"28\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"29\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"30\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"31\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"32\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"33\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"34\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"35\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"36\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"37\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"38\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"39\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"40\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"41\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"42\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"43\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"44\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"45\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"5\"->\"6\" [label = \"NNN\"] \n\"1\"->\"7\" [label = \"NTT\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"2\"->\"9\" [label = \"NNT\"] \n\"9\"->\"10\" [label = \"NNN\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"2\"->\"12\" [label = \"NTT\"] \n\"12\"->\"13\" [label = \"NNN\"] \n\"4\"->\"14\" [label = \"NTT\"] \n\"2\"->\"15\" [label = \"TTT\"] \n\"15\"->\"16\" [label = \"NNN\"] \n\"4\"->\"17\" [label = \"TTT\"] \n\"5\"->\"18\" [label = \"NNT\"] \n\"18\"->\"19\" [label = \"NNN\"] \n\"9\"->\"20\" [label = \"NNT\"] \n\"20\"->\"21\" [label = \"NNN\"] \n\"12\"->\"22\" [label = \"NNT\"] \n\"15\"->\"23\" [label = \"NNT\"] \n\"5\"->\"24\" [label = \"NTT\"] \n\"9\"->\"25\" [label = \"NTT\"] \n\"25\"->\"26\" [label = \"NNN\"] \n\"12\"->\"27\" [label = \"NTT\"] \n\"15\"->\"28\" [label = \"NTT\"] \n\"5\"->\"29\" [label = \"TTT\"] \n\"9\"->\"30\" [label = \"TTT\"] \n\"30\"->\"31\" [label = \"NNN\"] \n\"12\"->\"32\" [label = \"TTT\"] \n\"15\"->\"33\" [label = \"TTT\"] \n\"18\"->\"34\" [label = \"NNT\"] \n\"20\"->\"35\" [label = \"NNT\"] \n\"25\"->\"36\" [label = \"NNT\"] \n\"30\"->\"37\" [label = \"NNT\"] \n\"18\"->\"38\" [label = \"NTT\"] \n\"20\"->\"39\" [label = \"NTT\"] \n\"25\"->\"40\" [label = \"NTT\"] \n\"30\"->\"41\" [label = \"NTT\"] \n\"18\"->\"42\" [label = \"TTT\"] \n\"20\"->\"43\" [label = \"TTT\"] \n\"25\"->\"44\" [label = \"TTT\"] \n\"30\"->\"45\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><p class="caption">
+<div id="htmlwidget-deeecf41f0d5c1c570e4" style="width:700px;height:432.632880098888px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-deeecf41f0d5c1c570e4">{"x":{"diagram":"digraph {\n\ngraph [layout = \"neato\",\n       outputorder = \"edgesfirst\",\n       bgcolor = \"white\"]\n\nnode [fontname = \"Helvetica\",\n      fontsize = \"10\",\n      shape = \"circle\",\n      fixedsize = \"true\",\n      width = \"0.5\",\n      style = \"filled\",\n      fillcolor = \"aliceblue\",\n      color = \"gray70\",\n      fontcolor = \"gray50\"]\n\nedge [fontname = \"Helvetica\",\n     fontsize = \"8\",\n     len = \"1.5\",\n     color = \"gray80\",\n     arrowsize = \"0.5\"]\n\n  \"1\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"2\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"3\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"4\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"5\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"6\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"7\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"8\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"9\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"10\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"11\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"12\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"13\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"14\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"15\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"16\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"17\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"18\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"19\" [label = \"2\", fontcolor = \"#440154FF\", fillcolor = \"#FDE725FF\"] \n  \"20\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"21\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"22\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"23\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"24\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"25\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"26\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"27\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"28\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"29\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"30\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"31\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"32\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"33\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"34\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"35\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"36\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"37\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"38\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"39\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"40\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"41\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"42\" [label = \"1\", fontcolor = \"#FDE725FF\", fillcolor = \"#21908CFF\"] \n  \"43\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"44\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n  \"45\" [label = \"Stop\", fontcolor = \"#21908CFF\", fillcolor = \"#440154FF\"] \n\"1\"->\"2\" [label = \"NNN\"] \n\"2\"->\"3\" [label = \"NNN\"] \n\"1\"->\"4\" [label = \"NNT\"] \n\"4\"->\"5\" [label = \"NNN\"] \n\"5\"->\"6\" [label = \"NNN\"] \n\"1\"->\"7\" [label = \"NTT\"] \n\"1\"->\"8\" [label = \"TTT\"] \n\"2\"->\"9\" [label = \"NNT\"] \n\"9\"->\"10\" [label = \"NNN\"] \n\"4\"->\"11\" [label = \"NNT\"] \n\"2\"->\"12\" [label = \"NTT\"] \n\"12\"->\"13\" [label = \"NNN\"] \n\"4\"->\"14\" [label = \"NTT\"] \n\"2\"->\"15\" [label = \"TTT\"] \n\"15\"->\"16\" [label = \"NNN\"] \n\"4\"->\"17\" [label = \"TTT\"] \n\"5\"->\"18\" [label = \"NNT\"] \n\"18\"->\"19\" [label = \"NNN\"] \n\"9\"->\"20\" [label = \"NNT\"] \n\"20\"->\"21\" [label = \"NNN\"] \n\"12\"->\"22\" [label = \"NNT\"] \n\"15\"->\"23\" [label = \"NNT\"] \n\"5\"->\"24\" [label = \"NTT\"] \n\"9\"->\"25\" [label = \"NTT\"] \n\"25\"->\"26\" [label = \"NNN\"] \n\"12\"->\"27\" [label = \"NTT\"] \n\"15\"->\"28\" [label = \"NTT\"] \n\"5\"->\"29\" [label = \"TTT\"] \n\"9\"->\"30\" [label = \"TTT\"] \n\"30\"->\"31\" [label = \"NNN\"] \n\"12\"->\"32\" [label = \"TTT\"] \n\"15\"->\"33\" [label = \"TTT\"] \n\"18\"->\"34\" [label = \"NNT\"] \n\"20\"->\"35\" [label = \"NNT\"] \n\"25\"->\"36\" [label = \"NNT\"] \n\"30\"->\"37\" [label = \"NNT\"] \n\"18\"->\"38\" [label = \"NTT\"] \n\"20\"->\"39\" [label = \"NTT\"] \n\"25\"->\"40\" [label = \"NTT\"] \n\"30\"->\"41\" [label = \"NTT\"] \n\"18\"->\"42\" [label = \"TTT\"] \n\"20\"->\"43\" [label = \"TTT\"] \n\"25\"->\"44\" [label = \"TTT\"] \n\"30\"->\"45\" [label = \"TTT\"] \n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><p class="caption">
 Dose transition paths computed by package <code>escalation</code> v0.1.4, for the 3+3 trial with 2 doses, under the <code>allow_deescalate=TRUE</code> regime which implements the “more common” variant described in <span class="citation">Korn et al. (1994, p1801)</span>, in which the “requirement is to have 6 patients treated at the MTD (if it is higher than level 0).” Paths ‘1NNN, 2NNN, 2’ and ‘1NNT, 1NNN, 2NNN, 2’ appear to declare <span class="math inline">\(MTD=2\)</span> after enrolling only 3 patients at dose level 2.
 </p>
 </div>
 <div style="page-break-after: always;"></div>
-<div id="not-just-dtp-but-the-sims-themselves-omit-2nd-mtd-cohort" class="section level1">
-<h1 class="hasAnchor">
-<a href="#not-just-dtp-but-the-sims-themselves-omit-2nd-mtd-cohort" class="anchor"></a>Not just DTP, but the sims themselves omit 2nd MTD cohort</h1>
+<div class="section level1">
+<h1 id="not-just-dtp-but-the-sims-themselves-omit-2nd-mtd-cohort">Not just DTP, but the sims themselves omit 2nd MTD cohort<a class="anchor" aria-label="anchor" href="#not-just-dtp-but-the-sims-themselves-omit-2nd-mtd-cohort"></a>
+</h1>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">)</span>
-<span class="va">true_prob_tox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># drive simulation to top dose with zero toxicity</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">)</span>
+<span class="va">true_prob_tox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># drive simulation to top dose with zero toxicity</span>
 <span class="va">num_sims</span> <span class="op">&lt;-</span> <span class="fl">1</span>
-<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html">get_three_plus_three</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">3</span>, allow_deescalate <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_three_plus_three.html" class="external-link">get_three_plus_three</a></span><span class="op">(</span>num_doses <span class="op">=</span> <span class="fl">3</span>, allow_deescalate <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
   <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>num_sims <span class="op">=</span> <span class="va">num_sims</span>, true_prob_tox <span class="op">=</span> <span class="va">true_prob_tox</span><span class="op">)</span>
 <span class="va">sims</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">fit</span></code></pre></div>
-<pre><code>## Patient-level data:
-## # A tibble: 9 × 4
-##   Patient Cohort  Dose   Tox
-##     &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;
-## 1       1      1     1     0
-## 2       2      1     1     0
-## 3       3      1     1     0
-## 4       4      2     2     0
-## 5       5      2     2     0
-## 6       6      2     2     0
-## 7       7      3     3     0
-## 8       8      3     3     0
-## 9       9      3     3     0
-## 
-## Dose-level data:
-## # A tibble: 4 × 8
-##   dose     tox     n empiric_tox_rate mean_prob_tox median_prob_tox admissible
-##   &lt;ord&gt;  &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;lgl&gt;     
-## 1 NoDose     0     0                0             0               0 TRUE      
-## 2 1          0     3                0            NA              NA TRUE      
-## 3 2          0     3                0            NA              NA TRUE      
-## 4 3          0     3                0            NA              NA TRUE      
-## # … with 1 more variable: recommended &lt;lgl&gt;
-## 
-## The model advocates stopping and recommending dose 3.</code></pre>
+<pre><code><span class="co">## Patient-level data:</span>
+<span class="co">## <span style="color: #949494;"># A tibble: 9 × 4</span></span>
+<span class="co">##   Patient Cohort  Dose   Tox</span>
+<span class="co">##     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="co">## <span style="color: #BCBCBC;">1</span>       1      1     1     0</span>
+<span class="co">## <span style="color: #BCBCBC;">2</span>       2      1     1     0</span>
+<span class="co">## <span style="color: #BCBCBC;">3</span>       3      1     1     0</span>
+<span class="co">## <span style="color: #BCBCBC;">4</span>       4      2     2     0</span>
+<span class="co">## <span style="color: #BCBCBC;">5</span>       5      2     2     0</span>
+<span class="co">## <span style="color: #BCBCBC;">6</span>       6      2     2     0</span>
+<span class="co">## <span style="color: #BCBCBC;">7</span>       7      3     3     0</span>
+<span class="co">## <span style="color: #BCBCBC;">8</span>       8      3     3     0</span>
+<span class="co">## <span style="color: #BCBCBC;">9</span>       9      3     3     0</span>
+<span class="co">## </span>
+<span class="co">## Dose-level data:</span>
+<span class="co">## <span style="color: #949494;"># A tibble: 4 × 8</span></span>
+<span class="co">##   dose     tox     n empiric_tox_rate mean_prob_tox median_prob_tox admissible</span>
+<span class="co">##   <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     </span>
+<span class="co">## <span style="color: #BCBCBC;">1</span> NoDose     0     0                0             0               0 TRUE      </span>
+<span class="co">## <span style="color: #BCBCBC;">2</span> 1          0     3                0            <span style="color: #BB0000;">NA</span>              <span style="color: #BB0000;">NA</span> TRUE      </span>
+<span class="co">## <span style="color: #BCBCBC;">3</span> 2          0     3                0            <span style="color: #BB0000;">NA</span>              <span style="color: #BB0000;">NA</span> TRUE      </span>
+<span class="co">## <span style="color: #BCBCBC;">4</span> 3          0     3                0            <span style="color: #BB0000;">NA</span>              <span style="color: #BB0000;">NA</span> TRUE      </span>
+<span class="co">## <span style="color: #949494;"># … with 1 more variable: recommended &lt;lgl&gt;</span></span>
+<span class="co">## </span>
+<span class="co">## The model advocates stopping and recommending dose 3.</span></code></pre>
 </div>
-<div id="references" class="section level1 unnumbered">
-<h1 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h1>
+<div class="section level1 unnumbered">
+<h1 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h1>
 <div id="refs" class="references">
 <div id="ref-korn_comparison_1994">
-<p>Korn, Edward L., Douglas Midthune, T. Timothy Chen, Lawrence V. Rubinstein, Michaele C. Christian, and Richard M. Simon. 1994. “A Comparison of Two Phase I Trial Designs.” <em>Statistics in Medicine</em> 13 (18): 1799–1806. <a href="https://doi.org/10.1002/sim.4780131802">https://doi.org/10.1002/sim.4780131802</a>.</p>
+<p>Korn, Edward L., Douglas Midthune, T. Timothy Chen, Lawrence V. Rubinstein, Michaele C. Christian, and Richard M. Simon. 1994. “A Comparison of Two Phase I Trial Designs.” <em>Statistics in Medicine</em> 13 (18): 1799–1806. <a href="https://doi.org/10.1002/sim.4780131802" class="external-link">https://doi.org/10.1002/sim.4780131802</a>.</p>
 </div>
 </div>
 </div>
@@ -205,11 +201,13 @@ Dose transition paths computed by package <code>escalation</code> v0.1.4, for th
 
 
       <footer><div class="copyright">
-  <p>Developed by David C. Norris.</p>
+  <p></p>
+<p>Developed by David C. Norris.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -217,6 +215,8 @@ Dose transition paths computed by package <code>escalation</code> v0.1.4, for th
 
   
 
+
+  
 
   </body>
 </html>

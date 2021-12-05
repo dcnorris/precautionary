@@ -1,126 +1,144 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://dcnorris.github.io/precautionary//index.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/404.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/Boin-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/Ccd-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/DTP-vs-Korn94.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/Cpe-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/FDA-proactive.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/Cpe3_3-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/Intro.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/Crm-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/MCSE-Free.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/HyperMTDi-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/Safety-Schematic-via-CPE.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/as.data.table.exact.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/as.data.table.precautionary.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/authors.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/cohorts_of_n.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/index.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/crm.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/news/index.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/crmh.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/Boin-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/crmh_xo.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/Ccd-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/exact.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/Cpe-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/extend.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/Cpe3_3-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/format.safetytab.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/Crm-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/hyper_mtdi_lognormal-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/HyperMTDi-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/mtdi_lognormal-class.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/as.data.table.exact.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/ordinalizer.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/as.data.table.precautionary.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/phase1_sim.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/cohorts_of_n.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/plan.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/crm.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/plot-mtdi_distribution-ANY-method.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/crmh.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/plot-mtdi_generator-ANY-method.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/crmh_xo.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/plot_dutycycle.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/exact.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/precautionary-package.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/extend.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/print.exact.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/format.safetytab.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/print.hyper.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/hyper_mtdi_lognormal-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/print.precautionary.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/safety_kable.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/mtdi_lognormal-class.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/simulate_trials.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/ordinalizer.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/simulation_function.u_i.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/phase1_sim.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/stop_for_excess_toxicity_empiric.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/plan.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/summary.exact.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/plot-mtdi_distribution-ANY-method.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/summary.precautionary.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/plot-mtdi_generator-ANY-method.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/test_draw_samples.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/plot_dutycycle.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//reference/viola_dtp.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/precautionary-package.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//articles/DTP-vs-Korn94.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/print.exact.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//articles/FDA-proactive.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/print.hyper.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//articles/Intro.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/print.precautionary.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//articles/MCSE-Free.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/safety_kable.html</loc>
   </url>
   <url>
-    <loc>https://dcnorris.github.io/precautionary//articles/Safety-Schematic-via-CPE.html</loc>
+    <loc>https://dcnorris.github.io/precautionary/reference/simulate_trials.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/simulation_function.u_i.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/stop_for_excess_toxicity_empiric.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/summary.exact.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/summary.precautionary.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/test_draw_samples.html</loc>
+  </url>
+  <url>
+    <loc>https://dcnorris.github.io/precautionary/reference/viola_dtp.html</loc>
   </url>
 </urlset>
