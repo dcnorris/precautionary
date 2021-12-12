@@ -96,6 +96,7 @@ dose-TITRATION as in the 3+3/PC design [5].
 :- use_module(library(dcgs)).
 :- use_module(library(error)).
 :- use_module(library(lambda)).
+:- use_module(library(time)).
 
 %% During the course of a dose-escalation trial, at any given dose-level
 %% there is some current tally T/N, T,N ∈ ℕ recording T toxic responses
@@ -345,7 +346,7 @@ regrettable_decision(des).
 %%       even though we can invoke with A uninstantiated?
 state0_decision_feasible(S0, A, Truth) :-
     state_si(S0),
-    regrettable_decision(A), % this instantiates A
+    regrettable_decision(A), % guarantees A is ground
     (	state0_decision_state(S0, A, _) -> Truth = true
     ;	Truth = false
     ).
@@ -464,17 +465,23 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@ ;  Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
 %@ ;  false. % J=46 paths!
 
-%?- J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 0.229 seconds
 %@    J = 10.
-%?- J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 1.189 seconds
 %@    J = 46.
-%?- J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 4.137 seconds
 %@    J = 154.
-%?- J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 12.394 seconds
 %@    J = 442.
-%?- J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 32.790 seconds
 %@    J = 1162.
-%?- J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J)).
+%?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 83.518 seconds
 %@    J = 2890.
 %% Yep!
 
