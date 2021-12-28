@@ -108,21 +108,21 @@ dose-TITRATION as in the 3+3/PC design [5].
 %% (The 'toxicity assessment period' that must elapse before a toxicity
 %% determination can be made is NOT explicitly modeled, and is thus elided
 %% as if it were instantaneous.)
-enroll(C, T0/N0, T1/N1) :-
-    Nnew in C, indomain(Nnew),
+enroll(C/M, T0/N0, T1/N1) :-
+    Nnew in C, indomain(Nnew), % C is a (possibly singleton) integer range
     #N1 #= #N0 + #Nnew,
     Tnew in 0..Nnew, indomain(Tnew),
     #T1 #= #T0 + #Tnew,
-    #N1 #=< 6. % Maximum enrollment per cohort
+    #N1 #=< M. % Maximum enrollment per cohort
     
-%?- enroll(3, 0/0, T/N).
+%?- enroll(3/6, 0/0, T/N).
 %@    T = 0, N = 3
 %@ ;  T = 1, N = 3
 %@ ;  T = 2, N = 3
 %@ ;  T = 3, N = 3
 %@ ;  false. % Why extra choice-point when C is a singleton?
 
-%?- enroll(2..3, 0/0, T/N).
+%?- enroll((2..3)/6, 0/0, T/N).
 %@    T = 0, N = 2
 %@ ;  T = 1, N = 2
 %@ ;  T = 2, N = 2
@@ -139,9 +139,13 @@ enroll(C, T0/N0, T1/N1) :-
 %% is generally not done in dose-escalation trials, in which case there are
 %% 3 main dose-escalation decisions: ESCalate, STAy and DeEScalate:
 cohort(3). % use cohorts of 3
-state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :- cohort(C), enroll(C, R0, R).
-state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :- cohort(C), enroll(C, L0, L).
-state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- cohort(C), enroll(C, D0, D).
+maxenr(6). % maximum enrollment per dose
+state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :-
+    cohort(C), maxenr(M), enroll(C/M, R0, R).
+state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :-
+    cohort(C), maxenr(M), enroll(C/M, L0, L).
+state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :-
+    cohort(C), maxenr(M), enroll(C/M, D0, D).
 
 %?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Rs).
 %@    Ls = [0/3,0/3,1/6], Rs = [0/0]
@@ -182,8 +186,10 @@ state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- cohort(C), enroll
 
 %% This says that, regardless of the resulting tally, we would regret
 %% having de-escalated from an 'insufficiently toxic' tally of 1-/3+.
-regret(des, [_,T/N]) :-
-    #T #=< 1 #/\ #N #>= 3.
+regret(des, [T/N, T0/N0]) :-
+    #T0 #=< 1 #/\ #N0 #>= 3, % prev dose no more than moderately toxic
+    #N #> 0,
+    #T * 6 #> #N. % new toxicity rate is no worse than 1/6
 %% TODO: Try to tighten this up, so that we regret 0/3 toxicities after
 %%       having de-escalated from a 1/3.
 %% TODO: Might this regret already be expressed via the preference for
@@ -507,6 +513,10 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 12.394 seconds
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 51.025 seconds
+%@    J = 1162.
+%@    % CPU time: 48.602 seconds
+%@    J = 1162.
 %@    % CPU time: 43.608 seconds
 %@    J = 1162.
 %@    % CPU time: 37.271 seconds
@@ -516,6 +526,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 32.790 seconds
 %@    J = 1162.
 %?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 125.304 seconds
+%@    J = 2890.
 %@    % CPU time: 96.962 seconds
 %@    J = 2890.
 %@    % CPU time: 83.518 seconds
