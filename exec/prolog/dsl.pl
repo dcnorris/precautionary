@@ -107,8 +107,9 @@ dose-TITRATION as in the 3+3/PC design [5].
 %% (The 'toxicity assessment period' that must elapse before a toxicity
 %% determination can be made is NOT explicitly modeled, and is thus elided
 %% as if it were instantaneous.)
-enroll(T0/N0, T1/N1) :-
+enroll(T0/N0, T1/N1) :- % TODO: Introduce a new parameter
     #Nnew #= 3, % hard-coding cohorts of 3 for now
+    %Nnew in 2..3, indomain(Nnew), % allow cohorts of 2 or 3
     #N1 #= #N0 + #Nnew,
     Tnew in 0..Nnew, indomain(Tnew),
     #T1 #= #T0 + #Tnew,
@@ -180,10 +181,6 @@ regret(des, [_,T/N]) :-
 %% NOTE: Some of these decisions may best be deferred until our attempts
 %%       at generalization can offer selective principles.
 
-%% We regret having stayed at the current dose upon seeing a 5+/6 tally.
-regret(sta, [T/N|_]) :-
-    #N #= 6 #/\ #T #>= 5. % regret excess toxicity
-
 %% It is in regretting ESCALATION decisions that the clinical intuition
 %% expresses itself most strongly. The core intuition here is almost
 %% 'medico-legal' in character. What is regretted is the occurrence of
@@ -198,14 +195,11 @@ regret(esc, [T/N, T0/N0]) :-
 	 #N0 #< 3 % having enrolled less than 3 at previous dose.
     ;	#T #> 1, % We regret >1 toxicities after..
 	#T0 * 6 #> N0 % having seen tox rate T0/N0 > 1/6 at prev dose.
-    ;	#T #>= 5 % We regret net 5+ toxicities after any escalation.
-	%% NB:
-	%% The need for this final case is not obvious. It arises when
-	%% we have accumulated 0/6 toxicities at current dose, having
-	%% de-escalated from a higher dose with tally 2+/3. That this
-	%% case is so nontrivial perhaps points toward a need for some
-	%% new concept to render it 'obvious' or 'natural'.
     ).
+
+%% Finally, we regret ANY decision that results in a 5+/_ tally:
+regret(_, [T/N|_]) :-
+    #T #>= 5 #/\ #N #>= #T. % regret excess toxicity
 
 /*
 
@@ -466,24 +460,61 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@ ;  false. % J=46 paths!
 
 %?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 0.229 seconds
+%@    % CPU time: 0.226 seconds
 %@    J = 10.
+%@    % CPU time: 1.399 seconds
+%@    J = 49. % vs 10
 %?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 1.165 seconds
+%@    J = 46.
+%@    % CPU time: 24.175 seconds
+%@    J = 617. % vs 46
 %@    % CPU time: 1.189 seconds
 %@    J = 46.
 %?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 5.591 seconds
+%@    J = 154.
+%@    % CPU time: 4.086 seconds
+%@    J = 154.
+%@    % CPU time: 232.607 seconds
+%@    J = 5145.
 %@    % CPU time: 4.137 seconds
 %@    J = 154.
 %?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 16.150 seconds
+%@    J = 442.
+%@    % CPU time: 16.162 seconds
+%@    J = 442.
 %@    % CPU time: 12.394 seconds
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 37.271 seconds
+%@    J = 1162.
+%@    % CPU time: 42.915 seconds
+%@    J = 1162.
 %@    % CPU time: 32.790 seconds
 %@    J = 1162.
 %?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 96.962 seconds
+%@    J = 2890.
 %@    % CPU time: 83.518 seconds
 %@    J = 2890.
 %% Yep!
+
+%% What does a path look like, under optional size-2/3 cohorts?
+%?- length(D,2), maplist(=(0/0), D), phrase(path([]-D), Path).
+%@    D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[1/4,...]-[],sta,... - ...|...]
+%@ ;  ...
 
 /*
 
