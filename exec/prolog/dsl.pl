@@ -102,21 +102,31 @@ dose-TITRATION as in the 3+3/PC design [5].
 %% there is some current tally T/N, T,N ∈ ℕ recording T toxic responses
 %% ('toxicities') out of N participants enrolled at that dose. Enrollment
 %% of a further 'cohort' at this dose-level increases the denominator and
-%% possibly also the numerator. Initially, we constrain enrollment to
-%% cohorts of size 3, and limit total enrollment at any one dose to 6.
+%% possibly also the numerator. This predicate allows for C to be specified
+%% as a (possibly singleton) range. Initially, we hard-code a limit of 6
+%% on total enrollment at any one dose.
 %% (The 'toxicity assessment period' that must elapse before a toxicity
 %% determination can be made is NOT explicitly modeled, and is thus elided
 %% as if it were instantaneous.)
-enroll(T0/N0, T1/N1) :- % TODO: Introduce a new parameter
-    #Nnew #= 3, % hard-coding cohorts of 3 for now
-    %Nnew in 2..3, indomain(Nnew), % allow cohorts of 2 or 3
+enroll(C, T0/N0, T1/N1) :-
+    Nnew in C, indomain(Nnew),
     #N1 #= #N0 + #Nnew,
     Tnew in 0..Nnew, indomain(Tnew),
     #T1 #= #T0 + #Tnew,
     #N1 #=< 6. % Maximum enrollment per cohort
     
-%?- enroll(0/0, T/N).
+%?- enroll(3, 0/0, T/N).
 %@    T = 0, N = 3
+%@ ;  T = 1, N = 3
+%@ ;  T = 2, N = 3
+%@ ;  T = 3, N = 3
+%@ ;  false. % Why extra choice-point when C is a singleton?
+
+%?- enroll(2..3, 0/0, T/N).
+%@    T = 0, N = 2
+%@ ;  T = 1, N = 2
+%@ ;  T = 2, N = 2
+%@ ;  T = 0, N = 3
 %@ ;  T = 1, N = 3
 %@ ;  T = 2, N = 3
 %@ ;  T = 3, N = 3.
@@ -128,9 +138,10 @@ enroll(T0/N0, T1/N1) :- % TODO: Introduce a new parameter
 %% adjacent to the 'current dose' are immediately accessible. Dose-skipping
 %% is generally not done in dose-escalation trials, in which case there are
 %% 3 main dose-escalation decisions: ESCalate, STAy and DeEScalate:
-state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :- enroll(R0, R).
-state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :- enroll(L0, L).
-state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- enroll(D0, D).
+cohort(3). % use cohorts of 3
+state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :- cohort(C), enroll(C, R0, R).
+state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :- cohort(C), enroll(C, L0, L).
+state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :- cohort(C), enroll(C, D0, D).
 
 %?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Rs).
 %@    Ls = [0/3,0/3,1/6], Rs = [0/0]
@@ -460,11 +471,19 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@ ;  false. % J=46 paths!
 
 %?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 0.211 seconds
+%@    J = 10.
+%@    % CPU time: 1.243 seconds
+%@    J = 41.
 %@    % CPU time: 0.226 seconds
 %@    J = 10.
 %@    % CPU time: 1.399 seconds
 %@    J = 49. % vs 10
 %?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 1.466 seconds
+%@    J = 46.
+%@    % CPU time: 20.393 seconds
+%@    J = 497.
 %@    % CPU time: 1.165 seconds
 %@    J = 46.
 %@    % CPU time: 24.175 seconds
@@ -488,6 +507,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 12.394 seconds
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 43.608 seconds
+%@    J = 1162.
 %@    % CPU time: 37.271 seconds
 %@    J = 1162.
 %@    % CPU time: 42.915 seconds
