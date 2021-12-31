@@ -365,20 +365,92 @@ state0_decision_feasible(S0, A, Truth) :-
 %?- state0_decision_feasible([1/3]-[0/0,0/0], A, Truth).
 %@    A = esc, Truth = true
 %@ ;  A = sta, Truth = true
-%@ ;  A = des, Truth = false.
+%@ ;  A = des, Truth = false
+%@ ;  false.
 
+tally_si(T/N) :-
+    maxenr(MaxN),
+    N in 0..MaxN, indomain(N),
+    T in 0..N,
+    indomain(T). % TODO: do we truly need indomain(T) to be properly 'si'?
+
+%% To explore fully how the natural-language protocol descriptions relate
+%% to our formal trial definition, we will require a state_si/1 predicate
+%% capable of generating fairly enumerated states.
 state_si(L - R) :-
-    %% TODO: Should I also insist that all entries in L & R
-    %%       are tallies T/N, with T and N being integers?
-    %%       (NB: list_si/1 does sort/2, which implies visiting
-    %%       every element of the list anyway.)
-    list_si(L),
-    list_si(R).
+    D in 1..7,     % TODO: A catastrophic 'wart' on otherwise elegant code?
+    indomain(D),
+    Dcur in 0..D,  %       Does all this merely remind us how indispensable
+    indomain(Dcur),
+    #Dhi #= D - Dcur,
+    length(L, Dcur), %     clpz is for logic programming? Or does it
+    length(R, Dhi),  %     suggest we need a smarter append/3?
+    %% ~~ Everything below this point seemed so delightfully elegant ~~
+    %%%%length(Doses, D), % we prespecify a number D of dose levels
+    append(L, R, Doses), % the 'current dose' splits Doses somewhere
+    maplist(tally_si, Doses). % all doses bear a tally
 
 %?- state0_decision_noregrets([1/3]-[0/0], E, T).
 %@    E = esc, T = false
 %@ ;  E = sta, T = true
+%@ ;  E = des, T = false
 %@ ;  false.
+
+%% Now we can ask rather general queries based on partially instantiated states!
+%% The following says what we can do without regret:
+%?- setof(E, state0_decision_noregrets([1/3,_]-[0/0], E, true), Okay).
+%@    Okay = [sta]
+%@ ;  Okay = [sta]
+%@ ;  Okay = [sta]
+%@ ;  ... % TODO: Is this expected? Shouldn't setof/3 yield just 1 solution?
+
+%?- setof(E, (regrettable_decision(E), state0_decision_noregrets([1/3,_]-[0/0], E, true)), Okay).
+%@    Okay = [sta]
+%@ ;  Okay = [sta]
+%@ ;  Okay = [sta]
+%@ ;  ...
+
+%?- state0_decision_noregrets([1/3,_]-[0/0], esc, true).
+%@ false.
+
+%?- state0_decision_noregrets([1/3,_]-[0/0], des, true).
+%@ false.
+
+%?- state0_decision_noregrets([1/3,_]-[0/0], sta, true).
+%@    true
+%@ ;  true
+%@ ;  true
+%@ ;  ...
+
+%% Other demonstrations we can effect include:
+%?- setof(E, state0_decision_noregrets([0/3,_]-[_], E, true), Okay).
+%@    Okay = [esc,sta]
+%@ ;  Okay = [esc,sta]
+%@ ;  Okay = [esc,sta]
+%@ ;  ...
+%@ 
+
+%?- time(setof(E, (T in 0..1, state0_decision_noregrets([T/6,_]-[_], E, true)), Okay)).
+%@    % CPU time: 170.998 seconds
+%@    Okay = [esc], T = 0
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [esc], T = 0
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [esc], T = 0
+%@ ;  ...
+
+%?- time(setof(E, (#T #> 1, state0_decision_noregrets([T/6,_]-[_], E, true)), Okay)).
+%@    % CPU time: 446.447 seconds
+%@    Okay = [des], T = 2
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [des], T = 2
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [des], T = 2
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [des], T = 2
+%@ ;  % CPU time: 0.000 seconds
+%@    Okay = [des], T = 2
+%@ ;  ... # TODO: I can't believe this is really how setof/3 should behave!
 
 %% This code reflects the primacy of REGRET as the crucial user-level
 %% concept shaping these designs.
@@ -477,6 +549,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@ ;  false. % J=46 paths!
 
 %?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 1.870 seconds
+%@    J = 10.
 %@    % CPU time: 0.211 seconds
 %@    J = 10.
 %@    % CPU time: 1.243 seconds
@@ -486,6 +560,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 1.399 seconds
 %@    J = 49. % vs 10
 %?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 10.232 seconds
+%@    J = 46.
 %@    % CPU time: 1.466 seconds
 %@    J = 46.
 %@    % CPU time: 20.393 seconds
@@ -497,6 +573,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 1.189 seconds
 %@    J = 46.
 %?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 37.013 seconds
+%@    J = 154.
 %@    % CPU time: 5.591 seconds
 %@    J = 154.
 %@    % CPU time: 4.086 seconds
@@ -506,6 +584,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 4.137 seconds
 %@    J = 154.
 %?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 118.995 seconds
+%@    J = 442.
 %@    % CPU time: 16.150 seconds
 %@    J = 442.
 %@    % CPU time: 16.162 seconds
@@ -513,6 +593,12 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 12.394 seconds
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 553.133 seconds
+%@    J = 1162.
+%@    % CPU time: 86.155 seconds
+%@    J = 1162.
+%@    % CPU time: 85.450 seconds
+%@    J = 1162.
 %@    % CPU time: 51.025 seconds
 %@    J = 1162.
 %@    % CPU time: 48.602 seconds
@@ -526,6 +612,8 @@ path(S0) --> { cascading_decision_otherwise([esc,sta,des],
 %@    % CPU time: 32.790 seconds
 %@    J = 1162.
 %?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 1401.908 seconds
+%@    J = 2890.
 %@    % CPU time: 125.304 seconds
 %@    J = 2890.
 %@    % CPU time: 96.962 seconds
