@@ -97,6 +97,7 @@ dose-TITRATION as in the 3+3/PC design [5].
 :- use_module(library(error)).
 :- use_module(library(lambda)).
 :- use_module(library(time)).
+:- use_module(library(debug)).
 
 %% During the course of a dose-escalation trial, at any given dose-level
 %% there is some current tally T/N, T,N ∈ ℕ recording T toxic responses
@@ -371,8 +372,8 @@ state0_decision_feasible(S0, A, Truth) :-
 tally_si(T/N) :-
     maxenr(MaxN),
     N in 0..MaxN, indomain(N),
-    T in 0..N,
-    indomain(T). % TODO: do we truly need indomain(T) to be properly 'si'?
+    T in 0..N,    % TODO: Depending on whether I generalize indomain(T) away,
+    *indomain(T). %       my queries below acquire subtly different meanings!
 
 %% To explore fully how the natural-language protocol descriptions relate
 %% to our formal trial definition, we will require a state_si/1 predicate
@@ -398,17 +399,11 @@ state_si(L - R) :-
 
 %% Now we can ask rather general queries based on partially instantiated states!
 %% The following says what we can do without regret:
-%?- setof(E, state0_decision_noregrets([1/3,_]-[0/0], E, true), Okay).
-%@    Okay = [sta]
-%@ ;  Okay = [sta]
-%@ ;  Okay = [sta]
-%@ ;  ... % TODO: Is this expected? Shouldn't setof/3 yield just 1 solution?
+%?- setof(E, Q^state0_decision_noregrets([1/3,Q]-[0/0], E, true), Okay).
+%@    Okay = [sta].
 
-%?- setof(E, (regrettable_decision(E), state0_decision_noregrets([1/3,_]-[0/0], E, true)), Okay).
-%@    Okay = [sta]
-%@ ;  Okay = [sta]
-%@ ;  Okay = [sta]
-%@ ;  ...
+%?- setof(E, Q^(regrettable_decision(E), state0_decision_noregrets([1/3,Q]-[0/0], E, true)), Okay).
+%@    Okay = [sta].
 
 %?- state0_decision_noregrets([1/3,_]-[0/0], esc, true).
 %@ false.
@@ -423,34 +418,44 @@ state_si(L - R) :-
 %@ ;  ...
 
 %% Other demonstrations we can effect include:
-%?- setof(E, state0_decision_noregrets([0/3,_]-[_], E, true), Okay).
-%@    Okay = [esc,sta]
-%@ ;  Okay = [esc,sta]
-%@ ;  Okay = [esc,sta]
-%@ ;  ...
-%@ 
+%?- setof(E, Q^R^state0_decision_noregrets([0/3,Q]-[R], E, true), Okay).
+%@    Okay = [esc,sta].
 
-%?- time(setof(E, (T in 0..1, state0_decision_noregrets([T/6,_]-[_], E, true)), Okay)).
-%@    % CPU time: 170.998 seconds
-%@    Okay = [esc], T = 0
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [esc], T = 0
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [esc], T = 0
-%@ ;  ...
+%?- time(setof(T:E, Q^R^(T in 0..6, indomain(T), state0_decision_noregrets([T/6,Q]-[R], E, true)), Okay)).
+%@    % CPU time: 75.517s
+%@    Okay = [0:esc,1:esc,2:des,3:des,4:des,5:des,6:des].
 
-%?- time(setof(E, (#T #> 1, state0_decision_noregrets([T/6,_]-[_], E, true)), Okay)).
-%@    % CPU time: 446.447 seconds
-%@    Okay = [des], T = 2
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [des], T = 2
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [des], T = 2
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [des], T = 2
-%@ ;  % CPU time: 0.000 seconds
-%@    Okay = [des], T = 2
-%@ ;  ... # TODO: I can't believe this is really how setof/3 should behave!
+%?- time(setof(T:E, Q^R^(T in 0..6, state0_decision_noregrets([T/6,Q]-[R], E, true)), Okay)).
+%@    % CPU time: 10.921s
+%@ false.
+
+%?- state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
+%@ false.
+
+%% BUT .. with indomain(T) RETAINED in tally_si/1, we obtain
+%?- state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
+%@    E = esc, T = 0
+%@ ;  E = esc, T = 1
+%@ ;  E = des, T = 2
+%@ ;  E = des, T = 3
+%@ ;  E = des, T = 4
+%@ ;  E = des, T = 5
+%@ ;  E = des, T = 6
+%@ ;  false.
+
+%% Equivalently, we can make indomain(T) explicit:
+%?- T in 0..6, indomain(T), state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
+%@    T = 0, E = esc
+%@ ;  T = 1, E = esc
+%@ ;  T = 2, E = des
+%@ ;  T = 3, E = des
+%@ ;  T = 4, E = des
+%@ ;  T = 5, E = des
+%@ ;  T = 6, E = des
+%@ ;  false.
+
+%% I suppose all these 'surprises' are attributable
+%% to the not/1 implicit in the NO of 'noregrets'.
 
 %% This code reflects the primacy of REGRET as the crucial user-level
 %% concept shaping these designs.
