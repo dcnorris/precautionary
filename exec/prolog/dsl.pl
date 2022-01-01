@@ -363,17 +363,11 @@ state0_decision_feasible(S0, A, Truth) :-
     ;	Truth = false
     ).
 
-%?- state0_decision_feasible([1/3]-[0/0,0/0], A, Truth).
-%@    A = esc, Truth = true
-%@ ;  A = sta, Truth = true
-%@ ;  A = des, Truth = false
-%@ ;  false.
-
 tally_si(T/N) :-
     maxenr(MaxN),
     N in 0..MaxN, indomain(N),
-    T in 0..N,    % TODO: Depending on whether I generalize indomain(T) away,
-    *indomain(T). %       my queries below acquire subtly different meanings!
+    T in 0..N,
+    indomain(T). % as an adapted process, state0_decision_noregrets/3 demands ground state
 
 %% To explore fully how the natural-language protocol descriptions relate
 %% to our formal trial definition, we will require a state_si/1 predicate
@@ -405,57 +399,68 @@ state_si(L - R) :-
 %?- setof(E, Q^(regrettable_decision(E), state0_decision_noregrets([1/3,Q]-[0/0], E, true)), Okay).
 %@    Okay = [sta].
 
-%?- state0_decision_noregrets([1/3,_]-[0/0], esc, true).
-%@ false.
+%?- setof(E, T^(T in 0..6, indomain(T), state0_decision_noregrets([T/6,0/0]-[0/0], E, true)), Okay).
+%@    Okay = [des,esc].
 
-%?- state0_decision_noregrets([1/3,_]-[0/0], des, true).
+%?- setof(E, T^(T in 0..6, state0_decision_noregrets([T/6,0/0]-[0/0], E, true)), Okay).
 %@ false.
-
-%?- state0_decision_noregrets([1/3,_]-[0/0], sta, true).
-%@    true
-%@ ;  true
-%@ ;  true
-%@ ;  ...
 
 %% Other demonstrations we can effect include:
-%?- setof(E, Q^R^state0_decision_noregrets([0/3,Q]-[R], E, true), Okay).
+%?- time(setof(E, P^R^state0_decision_noregrets([0/3,P]-[R], E, true), Okay)).
+%@    % CPU time: 157.494s
 %@    Okay = [esc,sta].
 
-%?- time(setof(T:E, Q^R^(T in 0..6, indomain(T), state0_decision_noregrets([T/6,Q]-[R], E, true)), Okay)).
-%@    % CPU time: 75.517s
+%?- time(setof(T:E, P^R^state0_decision_noregrets([T/6,P]-[R], E, true), Okay)).
+%@    % CPU time: 1008.281s
 %@    Okay = [0:esc,1:esc,2:des,3:des,4:des,5:des,6:des].
 
-%?- time(setof(T:E, Q^R^(T in 0..6, state0_decision_noregrets([T/6,Q]-[R], E, true)), Okay)).
-%@    % CPU time: 10.921s
-%@ false.
+%% 1. The first action is 'escalating' from a zero dose!
+%?- length(Ds, 4), maplist(=(0/0), Ds), time(setof(E, state0_decision_noregrets([]-Ds, E, true), Begin)).
+%@    % CPU time: 0.222s
+%@    Ds = [0/0,0/0,0/0,0/0], Begin = [esc].
 
-%?- state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
-%@ false.
+%% 2. If 0/3 DLTs, escalate
+%?- setof(E, P^R^state0_decision_noregrets([0/3,P]-[R], E, true), Okay).
+%@    Okay = [esc,sta]. % NB: preference for esc > sta would bind here
 
-%% BUT .. with indomain(T) RETAINED in tally_si/1, we obtain
-%?- state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
-%@    E = esc, T = 0
-%@ ;  E = esc, T = 1
-%@ ;  E = des, T = 2
-%@ ;  E = des, T = 3
-%@ ;  E = des, T = 4
-%@ ;  E = des, T = 5
-%@ ;  E = des, T = 6
-%@ ;  false.
+%% 3. If 1/3 DLTs, treat an additional 3 at current dose level
+%?- setof(E, P^R^state0_decision_noregrets([1/3,P]-[R], E, true), Okay).
+%@    Okay = [sta].
 
-%% Equivalently, we can make indomain(T) explicit:
-%?- T in 0..6, indomain(T), state0_decision_noregrets([T/6,0/0]-[0/0], E, true).
-%@    T = 0, E = esc
-%@ ;  T = 1, E = esc
-%@ ;  T = 2, E = des
-%@ ;  T = 3, E = des
-%@ ;  T = 4, E = des
-%@ ;  T = 5, E = des
-%@ ;  T = 6, E = des
-%@ ;  false.
+%% 4. If 1/6 DLTs, escalate
+%?- setof(E, P^R^state0_decision_noregrets([1/6,P]-[R], E, true), Okay).
+%@    Okay = [esc].
 
-%% I suppose all these 'surprises' are attributable
-%% to the not/1 implicit in the NO of 'noregrets'.
+%% 4b. Edge case omitted: we are at top dose
+%?- state0_decision_noregrets([1/6,_]-[], E, true).
+%@ false. % Cannot find a dose-escalation decision we won't regret ==> STOP
+
+%% TODO: May have to deal separately with cases where previous dose
+%%       had either 3 or 6 patients treated.
+%% 5. If T >= 2, then MTD has been exceeded
+%?- time(setof(E, N^P^R^(#T #>= 2, state0_decision_noregrets([T/N,P]-[R], E, true)), Okay)).
+%@    % CPU time: 2145.148s
+%@    Okay = [des], T = 2
+%@ ;  % CPU time: 0.001s
+%@    Okay = [des], T = 3
+%@ ;  % CPU time: 0.000s
+%@    Okay = [des], T = 4
+%@ ;  % CPU time: 0.000s
+%@    Okay = [des], T = 5
+%@ ;  % CPU time: 0.000s
+%@    Okay = [des], T = 6.
+
+%% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
+%?- setof(Q:E, P^R^state0_decision_noregrets([Q,P]-[0/0], E, true), Okay).
+%@    Okay = [0/0:des,0/0:sta,0/1:des,0/1:sta,0/2:des,0/2:sta,0/3:esc,0/3:sta,0/4:esc,... : ...|...].
+
+%?- time(setof(Q, N^P^R^(Q = T/N, N in 0..6, T in 0..6, T #=< N, state0_decision_noregrets([Q,P]-[R], esc, true)), Okay)).
+%@    % CPU time: 1320.068s
+%@    Okay = [0/3,0/4,0/5,0/6], T = 0
+%@ ;  % CPU time: 0.000s
+%@    Okay = [1/6], T = 1.
+
+%?- T in 0..6, indomain(T), state0_decision_noregrets([T/N,0/0]-[0/0], E, true).
 
 %% This code reflects the primacy of REGRET as the crucial user-level
 %% concept shaping these designs.
