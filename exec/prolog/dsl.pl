@@ -190,7 +190,7 @@ state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :-
 regret(des, [T/N, T0/N0]) :-
     #T0 #=< 1 #/\ #N0 #>= 3, % prev dose no more than moderately toxic
     #N #> 0,
-    #T * 6 #> #N. % new toxicity rate is no worse than 1/6
+    #T * 6 #> #N. % new toxicity rate is worse than 1/6
 %% TODO: Try to tighten this up, so that we regret 0/3 toxicities after
 %%       having de-escalated from a 1/3.
 %% TODO: Might this regret already be expressed via the preference for
@@ -210,7 +210,7 @@ regret(des, [T/N, T0/N0]) :-
 regret(esc, [T/N, T0/N0]) :-
     #N #>= #T, % condition for T/N to be a valid tally
     (	#T #> 0, % We will regret even 1 toxicity when escalating after..
-	 #N0 #< 3 % having enrolled less than 3 at previous dose.
+	#N0 #< 3 % having enrolled less than 3 at previous dose.
     ;	#T #> 1, % We regret >1 toxicities after..
 	#T0 * 6 #> N0 % having seen tox rate T0/N0 > 1/6 at prev dose.
     ).
@@ -415,9 +415,8 @@ state_si(L - R) :-
 %@    Okay = [0:esc,1:esc,2:des,3:des,4:des,5:des,6:des].
 
 %% 1. The first action is 'escalating' from a zero dose!
-%?- length(Ds, 4), maplist(=(0/0), Ds), time(setof(E, state0_decision_noregrets([]-Ds, E, true), Begin)).
-%@    % CPU time: 0.222s
-%@    Ds = [0/0,0/0,0/0,0/0], Begin = [esc].
+%?- length(Levels, 3), maplist(=(0/0), Levels), S0 = []-Levels, setof(E, state0_decision_noregrets(S0, E, true), Begin).
+%@    Levels = [0/0,0/0,0/0], S0 = []-[0/0,0/0,0/0], Begin = [esc].
 
 %% 2. If 0/3 DLTs, escalate
 %?- setof(E, P^R^state0_decision_noregrets([0/3,P]-[R], E, true), Okay).
@@ -477,14 +476,102 @@ cascading_decision_otherwise([D|Ds], Os, E, S0, S) :-
 path(declare_mtd(_)) --> [].
 path(S0) --> { cascading_decision_otherwise([esc,sta,des],
                                             [E = stop, % ..and otherwise, STOP.
-                                             MTD = todo, % TODO: Actually obtain MTD as integer >= 0.
+                                             stopstate_mtd(S0, MTD),
                                              S = declare_mtd(MTD)], E, S0, S) },
 	     [E, S],
 	     path(S). % TODO: Implement declare_mtd possibility
 
-%?- Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)], phrase(path([0/0]-[0/0]), Path).
-%@    Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
+%% In order to validate the 'global' constraints implicit in Korn'94,
+%% we must at last define 'the' MTD!
+%% TODO: Refine and condense this, as much as possible.
+stopstate_mtd(S, MTD) :-
+    state_si(S), % TODO: Would tally_si(T/N) suffice?
+    (	S = [T/N|P]-_, % current tally is T/N
+	tally_si(T/N),
+	(   #T * 6 #> #N, % current toxicity rate is WORSE THAN 1/6
+	    length(P, MTD)
+	;   #T * 6 #=< #N, % current toxicity rate is NO WORSE than 1/6
+	    length([T/N|P], MTD)
+	)
+    ;	S = []-_, % current dose is zero (TODO: does this ever happen?)
+	MTD = 0
+    ).
+
+%?- stopstate_mtd([1/6,0/3]-[2/3], MTD).
+%@    MTD = 2
 %@ ;  false.
+
+%?- stopstate_mtd([T/N,0/3]-[2/3], 2).
+%@    T = 0, N = 0
+%@ ;  T = 0, N = 1
+%@ ;  T = 0, N = 2
+%@ ;  T = 0, N = 3
+%@ ;  T = 0, N = 4
+%@ ;  T = 0, N = 5
+%@ ;  T = 0, N = 6
+%@ ;  T = 1, N = 6
+%@ ;  false.
+
+%% TODO: Note the semantics here are that stopstate(S, MTD) means
+%%       that *IF* S is a valid 'stop' state (i.e., one from which
+%%       no further dose-escalation decision is permissible),
+%%       *THEN* MTD is the recommended dose.
+%?- stopstate_mtd([T/N,0/3]-[2/3], 1).
+%@    T = 1, N = 1
+%@ ;  T = 1, N = 2
+%@ ;  T = 2, N = 2
+%@ ;  T = 1, N = 3
+%@ ;  T = 2, N = 3
+%@ ;  T = 3, N = 3
+%@ ;  T = 1, N = 4
+%@ ;  T = 2, N = 4
+%@ ;  T = 3, N = 4
+%@ ;  T = 4, N = 4
+%@ ;  T = 1, N = 5
+%@ ;  T = 2, N = 5
+%@ ;  T = 3, N = 5
+%@ ;  T = 4, N = 5
+%@ ;  T = 5, N = 5
+%@ ;  T = 2, N = 6
+%@ ;  T = 3, N = 6
+%@ ;  T = 4, N = 6
+%@ ;  T = 5, N = 6
+%@ ;  T = 6, N = 6
+%@ ;  false.
+
+%% Can I now ensure that any declared MTD obeys the Korn'94 definition?
+%% "The MTD is then defined as the highest dose level (≥ 1)
+%%  in which 6 patients have been treated with ≤ 1 instance
+%%  of DLT, or dose level 0 if there were ≥ 2 instances of DLT
+%%  at dose level 1."
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(2)]), Path)), MTD2States).
+%@    MTD2States = [[0/6,0/3]-[],[1/6,0/3]-[]]
+%@ ;  MTD2States = [[1/6,0/3]-[]]
+%@ ;  MTD2States = [[0/6,1/6]-[],[1/6,1/6]-[]]
+%@ ;  MTD2States = [[1/6,1/6]-[]].
+
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(1)]), Path)), MTD1States).
+%@    MTD1States = [[0/6]-[2/6],[1/6]-[2/6]]
+%@ ;  MTD1States = [[0/6]-[3/6],[1/6]-[3/6]]
+%@ ;  MTD1States = [[0/6]-[2/6],[1/6]-[2/6]]
+%@ ;  MTD1States = [[0/6]-[3/6],[1/6]-[3/6]]
+%@ ;  MTD1States = [[0/6]-[4/6],[1/6]-[4/6]]
+%@ ;  MTD1States = [[0/6]-[2/3],[1/6]-[2/3]]
+%@ ;  MTD1States = [[0/6]-[3/3],[1/6]-[3/3]]
+%@ ;  MTD1States = [[2/3,1/6]-[],[3/3,1/6]-[]]
+%@ ;  MTD1States = [[2/6,1/6]-[],[3/6,1/6]-[]]
+%@ ;  MTD1States = [[2/6,1/6]-[],[3/6,1/6]-[],[4/6,1/6]-[]].
+
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(0)]), Path)), MTD0States).
+%@    MTD0States = [[2/3]-[0/0],[3/3]-[0/0]]
+%@ ;  MTD0States = [[2/6]-[2/6],[3/6]-[2/6]]
+%@ ;  MTD0States = [[2/6]-[3/6],[3/6]-[3/6]]
+%@ ;  MTD0States = [[2/6]-[2/6],[3/6]-[2/6]]
+%@ ;  MTD0States = [[2/6]-[3/6],[3/6]-[3/6]]
+%@ ;  MTD0States = [[2/6]-[4/6],[3/6]-[4/6]]
+%@ ;  MTD0States = [[2/6]-[2/3],[3/6]-[2/3]]
+%@ ;  MTD0States = [[2/6]-[3/3],[3/6]-[3/3]]
+%@ ;  MTD0States = [[2/6]-[0/0],[3/6]-[0/0],[4/6]-[0/0]].
 
 %% Right away, we can see that 'des' occurs when we should declare_mtd/1.
 %% This makes me wonder whether letting 'des' be some kind of default
