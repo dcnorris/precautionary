@@ -544,34 +544,14 @@ stopstate_mtd(S, MTD) :-
 %%  in which 6 patients have been treated with ≤ 1 instance
 %%  of DLT, or dose level 0 if there were ≥ 2 instances of DLT
 %%  at dose level 1."
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(2)]), Path)), MTD2States).
-%@    MTD2States = [[0/6,0/3]-[],[1/6,0/3]-[]]
-%@ ;  MTD2States = [[1/6,0/3]-[]]
-%@ ;  MTD2States = [[0/6,1/6]-[],[1/6,1/6]-[]]
-%@ ;  MTD2States = [[1/6,1/6]-[]].
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(2)]), Path)), MTD2States).
+%@    MTD2States = [[0/6,0/3]-[],[0/6,1/6]-[],[1/6,0/3]-[],[1/6,1/6]-[]].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(1)]), Path)), MTD1States).
-%@    MTD1States = [[0/6]-[2/6],[1/6]-[2/6]]
-%@ ;  MTD1States = [[0/6]-[3/6],[1/6]-[3/6]]
-%@ ;  MTD1States = [[0/6]-[2/6],[1/6]-[2/6]]
-%@ ;  MTD1States = [[0/6]-[3/6],[1/6]-[3/6]]
-%@ ;  MTD1States = [[0/6]-[4/6],[1/6]-[4/6]]
-%@ ;  MTD1States = [[0/6]-[2/3],[1/6]-[2/3]]
-%@ ;  MTD1States = [[0/6]-[3/3],[1/6]-[3/3]]
-%@ ;  MTD1States = [[2/3,1/6]-[],[3/3,1/6]-[]]
-%@ ;  MTD1States = [[2/6,1/6]-[],[3/6,1/6]-[]]
-%@ ;  MTD1States = [[2/6,1/6]-[],[3/6,1/6]-[],[4/6,1/6]-[]].
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(1)]), Path)), MTD1States).
+%@    MTD1States = [[0/6]-[2/3],[0/6]-[2/6],[0/6]-[3/3],[0/6]-[3/6],[0/6]-[4/6],[1/6]-[2/3],[1/6]-[2/6],[1/6]-[3/3],[...]-[...],... - ...|...].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((seq(_), [StopState], [stop], [declare_mtd(0)]), Path)), MTD0States).
-%@    MTD0States = [[2/3]-[0/0],[3/3]-[0/0]]
-%@ ;  MTD0States = [[2/6]-[2/6],[3/6]-[2/6]]
-%@ ;  MTD0States = [[2/6]-[3/6],[3/6]-[3/6]]
-%@ ;  MTD0States = [[2/6]-[2/6],[3/6]-[2/6]]
-%@ ;  MTD0States = [[2/6]-[3/6],[3/6]-[3/6]]
-%@ ;  MTD0States = [[2/6]-[4/6],[3/6]-[4/6]]
-%@ ;  MTD0States = [[2/6]-[2/3],[3/6]-[2/3]]
-%@ ;  MTD0States = [[2/6]-[3/3],[3/6]-[3/3]]
-%@ ;  MTD0States = [[2/6]-[0/0],[3/6]-[0/0],[4/6]-[0/0]].
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(0)]), Path)), MTD0States).
+%@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[...]-[...],... - ...|...].
 
 %% Right away, we can see that 'des' occurs when we should declare_mtd/1.
 %% This makes me wonder whether letting 'des' be some kind of default
