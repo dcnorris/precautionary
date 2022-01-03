@@ -336,6 +336,8 @@ But the price to pay for this is REIFICATION. I need to *reify* regret.
 state0_decision_noregrets(S0, A, Truth) :-
     state_si(S0),
     regrettable_decision(A),
+    %% TODO: Label here, not in _is type tests!
+    %% NB: _si tests should post instantiation errors, but not perform search.
     if_(state0_decision_feasible(S0, A),
 	(   state0_decision_state(S0, A, S),
 	    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
@@ -363,9 +365,10 @@ state0_decision_feasible(S0, A, Truth) :-
     ;	Truth = false
     ).
 
+%% TODO: State the monotonic execution constraint!
 tally_si(T/N) :-
     maxenr(MaxN),
-    N in 0..MaxN, indomain(N),
+    N in 0..MaxN, indomain(N), % TODO: No indomain/1 needed in an _si predicate.
     T in 0..N,
     indomain(T). % as an adapted process, state0_decision_noregrets/3 demands ground state
 
@@ -475,11 +478,11 @@ cascading_decision_otherwise([D|Ds], Os, E, S0, S) :-
 %path(_) --> []. % a convenience for testing; path can stop at any time
 path(declare_mtd(_)) --> [].
 path(S0) --> { cascading_decision_otherwise([esc,sta,des],
-                                            [E = stop, % ..and otherwise, STOP.
+                                            [E = stop,
                                              stopstate_mtd(S0, MTD),
                                              S = declare_mtd(MTD)], E, S0, S) },
 	     [E, S],
-	     path(S). % TODO: Implement declare_mtd possibility
+	     path(S).
 
 %% In order to validate the 'global' constraints implicit in Korn'94,
 %% we must at last define 'the' MTD!
@@ -544,13 +547,13 @@ stopstate_mtd(S, MTD) :-
 %%  in which 6 patients have been treated with ≤ 1 instance
 %%  of DLT, or dose level 0 if there were ≥ 2 instances of DLT
 %%  at dose level 1."
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(2)]), Path)), MTD2States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(2)]), Path)), MTD2States).
 %@    MTD2States = [[0/6,0/3]-[],[0/6,1/6]-[],[1/6,0/3]-[],[1/6,1/6]-[]].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(1)]), Path)), MTD1States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(1)]), Path)), MTD1States).
 %@    MTD1States = [[0/6]-[2/3],[0/6]-[2/6],[0/6]-[3/3],[0/6]-[3/6],[0/6]-[4/6],[1/6]-[2/3],[1/6]-[2/6],[1/6]-[3/3],[...]-[...],... - ...|...].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState], [stop], [declare_mtd(0)]), Path)), MTD0States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(0)]), Path)), MTD0States).
 %@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[...]-[...],... - ...|...].
 
 %% Right away, we can see that 'des' occurs when we should declare_mtd/1.
