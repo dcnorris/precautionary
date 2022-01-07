@@ -12,3 +12,7 @@ scryer_tabs : scryer.pl esc.pl
 
 sicstus_tabs : sicstus.pl esc.pl
 	sicstus -l sicstus.pl -l esc.pl
+
+benchmark:
+	scryer-prolog --version
+	time scryer-prolog scryer.pl esc.pl
