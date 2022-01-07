@@ -99,6 +99,8 @@ dose-TITRATION as in the 3+3/PC design [5].
 :- use_module(library(time)).
 :- use_module(library(debug)).
 
+:- initialization(assertz(clpz:monotonic)).
+
 %% During the course of a dose-escalation trial, at any given dose-level
 %% there is some current tally T/N, T,N ∈ ℕ recording T toxic responses
 %% ('toxicities') out of N participants enrolled at that dose. Enrollment
@@ -629,78 +631,24 @@ stopstate_mtd(S, MTD) :-
 %@ ;  false. % J=46 paths!
 
 %?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 1.870 seconds
+%@    % CPU time: 4.148s
 %@    J = 10.
-%@    % CPU time: 0.211 seconds
-%@    J = 10.
-%@    % CPU time: 1.243 seconds
-%@    J = 41.
-%@    % CPU time: 0.226 seconds
-%@    J = 10.
-%@    % CPU time: 1.399 seconds
-%@    J = 49. % vs 10
 %?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 10.232 seconds
-%@    J = 46.
-%@    % CPU time: 1.466 seconds
-%@    J = 46.
-%@    % CPU time: 20.393 seconds
-%@    J = 497.
-%@    % CPU time: 1.165 seconds
-%@    J = 46.
-%@    % CPU time: 24.175 seconds
-%@    J = 617. % vs 46
-%@    % CPU time: 1.189 seconds
+%@    % CPU time: 20.956s
 %@    J = 46.
 %?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 37.013 seconds
-%@    J = 154.
-%@    % CPU time: 5.591 seconds
-%@    J = 154.
-%@    % CPU time: 4.086 seconds
-%@    J = 154.
-%@    % CPU time: 232.607 seconds
-%@    J = 5145.
-%@    % CPU time: 4.137 seconds
+%@    % CPU time: 75.597s
 %@    J = 154.
 %?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 118.995 seconds
-%@    J = 442.
-%@    % CPU time: 16.150 seconds
-%@    J = 442.
-%@    % CPU time: 16.162 seconds
-%@    J = 442.
-%@    % CPU time: 12.394 seconds
+%@    % CPU time: 227.109s
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 553.133 seconds
-%@    J = 1162.
-%@    % CPU time: 86.155 seconds
-%@    J = 1162.
-%@    % CPU time: 85.450 seconds
-%@    J = 1162.
-%@    % CPU time: 51.025 seconds
-%@    J = 1162.
-%@    % CPU time: 48.602 seconds
-%@    J = 1162.
-%@    % CPU time: 43.608 seconds
-%@    J = 1162.
-%@    % CPU time: 37.271 seconds
-%@    J = 1162.
-%@    % CPU time: 42.915 seconds
-%@    J = 1162.
-%@    % CPU time: 32.790 seconds
+%@    % CPU time: 601.521s
 %@    J = 1162.
 %?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
-%@    % CPU time: 1401.908 seconds
+%@    % CPU time: 1529.402s
 %@    J = 2890.
-%@    % CPU time: 125.304 seconds
-%@    J = 2890.
-%@    % CPU time: 96.962 seconds
-%@    J = 2890.
-%@    % CPU time: 83.518 seconds
-%@    J = 2890.
-%% Yep!
+
 
 %% What does a path look like, under optional size-2/3 cohorts?
 %?- length(D,2), maplist(=(0/0), D), phrase(path([]-D), Path).
