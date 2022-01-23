@@ -148,12 +148,12 @@ of 3+3 dose-escalation design. arXiv:2012.05301 [stat.ME]. December 2020.
 <span class="r-in">  num_sims <span class="op">=</span> <span class="fl">1000</span></span>
 <span class="r-in">, true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">EXACT</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">EXACT</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                              None        Gr1        Gr2        Gr3        Gr4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.00101946 1.93056746 1.80571804 1.36673702 0.85808486</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.05587189 0.02298137 0.02296424 0.01212825 0.01132784</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                              None       Gr1       Gr2        Gr3        Gr4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 12.93729248 1.9582578 1.7817137 1.35582292 0.87897860</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.05728413 0.0225448 0.0217555 0.01180773 0.01151828</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                              Gr5       Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.62012937 19.58225621</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.01175877  0.05222813</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.62119474 19.53326022</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.01158448  0.05067976</span>
 <span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># runs too long for CRAN servers</span></span>
 <span class="r-in">  <span class="co"># Compare with discrete-event-simulation trials</span></span>
 <span class="r-in">  <span class="va">design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="simulate_trials.html">simulate_trials</a></span><span class="op">(</span></span>

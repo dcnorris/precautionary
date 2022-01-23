@@ -123,15 +123,15 @@ of patients who will experience each toxicity grade <em>in any given trial</em>.
 <span class="r-in"><span class="va">safety</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">boin_hsims</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></span>
 <span class="r-in"><span class="va">safety</span> <span class="co"># The print method invokes 'format.safetytab' ..</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     13    3    3    2    1    1   24.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     13    3    3    2    1    1     24</span>
 <span class="r-in"><span class="co"># .. but we can also inspect the underlying matrix by indexing:</span></span>
 <span class="r-in"><span class="va">safety</span><span class="op">[</span>,<span class="op">]</span>  <span class="co"># indexing strips 'safetytab' class, returning plain matrix</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                             None       Gr1       Gr2       Gr3       Gr4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.1500000 3.3666667 3.1833333 1.9833333 1.0166667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.3665575 0.2435225 0.2498493 0.1549406 0.1223399</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             None       Gr1       Gr2       Gr3      Gr4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.4833333 3.0333333 2.8500000 1.9333333 1.250000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.4456264 0.2165036 0.2362908 0.1644485 0.145798</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                             Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 1.3000000    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.1651912     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 1.1000000 23.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.1675682  0.35</span>
 <span class="r-in"><span class="co"># Note that, by extend()ing the simulation we can increase precision:</span></span>
 <span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># may run a bit too long for CRAN servers' taste</span></span>
 <span class="r-in">  <span class="va">boin_hsims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="extend.html">extend</a></span><span class="op">(</span>target_mcse <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">boin_hsimsX</span></span>
