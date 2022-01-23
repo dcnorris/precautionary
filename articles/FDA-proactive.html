@@ -114,15 +114,15 @@
 
     
     
-<div class="section level1">
-<h1 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
-</h1>
+<div class="section level2">
+<h2 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
+</h2>
 <p><span class="citation">Norris (2020)</span> examines a fatal dose-finding trial (<a href="https://clinicaltrials.gov/ct2/show/NCT02848911" class="external-link">AFM11-102</a>) in retrospect, through the lens of a somewhat realistic Bayesian model of ordinal toxicity outcomes. When this model is estimated <em>using only data from the first 5 dose cohorts</em>, it foresees as reasonably likely the fatal toxicity which actually occurred in the 6th cohort. Thus, even in this inherently unsafe trial, disaster might still have been averted through the dynamic ‘situational awareness’ a realistic model can deliver.</p>
 <p>Unfortunately, realistic models of the kind employed in <span class="citation">Norris (2020)</span> are unlikely to be contemplated or even understood by trial sponsors who deploy 3+3 designs like the one in question. Indeed, even FDA’s Oncology Center of Excellence (OCE) expresses at best <a href="https://precisionmethods.guru/2020/04/21/fda-oce-response-on-dose-individualization/" class="external-link">limited enthusiasm</a> for early-phase trial designs that are cognizant of inter-individual heterogeneity. Thus, the question arises: would a less sophisticated analysis have enabled the sponsor, or FDA, to recognize this trial’s unsafe design from the outset?</p>
 </div>
-<div class="section level1">
-<h1 id="mapping-the-trial-to-the-precautionary-package">Mapping the trial to the <code>precautionary</code> package<a class="anchor" aria-label="anchor" href="#mapping-the-trial-to-the-precautionary-package"></a>
-</h1>
+<div class="section level2">
+<h2 id="mapping-the-trial-to-the-precautionary-package">Mapping the trial to the <code>precautionary</code> package<a class="anchor" aria-label="anchor" href="#mapping-the-trial-to-the-precautionary-package"></a>
+</h2>
 <p>AFM11-102 used two modifications that do not map readily to designs implemented in the <code>escalation</code> package on which <code>precautionary</code> is based. Firstly, whereas the design specified an initial ‘accelerated titration’ phase <span class="citation">(Simon et al. 1997)</span>, we will simply simulate a standard ‘3+3’ design.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Secondly, the trial employed step-up dosing such that patients initiated treatment at 1/3 of their cohort’s target dose, stepping up to the full dose after 1 week. Whereas the abovementioned Bayesian model exploited the extra information available from this step-up protocol, we will for present purposes regard each cohort as characterized simply by its target dose:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dcnorris/precautionary" class="external-link">precautionary</a></span><span class="op">)</span>
@@ -147,9 +147,9 @@ Multiple samples from a <em>hyperprior</em> over the distribution of MTD<span cl
   <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="simulating-safety">Simulating safety<a class="anchor" aria-label="anchor" href="#simulating-safety"></a>
-</h1>
+<div class="section level2">
+<h2 id="simulating-safety">Simulating safety<a class="anchor" aria-label="anchor" href="#simulating-safety"></a>
+</h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2020</span><span class="op">)</span>
 <span class="va">design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
@@ -218,9 +218,9 @@ Total
 </td>
 </tr></tbody>
 </table>
-<div class="section level2">
-<h2 id="uncertainty-about-the-ordinalizer">Uncertainty about the ordinalizer<a class="anchor" aria-label="anchor" href="#uncertainty-about-the-ordinalizer"></a>
-</h2>
+<div class="section level3">
+<h3 id="uncertainty-about-the-ordinalizer">Uncertainty about the ordinalizer<a class="anchor" aria-label="anchor" href="#uncertainty-about-the-ordinalizer"></a>
+</h3>
 <p>What about our uncertainty over the therapeutic index <span class="math inline">\(r_0\)</span>? Here, it seems entirely reasonable simply to explore a range of values:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1.2</span>, <span class="fl">2.0</span>, <span class="fl">0.2</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r0</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">r0</span>, <span class="fl">2</span><span class="op">)</span>
@@ -482,14 +482,14 @@ MCSE
 </table>
 </div>
 </div>
-<div class="section level1">
-<h1 id="applying-the-simulation-results">Applying the simulation results<a class="anchor" aria-label="anchor" href="#applying-the-simulation-results"></a>
-</h1>
+<div class="section level2">
+<h2 id="applying-the-simulation-results">Applying the simulation results<a class="anchor" aria-label="anchor" href="#applying-the-simulation-results"></a>
+</h2>
 <p>Safety parameters for any given phase 1 trial necessarily depend on the clinical context and unmet need addressed by the investigational drug <span class="citation">(Muller and Milton 2012)</span>. For sake of discussion, suppose FDA would have required an expected probability of any fatality in AFM11-102 to be below 15%. Then FDA might have requested that the sponsor support an expectation that <span class="math inline">\(r_0 &gt; 2\)</span> (e.g., based on preclinical evidence), or else modify the trial design.</p>
 </div>
-<div class="section level1 unnumbered">
-<h1 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h1>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references">
 <div id="ref-muller_determination_2012">
 <p>Muller, Patrick Y., and Mark N. Milton. 2012. “The Determination and Interpretation of the Therapeutic Index in Drug Development.” <em>Nature Reviews. Drug Discovery</em> 11 (10): 751–61. <a href="https://doi.org/10.1038/nrd3801" class="external-link">https://doi.org/10.1038/nrd3801</a>.</p>
@@ -529,7 +529,7 @@ MCSE
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

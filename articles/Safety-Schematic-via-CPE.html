@@ -113,14 +113,14 @@
 
     
     
-<div class="section level1">
-<h1 id="aims">Aims<a class="anchor" aria-label="anchor" href="#aims"></a>
-</h1>
+<div class="section level2">
+<h2 id="aims">Aims<a class="anchor" aria-label="anchor" href="#aims"></a>
+</h2>
 <p><span class="citation">Norris (2020b)</span> proposed a universal schematic for evaluating the safety of the 3+3 dose-escalation design, and conjectured that the <em>dose transition pathways</em> (DTP) of <span class="citation">Yap et al. (2017)</span> would enable a similar treatment of model-based designs. This vignette demonstrates the fulfillment of that promise, in a demonstration of <em>complete path enumeration</em> (CPE) implemented efficiently for the continual reassessment method (CRM).</p>
 </div>
-<div class="section level1">
-<h1 id="generalized-exact-simulation-of-dose-escalation">Generalized exact simulation of dose escalation<a class="anchor" aria-label="anchor" href="#generalized-exact-simulation-of-dose-escalation"></a>
-</h1>
+<div class="section level2">
+<h2 id="generalized-exact-simulation-of-dose-escalation">Generalized exact simulation of dose escalation<a class="anchor" aria-label="anchor" href="#generalized-exact-simulation-of-dose-escalation"></a>
+</h2>
 <p>Dose-escalation trial designs commonly operate with a fixed set of <span class="math inline">\(D\)</span> prespecified doses, enrolling participants in small cohorts each of size <span class="math inline">\(n\)</span>, at doses selected sequentially according to observed counts of binary dose-limiting toxicities (DLTs). Under such designs, the observations at any point in the trial may be recorded in a <span class="math inline">\(C \times D\)</span> matrix of toxicity counts <span class="math inline">\(\{0, 1, ..., n, -\}\)</span>, with ‘<span class="math inline">\(-\)</span>’ being used where a cohort has not been enrolled. Indeed, for deterministic designs in which dose-escalation decisions depend strictly on the history of observed DLT counts, such matrices suffice to account for the full dose-escalation sequence.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> For designs with upper bounds on enrollment, <span class="math inline">\(C\)</span> may be fixed <em>ex ante</em>, and all possible paths comprehensively enumerated.</p>
 <p>In <span class="citation">Norris (2020b)</span>, for example, paths through the 3+3 design could be represented as <span class="math inline">\(2 \times D\)</span> matrices because the 3+3 design enrolls at most 2 cohorts at any given dose. The mathematical treatment offered there for the path matrices <span class="math inline">\(T_{c,d}^j\)</span> was independent of the 3+3 rules, however, and carries forward generally:</p>
 <p>Denoting the prespecified doses by <span class="math inline">\((X_d)\)</span> and the cumulative distribution function of <span class="math inline">\(\mathrm{MTD}_i\)</span> by <span class="math inline">\(P\)</span>, we can write the vector <span class="math inline">\((\pi^j)\)</span> of path probabilities:<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
@@ -145,9 +145,9 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 \]</span></p>
 <p>where <span class="math inline">\(\mathrm{Y} = \sum_c T_{c,d}^j\)</span> denotes the <span class="math inline">\((J \times D)\)</span> left half of <span class="math inline">\(\mathrm{U}\)</span>.</p>
 </div>
-<div class="section level1">
-<h1 id="connection-with-dtp">Connection with DTP<a class="anchor" aria-label="anchor" href="#connection-with-dtp"></a>
-</h1>
+<div class="section level2">
+<h2 id="connection-with-dtp">Connection with DTP<a class="anchor" aria-label="anchor" href="#connection-with-dtp"></a>
+</h2>
 <p>Dose transition pathways (DTP) seem to have been introduced primarily as a means to reconcile model-based formulations of dose-escalation trials with the habitually rule-based thinking of clinicians. Specifically, <span class="citation">Yap et al. (2017)</span> cites 3 specific “perceived challenges” in making the transition from rule-based to model-based designs:</p>
 <ol style="list-style-type: decimal">
 <li>The “flexibility” of model-based designs (which I take to mean the additional free parameters they introduce into the design space) creates choices which cannot readily be appreciated in the rule-based terms familiar to clinical investigators.</li>
@@ -156,16 +156,16 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 </ol>
 <p>To meet these challenges, DTP effectively transforms a model-based design into a rule-based design <em>locally</em> — so that its immediate operation several steps ahead can be ‘eyeballed’ by trialists as a small set of (say, <span class="math inline">\(4^4 = 64\)</span>) distinct paths. The exhaustive enumeration employed here as in <span class="citation">Norris (2020b)</span> differs conceptually in its <em>global</em> reach (reflected in the ‘CPE’ moniker), and in its intent to support <em>computation</em> over the paths as opposed to cursory inspection. Supporting this expansive concept has required significant programming effort; the implementation of CPE in package <code>precautionary</code> is hundreds of times faster than the DTP of package <code>dtpcrm</code> <span class="citation">(Yap et al. 2019)</span> on the VIOLA trial example below.</p>
 </div>
-<div class="section level1">
-<h1 id="an-application">An application<a class="anchor" aria-label="anchor" href="#an-application"></a>
-</h1>
-<p>We will adopt the same parameters as in the <code>dtpcrm</code> <a href="https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html" class="external-link">package vignette</a>:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <div class="section level2">
-<h2 id="viola-set-up">VIOLA set-up<a class="anchor" aria-label="anchor" href="#viola-set-up"></a>
+<h2 id="an-application">An application<a class="anchor" aria-label="anchor" href="#an-application"></a>
 </h2>
+<p>We will adopt the same parameters as in the <code>dtpcrm</code> <a href="https://cran.r-project.org/package=dtpcrm/vignettes/dtpcrm_vignettev02.html" class="external-link">package vignette</a>:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <div class="section level3">
-<h3 id="clinical-parameters">Clinical parameters<a class="anchor" aria-label="anchor" href="#clinical-parameters"></a>
+<h3 id="viola-set-up">VIOLA set-up<a class="anchor" aria-label="anchor" href="#viola-set-up"></a>
 </h3>
+<div class="section level4">
+<h4 id="clinical-parameters">Clinical parameters<a class="anchor" aria-label="anchor" href="#clinical-parameters"></a>
+</h4>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">number.doses</span> <span class="op">&lt;-</span> <span class="fl">7</span>
 <span class="va">start.dose.level</span> <span class="op">&lt;-</span> <span class="fl">3</span>
@@ -174,16 +174,16 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <span class="va">cohort.size</span> <span class="op">&lt;-</span> <span class="fl">3</span></code></pre></div>
 <p>Note that the sample size limit allows us to set <span class="math inline">\(C=7\)</span>.</p>
 </div>
-<div class="section level3">
-<h3 id="model-specification-parameters">Model specification parameters<a class="anchor" aria-label="anchor" href="#model-specification-parameters"></a>
-</h3>
+<div class="section level4">
+<h4 id="model-specification-parameters">Model specification parameters<a class="anchor" aria-label="anchor" href="#model-specification-parameters"></a>
+</h4>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">prior.DLT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.03</span>, <span class="fl">0.07</span>, <span class="fl">0.12</span>, <span class="fl">0.20</span>, <span class="fl">0.30</span>, <span class="fl">0.40</span>, <span class="fl">0.52</span><span class="op">)</span>
 <span class="va">prior.var</span> <span class="op">&lt;-</span> <span class="fl">0.75</span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="early-stopping">Early stopping<a class="anchor" aria-label="anchor" href="#early-stopping"></a>
-</h3>
+<div class="section level4">
+<h4 id="early-stopping">Early stopping<a class="anchor" aria-label="anchor" href="#early-stopping"></a>
+</h4>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">stop_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stop_for_excess_toxicity_empiric.html">stop_for_excess_toxicity_empiric</a></span><span class="op">(</span><span class="va">x</span>,
@@ -198,9 +198,9 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <span class="op">}</span></code></pre></div>
 </div>
 </div>
-<div class="section level2">
-<h2 id="complete-path-enumeration-cpe">Complete Path Enumeration (CPE)<a class="anchor" aria-label="anchor" href="#complete-path-enumeration-cpe"></a>
-</h2>
+<div class="section level3">
+<h3 id="complete-path-enumeration-cpe">Complete Path Enumeration (CPE)<a class="anchor" aria-label="anchor" href="#complete-path-enumeration-cpe"></a>
+</h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span>
 <span class="va">crm</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/Crm-class.html">Crm</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">prior.DLT</span>,
@@ -221,27 +221,27 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span> <span class="co"># ~3sec on a 2.6GHz Quad Core i7; was ~17min with dtpcrm v0.1.1</span></code></pre></div>
 <pre><code><span class="co">##    user  system elapsed </span>
-<span class="co">##   3.132   0.383   2.115</span></code></pre>
+<span class="co">##   2.855   0.306   1.760</span></code></pre>
 <p>This yields all elements of the matrix formalism laid out in equations @ref(eq:pi)–@ref(eq:fatalities) above:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">crm</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">## T (4693×7×7) constructed in 0.353 sec</span>
-<span class="co">## T condensed in 0.355 sec</span></code></pre>
+<pre><code><span class="co">## T (4693×7×7) constructed in 0.339 sec</span>
+<span class="co">## T condensed in 0.332 sec</span></code></pre>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code><span class="co">## [1] 4693    4    7</span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="compute-mathbfb-sum_c-n-choose-t_cd">Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathbfb-sum_c-n-choose-t_cd"></a>
-</h2>
+<div class="section level3">
+<h3 id="compute-mathbfb-sum_c-n-choose-t_cd">Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathbfb-sum_c-n-choose-t_cd"></a>
+</h3>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Special.html" class="external-link">choose</a></span><span class="op">(</span><span class="fl">3</span>, <span class="cn">T</span><span class="op">)</span><span class="op">)</span>, MARGIN <span class="op">=</span> <span class="fl">1</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <pre><code><span class="co">## [1] 4693</span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="compute-mathrmu-and-mathrmy">Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathrmu-and-mathrmy"></a>
-</h2>
+<div class="section level3">
+<h3 id="compute-mathrmu-and-mathrmy">Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathrmu-and-mathrmy"></a>
+</h3>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fl">3</span><span class="op">-</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -249,9 +249,9 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span></code></pre></div>
 <pre><code><span class="co">## [1] 4693   14</span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1">Derive <span class="math inline">\(\mathbf{\pi}\)</span> from the CRM skeleton, to check that <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span><a class="anchor" aria-label="anchor" href="#derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1"></a>
-</h2>
+<div class="section level3">
+<h3 id="derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1">Derive <span class="math inline">\(\mathbf{\pi}\)</span> from the CRM skeleton, to check that <span class="math inline">\(\sum_j \pi^j \equiv 1\)</span><a class="anchor" aria-label="anchor" href="#derive-mathbfpi-from-the-crm-skeleton-to-check-that-sum_j-pij-equiv-1"></a>
+</h3>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">prior.DLT</span><span class="op">)</span>
 <span class="va">log_q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior.DLT</span><span class="op">)</span>
@@ -259,9 +259,9 @@ f_d = \frac{P(e^{2\kappa} \mathrm{MTD}_i&lt;  X_d)}{P(\mathrm{MTD}_i&lt; X_d)}, 
 <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">log_pi</span><span class="op">)</span><span class="op">)</span> <span class="co"># check probabilities sum to 1</span></code></pre></div>
 <pre><code><span class="co">## [1] 1</span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="comparison-with-the-dtp-formulation">Comparison with the DTP formulation<a class="anchor" aria-label="anchor" href="#comparison-with-the-dtp-formulation"></a>
-</h2>
+<div class="section level3">
+<h3 id="comparison-with-the-dtp-formulation">Comparison with the DTP formulation<a class="anchor" aria-label="anchor" href="#comparison-with-the-dtp-formulation"></a>
+</h3>
 <p>With each of (up to) 7 cohorts having 4 possible outcomes (0, 1, 2 or 3 toxicities), the DTP tabulation of <code>dtpcrm</code> lists a total of <span class="math inline">\(4^7 = 16384\)</span> paths. These are not all distinct paths, however, since early stopping results in path degeneracy.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> For example, we can see that paths 1005–1008 all terminate at the 6th cohort, resulting in a <span class="math inline">\(4\times\)</span> degeneracy:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">viola_dtp</span><span class="op">)</span> <span class="co"># as originally generated by 'dtpcrm:calculate_dtps'</span>
@@ -881,9 +881,9 @@ NA
 <pre><code><span class="co">## [1] 4693   15</span></code></pre>
 </div>
 </div>
-<div class="section level1">
-<h1 id="fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton">Fitting a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> to VIOLA’s CRM skeleton<a class="anchor" aria-label="anchor" href="#fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton"></a>
-</h1>
+<div class="section level2">
+<h2 id="fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton">Fitting a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> to VIOLA’s CRM skeleton<a class="anchor" aria-label="anchor" href="#fitting-a-lognormal-mathrmmtd_i-to-violas-crm-skeleton"></a>
+</h2>
 <p>Whereas the analysis of <span class="citation">Norris (2020b)</span> was carried forth under a thoroughly logarithmic scaling of <em>dose</em>, the dosing intervals employed in the VIOLA trial are suggestive of an approximately square-root dose scaling—at least for the nonzero doses:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">viola_dosing</span> <span class="op">&lt;-</span>
@@ -945,9 +945,9 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
 </p>
 </div>
 </div>
-<div class="section level1">
-<h1 id="viola-safety">VIOLA safety<a class="anchor" aria-label="anchor" href="#viola-safety"></a>
-</h1>
+<div class="section level2">
+<h2 id="viola-safety">VIOLA safety<a class="anchor" aria-label="anchor" href="#viola-safety"></a>
+</h2>
 <p>Taking this CRM skeleton fit as a modal expectation of the <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution, we may employ Equations @ref(eq:fatal-fraction)–@ref(eq:fatalities) to obtain an expected number of fatal toxicities, as a function of <span class="math inline">\(\kappa\)</span>:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">kappa</span>, <span class="va">mu</span><span class="op">=</span><span class="va">mu_opt</span>, <span class="va">sigma</span><span class="op">=</span><span class="va">sigma_opt</span>, <span class="va">X</span><span class="op">=</span><span class="va">viola_dosing</span><span class="op">$</span><span class="va">Dose_mg</span><span class="op">)</span> <span class="op">{</span>
@@ -977,9 +977,9 @@ CRM skeleton probabilities vs <span class="math inline">\(\log \mathrm{Dose}\)</
      , ylab <span class="op">=</span> <span class="st">"Expected Number of Fatal DLTs"</span>
      , las<span class="op">=</span><span class="fl">1</span><span class="op">)</span></code></pre></div>
 <p><img src="Safety-Schematic-via-CPE_files/figure-html/fatalities-vs-kappa-1.png" width="576"></p>
-<div class="section level2">
-<h2 id="beyond-the-skeleton">Beyond the skeleton<a class="anchor" aria-label="anchor" href="#beyond-the-skeleton"></a>
-</h2>
+<div class="section level3">
+<h3 id="beyond-the-skeleton">Beyond the skeleton<a class="anchor" aria-label="anchor" href="#beyond-the-skeleton"></a>
+</h3>
 <p>The development of CRM methods has left the status of the <em>skeleton</em> somewhat ambiguous. While evading its realistic interpretation as an <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution,<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> CRM proponents often fixate on the skeleton as a natural starting point for simulation studies. <span class="citation">Braun (2020)</span>, for example, develops an approach which “hinges on the assumption that the true DLT probabilities examined are consistent with the selected skeleton.”</p>
 <p>Nevertheless, it is incumbent on trial methodologists to examine the safety characteristics of their designs under conditions of model misspecification. The technique of Figure 3 in <span class="citation">Norris (2020b)</span> provides one approach.</p>
 <p>To enable parameter departures from our lognormal skeleton fit, we require <span class="math inline">\(\log \boldsymbol{\pi}\)</span> as a <em>function</em> of <span class="math inline">\((\mu, \sigma)\)</span>:</p>
@@ -1012,15 +1012,15 @@ Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-u
 </div>
 </div>
 </div>
-<div class="section level1">
-<h1 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
-</h1>
+<div class="section level2">
+<h2 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
+</h2>
 <p>Although initially put forward with different intent, the <em>dose transition pathways</em> of <span class="citation">Yap et al. (2017)</span> render the enumerative approach of <span class="citation">Norris (2020b)</span> immediately applicable to the CRM. Importantly, the analysis is found to be computationally feasible in the setting of an actual trial. Indeed, with performance improvements debuted in version 0.2-2 of <code>precautionary</code>, the complete VIOLA enumeration becomes essentially trivial, taking just a few seconds on modern desktop hardware. This raises the prospect of scaling up our problems to meet the opportunities of massive parallelism <span class="citation">(Gustafson 1988)</span>, expanding this mode of analysis to ever larger dose-finding trials.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a></p>
 <p>The approach taken here exemplifies a widely applicable scheme for the safety analysis of dose-escalation trials generally, rooted in the exhaustive enumeration of all possible trial paths.</p>
 </div>
-<div class="section level1 unnumbered">
-<h1 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h1>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references">
 <div id="ref-braun_simulationfree_2020">
 <p>Braun, Thomas M. 2020. “A Simulation‐free Approach to Assessing the Performance of the Continual Reassessment Method.” <em>Statistics in Medicine</em>, September, sim.8746. <a href="https://doi.org/10.1002/sim.8746" class="external-link">https://doi.org/10.1002/sim.8746</a>.</p>
@@ -1076,7 +1076,7 @@ Ex ante expectation of fatalities in the VIOLA trial, under the analytical set-u
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
