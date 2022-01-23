@@ -633,6 +633,8 @@ stopstate_mtd(S, MTD) :-
 %% ~~~ BENCHMARKS ~~~
 
 %?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 0.782s % rebis-dev 1/23
+%@    J = 10.
 %@    % CPU time: 1.140s % rebis-dev
 %@    J = 10
 %@ ;  % CPU time: 0.000s
@@ -640,6 +642,8 @@ stopstate_mtd(S, MTD) :-
 %@    % CPU time: 4.148s % master
 %@    J = 10.
 %?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 3.995s % rebis-dev 1/23
+%@    J = 46.
 %@    % CPU time: 5.741s % rebis-dev
 %@    J = 46
 %@ ;  % CPU time: 0.000s
@@ -647,6 +651,8 @@ stopstate_mtd(S, MTD) :-
 %@    % CPU time: 20.956s % master
 %@    J = 46.
 %?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 14.185s % rebis-dev 1/23
+%@    J = 154.
 %@    % CPU time: 20.284s % rebis-dev
 %@    J = 154
 %@ ;  % CPU time: 0.000s
@@ -654,6 +660,8 @@ stopstate_mtd(S, MTD) :-
 %@    % CPU time: 75.597s % master
 %@    J = 154.
 %?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 42.324s % rebis-dev 1/23
+%@    J = 442.
 %@    % CPU time: 60.256s % rebis-dev
 %@    J = 442
 %@ ;  % CPU time: 0.000s
@@ -661,6 +669,8 @@ stopstate_mtd(S, MTD) :-
 %@    % CPU time: 227.109s % master
 %@    J = 442.
 %?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 115.892s % rebis-dev 1/23
+%@    J = 1162.
 %@    % CPU time: 162.863s % rebis-dev
 %@    J = 1162
 %@ ;  % CPU time: 0.000s
@@ -668,6 +678,8 @@ stopstate_mtd(S, MTD) :-
 %@    % CPU time: 601.521s % master
 %@    J = 1162.
 %?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%@    % CPU time: 295.461s % rebis-dev 1/23
+%@    J = 2890.
 %@    % CPU time: 421.905s % rebis-dev
 %@    J = 2890
 %@ ;  % CPU time: 0.000s
