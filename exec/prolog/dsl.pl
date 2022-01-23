@@ -454,6 +454,22 @@ state_si(L - R) :-
 %@ ;  % CPU time: 0.000s
 %@    Okay = [des], T = 6.
 
+could_report_excessive_mtd(NDoses) :-
+    #NDoses #> 0, % Number of doses must be a positive integer. 
+    length(D,NDoses), maplist(=(0/0), D), % From initial state D
+    phrase(path([]-D), Path),  % .. we seek a Path of the trial
+    phrase((..., [L-_], ...,   % .. on which state L-_ appeared
+	    [declare_mtd(MTD)] % .. and MTD was recommended ..
+	   ), Path),
+    length(L,X), X #=< MTD, % .. where [L-_] current dose X =< MTD
+    L = [T/_|_], #T #> 1.   % .. yet X `exceeded MTD' per protocol.
+
+%?- time((N in 1..7, indomain(N), could_report_excessive_mtd(N))).
+%@    % CPU time: 1195.630s % N in 1..7
+%@ false.
+%@    % CPU time: 480.133s % N in 1..6
+%@ false.
+
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
 %?- setof(Q:E, P^R^state0_decision_noregrets([Q,P]-[0/0], E, true), Okay).
 %@    Okay = [0/0:des,0/0:sta,0/1:des,0/1:sta,0/2:des,0/2:sta,0/3:esc,0/3:sta,0/4:esc,... : ...|...].
