@@ -143,35 +143,37 @@ enroll(C/M, T0/N0, T1/N1) :-
 %% 3 main dose-escalation decisions: ESCalate, STAy and DeEScalate:
 cohort(3). % use cohorts of 3
 maxenr(6). % maximum enrollment per dose
-state0_decision_state(Ls - [R0|Rs], esc, [R|Ls] - Rs) :-
-    cohort(C), maxenr(M), enroll(C/M, R0, R).
-state0_decision_state([L0|Ls] - Rs, sta, [L|Ls] - Rs) :-
+%% TODO: Watch out for 'Rs' which looks like 'Rec' (maybe 'Hs'?)
+state0_decision_state(Ls - [H0|Hs], esc, [H|Ls] - Hs) :-
+    cohort(C), maxenr(M), enroll(C/M, H0, H).
+state0_decision_state([L0|Ls] - Hs, sta, [L|Ls] - Hs) :-
     cohort(C), maxenr(M), enroll(C/M, L0, L).
-state0_decision_state([L,D0|Ls] - Rs, des, [D|Ls] - [L|Rs]) :-
+state0_decision_state([L,D0|Ls] - Hs, des, [D|Ls] - [L|Hs]) :-
     cohort(C), maxenr(M), enroll(C/M, D0, D).
 
-%?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Rs).
-%@    Ls = [0/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [1/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [2/3,0/3,1/6], Rs = [0/0]
-%@ ;  Ls = [3/3,0/3,1/6], Rs = [0/0]
+%?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Hs).
+%@    Ls = [0/3,0/3,1/6], Hs = [0/0]
+%@ ;  Ls = [1/3,0/3,1/6], Hs = [0/0]
+%@ ;  Ls = [2/3,0/3,1/6], Hs = [0/0]
+%@ ;  Ls = [3/3,0/3,1/6], Hs = [0/0]
 %@ ;  false.
 
-%?- state0_decision_state([1/3, 1/6] - [0/0, 0/0], sta, Ls - Rs).
-%@    Ls = [1/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [2/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [3/6,1/6], Rs = [0/0,0/0]
-%@ ;  Ls = [4/6,1/6], Rs = [0/0,0/0]
+%?- state0_decision_state([1/3, 1/6] - [0/0, 0/0], sta, Ls - Hs).
+%@    Ls = [1/6,1/6], Hs = [0/0,0/0]
+%@ ;  Ls = [2/6,1/6], Hs = [0/0,0/0]
+%@ ;  Ls = [3/6,1/6], Hs = [0/0,0/0]
+%@ ;  Ls = [4/6,1/6], Hs = [0/0,0/0]
 %@ ;  false.
 
-%?- state0_decision_state([2/3, 0/3] - [0/0, 0/0], des, Ls - Rs).
-%@    Ls = [0/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [1/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [2/6], Rs = [2/3,0/0,0/0]
-%@ ;  Ls = [3/6], Rs = [2/3,0/0,0/0].
+%?- state0_decision_state([2/3, 0/3] - [0/0, 0/0], des, Ls - Hs).
+%@    Ls = [0/6], Hs = [2/3,0/0,0/0]
+%@ ;  Ls = [1/6], Hs = [2/3,0/0,0/0]
+%@ ;  Ls = [2/6], Hs = [2/3,0/0,0/0]
+%@ ;  Ls = [3/6], Hs = [2/3,0/0,0/0]
+%@ ;  false.
 
 %% Note how a trial starts naturally from the obvious 'initial state':
-%?- state0_decision_state([] - [0/0, 0/0], esc, S).
+%?- S+\(Zero = []-[0/0,0/0], state0_decision_state(Zero, esc, S)).
 %@    S = [0/3]-[0/0]
 %@ ;  S = [1/3]-[0/0]
 %@ ;  S = [2/3]-[0/0]
@@ -377,17 +379,17 @@ tally_si(T/N) :-
 %% To explore fully how the natural-language protocol descriptions relate
 %% to our formal trial definition, we will require a state_si/1 predicate
 %% capable of generating fairly enumerated states.
-state_si(L - R) :-
+state_si(Ls - Hs) :-
     D in 1..7,     % TODO: A catastrophic 'wart' on otherwise elegant code?
     indomain(D),
     Dcur in 0..D,  %       Does all this merely remind us how indispensable
     indomain(Dcur),
     #Dhi #= D - Dcur,
-    length(L, Dcur), %     clpz is for logic programming? Or does it
-    length(R, Dhi),  %     suggest we need a smarter append/3?
+    length(Ls, Dcur), %     clpz is for logic programming? Or does it
+    length(Hs, Dhi),  %     suggest we need a smarter append/3?
     %% ~~ Everything below this point seemed so delightfully elegant ~~
     %%%%length(Doses, D), % we prespecify a number D of dose levels
-    append(L, R, Doses), % the 'current dose' splits Doses somewhere
+    append(Ls, Hs, Doses), % the 'current dose' splits Doses somewhere
     maplist(tally_si, Doses). % all doses bear a tally
 
 %?- state0_decision_noregrets([1/3]-[0/0], E, T).
@@ -454,17 +456,23 @@ state_si(L - R) :-
 %@ ;  % CPU time: 0.000s
 %@    Okay = [des], T = 6.
 
-could_report_excessive_mtd(NDoses) :-
+recommendation_exceeds_mtd(NDoses) :-
     #NDoses #> 0, % Number of doses must be a positive integer. 
-    length(D,NDoses), maplist(=(0/0), D), % From initial state D
-    phrase(path([]-D), Path),  % .. we seek a Path of the trial
-    phrase((..., [L-_], ...,   % .. on which state L-_ appeared
-	    [declare_mtd(MTD)] % .. and MTD was recommended ..
+    length(Ds,NDoses), maplist(=(0/0), Ds), % From initial state D,
+    phrase(path([]-Ds), Path),  % .. we seek a Path of the trial
+    phrase((..., [Ls-_], ...,   % .. on which state Ls-_ appeared,
+	    [recommend_dose(Rec)] %  and the recommended dose Rec
 	   ), Path),
-    length(L,X), X #=< MTD, % .. where [L-_] current dose X =< MTD
-    L = [T/_|_], #T #> 1.   % .. yet X `exceeded MTD' per protocol.
+    length(Ls,X), Rec #>= X, % .. was at least the current dose X,
+    Ls = [T/_|_], #T #> 1.   % .. yet X `exceeded MTD' per protocol.
 
-%?- time((N in 1..7, indomain(N), could_report_excessive_mtd(N))).
+%?- time((N in 1..3, indomain(N), recommendation_exceeds_mtd(N))).
+%@    % CPU time: 20.626s
+%@ false.
+%@    % CPU time: 0.003s
+%@ caught: error(existence_error(procedure,report_excessive_mtd/1),report_excessive_mtd/1)
+%@    % CPU time: 0.001s
+%@ caught: error(existence_error(procedure,report_excessive_mtd/1),report_excessive_mtd/1)
 %@    % CPU time: 1195.630s % N in 1..7
 %@ false.
 %@    % CPU time: 480.133s % N in 1..6
@@ -494,11 +502,11 @@ cascading_decision_otherwise([D|Ds], Os, E, S0, S) :-
             cascading_decision_otherwise(Ds, Os, E, S0, S)).
 
 %path(_) --> []. % a convenience for testing; path can stop at any time
-path(declare_mtd(_)) --> [].
+path(recommend_dose(_)) --> [].
 path(S0) --> { cascading_decision_otherwise([esc,sta,des],
                                             [E = stop,
                                              stopstate_mtd(S0, MTD),
-                                             S = declare_mtd(MTD)], E, S0, S) },
+                                             S = recommend_dose(MTD)], E, S0, S) },
 	     [E, S],
 	     path(S).
 
@@ -565,19 +573,19 @@ stopstate_mtd(S, MTD) :-
 %%  in which 6 patients have been treated with ≤ 1 instance
 %%  of DLT, or dose level 0 if there were ≥ 2 instances of DLT
 %%  at dose level 1."
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(2)]), Path)), MTD2States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,recommend_dose(2)]), Path)), MTD2States).
 %@    MTD2States = [[0/6,0/3]-[],[0/6,1/6]-[],[1/6,0/3]-[],[1/6,1/6]-[]].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(1)]), Path)), MTD1States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,recommend_dose(1)]), Path)), MTD1States).
 %@    MTD1States = [[0/6]-[2/3],[0/6]-[2/6],[0/6]-[3/3],[0/6]-[3/6],[0/6]-[4/6],[1/6]-[2/3],[1/6]-[2/6],[1/6]-[3/3],[...]-[...],... - ...|...].
 
-%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,declare_mtd(0)]), Path)), MTD0States).
+%?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,recommend_dose(0)]), Path)), MTD0States).
 %@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[...]-[...],... - ...|...].
 
-%% Right away, we can see that 'des' occurs when we should declare_mtd/1.
+%% Right away, we can see that 'des' occurs when we should recommend_dose/1.
 %% This makes me wonder whether letting 'des' be some kind of default
 %% is wrong. Perhaps I should also have a concept of regretting 'des'?
-%% Or else maybe there should be some *more active* effort to declare_mtd/1
+%% Or else maybe there should be some *more active* effort to recommend_dose/1
 %% ASAP.
 %% I really do like the idea of defining the MTD implicitly through termination
 %% of the dose-escalation, by 'running out of options'.
@@ -598,57 +606,57 @@ stopstate_mtd(S, MTD) :-
 %@ ;  false.
 
 %?- phrase(path([0/0]-[0/0]), Path).
-%@    Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[0/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[0/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[1/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[2/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[3/6]-[4/6],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[2/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[3/6]-[2/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[2/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[3/6]-[3/3],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[0/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[1/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[2/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[3/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[4/6,...]-[],stop,declare_mtd(...)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[2/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[3/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[1/3]-[0/0],sta,[4/6]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[2/3]-[0/0],stop,declare_mtd(todo)]
-%@ ;  Path = [sta,[3/3]-[0/0],stop,declare_mtd(todo)]
+%@    Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[0/6,0/3]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[1/6,0/3]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[0/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[1/6,0/3]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[0/6]-[2/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[1/6]-[2/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[2/6]-[2/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[2/6,0/3]-[],des,[3/6]-[2/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[0/6]-[3/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[1/6]-[3/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[2/6]-[3/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[3/6,0/3]-[],des,[3/6]-[3/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[0/6]-[4/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[1/6]-[4/6],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[2/6]-[4/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[1/3,0/3]-[],sta,[4/6,0/3]-[],des,[3/6]-[4/6],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[0/6]-[2/3],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[1/6]-[2/3],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[2/6]-[2/3],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[2/3,0/3]-[],des,[3/6]-[2/3],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[0/6]-[3/3],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[1/6]-[3/3],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[2/6]-[3/3],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[0/3]-[0/0],esc,[3/3,0/3]-[],des,[3/6]-[3/3],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[0/6,1/6]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[1/6,1/6]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[2/6,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[0/3,1/6]-[],sta,[3/6,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[1/6,1/6]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[2/6,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[3/6,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[1/3,1/6]-[],sta,[4/6,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[2/3,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[1/6]-[0/0],esc,[3/3,1/6]-[],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[2/6]-[0/0],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[3/6]-[0/0],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[1/3]-[0/0],sta,[4/6]-[0/0],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[2/3]-[0/0],stop,recommend_dose(0)]
+%@ ;  Path = [sta,[3/3]-[0/0],stop,recommend_dose(0)]
 %@ ;  false. % J=46 paths!
 
 %% ~~~ BENCHMARKS ~~~
 
-%?- time(J+\(length(D,1), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,1), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 0.782s % rebis-dev 1/23
 %@    J = 10.
 %@    % CPU time: 1.140s % rebis-dev
@@ -657,7 +665,7 @@ stopstate_mtd(S, MTD) :-
 %@    false.
 %@    % CPU time: 4.148s % master
 %@    J = 10.
-%?- time(J+\(length(D,2), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,2), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 3.995s % rebis-dev 1/23
 %@    J = 46.
 %@    % CPU time: 5.741s % rebis-dev
@@ -666,7 +674,7 @@ stopstate_mtd(S, MTD) :-
 %@    false.
 %@    % CPU time: 20.956s % master
 %@    J = 46.
-%?- time(J+\(length(D,3), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,3), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 14.185s % rebis-dev 1/23
 %@    J = 154.
 %@    % CPU time: 20.284s % rebis-dev
@@ -675,7 +683,7 @@ stopstate_mtd(S, MTD) :-
 %@    false.
 %@    % CPU time: 75.597s % master
 %@    J = 154.
-%?- time(J+\(length(D,4), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,4), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 42.324s % rebis-dev 1/23
 %@    J = 442.
 %@    % CPU time: 60.256s % rebis-dev
@@ -684,7 +692,7 @@ stopstate_mtd(S, MTD) :-
 %@    false.
 %@    % CPU time: 227.109s % master
 %@    J = 442.
-%?- time(J+\(length(D,5), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,5), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 115.892s % rebis-dev 1/23
 %@    J = 1162.
 %@    % CPU time: 162.863s % rebis-dev
@@ -693,7 +701,7 @@ stopstate_mtd(S, MTD) :-
 %@    false.
 %@    % CPU time: 601.521s % master
 %@    J = 1162.
-%?- time(J+\(length(D,6), maplist(=(0/0), D), findall(Path, phrase(path([]-D), Path), Paths), length(Paths, J))).
+%?- time(J+\(length(Ds,6), maplist(=(0/0), Ds), findall(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 295.461s % rebis-dev 1/23
 %@    J = 2890.
 %@    % CPU time: 421.905s % rebis-dev
@@ -705,7 +713,7 @@ stopstate_mtd(S, MTD) :-
 
 
 %% What does a path look like, under optional size-2/3 cohorts?
-%?- length(D,2), maplist(=(0/0), D), phrase(path([]-D), Path).
+%?- length(Ds,2), maplist(=(0/0), Ds), phrase(path([]-Ds), Path).
 %@    D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
 %@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
 %@ ;  D = [0/0,0/0], Path = [esc,[0/2]-[0/0],sta,[0/4]-[0/0],esc,[0/2,0/4]-[],sta,[0/4,...]-[],sta,... - ...|...]
