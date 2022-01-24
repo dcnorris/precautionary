@@ -192,8 +192,7 @@ maxenr(6). % and enroll at most 6 patients at any one dose level.
 %% having de-escalated from an 'insufficiently toxic' tally of 1-/3+.
 regret(des, [T/N, T0/N0]) :-
     #T0 #=< 1 #/\ #N0 #>= 3, % prev dose no more than moderately toxic
-    #N #> 0,
-    #T * 6 #> #N. % new toxicity rate is worse than 1/6
+    #N #> 0, #T * 6 #> #N.   % new toxicity rate is lower than 1/6
 %% TODO: Try to tighten this up, so that we regret 0/3 toxicities after
 %%       having de-escalated from a 1/3.
 %% TODO: Might this regret already be expressed via the preference for
@@ -210,12 +209,12 @@ regret(des, [T/N, T0/N0]) :-
 %% Thus, for example, we regret ANY amount of toxicity at dose D+1
 %% if we lack a basis of 0/3 or no more than 1/6 toxicities at dose D.
 
-regret(esc, [T/N, T0/N0]) :-
+regret(esc, [T/N, T0/N0]) :- % regret escalating without `safe harbor'
     #N #>= #T, % condition for T/N to be a valid tally
-    (	#T #> 0, % We will regret even 1 toxicity when escalating after..
-	#N0 #< 3 % having enrolled less than 3 at previous dose.
-    ;	#T #> 1, % We regret >1 toxicities after..
-	#T0 * 6 #> N0 % having seen tox rate T0/N0 > 1/6 at prev dose.
+    (   #T #> 0, % We will regret even 1 toxicity when escalating after..
+        #N0 #< 3 % having enrolled less than 3 at previous dose.
+    ;   #T #> 1, % We regret >1 toxicities after..
+        #T0 * 6 #> N0 % having seen tox rate T0/N0 > 1/6 at prev dose.
     ).
 
 %% Finally, we regret ANY decision that results in a 5+/_ tally:
