@@ -141,15 +141,14 @@ enroll(C/M, T0/N0, T1/N1) :-
 %% adjacent to the 'current dose' are immediately accessible. Dose-skipping
 %% is generally not done in dose-escalation trials, in which case there are
 %% 3 main dose-escalation decisions: ESCalate, STAy and DeEScalate:
-cohort(3). % use cohorts of 3
-maxenr(6). % maximum enrollment per dose
-%% TODO: Watch out for 'Rs' which looks like 'Rec' (maybe 'Hs'?)
 state0_decision_state(Ls - [H0|Hs], esc, [H|Ls] - Hs) :-
     cohort(C), maxenr(M), enroll(C/M, H0, H).
 state0_decision_state([L0|Ls] - Hs, sta, [L|Ls] - Hs) :-
     cohort(C), maxenr(M), enroll(C/M, L0, L).
 state0_decision_state([L,D0|Ls] - Hs, des, [D|Ls] - [L|Hs]) :-
     cohort(C), maxenr(M), enroll(C/M, D0, D).
+cohort(3). % For the present application we use cohorts of size 3,
+maxenr(6). % and enroll at most 6 patients at any one dose level.
 
 %?- state0_decision_state([0/3, 1/6] - [0/0, 0/0], esc, Ls - Hs).
 %@    Ls = [0/3,0/3,1/6], Hs = [0/0]
@@ -337,36 +336,32 @@ But the price to pay for this is REIFICATION. I need to *reify* regret.
 %% application. What I need is a goal that reifies to 'true' for precisely
 %% those decisions which are BOTH feasible AND non-regrettable, and otherwise
 %% reifies to 'false'.
-state0_decision_noregrets(S0, A, Truth) :-
+state0_decision_noregrets(S0, E, Truth) :-
     state_si(S0),
-    regrettable_decision(A),
-    %% TODO: Label here, not in _is type tests!
-    %% NB: _si tests should post instantiation errors, but not perform search.
-    if_(state0_decision_feasible(S0, A),
-	(   state0_decision_state(S0, A, S),
-	    S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
-	    S  = [T /N |_] - _, %       into a regret/3 predicate?
-	    %% I introduce the (->) below to avert backtracking over
-	    %% possibly multiple scenarios for regret -- one is enough!
-    	    regret(A, [T/N, T0/N0]) -> Truth = false
-	;   Truth = true
-	),
-	Truth = false
+    regrettable_decision(E),
+    if_(state0_decision_feasible(S0, E),
+        (   state0_decision_state(S0, E, S),
+            S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
+            S  = [T /N |_] - _, %       into a regret/3 predicate?
+            %% The (->) below averts backtracking over possibly multiple
+            %% scenarios for regret. Regret being idempotent, 1 suffices.
+            regret(E, [T/N, T0/N0]) -> Truth = false
+        ;   Truth = true
+        ),
+        Truth = false
        ).
 
-%% These are the 3 dose-escalation decisions
-%% to which the 'regret' concept applies:
-regrettable_decision(esc).
-regrettable_decision(sta).
-regrettable_decision(des).
+regrettable_decision(esc). % These are the 3 dose-escalation decisions
+regrettable_decision(sta). % to which the `regret' concept applies.
+regrettable_decision(des). % Note in particular the absence of `stop'.
 
 %% TODO: Does the (->)/2 below really engender distrust,
-%%       even though we can invoke with A uninstantiated?
-state0_decision_feasible(S0, A, Truth) :-
+%%       even though we can invoke with E uninstantiated?
+state0_decision_feasible(S0, E, Truth) :-
     state_si(S0),
-    regrettable_decision(A), % guarantees A is ground
-    (	state0_decision_state(S0, A, _) -> Truth = true
-    ;	Truth = false
+    regrettable_decision(E), % guarantees E is ground
+    (   state0_decision_state(S0, E, _) -> Truth = true
+    ;   Truth = false
     ).
 
 %% TODO: State the monotonic execution constraint!
