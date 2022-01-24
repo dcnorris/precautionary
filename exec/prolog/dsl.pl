@@ -472,6 +472,21 @@ recommendation_exceeds_mtd(NDoses) :-
 %@    % CPU time: 480.133s % N in 1..6
 %@ false.
 
+%% To support the paper, a free query (not RHS of Horn clause) serves best:
+badness :-
+    N in 1..7, indomain(N), % Search to a depth of trials with up to 7 doses
+    InitN = []-Ds, length(Ds, N), maplist(=(0/0), Ds), % From initial state..
+    phrase(path(InitN), Path),  % .. we seek a Path of the trial
+    phrase((..., [Ls-_], ...,   % .. on which state Ls-_ appeared,
+	    [recommend_dose(Rec)] %  and where the recommended dose Rec
+	   ), Path),
+    length(Ls,X), Rec #>= X, % .. was at least the current dose X,
+    Ls = [T/_|_], #T #> 1.   % .. yet X `exceeded MTD' per protocol.
+
+%?- time(badness).
+%@    % CPU time: 1262.907s
+%@ false.
+
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
 %?- setof(Q:E, P^R^state0_decision_noregrets([Q,P]-[0/0], E, true), Okay).
 %@    Okay = [0/0:des,0/0:sta,0/1:des,0/1:sta,0/2:des,0/2:sta,0/3:esc,0/3:sta,0/4:esc,... : ...|...].
