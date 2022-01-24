@@ -179,12 +179,12 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NoDose            0   0       0               0         0               0     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5 0       3.2             0         0.066<span style="text-decoration: underline;">7</span>          0.165 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1   0.2     3.6             0         0.066<span style="text-decoration: underline;">7</span>          0.186 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2   0.333   3.8             0         0.267           0.196 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4   1       4.2             0         0.267           0.216 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6   0.733   3               0         0.2             0.155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8   0.867   1.6             0         0.133           0.082<span style="text-decoration: underline;">5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5 0       3.2             0         0.066<span style="text-decoration: underline;">7</span>          0.182 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1   0.2     3.8             0         0.2             0.216 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2   0.8     4.4             0         0.267           0.25  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4   0.733   3.6             0         0.4             0.205 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6   1       2.2             0         0.066<span style="text-decoration: underline;">7</span>          0.125 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8   0.2     0.4             0         0               0.022<span style="text-decoration: underline;">7</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hsims</span>, ordinalizer <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">dose</span>, <span class="va">r0</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="va">dose</span><span class="op">/</span><span class="va">r0</span><span class="op">^</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="va">dose</span><span class="op">/</span><span class="va">r0</span>, Gr3<span class="op">=</span><span class="va">dose</span>, Gr4<span class="op">=</span><span class="va">dose</span><span class="op">*</span><span class="va">r0</span>, Gr5<span class="op">=</span><span class="va">dose</span><span class="op">*</span><span class="va">r0</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
@@ -193,42 +193,42 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NoDose            0   0       0               0         0               0     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5 0       3.2             0         0.066<span style="text-decoration: underline;">7</span>          0.165 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1   0.2     3.6             0         0.066<span style="text-decoration: underline;">7</span>          0.186 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2   0.333   3.8             0         0.267           0.196 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4   1       4.2             0         0.267           0.216 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6   0.733   3               0         0.2             0.155 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8   0.867   1.6             0         0.133           0.082<span style="text-decoration: underline;">5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5 0       3.2             0         0.066<span style="text-decoration: underline;">7</span>          0.182 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1   0.2     3.8             0         0.2             0.216 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2   0.8     4.4             0         0.267           0.25  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4   0.733   3.6             0         0.4             0.205 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6   1       2.2             0         0.066<span style="text-decoration: underline;">7</span>          0.125 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8   0.2     0.4             0         0               0.022<span style="text-decoration: underline;">7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $safety</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     12    2    2    2    1    1     19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     11    2    1    1    1    1     18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $toxTab</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Tox</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rep  None Gr1 Gr2 Gr3 Gr4 Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1    10   5   1   4   1   0    21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2    10   0   0   0   0   2    12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3    13   3   1   1   2   1    21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4    14   3   5   2   2   1    27</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5    12   2   2   0   0   2    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   6    17   2   1   3   2   2    27</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   7    11   0   4   2   0   1    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   8    12   1   2   0   3   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   9    14   4   0   0   0   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   10   15   3   2   2   2   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   11   17   1   0   2   0   1    21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   12    7   5   2   4   0   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   13   10   1   2   1   1   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   14   12   3   5   1   0   0    21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   15    8   1   1   2   0   0    12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1    16   3   1   0   2   2    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2    10   0   2   1   0   2    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3     9   1   0   0   1   1    12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4    14   2   2   1   1   1    21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5    12   2   4   1   1   1    21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   6     6   1   2   2   0   1    12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   7    17   0   1   2   1   0    21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   8    12   4   1   2   1   1    21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   9    12   1   0   0   2   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   10   13   4   1   1   1   1    21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   11    9   2   3   1   1   2    18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   12    9   2   1   3   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   13   11   2   0   0   0   2    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   14   11   1   0   2   0   1    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   15   10   4   2   2   0   0    18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="va">hsims</span> <span class="op">&lt;-</span> <span class="va">hsims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="extend.html">extend</a></span><span class="op">(</span>num_sims <span class="op">=</span> <span class="va">num_sims</span><span class="op">)</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hsims</span>, ordinalizer <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">dose</span>, <span class="va">r0</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="va">dose</span><span class="op">/</span><span class="va">r0</span><span class="op">^</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="va">dose</span><span class="op">/</span><span class="va">r0</span>, Gr3<span class="op">=</span><span class="va">dose</span>, Gr4<span class="op">=</span><span class="va">dose</span><span class="op">*</span><span class="va">r0</span>, Gr5<span class="op">=</span><span class="va">dose</span><span class="op">*</span><span class="va">r0</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span><span class="op">$</span><span class="va">safety</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     12    2    2    1    1    1     18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     11    2    2    1    1    1     17</span>
 <span class="r-in"><span class="co"># Set a CRM skeleton from the average probs in above simulation</span></span>
 <span class="r-in"><span class="va">num_sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span class="r-in">, <span class="fl">16</span></span>
@@ -250,24 +250,24 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dose   `dose (mg/kg)`   tox     n true_prob_tox prob_recommend prob_administer</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NoDose            0    0     0                0           0             0     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5  0.75  5.25             0           0.25          0.219 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1    0.75  1.5              0           0             0.062<span style="text-decoration: underline;">5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2    1     4.5              0           0.25          0.188 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4    2    11.2              0           0             0.469 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6    0.5   0.75             0           0.5           0.031<span style="text-decoration: underline;">2</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8    0.75  0.75             0           0             0.031<span style="text-decoration: underline;">2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                 0.5  0     3                0           0             0.125 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                 1    0.75  3.75             0           0.25          0.156 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                 2    1     3.75             0           0.25          0.156 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                 4    2     8.25             0           0.25          0.344 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                 6    1.5   4.5              0           0.25          0.188 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                 8    0.5   0.75             0           0             0.031<span style="text-decoration: underline;">2</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $safety</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     11    4    3    2    2    2   24.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     11    4    3    3    0    2   24.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $toxTab</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Tox</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rep None Gr1 Gr2 Gr3 Gr4 Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1   10   3   2   1   3   5    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2   18   0   3   1   2   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3   13   2   3   3   2   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4    4  10   5   5   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1   15   2   0   4   0   3    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2   13   3   5   2   0   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3    9   3   6   2   1   3    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4    6  10   1   5   1   1    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>dose_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">6</span>, <span class="fl">20</span>, <span class="fl">60</span>, <span class="fl">180</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span></span>
@@ -296,7 +296,7 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                        6   0     3        1.30<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span>              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                       20   0     3        1.90<span style="color: #949494;">e</span><span style="color: #BB0000;">- 5</span>              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                       60   0     3        3.64<span style="color: #949494;">e</span><span style="color: #BB0000;">- 2</span>              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                      180   2.9   4.2      7.03<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                      180   2.4   3.6      7.03<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                      400   0     0        9.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 1 more variable: prob_administer &lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -307,16 +307,16 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $toxTab</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Tox</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rep  None Gr1 Gr2 Gr3 Gr4 Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1     9   1   3   1   1   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2    10   2   2   3   1   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3    10   1   2   2   0   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4    10   2   2   3   1   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5     8   3   1   3   0   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   6     9   3   0   2   1   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   7     9   1   2   2   1   0    15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   8     9   3   2   4   0   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   9    10   3   3   1   1   0    18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   10    9   2   2   2   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1     8   4   2   4   0   0    18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2     9   1   3   1   1   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3    10   2   0   3   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4     9   3   1   1   1   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5     8   3   2   2   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   6     8   4   1   2   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   7     8   2   3   0   2   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   8     9   1   3   1   1   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   9     9   2   2   2   0   0    15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   10    9   1   5   2   1   0    18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="co"># Set a CRM skeleton from the average probs in above simulation</span></span>
 <span class="r-in"><span class="fu">get_dfcrm</span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">sims</span><span class="op">$</span><span class="va">true_prob_tox</span></span>
@@ -334,42 +334,42 @@ without the nuisance of nested progress bars.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dose   `dose (ng/kg/week)`   tox     n true_prob_tox prob_recommend</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NoDose                   0  0      0        0   <span style="color: #949494;"> </span>              0   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                        2  0      3        1.19<span style="color: #949494;">e</span><span style="color: #BB0000;">-19</span>           0   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                        6  0      0        1.30<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span>           0   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                       20  0      0        1.90<span style="color: #949494;">e</span><span style="color: #BB0000;">- 5</span>           0   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                       60  0.6   17.4      3.64<span style="color: #949494;">e</span><span style="color: #BB0000;">- 2</span>           0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                      180  2.25   3.6      7.03<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>           0.05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                      400  0      0        9.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>           0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NoDose                   0  0      0        0   <span style="color: #949494;"> </span>                 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1                        2  0      3        1.19<span style="color: #949494;">e</span><span style="color: #BB0000;">-19</span>              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 2                        6  0      0        1.30<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span>              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 3                       20  0      0        1.90<span style="color: #949494;">e</span><span style="color: #BB0000;">- 5</span>              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 4                       60  0.75  18.9      3.64<span style="color: #949494;">e</span><span style="color: #BB0000;">- 2</span>              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5                      180  1.55   2.1      7.03<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> 6                      400  0      0        9.87<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span>              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 1 more variable: prob_administer &lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $safety</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   None  Gr1  Gr2  Gr3  Gr4  Gr5  Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     15    4    3    1    1    1   24.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     15    5    2    1    0    1   24.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $toxTab</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Tox</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rep  None Gr1 Gr2 Gr3 Gr4 Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1    14   6   2   0   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2    15   5   2   1   0   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3    15   5   3   1   0   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4    14   5   2   0   1   2    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5    14   3   3   0   4   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   6    10   5   5   1   3   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   7    15   5   1   1   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   8    15   4   3   2   0   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   9    19   2   2   1   0   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   10    9   2   7   3   1   2    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   11   17   3   1   2   0   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   12   17   3   2   0   2   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   13   14   2   5   1   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   14   11   5   4   2   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   15   18   3   2   1   0   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   16   19   1   1   1   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   17   17   4   1   0   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   18   11   3   5   3   2   0    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   19   14   5   2   1   1   1    24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   20   18   0   3   2   1   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1    16   4   2   2   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2    13   8   2   0   1   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3    17   3   3   1   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4    13   7   2   2   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5    13   5   4   1   0   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   6    15   5   2   2   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   7    13   5   3   1   2   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   8    13   4   2   3   1   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   9    18   5   0   0   1   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   10   16   3   2   0   2   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   11   15   8   0   0   1   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   12   12   5   1   4   0   2    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   13   16   3   2   2   0   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   14   15   5   2   1   0   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   15   15   4   3   0   2   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   16   16   6   0   2   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   17   17   3   2   0   0   2    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   18   15   7   1   1   0   0    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   19   15   4   3   1   0   1    24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   20   12   8   1   2   0   1    24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># don't overtax CRAN servers</span></span>
 <span class="r-in"><span class="va">crm_sims</span> <span class="op">&lt;-</span> <span class="va">crm_sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="extend.html">extend</a></span><span class="op">(</span>target_mcse <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span>
@@ -418,12 +418,12 @@ without the nuisance of nested progress bars.</p>
 <span class="r-in">  , true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span></span>
 <span class="r-in"><span class="op">)</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ehsims</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                            None       Gr1       Gr2        Gr3        Gr4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 11.743847 1.9730354 1.7980966 1.14639466 0.70938116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.316194 0.1009571 0.1410826 0.06051687 0.03390662</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                              Gr5      Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.98975472 18.3605098</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.07396376  0.3383951</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             None        Gr1        Gr2        Gr3        Gr4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 11.4413152 1.89734756 1.67638900 1.24781325 0.79628866</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.3611569 0.07717994 0.07854286 0.04371852 0.01210801</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                             Gr5      Total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.9947871 18.0539408</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.0633802  0.3683513</span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span></span>
 </code></pre></div>
     </div>
