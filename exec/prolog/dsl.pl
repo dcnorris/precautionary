@@ -495,24 +495,24 @@ badness :-
 %@ false.
 
 %% TODO: Verify the 'definition' of MTD.
-rec_not_as_defined(D) :-
-    #D #> 0, % For trials of positive size D
+rec_not_as_defined :-
+    D in 1..7, indomain(D), % For trials of usual size (up to D=7 doses)
     InitD = []-Ds, length(Ds, D), % .. that start from the lowest dose
     maplist(=(0/0), Ds),          % .. with no prior toxicity information,
-    phrase(path(InitD), Path),    % can we find a propery-violating Path
+    phrase(path(InitD), Path),    % does any Path exist
     phrase((..., [S, stop,        % .. on which a terminal state S appears,
                   recommend_dose(Rec)] % .. and recommended dose is Rec
                  ), Path),
     state_tallies(S, Qs), % such that the dose-ordered tally list ..
     length(OKs, Rec), append(OKs, TOXs, Qs), % split on the recommendation
-    (   nth0(Rec, [0/99|Qs], T/N), % has the recommended dose
+    (   nth0(Rec, [nil|Qs], T/N), % has the recommended dose
         #T #> 1 #\/ #N #< 6 % .. being too toxic or insufficiently tried
-    ;   % OR ... any one of the TOXs could have been recommended
-        \+maplist(\Q^(Q=T/N, #T #> 1 #\/ #N #< 6), TOXs)
+    ;   \+maplist(\Q^(Q=T/N, #T #> 1 #\/ #N #< 6), % .. OR the same fails
+                  TOXs) % .. to hold for any of the above-Rec doses?
     ).
 
-%?- time(rec_not_as_defined(4)).
-%@    % CPU time: 46.994s
+%?- time(rec_not_as_defined).
+%@    % CPU time: 1359.726s
 %@ false.
 
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
