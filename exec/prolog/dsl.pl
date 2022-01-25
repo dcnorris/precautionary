@@ -179,6 +179,12 @@ maxenr(6). % and enroll at most 6 patients at any one dose level.
 %@ ;  S = [3/3]-[0/0]
 %@ ;  false.
 
+%% Note the manner in which Ls-Hs maps to a dose-ordered tally list:
+state_tallies(Ls-Hs, Qs) :- reverse(Ls,Js), append(Js,Hs,Qs).
+
+%?- state_tallies([]-[1/6,2/3], Qs).
+%@    Qs = [1/6,2/3].
+
 %% ~~~~~~~~~~ Abstracting the 'regrets' implicit in 3+3 ~~~~~~~~~~
 
 %% regret(A, [Q|Qs]) holds if we regret having taken action A if it
@@ -474,18 +480,39 @@ recommendation_exceeds_mtd(NDoses) :-
 
 %% To support the paper, a free query (not RHS of Horn clause) serves best:
 badness :-
-    N in 1..7, indomain(N), % For trials of practical size (up to 7 doses)
+    D in 1..7, indomain(D), % For trials of practical size (up to 7 doses)
     InitN = []-Ds, length(Ds, N), % .. that start from the lowest dose
-    maplist(=(0/0), Ds),          % .. with no prior toxicity information
-    phrase(path(InitN), Path),    % .. we seek a Path of the trial
-    phrase((..., [Ls-_], ...,     % .. on which state Ls-_ appeared,
-            [recommend_dose(Rec)] %  and where the recommended dose Rec
+    maplist(=(0/0), Ds),          % .. with no prior toxicity information,
+    phrase(path(InitN), Path),    % can we find a propery-violating Path
+    phrase((..., [Ls-_], ...,     % .. on which a state Ls-_ appears,
+            [recommend_dose(Rec)] % .. such that the recommended dose Rec
            ), Path),
     length(Ls,X), Rec #>= X,      % .. was at least the current dose X,
-    Ls = [T/_|_], #T #> 1.        % .. yet X `exceeded MTD' per protocol.
+    Ls = [T/_|_], #T #> 1.        % .. yet X `exceeded MTD' per protocol?
 
 %?- time(badness).
 %@    % CPU time: 1262.907s
+%@ false.
+
+%% TODO: Verify the 'definition' of MTD.
+rec_not_as_defined(D) :-
+    #D #> 0, % For trials of positive size D
+    InitD = []-Ds, length(Ds, D), % .. that start from the lowest dose
+    maplist(=(0/0), Ds),          % .. with no prior toxicity information,
+    phrase(path(InitD), Path),    % can we find a propery-violating Path
+    phrase((..., [S, stop,        % .. on which a terminal state S appears,
+                  recommend_dose(Rec)] % .. and recommended dose is Rec
+                 ), Path),
+    state_tallies(S, Qs), % such that the dose-ordered tally list ..
+    length(OKs, Rec), append(OKs, TOXs, Qs), % split on the recommendation
+    (   nth0(Rec, [0/99|Qs], T/N), % has the recommended dose
+        #T #> 1 #\/ #N #< 6 % .. being too toxic or insufficiently tried
+    ;   % OR ... any one of the TOXs could have been recommended
+        \+maplist(\Q^(Q=T/N, #T #> 1 #\/ #N #< 6), TOXs)
+    ).
+
+%?- time(rec_not_as_defined(4)).
+%@    % CPU time: 46.994s
 %@ false.
 
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
