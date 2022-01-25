@@ -474,14 +474,15 @@ recommendation_exceeds_mtd(NDoses) :-
 
 %% To support the paper, a free query (not RHS of Horn clause) serves best:
 badness :-
-    N in 1..7, indomain(N), % Search to a depth of trials with up to 7 doses
-    InitN = []-Ds, length(Ds, N), maplist(=(0/0), Ds), % From initial state..
-    phrase(path(InitN), Path),  % .. we seek a Path of the trial
-    phrase((..., [Ls-_], ...,   % .. on which state Ls-_ appeared,
-	    [recommend_dose(Rec)] %  and where the recommended dose Rec
-	   ), Path),
-    length(Ls,X), Rec #>= X, % .. was at least the current dose X,
-    Ls = [T/_|_], #T #> 1.   % .. yet X `exceeded MTD' per protocol.
+    N in 1..7, indomain(N), % For trials of practical size (up to 7 doses)
+    InitN = []-Ds, length(Ds, N), % .. that start from the lowest dose
+    maplist(=(0/0), Ds),          % .. with no prior toxicity information
+    phrase(path(InitN), Path),    % .. we seek a Path of the trial
+    phrase((..., [Ls-_], ...,     % .. on which state Ls-_ appeared,
+            [recommend_dose(Rec)] %  and where the recommended dose Rec
+           ), Path),
+    length(Ls,X), Rec #>= X,      % .. was at least the current dose X,
+    Ls = [T/_|_], #T #> 1.        % .. yet X `exceeded MTD' per protocol.
 
 %?- time(badness).
 %@    % CPU time: 1262.907s
