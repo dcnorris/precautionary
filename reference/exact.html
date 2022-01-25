@@ -149,11 +149,11 @@ of 3+3 dose-escalation design. arXiv:2012.05301 [stat.ME]. December 2020.
 <span class="r-in">, true_prob_tox <span class="op">=</span> <span class="va">mtdi_gen</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">EXACT</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">EXACT</span><span class="op">)</span><span class="op">$</span><span class="va">safety</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                              None        Gr1        Gr2        Gr3        Gr4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 12.98432484 1.97418774 1.80766194 1.34514537 0.86976951</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.05717865 0.02216154 0.02279826 0.01208444 0.01154195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                             Gr5       Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.6287607 19.60985011</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.0119067  0.05138952</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.13786561 1.94876233 1.78689935 1.37011159 0.85645853</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.05684925 0.02158239 0.02159912 0.01209925 0.01079949</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                              Gr5       Total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.60899809 19.70909549</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.01136535  0.05191122</span>
 <span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># runs too long for CRAN servers</span></span>
 <span class="r-in">  <span class="co"># Compare with discrete-event-simulation trials</span></span>
 <span class="r-in">  <span class="va">design</span> <span class="op">%&gt;%</span> <span class="fu"><a href="simulate_trials.html">simulate_trials</a></span><span class="op">(</span></span>
