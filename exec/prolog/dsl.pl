@@ -533,7 +533,7 @@ rec_not_as_defined :-
 %?- phrase(path([]-[0/0,0/0,0/0,0/0]), Path), phrase((..., [[0/3,0/3,0/3]-[0/0], _, [2/6,0/3,0/3]-[0/0]], ...), Path).
 %@ false.
 
-%% Finally, ENUMERATION of all trial paths:
+%% Finally, COMPLETE ENUMERATION of all trial paths:
 %?- J+\time((D = 7, length(Ds, D), maplist(=(0/0), Ds), setof(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
 %@    % CPU time: 731.888s % D=7 (rebis-dev, i7-4790 @ 4.00GHz)
 %@    J = 6922.
@@ -580,8 +580,32 @@ nondeterminism(D) :-
 %@ false.
 %@ false.
 
-%?- D in 1..7, indomain(D), length(Ds, D), maplist(=(0/0), Ds),
-   
+%% ROLLING ENROLLMENT
+%%cohort(1).
+%%cohort(2).
+%% TODO: See if any changes to regrets permit enrolling 1 at a time,
+%%       without allowing sta at a dose we know will never get rec'ed.
+%?- E+\(phrase(path([0/3,0/3,0/3]-[]), [sta, [2/5,0/3,0/3]-[], E | Rest])).
+%@    E = sta % after asserting cohort(1) and cohort(2)
+%@ ;  E = sta
+%@ ;  E = sta
+%@ ;  E = sta
+%@ ;  E = sta
+%@ ;  ...
+%@    E = des % after asserting cohort(2)
+%@ ;  ...
+%@ false. % without cohort(2)
+%@    E = des
+%@ ;  ...
+
+%?- phrase(path([0/3,0/3,0/3]-[]), Path).
+%@    Path = [sta,[0/5,0/3,0/3]-[],stop,recommend_dose(3)]
+%@ ;  Path = [sta,[1/5,0/3,0/3]-[],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[2/5,0/3,0/3]-[],des,[0/5,0/3]-[2/5],stop,recommend_dose(2)]
+%@ ;  Path = [sta,[2/5,0/3,0/3]-[],des,[1/5,0/3]-[2/5],stop,recommend_dose(1)]
+%@ ;  Path = [sta,[2/5,0/3,0/3]-[],des,[2/5,0/3]-[2/5],des,[0/5]-[2/5,2/5],stop,recommend_dose(1)]
+%@ ;  ... 
+
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
 %?- setof(Q:E, P^R^state0_decision_noregrets([Q,P]-[0/0], E, true), Okay).
 %@    Okay = [0/0:des,0/0:sta,0/1:des,0/1:sta,0/2:des,0/2:sta,0/3:esc,0/3:sta,0/4:esc,... : ...|...].
