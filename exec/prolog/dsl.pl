@@ -481,7 +481,7 @@ recommendation_exceeds_mtd(NDoses) :-
 %% To support the paper, a free query (not RHS of Horn clause) serves best:
 badness :-
     D in 1..7, indomain(D), % For trials of practical size (up to 7 doses)
-    InitN = []-Ds, length(Ds, N), % .. that start from the lowest dose
+    InitN = []-Ds, length(Ds, D), % .. that start from the lowest dose
     maplist(=(0/0), Ds),          % .. with no prior toxicity information,
     phrase(path(InitN), Path),    % can we find a propery-violating Path
     phrase((..., [Ls-_], ...,     % .. on which a state Ls-_ appears,
@@ -542,32 +542,32 @@ cascading_decision_otherwise([D|Ds], Os, E, S0, S) :-
 path(recommend_dose(_)) --> [].
 path(S0) --> { cascading_decision_otherwise([esc,sta,des],
                                             [E = stop,
-                                             stopstate_mtd(S0, MTD),
-                                             S = recommend_dose(MTD)], E, S0, S) },
+                                             stopstate_rec(S0, Rec),
+                                             S = recommend_dose(Rec)], E, S0, S) },
 	     [E, S],
 	     path(S).
 
 %% In order to validate the 'global' constraints implicit in Korn'94,
 %% we must at last define 'the' MTD!
 %% TODO: Refine and condense this, as much as possible.
-stopstate_mtd(S, MTD) :-
-    state_si(S), % TODO: Would tally_si(T/N) suffice?
-    (	S = [T/N|P]-_, % current tally is T/N
-	tally_si(T/N),
-	(   #T * 6 #> #N, % current toxicity rate is WORSE THAN 1/6
-	    length(P, MTD)
-	;   #T * 6 #=< #N, % current toxicity rate is NO WORSE than 1/6
-	    length([T/N|P], MTD)
-	)
-    ;	S = []-_, % current dose is zero (TODO: does this ever happen?)
-	MTD = 0
+stopstate_rec(S, Rec) :-
+    state_si(S),
+    (   S = [T/N|P]-_, % current tally is T/N
+        tally_si(T/N),
+        (   #T * 6 #> #N,  % current toxicity rate is WORSE THAN 1/6
+            length(P, Rec)       % ==> Rec = next-lower dose
+        ;   #T * 6 #=< #N, % current toxicity rate is NO WORSE than 1/6
+            length([T/N|P], Rec) % ==> Rec = current dose
+        )
+    ;   S = []-_, % current dose is zero (TODO: does this ever happen?)
+        Rec = 0
     ).
 
-%?- stopstate_mtd([1/6,0/3]-[2/3], MTD).
+%?- stopstate_rec([1/6,0/3]-[2/3], MTD).
 %@    MTD = 2
 %@ ;  false.
 
-%?- stopstate_mtd([T/N,0/3]-[2/3], 2).
+%?- stopstate_rec([T/N,0/3]-[2/3], 2).
 %@    T = 0, N = 0
 %@ ;  T = 0, N = 1
 %@ ;  T = 0, N = 2
@@ -582,7 +582,7 @@ stopstate_mtd(S, MTD) :-
 %%       that *IF* S is a valid 'stop' state (i.e., one from which
 %%       no further dose-escalation decision is permissible),
 %%       *THEN* MTD is the recommended dose.
-%?- stopstate_mtd([T/N,0/3]-[2/3], 1).
+%?- stopstate_rec([T/N,0/3]-[2/3], 1).
 %@    T = 1, N = 1
 %@ ;  T = 1, N = 2
 %@ ;  T = 2, N = 2
