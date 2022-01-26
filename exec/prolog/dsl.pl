@@ -515,6 +515,73 @@ rec_not_as_defined :-
 %@    % CPU time: 1359.726s
 %@ false.
 
+%% ALL DIRECTIONS
+%% Looking ONE STEP FORWARD ..
+%% NB: This required reverting to 'master'; see #1246
+%?- setof(E, Path^(phrase(path([]-[0/0,0/0,0/0]), Path), phrase((...,[[0/3,0/3,0/3]-[], E], ...), Path)), Es).
+%@    Es = [sta].
+
+%% Looking BACKWARD ..
+%?- setof(E0, Path^(phrase(path([]-[0/0,0/0,0/0]), Path), phrase((...,[E0, [0/3,0/3,0/3]-[]],...), Path)), E0s).
+%@    E0s = [esc].
+
+%% Looking FAR FORWARD ..
+%?- setof(Rec, Path^(phrase(path([]-[0/0,0/0,0/0]), Path), phrase((...,[[2/6,0/3,0/3]-[]],...,[recommend_dose(Rec)]), Path)), Recs).
+%@    Recs = [0,1,2].
+
+%% A fresh way to see PROTOCOL VIOLATION:
+%?- phrase(path([]-[0/0,0/0,0/0,0/0]), Path), phrase((..., [[0/3,0/3,0/3]-[0/0], _, [2/6,0/3,0/3]-[0/0]], ...), Path).
+%@ false.
+
+%% Finally, ENUMERATION of all trial paths:
+%?- J+\time((D = 7, length(Ds, D), maplist(=(0/0), Ds), setof(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J))).
+%@    % CPU time: 731.888s % D=7 (rebis-dev, i7-4790 @ 4.00GHz)
+%@    J = 6922.
+%@    % CPU time: 304.874s % D=6 (rebis-dev)
+%@    J = 2890.
+%@    % CPU time: 120.060s % D=5 (rebis-dev)
+%@    J = 1162.
+%@    % CPU time: 43.237s  % D=4 (rebis-dev)
+%@    J = 442.
+%@    % CPU time: 222.425s % D=4 (master)
+%@    J = 442.
+
+%% LIVENESS & OTHER PROPERTIES
+
+%% The trial always finishes with a recommendation between 0 and D.
+recommends_wrongly(D) :-
+    #D #> 0,
+    InitD = []-Ds, length(Ds, D), maplist(=(0/0), Ds),
+    phrase(path(InitD), Path), % Does any Path exist
+    (   phrase((...,           % .. which ever
+                [recommend_dose(Rec)], % recommends a dose
+                [_], ...), Path) % .. and then continues?
+    ;   \+ phrase((..., % .. or fails to end with a rec?
+                   [recommend_dose(Rec)]), Path)
+    ;   phrase((..., % .. or ever recommends a dose
+                [recommended_dose(Rec)], ...), Path),
+        #\ (Rec in 0..D) % .. that is not an integer from 0 to D?
+    ).
+
+%?- time((D in 1..4, indomain(D), recommends_wrongly(D))).
+%@    % CPU time: 62.902s
+%@ false.
+
+nondeterminism(D) :-
+    #D #> 0,
+    length(Ds, D), maplist(=(0/0), Ds),
+    phrase(path([]-Ds), Path),
+    phrase((..., [Ls-Hs, E1], ...), Path),
+    phrase((..., [Ls-Hs, E2], ...), Path),
+    E1 \= E2.
+
+%?- time((D in 1..3, indomain(D), nondeterminism(D))).
+%@    % CPU time: 19.792s
+%@ false.
+%@ false.
+
+%?- D in 1..7, indomain(D), length(Ds, D), maplist(=(0/0), Ds),
+   
 %% CHALLENGE: Can I write a query that regurgitates the entirety of Korn '94 protocol?
 %?- setof(Q:E, P^R^state0_decision_noregrets([Q,P]-[0/0], E, true), Okay).
 %@    Okay = [0/0:des,0/0:sta,0/1:des,0/1:sta,0/2:des,0/2:sta,0/3:esc,0/3:sta,0/4:esc,... : ...|...].
@@ -617,6 +684,7 @@ stopstate_rec(S, Rec) :-
 %@    MTD1States = [[0/6]-[2/3],[0/6]-[2/6],[0/6]-[3/3],[0/6]-[3/6],[0/6]-[4/6],[1/6]-[2/3],[1/6]-[2/6],[1/6]-[3/3],[...]-[...],... - ...|...].
 
 %?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,recommend_dose(0)]), Path)), MTD0States).
+%@ caught: error(existence_error(procedure,path/3),path/3) % Scryer #1246
 %@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[...]-[...],... - ...|...].
 
 %% Right away, we can see that 'des' occurs when we should recommend_dose/1.
