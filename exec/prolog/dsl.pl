@@ -147,6 +147,7 @@ state0_decision_state([L0|Ls] - Hs, sta, [L|Ls] - Hs) :-
     cohort(C), maxenr(M), enroll(C/M, L0, L).
 state0_decision_state([L,D0|Ls] - Hs, des, [D|Ls] - [L|Hs]) :-
     cohort(C), maxenr(M), enroll(C/M, D0, D).
+:- discontiguous(cohort/1). % (to permit later additions)
 cohort(3). % For the present application we use cohorts of size 3,
 maxenr(6). % and enroll at most 6 patients at any one dose level.
 
@@ -194,6 +195,7 @@ state_tallies(Ls-Hs, Qs) :- reverse(Ls,Js), append(Js,Hs,Qs).
 %% histories would hardly be intuitive for clinical trialists, and a key
 %% aim here is of course to capture the definitive intuitions.)
 
+:- discontiguous(regret/2).
 %% This says that, regardless of the resulting tally, we would regret
 %% having de-escalated from an 'insufficiently toxic' tally of 1-/3+.
 regret(des, [T/N, T0/N0]) :-
@@ -580,23 +582,42 @@ nondeterminism(D) :-
 %@ false.
 %@ false.
 
+%?- cohort(C).
+%@    C = 1
+%@ ;  C = 2
+%@ ;  C = 3.
+
+%?- state0_decision_state([0/3,0/3,0/3]-[], sta, [T/N,0/3,0/3]-[]).
+%@    T = 0, N = 4
+%@ ;  T = 1, N = 4
+%@ ;  T = 0, N = 5
+%@ ;  T = 1, N = 5
+%@ ;  T = 2, N = 5
+%@ ;  T = 0, N = 6
+%@ ;  T = 1, N = 6
+%@ ;  T = 2, N = 6
+%@ ;  T = 3, N = 6
+%@ ;  false.
+
 %% ROLLING ENROLLMENT
-%%cohort(1).
-%%cohort(2).
+:- discontiguous(cohort/1).
+cohort(1).
+cohort(2).
+cohort(3).
 %% TODO: See if any changes to regrets permit enrolling 1 at a time,
 %%       without allowing sta at a dose we know will never get rec'ed.
-%?- E+\(phrase(path([0/3,0/3,0/3]-[]), [sta, [2/5,0/3,0/3]-[], E | Rest])).
-%@    E = sta % after asserting cohort(1) and cohort(2)
-%@ ;  E = sta
-%@ ;  E = sta
-%@ ;  E = sta
-%@ ;  E = sta
+%% Hmmm: Even if I regret staying at a dose I could not recommend..
+regret(sta, [_, T/_]) :- % NB: a backward-looking regret
+    #T #>= 2. % regret staying at a too-toxic dose we'd never recommend
+%% .. we still end up re-escalating as below!
+%?- phrase(path([0/3,0/3,0/3]-[]), [sta, [2/5,0/3,0/3]-[] | Rest]).
+%@    Rest = [des,[0/6,0/3]-[2/5],esc,[2/6,0/6,0/3]-[],stop,recommend_dose(2)]
+%@ ;  Rest = [des,[0/6,0/3]-[2/5],esc,[3/6,0/6,0/3]-[],stop,recommend_dose(2)]
 %@ ;  ...
-%@    E = des % after asserting cohort(2)
-%@ ;  ...
-%@ false. % without cohort(2)
-%@    E = des
-%@ ;  ...
+%% This actually demonstrates the need (when generalizing to rolling
+%% enrollment) for more general forms of regret/2. One useful form
+%% (in this case) would look at the existing tally at the new dose,
+%% rather than being able to consider only the post-enrollment tallies.
 
 %?- phrase(path([0/3,0/3,0/3]-[]), Path).
 %@    Path = [sta,[0/5,0/3,0/3]-[],stop,recommend_dose(3)]
