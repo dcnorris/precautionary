@@ -127,11 +127,11 @@ of patients who will experience each toxicity grade <em>in any given trial</em>.
 <span class="r-in"><span class="co"># .. but we can also inspect the underlying matrix by indexing:</span></span>
 <span class="r-in"><span class="va">safety</span><span class="op">[</span>,<span class="op">]</span>  <span class="co"># indexing strips 'safetytab' class, returning plain matrix</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                             None       Gr1       Gr2       Gr3       Gr4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.5500000 3.1333333 2.6666667 2.1833333 1.1333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.5155355 0.2486877 0.2225515 0.1967126 0.1512036</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 13.6833333 3.2833333 2.7666667 1.9666667 1.1333333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                   0.4943132 0.2256086 0.2607753 0.1945103 0.1493236</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                             Gr5 Total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 1.1833333 23.85</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.1802253  0.15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Expected participants 0.9166667 23.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCSE                  0.1470840  0.25</span>
 <span class="r-in"><span class="co"># Note that, by extend()ing the simulation we can increase precision:</span></span>
 <span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># may run a bit too long for CRAN servers' taste</span></span>
 <span class="r-in">  <span class="va">boin_hsims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="extend.html">extend</a></span><span class="op">(</span>target_mcse <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">boin_hsimsX</span></span>
