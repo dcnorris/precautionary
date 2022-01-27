@@ -519,7 +519,6 @@ rec_not_as_defined :-
 
 %% ALL DIRECTIONS
 %% Looking ONE STEP FORWARD ..
-%% NB: This required reverting to 'master'; see #1246
 %?- setof(E, Path^(phrase(path([]-[0/0,0/0,0/0]), Path), phrase((...,[[0/3,0/3,0/3]-[], E], ...), Path)), Es).
 %@    Es = [sta].
 
@@ -609,10 +608,9 @@ regret(esc, [3/N|_]) :- N in 4..6, indomain(N).
 %?- J+\(D = 7, length(Ds, D), maplist(=(0/0), Ds), setof(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J)).
 %@    J = 6922. % no paths have been lost
 
-:- discontiguous(cohort/1).
-cohort(1).
-cohort(2).
-cohort(3).
+%cohort(1).
+%cohort(2).
+%cohort(3).
 
 %% More flexible enrollment as above now enables de-escalation
 %% before dosing participant C in Figure 1 of the paper:
@@ -730,7 +728,7 @@ stopstate_rec(S, Rec) :-
 %@    MTD1States = [[0/6]-[2/3],[0/6]-[2/6],[0/6]-[3/3],[0/6]-[3/6],[0/6]-[4/6],[1/6]-[2/3],[1/6]-[2/6],[1/6]-[3/3],[...]-[...],... - ...|...].
 
 %?- setof(StopState, Path^(phrase(path([]-[0/0,0/0]), Path), phrase((..., [StopState,stop,recommend_dose(0)]), Path)), MTD0States).
-%@ caught: error(existence_error(procedure,path/3),path/3) % Scryer #1246
+%@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[3/6]-[0/0],[3/6]-[2/3],[3/6]-[2/6],[3/6]-[3/3],[3/6]-[3/6],[3/6]-[4/6],[4/6]-[0/0]].
 %@    MTD0States = [[2/3]-[0/0],[2/6]-[0/0],[2/6]-[2/3],[2/6]-[2/6],[2/6]-[3/3],[2/6]-[3/6],[2/6]-[4/6],[3/3]-[0/0],[...]-[...],... - ...|...].
 
 %% Right away, we can see that 'des' occurs when we should recommend_dose/1.
