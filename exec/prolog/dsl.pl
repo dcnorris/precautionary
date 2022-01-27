@@ -600,24 +600,25 @@ nondeterminism(D) :-
 %@ ;  false.
 
 %% ROLLING ENROLLMENT
+regret(sta, [_, T/_]) :- % NB: a backward-looking regret
+    #T #>= 2. % regret staying at a too-toxic dose we'd never recommend
+regret(esc, [3/N|_]) :- N in 4..6, indomain(N).
+
+%% TODO: Show that neither of these additional regrets
+%%       eliminates any path of the trial:
+%?- J+\(D = 7, length(Ds, D), maplist(=(0/0), Ds), setof(Path, phrase(path([]-Ds), Path), Paths), length(Paths, J)).
+%@    J = 6922. % no paths have been lost
+
 :- discontiguous(cohort/1).
 cohort(1).
 cohort(2).
 cohort(3).
-%% TODO: See if any changes to regrets permit enrolling 1 at a time,
-%%       without allowing sta at a dose we know will never get rec'ed.
-%% Hmmm: Even if I regret staying at a dose I could not recommend..
-regret(sta, [_, T/_]) :- % NB: a backward-looking regret
-    #T #>= 2. % regret staying at a too-toxic dose we'd never recommend
-%% .. we still end up re-escalating as below!
-%?- phrase(path([0/3,0/3,0/3]-[]), [sta, [2/5,0/3,0/3]-[] | Rest]).
-%@    Rest = [des,[0/6,0/3]-[2/5],esc,[2/6,0/6,0/3]-[],stop,recommend_dose(2)]
-%@ ;  Rest = [des,[0/6,0/3]-[2/5],esc,[3/6,0/6,0/3]-[],stop,recommend_dose(2)]
+
+%% More flexible enrollment as above now enables de-escalation
+%% before dosing participant C in Figure 1 of the paper:
+%?- phrase(path([0/3,0/3,0/3]-[]), [sta, [2/5,0/3,0/3]-[], des, [0/6,0/3]-[2/5], stop, recommend_dose(2)]).
+%@    true
 %@ ;  ...
-%% This actually demonstrates the need (when generalizing to rolling
-%% enrollment) for more general forms of regret/2. One useful form
-%% (in this case) would look at the existing tally at the new dose,
-%% rather than being able to consider only the post-enrollment tallies.
 
 %?- phrase(path([0/3,0/3,0/3]-[]), Path).
 %@    Path = [sta,[0/5,0/3,0/3]-[],stop,recommend_dose(3)]
