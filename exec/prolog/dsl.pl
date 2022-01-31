@@ -351,7 +351,7 @@ state0_decision_noregrets(S0, E, Truth) :-
             S0 = [T0/N0|_] - _, % TODO: Factor this pattern matching
             S  = [T /N |_] - _, %       into a regret/3 predicate?
             %% The (->) below averts backtracking over possibly multiple
-            %% scenarios for regret. Regret being idempotent, 1 suffices.
+            %% scenarios for regret, because any single witness suffices.
             regret(E, [T/N, T0/N0]) -> Truth = false
         ;   Truth = true
         ),
