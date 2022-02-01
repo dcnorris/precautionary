@@ -98,7 +98,7 @@
 
       
 
-      </header><script src="Intro_files/header-attrs-2.9/header-attrs.js"></script><script src="Intro_files/kePrint-0.0.1/kePrint.js"></script><link href="Intro_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+      </header><script src="Intro_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="Intro_files/kePrint-0.0.1/kePrint.js"></script><link href="Intro_files/lightable-0.0.1/lightable.css" rel="stylesheet">
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -107,16 +107,16 @@
             
             <h4 data-toc-skip class="date">7/31/2020</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/master/vignettes/Intro.Rmd" class="external-link"><code>vignettes/Intro.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/HEAD/vignettes/Intro.Rmd" class="external-link"><code>vignettes/Intro.Rmd</code></a></small>
       <div class="hidden name"><code>Intro.Rmd</code></div>
 
     </div>
 
     
     
-<div id="basics" class="section level1">
-<h1 class="hasAnchor">
-<a href="#basics" class="anchor" aria-hidden="true"></a>Basics</h1>
+<div class="section level2">
+<h2 id="basics">Basics<a class="anchor" aria-label="anchor" href="#basics"></a>
+</h2>
 <p>In package <a href="https://CRAN.R-project.org/package=escalation" class="external-link">escalation</a>, you can simulate a 3 + 3 design as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">escalation</span><span class="op">)</span>
@@ -170,7 +170,7 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.10
+0.11
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -181,19 +181,19 @@ NoDose
 1
 </td>
 <td style="text-align:right;">
-0.46
+0.48
 </td>
 <td style="text-align:right;">
-3.93
+4.02
 </td>
 <td style="text-align:right;">
 0.12
 </td>
 <td style="text-align:right;">
-0.40
+0.41
 </td>
 <td style="text-align:right;">
-0.3864307
+0.3806818
 </td>
 </tr>
 <tr>
@@ -201,19 +201,19 @@ NoDose
 2
 </td>
 <td style="text-align:right;">
-0.95
+1.03
 </td>
 <td style="text-align:right;">
-3.66
+3.87
 </td>
 <td style="text-align:right;">
 0.27
 </td>
 <td style="text-align:right;">
-0.44
+0.36
 </td>
 <td style="text-align:right;">
-0.3598820
+0.3664773
 </td>
 </tr>
 <tr>
@@ -221,19 +221,19 @@ NoDose
 3
 </td>
 <td style="text-align:right;">
-1.09
+0.99
 </td>
 <td style="text-align:right;">
-2.28
+2.04
 </td>
 <td style="text-align:right;">
 0.44
 </td>
 <td style="text-align:right;">
-0.06
+0.10
 </td>
 <td style="text-align:right;">
-0.2241888
+0.1931818
 </td>
 </tr>
 <tr>
@@ -241,19 +241,19 @@ NoDose
 4
 </td>
 <td style="text-align:right;">
-0.17
+0.26
 </td>
 <td style="text-align:right;">
-0.30
+0.51
 </td>
 <td style="text-align:right;">
 0.53
 </td>
 <td style="text-align:right;">
-0.00
+0.02
 </td>
 <td style="text-align:right;">
-0.0294985
+0.0482955
 </td>
 </tr>
 <tr>
@@ -261,10 +261,10 @@ NoDose
 5
 </td>
 <td style="text-align:right;">
-0.00
+0.08
 </td>
 <td style="text-align:right;">
-0.00
+0.12
 </td>
 <td style="text-align:right;">
 0.57
@@ -273,16 +273,16 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0113636
 </td>
 </tr>
 </tbody>
 </table>
-<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 10.17, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>From Table @ref(tab:basic-sim), we learn a few things of interest. For example, we see that, with the lowest dose being too toxic for 12% of the population, under this scenario there is a real chance even this dose will be rejected by our trial. Conversely, we also find it is not impossible for our trial to recommend a dose that is toxic to nearly half the population. Note also that, by summing the <span class="math inline">\(n\)</span> column, we can estimate expected enrollment at 10.56, which perhaps informs us about the expected cost or duration of our trial.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>But simulations such as these cannot answer crucial questions about <strong>trial safety</strong>, mainly because the simulation machinery recognizes no notion of <em>graded toxicity</em>. The binary (yes/no) toxicities in the simulation machinery of <code>escalation</code> regard Grade 5 (fatal) toxicities no differently from Grade 3.</p>
-<div id="introducing-realistic-pharmacologic-thinking" class="section level2">
-<h2 class="hasAnchor">
-<a href="#introducing-realistic-pharmacologic-thinking" class="anchor" aria-hidden="true"></a>Introducing realistic pharmacologic thinking</h2>
+<div class="section level3">
+<h3 id="introducing-realistic-pharmacologic-thinking">Introducing realistic pharmacologic thinking<a class="anchor" aria-label="anchor" href="#introducing-realistic-pharmacologic-thinking"></a>
+</h3>
 <p>The <code>precautionary</code> package solves this problem by pursuing a <em>realistic</em> approach to pharmacologic thinking. Rather than plucking a sequence of toxicity probabilities out of thin air, this approach <strong>derives</strong> such probabilities according to how a latent toxicity threshold is distributed in the population.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/dcnorris/precautionary" class="external-link">precautionary</a></span><span class="op">)</span>
@@ -338,9 +338,9 @@ NoDose
 </tr></tbody>
 </table>
 </div>
-<div id="extending-escalation-to-support-the-mathrmmtd_i-concept" class="section level2">
-<h2 class="hasAnchor">
-<a href="#extending-escalation-to-support-the-mathrmmtd_i-concept" class="anchor" aria-hidden="true"></a>Extending <code>escalation</code> to support the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept</h2>
+<div class="section level3">
+<h3 id="extending-escalation-to-support-the-mathrmmtd_i-concept">Extending <code>escalation</code> to support the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept<a class="anchor" aria-label="anchor" href="#extending-escalation-to-support-the-mathrmmtd_i-concept"></a>
+</h3>
 <p>Package <code>precautionary</code> provides additional methods for <code>escalation</code> functions, so that an <code>mtdi_distribution</code> may be used instead of out-of-thin-air probabilities:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">design</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/simulate_trials.html">simulate_trials</a></span><span class="op">(</span>
@@ -394,7 +394,7 @@ NoDose
 0.0000000
 </td>
 <td style="text-align:right;">
-0.03
+0.00
 </td>
 <td style="text-align:right;">
 0.0000000
@@ -408,19 +408,19 @@ NoDose
 0.5
 </td>
 <td style="text-align:right;">
-0.12
+0.04
 </td>
 <td style="text-align:right;">
-3.27
+3.12
 </td>
 <td style="text-align:right;">
 0.0347613
 </td>
 <td style="text-align:right;">
-0.07
+0.14
 </td>
 <td style="text-align:right;">
-0.2471655
+0.2369021
 </td>
 </tr>
 <tr>
@@ -431,19 +431,19 @@ NoDose
 1.0
 </td>
 <td style="text-align:right;">
-0.34
+0.40
 </td>
 <td style="text-align:right;">
-3.63
+3.54
 </td>
 <td style="text-align:right;">
 0.1022854
 </td>
 <td style="text-align:right;">
-0.35
+0.37
 </td>
 <td style="text-align:right;">
-0.2743764
+0.2687927
 </td>
 </tr>
 <tr>
@@ -454,19 +454,19 @@ NoDose
 2.0
 </td>
 <td style="text-align:right;">
-0.87
+1.00
 </td>
 <td style="text-align:right;">
-3.60
+3.87
 </td>
 <td style="text-align:right;">
 0.2350660
 </td>
 <td style="text-align:right;">
-0.43
+0.36
 </td>
 <td style="text-align:right;">
-0.2721088
+0.2938497
 </td>
 </tr>
 <tr>
@@ -477,19 +477,19 @@ NoDose
 4.0
 </td>
 <td style="text-align:right;">
-1.05
+0.88
 </td>
 <td style="text-align:right;">
-2.25
+2.04
 </td>
 <td style="text-align:right;">
 0.4301892
 </td>
 <td style="text-align:right;">
-0.12
+0.13
 </td>
 <td style="text-align:right;">
-0.1700680
+0.1548975
 </td>
 </tr>
 <tr>
@@ -500,10 +500,10 @@ NoDose
 6.0
 </td>
 <td style="text-align:right;">
-0.32
+0.33
 </td>
 <td style="text-align:right;">
-0.48
+0.60
 </td>
 <td style="text-align:right;">
 0.5571371
@@ -512,18 +512,18 @@ NoDose
 0.00
 </td>
 <td style="text-align:right;">
-0.0362812
+0.0455581
 </td>
 </tr>
 </tbody>
 </table>
 <p>Judging from Table @ref(tab:MTDi-regime), however, introducing the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept has by itself generated little progress. The only apparent improvement compared with Table @ref(tab:basic-sim) is the addition of a column with <em>actual</em> doses. To make further progress <em>while continuing to operate within the dose-escalation paradigm</em>, we need to introduce another concept.</p>
 </div>
-<div id="introducing-graded-toxicities" class="section level2">
-<h2 class="hasAnchor">
-<a href="#introducing-graded-toxicities" class="anchor" aria-hidden="true"></a>Introducing graded toxicities</h2>
+<div class="section level3">
+<h3 id="introducing-graded-toxicities">Introducing graded toxicities<a class="anchor" aria-label="anchor" href="#introducing-graded-toxicities"></a>
+</h3>
 <p>When its full implications are allowed to develop, the latent toxicity threshold <span class="math inline">\(\mathrm{MTD}_i\)</span> has far-reaching consequences for the design of dose-finding trials. Indeed, it forms the conceptual basis for dose-<em>titration</em> designs that abandon cohortwise dose-escalation altogether <span class="citation">(Norris 2017a, 2017b)</span>.</p>
-<p>For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of <span class="math inline">\(\mathrm{MTD}_i\)</span>, and relegates the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept <em>standing alone</em> to the status of a mere formalism. But in conjunction with <em>a dose scaling that links different toxicity grades at the individual level</em>, the <span class="math inline">\(\mathrm{MTD}_i\)</span> can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package <code>precautionary</code>, such scaling functions are called ‘ordinalizers,’ and may be applied at the time when simulations are summarized:</p>
+<p>For present purposes, however, we take it for granted that (for whatever reason) we have chosen to employ a dose-escalation design. That choice effectively discards the core insight of <span class="math inline">\(\mathrm{MTD}_i\)</span>, and relegates the <span class="math inline">\(\mathrm{MTD}_i\)</span> concept <em>standing alone</em> to the status of a mere formalism. But in conjunction with <em>a dose scaling that links different toxicity grades at the individual level</em>, the <span class="math inline">\(\mathrm{MTD}_i\)</span> can be rehabilitated as an effective tool, even within the confines of a dose-escalation design. In package <code>precautionary</code>, such scaling functions are called ‘ordinalizers’, and may be applied at the time when simulations are summarized:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tox_threshold_scaling</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">MTDi</span>, <span class="va">r0</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">MTDi</span> <span class="op">*</span> <span class="va">r0</span> <span class="op">^</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1<span class="op">=</span><span class="op">-</span><span class="fl">2</span>, Gr2<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, Gr3<span class="op">=</span><span class="fl">0</span>, Gr4<span class="op">=</span><span class="fl">1</span>, Gr5<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
@@ -582,10 +582,10 @@ Total
 1.4
 </td>
 <td style="text-align:right;">
-0.7
+0.8
 </td>
 <td style="text-align:right;">
-0.6
+0.5
 </td>
 <td style="text-align:right;">
 13
@@ -594,10 +594,9 @@ Total
 </table>
 <p>Clearly, we have now made some genuine progress. Of special interest from a safety perspective are the numbers of Grade 4 (severe) and Grade 5 (fatal) toxicities expected in the trial.</p>
 </div>
-<div id="a-closer-look-at-the-ordinalizer" class="section level2">
-<h2 class="hasAnchor">
-<a href="#a-closer-look-at-the-ordinalizer" class="anchor" aria-hidden="true"></a>A closer look at the <em>ordinalizer</em>
-</h2>
+<div class="section level3">
+<h3 id="a-closer-look-at-the-ordinalizer">A closer look at the <em>ordinalizer</em><a class="anchor" aria-label="anchor" href="#a-closer-look-at-the-ordinalizer"></a>
+</h3>
 <p>Let us unroll the ordinalizer above, to make it less cryptic:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tox_threshold_scaling</span> <span class="op">&lt;-</span>
@@ -623,10 +622,10 @@ Total
 \]</span></p>
 <p>and defined as the dose threshold where a grade-<span class="math inline">\((g-1)\)</span> toxicity would convert to grade-<span class="math inline">\(g\)</span>.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> Thus, in the usual case where the binary ‘dose-limiting toxicity’ (DLT) of a dose-escalation design is defined as CTCAE Grade ≥ 3, we identify ‘<span class="math inline">\(\mathrm{MTD}_i\)</span>’ with <span class="math inline">\(\mathrm{MTD}_i^{3}\)</span> .</p>
 </div>
-<div id="taking-stock-of-parameter-counts" class="section level2">
-<h2 class="hasAnchor">
-<a href="#taking-stock-of-parameter-counts" class="anchor" aria-hidden="true"></a>Taking stock of parameter counts</h2>
-<p>It might seem that the benefits of package <code>precautionary</code> come at the cost of having to prespecify many additional parameters. <em>Au contraire!</em> In the example above, the <code>CV</code> and <code>median</code> parameters of <code>mtdi_dist</code> <strong>replaced</strong> the 5 ‘true toxicity probabilities’ that the package-<code>escalation</code> approach requires you to pluck out of thin air. Thus, immediately we have saved 3 parameters. From this savings, we then spent only 1 on the single parameter <code>r0</code> of our simple ordinalizer. Indeed, if we had wished to spend all of our ‘parameter savings,’ we could have specified an ordinalizer such as:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<div class="section level3">
+<h3 id="taking-stock-of-parameter-counts">Taking stock of parameter counts<a class="anchor" aria-label="anchor" href="#taking-stock-of-parameter-counts"></a>
+</h3>
+<p>It might seem that the benefits of package <code>precautionary</code> come at the cost of having to prespecify many additional parameters. <em>Au contraire!</em> In the example above, the <code>CV</code> and <code>median</code> parameters of <code>mtdi_dist</code> <strong>replaced</strong> the 5 ‘true toxicity probabilities’ that the package-<code>escalation</code> approach requires you to pluck out of thin air. Thus, immediately we have saved 3 parameters. From this savings, we then spent only 1 on the single parameter <code>r0</code> of our simple ordinalizer. Indeed, if we had wished to spend all of our ‘parameter savings’, we could have specified an ordinalizer such as:<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw">function</span><span class="op">(</span><span class="va">MTDi3</span>, <span class="va">r12</span>, <span class="va">r4</span>, <span class="va">r5</span><span class="op">)</span> <span class="op">{</span>
   <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Gr1 <span class="op">=</span> <span class="va">MTDi3</span> <span class="op">/</span> <span class="va">r12</span><span class="op">^</span><span class="fl">2</span>
@@ -639,9 +638,9 @@ Total
 <p>As we count design parameters, we also ought not overlook the prespecified dose levels themselves, which are indeed parameters of our design. But package <code>precautionary</code> changes the manner in which these parameters enter into simulation-based trial design. In the usual approach, every new set of prespecified dose levels requires its own set of ‘true toxicity probabilities’ to be pulled anew out of thin air. But in package <code>precautionary</code>, the linkage between dose levels and probabilities is provided through a model. In theory, this would allow us to obtain our dose levels as <em>results</em> of simulation-based design, instead of providing them as <em>inputs</em>.</p>
 </div>
 </div>
-<div id="modeling-uncertainty" class="section level1">
-<h1 class="hasAnchor">
-<a href="#modeling-uncertainty" class="anchor" aria-hidden="true"></a>Modeling uncertainty</h1>
+<div class="section level2">
+<h2 id="modeling-uncertainty">Modeling uncertainty<a class="anchor" aria-label="anchor" href="#modeling-uncertainty"></a>
+</h2>
 <p>When you ask people to start thinking, sometimes they keep going. No sooner will you have elicited values for the <code>CV</code> and <code>median</code> parametrizing a lognormal <span class="math inline">\(\mathrm{MTD}_i\)</span> distribution</p>
 <p><span class="math display">\[
 \begin{align}
@@ -737,22 +736,22 @@ Total
 1.6
 </td>
 <td style="text-align:right;">
-1.2
-</td>
-<td style="text-align:right;">
-0.7
+1.1
 </td>
 <td style="text-align:right;">
 0.6
 </td>
 <td style="text-align:right;">
-14
+0.7
+</td>
+<td style="text-align:right;">
+15
 </td>
 </tr></tbody>
 </table>
-<div id="uncertainty-about-the-ordinalizer" class="section level2">
-<h2 class="hasAnchor">
-<a href="#uncertainty-about-the-ordinalizer" class="anchor" aria-hidden="true"></a>Uncertainty about the ordinalizer</h2>
+<div class="section level3">
+<h3 id="uncertainty-about-the-ordinalizer">Uncertainty about the ordinalizer<a class="anchor" aria-label="anchor" href="#uncertainty-about-the-ordinalizer"></a>
+</h3>
 <p>What about our uncertainty over the parameter <span class="math inline">\(r_0\)</span>? Here, it seems entirely reasonable simply to explore a range of values:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.25</span>, <span class="fl">1.5</span>, <span class="fl">1.75</span>, <span class="fl">2.0</span><span class="op">)</span>
@@ -809,25 +808,25 @@ Total
 1.25
 </td>
 <td style="text-align:right;">
-10.22
+10.33
 </td>
 <td style="text-align:right;">
-0.86
+0.97
 </td>
 <td style="text-align:right;">
-0.86
+0.80
 </td>
 <td style="text-align:right;">
-0.72
+0.64
 </td>
 <td style="text-align:right;">
-0.52
+0.53
 </td>
 <td style="text-align:right;">
-1.21
+1.27
 </td>
 <td style="text-align:right;">
-14.39
+14.54
 </td>
 </tr>
 <tr>
@@ -835,25 +834,25 @@ Total
 1.50
 </td>
 <td style="text-align:right;">
-8.63
+8.74
 </td>
 <td style="text-align:right;">
-1.75
+1.78
 </td>
 <td style="text-align:right;">
 1.57
 </td>
 <td style="text-align:right;">
-1.17
+1.08
 </td>
 <td style="text-align:right;">
-0.66
+0.64
 </td>
 <td style="text-align:right;">
-0.61
+0.72
 </td>
 <td style="text-align:right;">
-14.39
+14.54
 </td>
 </tr>
 <tr>
@@ -861,25 +860,25 @@ Total
 1.75
 </td>
 <td style="text-align:right;">
-7.32
+7.38
 </td>
 <td style="text-align:right;">
-2.39
+2.50
 </td>
 <td style="text-align:right;">
-2.23
+2.22
 </td>
 <td style="text-align:right;">
-1.46
+1.37
 </td>
 <td style="text-align:right;">
-0.63
+0.68
 </td>
 <td style="text-align:right;">
-0.36
+0.40
 </td>
 <td style="text-align:right;">
-14.39
+14.54
 </td>
 </tr>
 <tr>
@@ -887,34 +886,34 @@ Total
 2.00
 </td>
 <td style="text-align:right;">
-6.19
+6.30
 </td>
 <td style="text-align:right;">
-2.96
+2.94
 </td>
 <td style="text-align:right;">
-2.80
+2.86
 </td>
 <td style="text-align:right;">
-1.67
+1.57
 </td>
 <td style="text-align:right;">
-0.59
+0.62
 </td>
 <td style="text-align:right;">
-0.19
+0.26
 </td>
 <td style="text-align:right;">
-14.39
+14.54
 </td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<div id="beyond-3-3" class="section level1">
-<h1 class="hasAnchor">
-<a href="#beyond-3-3" class="anchor" aria-hidden="true"></a>Beyond 3 + 3</h1>
+<div class="section level2">
+<h2 id="beyond-3-3">Beyond 3 + 3<a class="anchor" aria-label="anchor" href="#beyond-3-3"></a>
+</h2>
 <p>One reason that package <code>escalation</code> makes such a suitable basis for these developments is that it unifies several dose-escalation designs under one object-oriented design. Thus, we can repeat the above simulation exercise with a CRM design:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">crm_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/escalation/man/get_dfcrm.html" class="external-link">get_dfcrm</a></span><span class="op">(</span>skeleton <span class="op">=</span> <span class="va">scenario</span>, target <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
@@ -962,22 +961,22 @@ Total
 </thead>
 <tbody><tr>
 <td style="text-align:right;">
-13
+12
+</td>
+<td style="text-align:right;">
+4
 </td>
 <td style="text-align:right;">
 3
 </td>
 <td style="text-align:right;">
-3
-</td>
-<td style="text-align:right;">
-2.2
-</td>
-<td style="text-align:right;">
-1.5
+2
 </td>
 <td style="text-align:right;">
 1.3
+</td>
+<td style="text-align:right;">
+1.4
 </td>
 <td style="text-align:right;">
 24.0
@@ -1040,13 +1039,13 @@ Total
 3
 </td>
 <td style="text-align:right;">
-1.9
+2.0
 </td>
 <td style="text-align:right;">
 1.1
 </td>
 <td style="text-align:right;">
-1.2
+1.1
 </td>
 <td style="text-align:right;">
 24.0
@@ -1054,30 +1053,29 @@ Total
 </tr></tbody>
 </table>
 </div>
-<div id="implications-of-package-precautionary" class="section level1">
-<h1 class="hasAnchor">
-<a href="#implications-of-package-precautionary" class="anchor" aria-hidden="true"></a>Implications of package <code>precautionary</code>
-</h1>
+<div class="section level2">
+<h2 id="implications-of-package-precautionary">Implications of package <code>precautionary</code><a class="anchor" aria-label="anchor" href="#implications-of-package-precautionary"></a>
+</h2>
 <p>Package <code>precautionary</code> demonstrates in principle that any dose-escalation design can be assessed for safety, given a modicum of realistic pharmacologic thinking during prior elicitation. How truly modest this additional input is, should be apparent from the obvious connections between the ratios in an ‘ordinalizer’ and the notion of <a href="https://en.wikipedia.org/wiki/Therapeutic_index" class="external-link">therapeutic index</a> (TI). It is hard to imagine that any trialist would pursue a phase 1 investigation without some notion of a plausible range for TI <span class="citation">(Muller and Milton 2012)</span>. Yet within the biostatistical literature on dose-finding methods, I know of no attempt to apply a TI concept formally to assess design safety.</p>
 </div>
-<div id="references" class="section level1 unnumbered">
-<h1 class="hasAnchor">
-<a href="#references" class="anchor" aria-hidden="true"></a>References</h1>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-liu_bayesian_2015" class="csl-entry">
-Liu, Suyu, and Ying Yuan. 2015. <span>“Bayesian Optimal Interval Designs for Phase <span>I</span> Clinical Trials.”</span> <em>Journal of the Royal Statistical Society: Series C (Applied Statistics)</em> 64 (3): 507–23. <a href="https://doi.org/10.1111/rssc.12089" class="external-link">https://doi.org/10.1111/rssc.12089</a>.
+<div class="section level2">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<div id="refs" class="references hanging-indent">
+<div id="ref-liu_bayesian_2015">
+<p>Liu, Suyu, and Ying Yuan. 2015. “Bayesian Optimal Interval Designs for Phase I Clinical Trials.” <em>Journal of the Royal Statistical Society: Series C (Applied Statistics)</em> 64 (3): 507–23. <a href="https://doi.org/10.1111/rssc.12089" class="external-link">https://doi.org/10.1111/rssc.12089</a>.</p>
 </div>
-<div id="ref-muller_determination_2012" class="csl-entry">
-Muller, Patrick Y., and Mark N. Milton. 2012. <span>“The Determination and Interpretation of the Therapeutic Index in Drug Development.”</span> <em>Nature Reviews. Drug Discovery</em> 11 (10): 751–61. <a href="https://doi.org/10.1038/nrd3801" class="external-link">https://doi.org/10.1038/nrd3801</a>.
+<div id="ref-muller_determination_2012">
+<p>Muller, Patrick Y., and Mark N. Milton. 2012. “The Determination and Interpretation of the Therapeutic Index in Drug Development.” <em>Nature Reviews. Drug Discovery</em> 11 (10): 751–61. <a href="https://doi.org/10.1038/nrd3801" class="external-link">https://doi.org/10.1038/nrd3801</a>.</p>
 </div>
-<div id="ref-norris_dose_2017" class="csl-entry">
-Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</span> <span>Tuning</span> (<span>DTAT</span>) Should Supersede <span>‘the’</span> <span>Maximum</span> <span>Tolerated</span> <span>Dose</span> (<span>MTD</span>) in Oncology Dose-Finding Trials.”</span> <em>F1000Research</em> 6 (July): 112. <a href="https://doi.org/10.12688/f1000research.10624.3" class="external-link">https://doi.org/10.12688/f1000research.10624.3</a>.
+<div id="ref-norris_dose_2017">
+<p>Norris, David C. 2017a. “Dose Titration Algorithm Tuning (DTAT) Should Supersede ‘the’ Maximum Tolerated Dose (MTD) in Oncology Dose-Finding Trials.” <em>F1000Research</em> 6 (July): 112. <a href="https://doi.org/10.12688/f1000research.10624.3" class="external-link">https://doi.org/10.12688/f1000research.10624.3</a>.</p>
 </div>
-<div id="ref-norris_precautionary_2017" class="csl-entry">
-———. 2017b. <span>“Precautionary <span>Coherence</span> <span>Unravels</span> <span>Dose</span> <span>Escalation</span> <span>Designs</span>.”</span> <em>bioRxiv</em>, December. <a href="https://doi.org/10.1101/240846" class="external-link">https://doi.org/10.1101/240846</a>.
+<div id="ref-norris_precautionary_2017">
+<p>———. 2017b. “Precautionary Coherence Unravels Dose Escalation Designs.” <em>bioRxiv</em>, December. <a href="https://doi.org/10.1101/240846" class="external-link">https://doi.org/10.1101/240846</a>.</p>
 </div>
-<div id="ref-norris_retrospective_2020" class="csl-entry">
-———. 2020. <span>“Retrospective Analysis of a Fatal Dose-Finding Trial.”</span> <em>arXiv:2004.12755 [Stat.ME]</em>, April. <a href="https://arxiv.org/abs/2004.12755" class="external-link">https://arxiv.org/abs/2004.12755</a>.
+<div id="ref-norris_retrospective_2020">
+<p>———. 2020. “Retrospective Analysis of a Fatal Dose-Finding Trial.” <em>arXiv:2004.12755 [stat.ME]</em>, April. <a href="https://arxiv.org/abs/2004.12755" class="external-link">https://arxiv.org/abs/2004.12755</a>.</p>
 </div>
 </div>
 </div>
@@ -1086,7 +1084,7 @@ Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</sp
 <ol>
 <li id="fn1"><p>Any complete simulation study will of course consider multiple scenarios, perhaps weighted according to their varying likelihood.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>The names allow for user-customized labeling of the toxicity levels, which carries forward into summaries, etc.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>To preserve the intuition of the term ‘maximum tolerated dose,’ you could say <span class="math inline">\(\mathrm{MTD}_i^{g}\)</span> is the maximum dose that individual <span class="math inline">\(i\)</span> can tolerate if ‘tolerability’ is defined as toxicity <em>below</em> grade-<span class="math inline">\(g\)</span>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>To preserve the intuition of the term ‘maximum tolerated dose’, you could say <span class="math inline">\(\mathrm{MTD}_i^{g}\)</span> is the maximum dose that individual <span class="math inline">\(i\)</span> can tolerate if ‘tolerability’ is defined as toxicity <em>below</em> grade-<span class="math inline">\(g\)</span>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>Note the judicious allocation of parameters. This ordinalizer devotes 2 parameters (<code>r4</code> and <code>r5</code>) to the safety-critical threshold ratios <span class="math inline">\(r_4 := \mathrm{MTD}_i^3 : \mathrm{MTD}_i^4\)</span> and <span class="math inline">\(r_5 := \mathrm{MTD}_i^3 : \mathrm{MTD}_i^4\)</span>, but conserves on parameters by sharing the same parameter <span class="math inline">\(r_{12}\)</span> for the ratios involving low-grade toxicities.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 <li id="fn5"><p>For example, setting <span class="math inline">\(\sigma_{\mathrm{med}} = 0.5\)</span> would express a ±50% uncertainty in our guessed median <span class="math inline">\(\mathrm{MTD}_i\)</span>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 <li id="fn6"><p>The exact figure is <span class="math inline">\(\sqrt{2-\pi/2} \approx 0.655\)</span>. Given how little is known generally—or even acknowledged!—about inter-individual variation in optimal dosing, it seems reasonable to suppose that you will allow a ± of 66% on any value you choose as most likely for <span class="math inline">\(\mathrm{CV}(\mathrm{MTD}_i)\)</span>.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
@@ -1111,7 +1109,7 @@ Norris, David C. 2017a. <span>“Dose <span>Titration</span> <span>Algorithm</sp
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

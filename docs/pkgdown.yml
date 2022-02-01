@@ -1,13 +1,13 @@
-pandoc: 2.14.0.3
-pkgdown: 1.6.1.9001
-pkgdown_sha: 9ce6af43b55cd21e9563526e12a12d1243657bf6
+pandoc: 2.9.2.1
+pkgdown: 2.0.2
+pkgdown_sha: ~
 articles:
   DTP-vs-Korn94: DTP-vs-Korn94.html
   FDA-proactive: FDA-proactive.html
   Intro: Intro.html
   MCSE-Free: MCSE-Free.html
   Safety-Schematic-via-CPE: Safety-Schematic-via-CPE.html
-last_built: 2021-08-27T13:01Z
+last_built: 2022-02-01T13:43Z
 urls:
   reference: https://dcnorris.github.io/precautionary/reference
   article: https://dcnorris.github.io/precautionary/articles

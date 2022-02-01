@@ -98,7 +98,7 @@
 
       
 
-      </header><script src="MCSE-Free_files/header-attrs-2.9/header-attrs.js"></script><script src="MCSE-Free_files/kePrint-0.0.1/kePrint.js"></script><link href="MCSE-Free_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+      </header><script src="MCSE-Free_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="MCSE-Free_files/kePrint-0.0.1/kePrint.js"></script><link href="MCSE-Free_files/lightable-0.0.1/lightable.css" rel="stylesheet">
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -107,7 +107,7 @@
             
             <h4 data-toc-skip class="date">4/25/2021</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/master/vignettes/MCSE-Free.Rmd" class="external-link"><code>vignettes/MCSE-Free.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/dcnorris/precautionary/blob/HEAD/vignettes/MCSE-Free.Rmd" class="external-link"><code>vignettes/MCSE-Free.Rmd</code></a></small>
       <div class="hidden name"><code>MCSE-Free.Rmd</code></div>
 
     </div>
@@ -126,16 +126,16 @@
 <blockquote>
 <p>“The main challenge when using the CRM is model calibration.”<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
 </blockquote>
-<div id="background" class="section level1">
-<h1 class="hasAnchor">
-<a href="#background" class="anchor" aria-hidden="true"></a>Background</h1>
-<p>Since its inception 3 decades ago <span class="citation">(O’Quigley, Pepe, and Fisher 1990)</span>, the CRM has retreated from the sincere Bayesianism of its original aim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of <span class="citation">O’Quigley, Pepe, and Fisher (1990)</span>, titled ‘Establishing Dose Levels,’ suggested a substantial collaboration between modelers and clinical investigators. Yet within a few years, <span class="citation">Chevret (1993)</span> already accepted “that <span class="math inline">\(k\)</span> distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise,” and demoted the CRM’s prior dose-toxicity curve to the status of a (multidimensional) <em>tuning parameter</em>. The retreat continued apace with <span class="citation">Goodman, Zahurak, and Piantadosi (1995)</span> giving voice to the deep skepticism with which clinical investigators were already viewing the CRM. Indeed, a key “practical improvement” for which that paper is still cited, was its rejection of the prior curve’s pretense to inform the trial starting dose.</p>
+<div class="section level2">
+<h2 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
+</h2>
+<p>Since its inception 3 decades ago <span class="citation">(O’Quigley, Pepe, and Fisher 1990)</span>, the CRM has retreated from the sincere Bayesianism of its original aim to manifest clinically relevant prior information. The early retreat was quite swift, in fact. Section 2.4 of <span class="citation">O’Quigley, Pepe, and Fisher (1990)</span>, titled ‘Establishing Dose Levels’, suggested a substantial collaboration between modelers and clinical investigators. Yet within a few years, <span class="citation">Chevret (1993)</span> already accepted “that <span class="math inline">\(k\)</span> distinct doses are chosen for experimentation, defined by the investigator through an implicit idea of the dose-toxicity relationship, however imprecise,” and demoted the CRM’s prior dose-toxicity curve to the status of a (multidimensional) <em>tuning parameter</em>. The retreat continued apace with <span class="citation">Goodman, Zahurak, and Piantadosi (1995)</span> giving voice to the deep skepticism with which clinical investigators were already viewing the CRM. Indeed, a key “practical improvement” for which that paper is still cited, was its rejection of the prior curve’s pretense to inform the trial starting dose.</p>
 <p>By twenty years later, biostatisticians had completed their retreat, with the prior toxicity curve being variously rebranded to avoid using the word ‘prior,’<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> and computer-based model tuning activities having become “the main challenge when using the CRM” <span class="citation">(Lee and Cheung 2011)</span>. Biostatisticians remain to this day intent on problems arising out of CRM calibration practice, as demonstrated in the recent contribution by Braun <span class="citation">(2020)</span>, who develops a mean-field approximation that greatly accelerates CRM performance characterization and calibration. Applied to a previously-completed trial, this approximation technique reduces certain calibration steps from 6.3 hours to 18 seconds (1260<span class="math inline">\(\times\)</span>) and from 2 days to 2 minutes (<span class="math inline">\(\approx 1400 \times\)</span>).</p>
 <p>Here I revisit Braun’s application from the perspective of <em>complete path enumeration</em> (CPE), which package <code>precautionary</code> now implements for the CRM.</p>
 </div>
-<div id="performance-characterization-for-a-given-crm-model" class="section level1">
-<h1 class="hasAnchor">
-<a href="#performance-characterization-for-a-given-crm-model" class="anchor" aria-hidden="true"></a>Performance characterization for a given CRM model</h1>
+<div class="section level2">
+<h2 id="performance-characterization-for-a-given-crm-model">Performance characterization for a given CRM model<a class="anchor" aria-label="anchor" href="#performance-characterization-for-a-given-crm-model"></a>
+</h2>
 <p>Prerequisite to any CRM prior calibration procedure aiming to optimize selected performance characteristics, is the ability to characterize performance for any given CRM model with fixed prior parameters.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> So we begin by repeating Braun’s characterization of his calibrated model.<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> The calibrated model is as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">skel_0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.03</span>, <span class="fl">0.11</span>, <span class="fl">0.25</span>, <span class="fl">0.42</span>, <span class="fl">0.58</span>, <span class="fl">0.71</span><span class="op">)</span>
@@ -160,39 +160,37 @@
   
   <span class="cn">T</span> <span class="op">&lt;-</span> <span class="va">calmod</span><span class="op">$</span><span class="fu">path_array</span><span class="op">(</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
-<pre><code>## T (22041×15×6) constructed in 2.361 sec
-## T condensed in 1.717 sec</code></pre>
-<pre><code>##    user  system elapsed 
-##  10.702   0.447   9.692</code></pre>
+<pre><code><span class="co">## T (22041×15×6) constructed in 0.870 sec</span>
+<span class="co">## T condensed in 0.811 sec</span></code></pre>
+<pre><code><span class="co">##    user  system elapsed </span>
+<span class="co">##   5.365   0.165   4.732</span></code></pre>
 <p>The 3-dimensional array <code>T[j,c,d]</code> has the same structure and function as in <span class="citation">Norris (2020)</span>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 22041     5     6</code></pre>
+<pre><code><span class="co">## [1] 22041     5     6</span></code></pre>
 <p>Along each of the 22041 paths enumerated, toxicities have been tabulated separately for as many as 5 distinct cohorts enrolled at each of 6 doses.</p>
 <p>Again as in <span class="citation">Norris (2020)</span>, we may …</p>
-<div id="compute-mathbfb-sum_c-n-choose-t_cd" class="section level2">
-<h2 class="hasAnchor">
-<a href="#compute-mathbfb-sum_c-n-choose-t_cd" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span>
-</h2>
+<div class="section level3">
+<h3 id="compute-mathbfb-sum_c-n-choose-t_cd">Compute <span class="math inline">\(\mathbf{b} = \sum_c {n \choose T_{c,d}}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathbfb-sum_c-n-choose-t_cd"></a>
+</h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Special.html" class="external-link">choose</a></span><span class="op">(</span><span class="fl">2</span>, <span class="cn">T</span><span class="op">)</span><span class="op">)</span>, MARGIN <span class="op">=</span> <span class="fl">1</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 22041</code></pre>
+<pre><code><span class="co">## [1] 22041</span></code></pre>
 </div>
-<div id="compute-mathrmu-and-mathrmy" class="section level2">
-<h2 class="hasAnchor">
-<a href="#compute-mathrmu-and-mathrmy" class="anchor" aria-hidden="true"></a>Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span>
-</h2>
+<div class="section level3">
+<h3 id="compute-mathrmu-and-mathrmy">Compute <span class="math inline">\(\mathrm{U}\)</span> and <span class="math inline">\(\mathrm{Y}\)</span><a class="anchor" aria-label="anchor" href="#compute-mathrmu-and-mathrmy"></a>
+</h3>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fl">2</span><span class="op">-</span><span class="cn">T</span>, MARGIN <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">sum</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">U</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Y</span>, <span class="va">Z</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">U</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 22041    12</code></pre>
+<pre><code><span class="co">## [1] 22041    12</span></code></pre>
 </div>
-<div id="express-mathbfpi-as-a-function-of-dose-wise-dlt-probabilities" class="section level2">
-<h2 class="hasAnchor">
-<a href="#express-mathbfpi-as-a-function-of-dose-wise-dlt-probabilities" class="anchor" aria-hidden="true"></a>Express <span class="math inline">\(\mathbf{\pi}\)</span> as a function of dose-wise DLT probabilities</h2>
+<div class="section level3">
+<h3 id="express-mathbfpi-as-a-function-of-dose-wise-dlt-probabilities">Express <span class="math inline">\(\mathbf{\pi}\)</span> as a function of dose-wise DLT probabilities<a class="anchor" aria-label="anchor" href="#express-mathbfpi-as-a-function-of-dose-wise-dlt-probabilities"></a>
+</h3>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">log_pi</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">prob.DLT</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">log_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">prob.DLT</span><span class="op">)</span>
@@ -203,59 +201,59 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span><span class="op">)</span> <span class="co"># randomly select a DLT probability vector</span>
 <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fu">log_pi</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="co"># check path probabilities sum to 1</span></code></pre></div>
-<pre><code>## [1] 1</code></pre>
+<pre><code><span class="co">## [1] 1</span></code></pre>
 <p>Together with this ability to compute the path probabilities <span class="math inline">\(\mathbf{\pi}(\mathbf{p})\)</span> under any scenario <span class="math inline">\(\mathbf{p}\)</span>, the complete frequentist characterization by <span class="math inline">\(\mathrm{T}\)</span> of all path outcomes enables us immediately to obtain any of the common performance characteristics of interest:<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a></p>
 </div>
-<div id="probability-of-correct-selection-pcs" class="section level2">
-<h2 class="hasAnchor">
-<a href="#probability-of-correct-selection-pcs" class="anchor" aria-hidden="true"></a>Probability of Correct Selection (PCS)</h2>
+<div class="section level3">
+<h3 id="probability-of-correct-selection-pcs">Probability of Correct Selection (PCS)<a class="anchor" aria-label="anchor" href="#probability-of-correct-selection-pcs"></a>
+</h3>
 <p>Whereas the array <span class="math inline">\(T_{c,d}^j\)</span> contains clinical <em>events</em> (enrollments, toxicities) along each path, the final dose <em>recommendations</em> are retained as the rightmost non-<code>NA</code> value in each row of <code>calmod</code>’s <em>path matrix</em>.<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> The <code>path_rx()</code> method of the <code>Crm</code> class returns this:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/xtabs.html" class="external-link">xtabs</a></span><span class="op">(</span><span class="op">~</span><span class="va">calmod</span><span class="op">$</span><span class="fu">path_rx</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## calmod$path_rx()
-##    1    2    3    4    5    6 
-## 6178 9266 4864 1314  341   78</code></pre>
+<pre><code><span class="co">## calmod$path_rx()</span>
+<span class="co">##    1    2    3    4    5    6 </span>
+<span class="co">## 6178 9266 4864 1314  341   78</span></code></pre>
 <p>These dose recommendations of course must be weighted by the path probabilities of some chosen dose-toxicity scenario. For sake of an easy demonstration, let’s take our scenario from the skeleton itself:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pi_skel</span> <span class="op">&lt;-</span> <span class="va">calmod</span><span class="op">$</span><span class="fu">path_probs</span><span class="op">(</span><span class="va">calmod</span><span class="op">$</span><span class="fu">skeleton</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/stats/xtabs.html" class="external-link">xtabs</a></span><span class="op">(</span><span class="va">pi_skel</span> <span class="op">~</span> <span class="va">calmod</span><span class="op">$</span><span class="fu">path_rx</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>## calmod$path_rx()
-##        1        2        3        4        5        6 
-## 0.010420 0.248309 0.560418 0.172114 0.008630 0.000109</code></pre>
+<pre><code><span class="co">## calmod$path_rx()</span>
+<span class="co">##        1        2        3        4        5        6 </span>
+<span class="co">## 0.010420 0.248309 0.560418 0.172114 0.008630 0.000109</span></code></pre>
 <p>According to our skeleton, dose 3 is ‘the’ MTD; so PCS is 0.56 in this scenario.</p>
 </div>
-<div id="fraction-assigned-to-mtd" class="section level2">
-<h2 class="hasAnchor">
-<a href="#fraction-assigned-to-mtd" class="anchor" aria-hidden="true"></a>Fraction Assigned to MTD</h2>
+<div class="section level3">
+<h3 id="fraction-assigned-to-mtd">Fraction Assigned to MTD<a class="anchor" aria-label="anchor" href="#fraction-assigned-to-mtd"></a>
+</h3>
 <p>The array <span class="math inline">\(T_{c,d}^j\)</span> lets us count patients assigned to ‘the’ MTD:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">path_cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span>, MARGIN<span class="op">=</span><span class="fl">1</span>, FUN<span class="op">=</span><span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">path_MTDcohs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="cn">T</span><span class="op">[</span>,,<span class="fl">3</span><span class="op">]</span><span class="op">)</span>, MARGIN<span class="op">=</span><span class="fl">1</span>, FUN<span class="op">=</span><span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">pi_skel</span> <span class="op">*</span> <span class="va">path_MTDcohs</span> <span class="op">/</span> <span class="va">path_cohorts</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 0.3895</code></pre>
+<pre><code><span class="co">## [1] 0.3895</span></code></pre>
 </div>
-<div id="fraction-overdosed" class="section level2">
-<h2 class="hasAnchor">
-<a href="#fraction-overdosed" class="anchor" aria-hidden="true"></a>Fraction ‘Overdosed’</h2>
+<div class="section level3">
+<h3 id="fraction-overdosed">Fraction ‘Overdosed’<a class="anchor" aria-label="anchor" href="#fraction-overdosed"></a>
+</h3>
 <p>A similar calculation enables us to calculate the fraction assigned to doses exceeding ‘the’ MTD:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">path_ODcohs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="cn">T</span><span class="op">[</span>,,<span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span><span class="op">)</span>, MARGIN<span class="op">=</span><span class="fl">1</span>, FUN<span class="op">=</span><span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">pi_skel</span> <span class="op">*</span> <span class="va">path_ODcohs</span> <span class="op">/</span> <span class="va">path_cohorts</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 0.1971</code></pre>
+<pre><code><span class="co">## [1] 0.1971</span></code></pre>
 <p>Furthermore, we can ask what fraction of thus-‘overdosed’ trial participants may be expected to exceed <em>their own</em> MTD<span class="math inline">\(_i\)</span>’s:<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a></p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">path_DLTs4_6</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="cn">T</span><span class="op">[</span>,,<span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, MARGIN<span class="op">=</span><span class="fl">1</span>, FUN<span class="op">=</span><span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">pi_skel</span> <span class="op">*</span> <span class="va">path_DLTs4_6</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">pi_skel</span> <span class="op">*</span> <span class="fl">2</span><span class="op">*</span><span class="va">path_ODcohs</span><span class="op">)</span></code></pre></div>
-<pre><code>## [1] 0.442</code></pre>
+<pre><code><span class="co">## [1] 0.442</span></code></pre>
 </div>
-<div id="extensions-to-scenario-ensembles" class="section level2">
-<h2 class="hasAnchor">
-<a href="#extensions-to-scenario-ensembles" class="anchor" aria-hidden="true"></a>Extensions to scenario ensembles</h2>
+<div class="section level3">
+<h3 id="extensions-to-scenario-ensembles">Extensions to scenario ensembles<a class="anchor" aria-label="anchor" href="#extensions-to-scenario-ensembles"></a>
+</h3>
 <p>As the examples above illustrate, once a fixed trial design has been completely path-enumerated, its performance characteristics are available through fast array operations. The generalization of single-scenario performance evaluations to ensemble-average evaluations should prove straightforward.</p>
 </div>
-<div id="extending-to-larger-trials" class="section level2">
-<h2 class="hasAnchor">
-<a href="#extending-to-larger-trials" class="anchor" aria-hidden="true"></a>Extending to larger trials</h2>
+<div class="section level3">
+<h3 id="extending-to-larger-trials">Extending to larger trials<a class="anchor" aria-label="anchor" href="#extending-to-larger-trials"></a>
+</h3>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">saved</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>
 <span class="va">kraken</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>C <span class="op">=</span> <span class="fl">11</span><span class="op">:</span><span class="fl">25</span>, J <span class="op">=</span> <span class="cn">NA_integer_</span>, elapsed <span class="op">=</span> <span class="cn">NA_real_</span><span class="op">)</span>
@@ -477,9 +475,9 @@ Number of paths <em>J</em> vs enrollment for the CRM trial at hand. Note that al
 <p>Reassuringly, the (perhaps typical) stopping criteria in this trial impose a finite upper bound on CPE size stringent enough to keep the space and time complexity of CPE feasible. Even without such planned stopping rules, as a practical matter, once a dose-finding trial has enrolled more than 30 participants, it ought to have yielded enough information to warrant revisiting the original design. This limits the reasonable ‘time between overhauls’<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> for a fixed CRM trial design. Thus, CPE-based performance characterization may prove entirely feasible for most practical applications of the standard CRM model.<a href="#fn14" class="footnote-ref" id="fnref14"><sup>14</sup></a></p>
 </div>
 </div>
-<div id="calibration-of-crm-priors" class="section level1">
-<h1 class="hasAnchor">
-<a href="#calibration-of-crm-priors" class="anchor" aria-hidden="true"></a>Calibration of CRM priors</h1>
+<div class="section level2">
+<h2 id="calibration-of-crm-priors">Calibration of CRM priors<a class="anchor" aria-label="anchor" href="#calibration-of-crm-priors"></a>
+</h2>
 <p>The foregoing analysis shows that CPE-based performance characterization for a <em>given</em> CRM model of typical size may require on the order of 15 seconds on quite modest hardware. To <em>calibrate</em> a CRM model via CPE, however, may incur this cost repeatedly—perhaps hundreds of times—during what will generally amount to the derivative-free optimization of a discontinuous objective function over the prior-parameter space. For the example at hand, the Nelder-Mead method finds a PCS-optimal skeleton in just 25 minutes:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">scenario</span> <span class="op">&lt;-</span> <span class="va">skel_0</span> <span class="co"># for a demo scenario, we use our original skeleton</span>
@@ -513,51 +511,51 @@ $convergence
 
 $message
 NULL</code></pre>
-<div id="miscellaneous-helps-to-optimization" class="section level2">
-<h2 class="hasAnchor">
-<a href="#miscellaneous-helps-to-optimization" class="anchor" aria-hidden="true"></a>Miscellaneous helps to optimization</h2>
+<div class="section level3">
+<h3 id="miscellaneous-helps-to-optimization">Miscellaneous helps to optimization<a class="anchor" aria-label="anchor" href="#miscellaneous-helps-to-optimization"></a>
+</h3>
 <p>Cheung and Chappell <span class="citation">(2002)</span> develop an asymptotic assessment capable of rejecting certain skeletons as <em>intrinsically</em> unreasonable because they confer inadequate sensitivity on the CRM. This criterion applies irrespective of dose-toxicity scenario, and so might usefully restrict our skeleton search during calibration by Nelder-Mead or similar direct-search method. The dimensionality of this search might also be addressed directly, by parametrizing the skeleton in 2 or 3 suitable basis dimensions. But such exquisite efforts risk taking this type of calibration exercise too seriously.</p>
 </div>
 </div>
-<div id="on-calibrating-priors" class="section level1">
-<h1 class="hasAnchor">
-<a href="#on-calibrating-priors" class="anchor" aria-hidden="true"></a>On calibrating ‘priors’</h1>
+<div class="section level2">
+<h2 id="on-calibrating-priors">On calibrating ‘priors’<a class="anchor" aria-label="anchor" href="#on-calibrating-priors"></a>
+</h2>
 <p>In everyday usage, <em>calibration</em> suggests an exacting procedure, in which typically a measuring instrument is adjusted to accord with some objective standard or criterion. In statistics, however, the term may not carry quite this connotation. Certainly, <span class="citation">Grieve (2016)</span> discusses the calibration of Bayesian trial designs generally in much the same sense as our ‘CRM calibration’ here, with the criterion being provided by whatever frequentist properties are deemed desirable in each given application.</p>
 <p>Whatever we call this chiropractic of the CRM skeleton, the very act of treating the CRM’s prior dose-toxicity probabilities as <em>free parameters</em> undermines the presumption that model-basedness <em>per se</em> necessarily confers special qualities upon dose-finding methods. But now that even the CRM—the very type specimen of model-based dose finding—yields to complete path enumeration, ‘model-based’ has become a distinction without a difference.</p>
 </div>
-<div id="references" class="section level1 unnumbered">
-<h1 class="hasAnchor">
-<a href="#references" class="anchor" aria-hidden="true"></a>References</h1>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-braun_simulationfree_2020" class="csl-entry">
-Braun, Thomas M. 2020. <span>“A Simulation‐free Approach to Assessing the Performance of the Continual Reassessment Method.”</span> <em>Statistics in Medicine</em>, September, sim.8746. <a href="https://doi.org/10.1002/sim.8746" class="external-link">https://doi.org/10.1002/sim.8746</a>.
+<div class="section level2">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<div id="refs" class="references hanging-indent">
+<div id="ref-braun_simulationfree_2020">
+<p>Braun, Thomas M. 2020. “A Simulation‐free Approach to Assessing the Performance of the Continual Reassessment Method.” <em>Statistics in Medicine</em>, September, sim.8746. <a href="https://doi.org/10.1002/sim.8746" class="external-link">https://doi.org/10.1002/sim.8746</a>.</p>
 </div>
-<div id="ref-cheung_simple_2002" class="csl-entry">
-Cheung, Ying Kuen, and Rick Chappell. 2002. <span>“A Simple Technique to Evaluate Model Sensitivity in the Continual Reassessment Method.”</span> <em>Biometrics</em> 58 (3): 671–74. <a href="https://doi.org/10.1111/j.0006-341x.2002.00671.x" class="external-link">https://doi.org/10.1111/j.0006-341x.2002.00671.x</a>.
+<div id="ref-cheung_simple_2002">
+<p>Cheung, Ying Kuen, and Rick Chappell. 2002. “A Simple Technique to Evaluate Model Sensitivity in the Continual Reassessment Method.” <em>Biometrics</em> 58 (3): 671–74. <a href="https://doi.org/10.1111/j.0006-341x.2002.00671.x" class="external-link">https://doi.org/10.1111/j.0006-341x.2002.00671.x</a>.</p>
 </div>
-<div id="ref-chevret_continual_1993" class="csl-entry">
-Chevret, S. 1993. <span>“The Continual Reassessment Method in Cancer Phase <span>I</span> Clinical Trials: A Simulation Study.”</span> <em>Statistics in Medicine</em> 12 (12): 1093–1108. <a href="https://doi.org/10.1002/sim.4780121201" class="external-link">https://doi.org/10.1002/sim.4780121201</a>.
+<div id="ref-chevret_continual_1993">
+<p>Chevret, S. 1993. “The Continual Reassessment Method in Cancer Phase I Clinical Trials: A Simulation Study.” <em>Statistics in Medicine</em> 12 (12): 1093–1108. <a href="https://doi.org/10.1002/sim.4780121201" class="external-link">https://doi.org/10.1002/sim.4780121201</a>.</p>
 </div>
-<div id="ref-goodman_practical_1995" class="csl-entry">
-Goodman, S. N., M. L. Zahurak, and S. Piantadosi. 1995. <span>“Some Practical Improvements in the Continual Reassessment Method for Phase <span>I</span> Studies.”</span> <em>Statistics in Medicine</em> 14 (11): 1149–61.
+<div id="ref-goodman_practical_1995">
+<p>Goodman, S. N., M. L. Zahurak, and S. Piantadosi. 1995. “Some Practical Improvements in the Continual Reassessment Method for Phase I Studies.” <em>Statistics in Medicine</em> 14 (11): 1149–61.</p>
 </div>
-<div id="ref-grieve_idle_2016" class="csl-entry">
-Grieve, Andrew P. 2016. <span>“Idle Thoughts of a <span>‘Well-Calibrated’</span> <span>Bayesian</span> in Clinical Drug Development.”</span> <em>Pharmaceutical Statistics</em> 15 (2): 96–108. <a href="https://doi.org/10.1002/pst.1736" class="external-link">https://doi.org/10.1002/pst.1736</a>.
+<div id="ref-grieve_idle_2016">
+<p>Grieve, Andrew P. 2016. “Idle Thoughts of a ‘Well-Calibrated’ Bayesian in Clinical Drug Development.” <em>Pharmaceutical Statistics</em> 15 (2): 96–108. <a href="https://doi.org/10.1002/pst.1736" class="external-link">https://doi.org/10.1002/pst.1736</a>.</p>
 </div>
-<div id="ref-lee_model_2009" class="csl-entry">
-Lee, Shing M., and Ying Kuen Cheung. 2009. <span>“Model Calibration in the Continual Reassessment Method.”</span> <em>Clinical Trials (London, England)</em> 6 (3): 227–38. <a href="https://doi.org/10.1177/1740774509105076" class="external-link">https://doi.org/10.1177/1740774509105076</a>.
+<div id="ref-lee_model_2009">
+<p>Lee, Shing M., and Ying Kuen Cheung. 2009. “Model Calibration in the Continual Reassessment Method.” <em>Clinical Trials (London, England)</em> 6 (3): 227–38. <a href="https://doi.org/10.1177/1740774509105076" class="external-link">https://doi.org/10.1177/1740774509105076</a>.</p>
 </div>
-<div id="ref-lee_calibration_2011" class="csl-entry">
-———. 2011. <span>“Calibration of Prior Variance in the <span>Bayesian</span> Continual Reassessment Method.”</span> <em>Statistics in Medicine</em> 30 (17): 2081–89. <a href="https://doi.org/10.1002/sim.4139" class="external-link">https://doi.org/10.1002/sim.4139</a>.
+<div id="ref-lee_calibration_2011">
+<p>———. 2011. “Calibration of Prior Variance in the Bayesian Continual Reassessment Method.” <em>Statistics in Medicine</em> 30 (17): 2081–9. <a href="https://doi.org/10.1002/sim.4139" class="external-link">https://doi.org/10.1002/sim.4139</a>.</p>
 </div>
-<div id="ref-norris_what_2020" class="csl-entry">
-Norris, David C. 2020. <span>“What <span>Were</span> <span>They</span> <span>Thinking</span>? <span>Pharmacologic</span> Priors Implicit in a Choice of 3+3 Dose-Escalation Design.”</span> <em>arXiv:2012.05301 [Stat.ME]</em>, December. <a href="https://arxiv.org/abs/2012.05301" class="external-link">https://arxiv.org/abs/2012.05301</a>.
+<div id="ref-norris_what_2020">
+<p>Norris, David C. 2020. “What Were They Thinking? Pharmacologic Priors Implicit in a Choice of 3+3 Dose-Escalation Design.” <em>arXiv:2012.05301 [stat.ME]</em>, December. <a href="https://arxiv.org/abs/2012.05301" class="external-link">https://arxiv.org/abs/2012.05301</a>.</p>
 </div>
-<div id="ref-oquigley_continual_1990" class="csl-entry">
-O’Quigley, J., M. Pepe, and L. Fisher. 1990. <span>“Continual Reassessment Method: A Practical Design for Phase 1 Clinical Trials in Cancer.”</span> <em>Biometrics</em> 46 (1): 33–48.
+<div id="ref-oquigley_continual_1990">
+<p>O’Quigley, J., M. Pepe, and L. Fisher. 1990. “Continual Reassessment Method: A Practical Design for Phase 1 Clinical Trials in Cancer.” <em>Biometrics</em> 46 (1): 33–48.</p>
 </div>
-<div id="ref-wages_dose-finding_2011" class="csl-entry">
-Wages, Nolan A, Mark R Conaway, and John O’Quigley. 2011. <span>“Dose-Finding Design for Multi-Drug Combinations.”</span> <em>Clinical Trials: Journal of the Society for Clinical Trials</em> 8 (4): 380–89. <a href="https://doi.org/10.1177/1740774511408748" class="external-link">https://doi.org/10.1177/1740774511408748</a>.
+<div id="ref-wages_dose-finding_2011">
+<p>Wages, Nolan A, Mark R Conaway, and John O’Quigley. 2011. “Dose-Finding Design for Multi-Drug Combinations.” <em>Clinical Trials: Journal of the Society for Clinical Trials</em> 8 (4): 380–89. <a href="https://doi.org/10.1177/1740774511408748" class="external-link">https://doi.org/10.1177/1740774511408748</a>.</p>
 </div>
 </div>
 </div>
@@ -568,14 +566,14 @@ Wages, Nolan A, Mark R Conaway, and John O’Quigley. 2011. <span>“Dose-Findin
 <li id="fn2"><p><span class="citation">Chevret (1993)</span><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p><span class="citation">Goodman, Zahurak, and Piantadosi (1995)</span><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p><span class="citation">Lee and Cheung (2011)</span><a href="#fnref4" class="footnote-back">↩︎</a></p></li>
-<li id="fn5"><p>For example, <span class="citation">Lee and Cheung (2009)</span> exploit a technicality of the CRM to identify this prior curve with “the selection of ‘dose levels,’” while <span class="citation">Wages, Conaway, and O’Quigley (2011)</span> apparently introduce the now-popular ‘skeleton.’<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>For example, <span class="citation">Lee and Cheung (2009)</span> exploit a technicality of the CRM to identify this prior curve with “the selection of ‘dose levels’”, while <span class="citation">Wages, Conaway, and O’Quigley (2011)</span> apparently introduce the now-popular ‘skeleton’.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 <li id="fn6"><p>This is just the observation that we must be able to calculate an objective function in order to optimize it.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 <li id="fn7"><p>This starts at the bottom of page 8 in <span class="citation">Braun (2020)</span>.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 <li id="fn8"><p>The cohort size is not mentioned in the text, but see the example at the bottom of Appendix 1, where Braun sets <code>cohort_size &lt;- 2</code>.<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
 <li id="fn9"><p>But note this constraint holds trivially, simply by the construction of <span class="math inline">\(\mathrm{U}\)</span> from complementary left and right halves, <span class="math inline">\(\mathrm{Y}\)</span> and <span class="math inline">\(\mathrm{Z}\)</span>.<a href="#fnref9" class="footnote-back">↩︎</a></p></li>
 <li id="fn10"><p>I suspend judgment as to whether we <em>should</em> do this, and indeed whether these performance characteristics make any sense at all.<a href="#fnref10" class="footnote-back">↩︎</a></p></li>
 <li id="fn11"><p>This matrix retains the columnar layout—although <em>not</em> the row degeneracy—of the <em>dose transition pathways</em> (DTP) tables of package <a href="https://CRAN.R-project.org/package=dtpcrm" class="external-link"><code>dtpcrm</code></a><a href="#fnref11" class="footnote-back">↩︎</a></p></li>
-<li id="fn12"><p>That is, to experience a DLT. Note that this latter fraction constitutes a <em>patient-centered</em> notion of ‘overdose,’ in contrast to the traditionally dose-centered notion.<a href="#fnref12" class="footnote-back">↩︎</a></p></li>
+<li id="fn12"><p>That is, to experience a DLT. Note that this latter fraction constitutes a <em>patient-centered</em> notion of ‘overdose’, in contrast to the traditionally dose-centered notion.<a href="#fnref12" class="footnote-back">↩︎</a></p></li>
 <li id="fn13"><p>See <a href="https://en.wikipedia.org/wiki/Time_between_overhauls" class="external-link uri">https://en.wikipedia.org/wiki/Time_between_overhauls</a>.<a href="#fnref13" class="footnote-back">↩︎</a></p></li>
 <li id="fn14"><p>This perhaps does <em>not</em> apply to applications such as TITE CRM, where participants are modeled non-exchangeably. CPE for TITE CRM remains an open problem.<a href="#fnref14" class="footnote-back">↩︎</a></p></li>
 </ol>
@@ -599,7 +597,7 @@ Wages, Nolan A, Mark R Conaway, and John O’Quigley. 2011. <span>“Dose-Findin
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
